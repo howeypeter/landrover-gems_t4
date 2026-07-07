@@ -1,0 +1,41 @@
+# --- Python ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+*.spec                 # PyInstaller build spec (Phase 6)
+
+# --- Test / type / lint caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- ECU data / runtime artifacts ---
+*.bin                  # EPROM / calibration dumps
+backups/               # coding-write backups
+scratch_shots/         # rendered screen PNGs (dev only)
+
+# --- OS / OneDrive / editor junk ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.swp
+*~
+.idea/
+*.code-workspace
+
+# --- Arduino / firmware build output ---
+firmware/**/build/
+*.elf
+*.uf2
