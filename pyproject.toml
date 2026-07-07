@@ -1,0 +1,27 @@
+[project]
+name = "gems_t4"
+version = "0.1.0"
+description = "A T4-style diagnostic and (emulated) programming tool for the Lucas/SAGEM GEMS V8 ECU (P38 Range Rover / Discovery 1)"
+requires-python = ">=3.11"
+dependencies = [
+    "pyserial>=3.5",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.6"]
+dev = ["pytest>=8.0", "PySide6>=6.6", "pytest-qt>=4.2"]
+
+[project.scripts]
+gems_t4 = "gems_t4.app.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["gems_t4*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

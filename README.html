@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gems_t4 — GEMS V8 diagnostic tool</title>
+<style>
+  :root {
+    --bg: #f4f2ec;
+    --panel: #ffffff;
+    --ink: #23231f;
+    --muted: #6b6a63;
+    --accent: #1f6b4c;
+    --accent-2: #0f5a8a;
+    --line: #ddd9cf;
+    --code-bg: #2b2b28;
+    --code-ink: #eae7dd;
+    --warn-bg: #fbf3e0;
+    --warn-line: #e6b800;
+    --refuse: #a5301a;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+  header.hero {
+    background: linear-gradient(180deg, #23352c 0%, #1b2a22 100%);
+    color: #f4f2ec; border-radius: 12px; padding: 28px 28px 24px; margin-bottom: 28px;
+  }
+  header.hero h1 { margin: 0 0 6px; font-size: 2rem; letter-spacing: .3px; }
+  header.hero .tag { color: #b9d8c7; font-size: 1.02rem; margin: 0; }
+  header.hero .pills { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    color: #eef7f1; font-size: .8rem; padding: 3px 10px; border-radius: 999px; }
+  h2 { font-size: 1.35rem; margin: 38px 0 12px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--line); color: #1b1b18; }
+  h3 { font-size: 1.05rem; margin: 22px 0 8px; color: var(--accent); }
+  h3 code { background: none; color: var(--accent); padding: 0; }
+  p { margin: 10px 0; }
+  a { color: var(--accent-2); }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: #e9e6dd; color: #3a3a34; padding: 1px 5px; border-radius: 4px; font-size: .9em;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font-size: .88rem; line-height: 1.5;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: .93rem;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #efece4; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .callout {
+    background: var(--warn-bg); border: 1px solid var(--warn-line); border-left: 5px solid var(--warn-line);
+    border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: .95rem;
+  }
+  .callout strong { color: #8a6d00; }
+  .note { color: var(--muted); font-size: .92rem; }
+  .refused { color: var(--refuse); font-weight: 600; }
+  .tos { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 8px 0 0; padding: 0; list-style: none; font-size: .9rem; }
+  .tos a { text-decoration: none; }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: .88rem; }
+  @media (max-width: 560px) { header.hero h1 { font-size: 1.6rem; } .wrap { padding: 20px 14px 60px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>gems_t4</h1>
+  <p class="tag">A TestBook-T4-style diagnostic &amp; (emulated) programming tool for the
+  Lucas/SAGEM <strong>GEMS V8</strong> engine ECU — P38 Range Rover 4.0/4.6 &amp;
+  Discovery 1 V8i (1995–early 1999).</p>
+  <div class="pills">
+    <span class="pill">Python 3.11+</span>
+    <span class="pill">Virtual ECU — no car needed</span>
+    <span class="pill">K-line / KWP2000</span>
+    <span class="pill">45 tests passing</span>
+  </div>
+</header>
+
+<p>It speaks the GEMS K-line (KWP2000 / ISO-14230) dialect and ships with a built-in
+<strong>virtual ECU</strong>, so the whole thing runs on a laptop with <strong>no car and no
+adapter</strong>. When you're ready for real hardware, the same code drives a Raspberry Pi
+Pico K-line adapter over USB.</p>
+
+<div class="callout">
+  <strong>Scope note.</strong> GEMS engine maps live in socketed UV-EPROMs and are
+  <em>not</em> reflashable over the K-line — that capability never existed for GEMS. This
+  tool does the real over-the-wire work (fault codes, live data, actuator tests, coding,
+  immobiliser Security-Learn) and treats map “reflash” as an emulated chip-swap lookalike.
+  Background dossier is in <code>memory/research/</code>.
+</div>
+
+<p>New to the P38/GEMS platform? See
+<a href="diagrams/p38-gems-electronics.html"><strong>How the electronics work</strong></a> —
+a visual walkthrough of the K-line diagnostic star, the BeCM hub, and how the ECU, EAT,
+ABS, EAS, and body systems talk to each other. A network diagram is also in
+<a href="diagrams/p38-gems-network.svg"><code>diagrams/p38-gems-network.svg</code></a>.</p>
+
+<ul class="tos">
+  <li><a href="#requirements">Requirements</a></li>
+  <li><a href="#install">Install</a></li>
+  <li><a href="#quick-start">Quick start</a></li>
+  <li><a href="#gui">Graphical interface</a></li>
+  <li><a href="#commands">Commands</a></li>
+  <li><a href="#scenarios">Fault scenarios</a></li>
+  <li><a href="#hardware">Real hardware</a></li>
+  <li><a href="#layout">Project layout</a></li>
+  <li><a href="#dev">Development</a></li>
+  <li><a href="#status">Status</a></li>
+  <li><a href="diagrams/p38-gems-electronics.html">Vehicle electronics ↗</a></li>
+</ul>
+
+<h2 id="requirements">Requirements</h2>
+<ul>
+  <li><strong>Python 3.11 or newer</strong> (developed on 3.14).</li>
+  <li>Windows, macOS, or Linux for the CLI. (The planned GUI targets Windows.)</li>
+  <li>No hardware required for <code>--fake</code> mode (the default).</li>
+</ul>
+
+<h2 id="install">Install</h2>
+<p>Create a virtual environment and install the dependencies. <strong>Activate the venv once
+per terminal</strong> — after that, plain <code>python</code> and <code>pip</code> point at
+it, so there are no path prefixes to type.</p>
+
+<h3>Windows (PowerShell)</h3>
+<pre><code>python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt</code></pre>
+
+<h3>macOS / Linux (bash)</h3>
+<pre><code>python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt</code></pre>
+
+<p>Then run it from the project folder:</p>
+<pre><code>python -m gems_t4 scenarios</code></pre>
+
+<div class="callout">
+  New terminal? Re-run the activate line. Prefer a shorter <code>gems_t4</code> command
+  instead of <code>python -m gems_t4</code>? Also run <code>pip install -e .</code>.
+</div>
+
+<h2 id="quick-start">Quick start</h2>
+<pre><code>python -m gems_t4 scenarios                          # list the fault scenarios
+python -m gems_t4 live                               # live data, healthy vehicle
+python -m gems_t4 live --scenario coolant_sensor     # live data with a fault injected
+python -m gems_t4 dtc read --scenario misfire_cyl3   # read stored fault codes
+python -m gems_t4 dtc clear --scenario misfire_cyl3  # clear stored fault codes
+python -m gems_t4 actuator fuel_pump --state on      # run an actuator test</code></pre>
+<p>Everything runs against the virtual ECU by default. Add <code>--port COM5</code> (Windows)
+or <code>--port /dev/ttyACM0</code> (Linux) to talk to a real Pico adapter instead.</p>
+
+<h2 id="gui">Graphical interface</h2>
+<p>A PySide6 kiosk GUI reproduces the Win98 dealer-tool look over the same engine: a
+boot splash, VIN-first vehicle identification (where you pick the fault scenario), a
+system menu, and screens for fault codes, live data (with the authentic gauge-count →
+refresh-rate trade-off), actuator tests (refusals and all), toolbox self-tests, and a
+Programming sub-menu (gated coding editor, immobiliser Security-Learn re-sync, and the
+read-only fuel/ignition map viewer).</p>
+<p>It needs the <code>gui</code> extra (PySide6). Install and launch:</p>
+<pre><code>pip install -e ".[gui]"
+python -m gems_t4 gui                         # or: python -m gems_t4.app.gui
+python -m gems_t4 gui --scenario coolant_sensor</code></pre>
+<p class="note">The CLI and the GUI are thin presentations over the same
+<code>Backend</code>/<code>gems_core</code> — no diagnostic logic is duplicated between them.</p>
+
+<h2 id="commands">Commands</h2>
+
+<h3><code>scenarios</code></h3>
+<p>List the available fault scenarios.</p>
+
+<h3><code>live [options]</code></h3>
+<p>Read live sensor data (the GEMS <code>$61</code> records).</p>
+<table>
+  <tr><th>Option</th><th>Meaning</th></tr>
+  <tr><td><code>--scenario NAME</code></td><td>Inject a fault scenario (default <code>healthy</code>).</td></tr>
+  <tr><td><code>--ids 0x01 0x02 …</code></td><td>Read only these local ids instead of all of them.</td></tr>
+  <tr><td><code>--latency SECONDS</code></td><td>Model authentic K-line slowness (default <code>0.0</code>).</td></tr>
+  <tr><td><code>--port PORT</code></td><td>Use a real Pico adapter on this serial port.</td></tr>
+</table>
+<p class="note">Common local ids: <code>0x01</code> coolant temp, <code>0x02</code> engine speed,
+<code>0x03</code> battery, <code>0x04</code> throttle, <code>0x05</code> MAF,
+<code>0x07</code> O2 bank A, <code>0x0A</code> IACV steps, <code>0x0F</code> fuel temp.</p>
+
+<h3><code>dtc {read|clear} [options]</code></h3>
+<p>Read or clear stored fault codes. Same <code>--scenario</code> / <code>--port</code> options as <code>live</code>.</p>
+
+<h3><code>actuator NAME [options]</code></h3>
+<p>Command an actuator output test.</p>
+<table>
+  <tr><th>NAME</th><th>Actuator</th></tr>
+  <tr><td><code>mil</code></td><td>Malfunction indicator lamp</td></tr>
+  <tr><td><code>o2_heater</code></td><td>Oxygen sensor heater</td></tr>
+  <tr><td><code>fuel_pump</code></td><td>Fuel pump relay (refused while the engine “runs”)</td></tr>
+  <tr><td><code>ac_grant</code></td><td>Air-conditioning grant</td></tr>
+  <tr><td><code>condenser_fan</code></td><td>Condenser fan relay</td></tr>
+</table>
+<p>Options: <code>--state on|off</code> (default <code>on</code>), plus <code>--scenario</code> /
+<code>--port</code>. Exit code is <code>0</code> if the test ran, <code>1</code> if the ECU refused it.</p>
+
+<h3><code>coding {read|write}</code> — ECU coding (gated)</h3>
+<p>Read the coding block, or write one field through the safety gates (backup +
+verify + confirm). Writable identity fields (VIN last-6, dealer id, 4.0/4.6 select,
+transmission, build code) vs read-only factory fields (market, part number).</p>
+<pre><code>python -m gems_t4 coding read
+python -m gems_t4 coding write --field vin_last6 --value 654321   # ASCII for vin/part, else hex</code></pre>
+
+<h3><code>immo {status|learn}</code> — immobiliser Security-Learn</h3>
+<p>The one genuine GEMS over-the-wire write: re-sync the BeCM↔ECM mobilisation
+(the canon "ENGINE IMMOBILISED" recovery). <code>--immobilised</code> starts the
+virtual ECU desynced so you can watch the fix.</p>
+<pre><code>python -m gems_t4 immo status --immobilised
+python -m gems_t4 immo learn  --immobilised</code></pre>
+<p class="note">GEMS fuel/ignition maps are <em>not</em> writable over the K-line
+(bench EPROM swap) — the map viewer lives in the GUI as a read-only lookalike.</p>
+
+<h2 id="scenarios">Fault scenarios</h2>
+<p>Each scenario produces <strong>coherent</strong> symptoms across fault codes, live data, and
+actuator tests, so a read → diagnose → clear workflow makes sense.</p>
+<table>
+  <tr><th>Scenario</th><th>Code</th><th>What you'll see</th></tr>
+  <tr><td><code>healthy</code></td><td>—</td><td>No faults; nominal live data; all tests allowed.</td></tr>
+  <tr><td><code>coolant_sensor</code></td><td>P0118</td><td>Coolant reads a fail-safe −40 °C; idle bumped high.</td></tr>
+  <tr><td><code>misfire_cyl3</code></td><td>P0303</td><td>Cylinder-3 misfire; rough/low idle.</td></tr>
+  <tr><td><code>lambda_heater</code></td><td>P1185</td><td>O2 sensor heater open circuit; the <code>o2_heater</code> test is refused.</td></tr>
+</table>
+<p>Example — the fault ties together across screens:</p>
+<pre><code>python -m gems_t4 dtc read --scenario lambda_heater            # -&gt; P1185
+python -m gems_t4 actuator o2_heater --scenario lambda_heater # -&gt; <span class="refused">REFUSED</span> (same fault)</code></pre>
+
+<h2 id="hardware">Real hardware (optional)</h2>
+<p>The canonical adapter is a <strong>Raspberry Pi Pico + ISO 9141 Click (L9637D)</strong> over
+USB. The Pico owns the K-line timing; the PC speaks a simple USB protocol to it.</p>
+<ol>
+  <li>Build the parts list and wire it up per <code>firmware/README.md</code>.</li>
+  <li>Flash <code>firmware/pico_kline/pico_kline.ino</code> to the Pico.</li>
+  <li>Point the CLI at it:</li>
+</ol>
+<pre><code>python -m gems_t4 live --port COM5           # Windows
+python -m gems_t4 live --port /dev/ttyACM0    # Linux</code></pre>
+<p>The host protocol between PC and Pico is specified in <code>firmware/HOST_PROTOCOL.md</code>.</p>
+<div class="callout">
+  <strong>Safety:</strong> OBD pin 16 is battery-live with the key off — fuse it. Start every
+  session read-only; test any <em>write</em> (coding / Security-Learn) against the virtual ECU first.
+</div>
+
+<h2 id="layout">Project layout</h2>
+<pre><code>gems_t4/
+  transport/   the only I/O layer — virtual ECU link, Pico adapter (USB), FTDI stub
+  protocol/    KWP2000 framing, init, services, security, the KwpClient
+  gems/        GEMS meaning — DTCs, $61 live data, actuators, virtual ECU, scenarios
+  app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
+firmware/      Pico sketch + the USB-CDC host-protocol spec + wiring guide
+tests/         pytest suite (runs with no hardware)
+requirements.txt  runtime + test dependencies
+INTERFACES.md  the frozen build contract (wire format, service map, module APIs)</code></pre>
+<p>The load-bearing seam is <code>KwpClient(transport)</code>: it takes a real serial transport
+or the in-memory <code>VirtualTransport</code>, so the whole stack is testable off-car.</p>
+
+<h2 id="dev">Development</h2>
+<p>Run the test suite (no hardware needed):</p>
+<pre><code>pytest</code></pre>
+<p>Expected: <strong>93 passed</strong> if you installed the <code>gui</code> extra
+(<code>pip install -e ".[gui]"</code>), or <strong>65 passed, 7 skipped</strong> without it
+— the 7 GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
+it's absent, since <code>requirements.txt</code> deliberately doesn't include it (see
+"Graphical interface" above).</p>
+<p>If you extend the code, keep to <code>INTERFACES.md</code> — it pins the wire format, the
+service/SID map, and every module's public API so the layers stay compatible. Guidelines:
+Python 3.11+, full type hints, docstrings, and <strong>no I/O or <code>sleep</code> in
+<code>protocol/</code> or <code>gems/</code></strong> (timing lives only in <code>transport/</code>).</p>
+<p>Use it from Python directly:</p>
+<pre><code>from gems_t4.gems.virtual_ecu import VirtualEcu
+from gems_t4.gems.scenarios import get_scenario
+from gems_t4.transport.virtual import VirtualTransport
+from gems_t4.protocol.client import KwpClient
+from gems_t4.gems import dtc, livedata
+
+ecu = VirtualEcu(get_scenario("coolant_sensor"))
+client = KwpClient(VirtualTransport(ecu))
+client.connect()
+client.start_session()
+
+print([d.code for d in dtc.read_dtcs(client)])     # ['P0118']
+print(livedata.read_all(client)[0].formatted())     # coolant temperature</code></pre>
+
+<h2 id="status">Status</h2>
+<p>Phases 1–2 complete: the virtual ECU, full protocol stack, CLI, Pico
+firmware/transport, and a 45-test suite. Next up: the PySide6 Win98 kiosk GUI over the same
+core, and on-car validation of the Pico adapter. See the “Tech stack” and “Build status”
+sections of <code>CLAUDE.md</code> for the roadmap.</p>
+
+<footer>
+  gems_t4 · Lucas/SAGEM GEMS V8 (P38 Range Rover / Discovery 1) · diagnostic + emulated
+  programming tool. Full styled docs (this file) — open in a browser; the concise
+  GitHub landing page is README.md.
+</footer>
+
+</div>
+</body>
+</html>

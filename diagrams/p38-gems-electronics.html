@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P38 Range Rover (GEMS) — How the Electronics Work</title>
+<style>
+  :root {
+    --ink: #2c2a26;
+    --muted: #6b675f;
+    --paper: #f5f2ea;
+    --card: #ffffff;
+    --line: #d8d3c6;
+    --kline: #1b7a34;
+    --serial: #1565c0;
+    --hardwire: #c62828;
+    --immob: #6a1b9a;
+    --analog: #757575;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    line-height: 1.5;
+    padding: 28px 20px 60px;
+  }
+  .wrap { max-width: 1460px; margin: 0 auto; }
+  header { margin-bottom: 18px; border-left: 6px solid var(--kline); padding-left: 16px; }
+  h1 { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+  header p { color: var(--muted); font-size: 15px; max-width: 70em; }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .diagram { overflow-x: auto; }
+  .diagram svg { display: block; min-width: 1100px; width: 100%; height: auto; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px 26px;
+    margin: 14px 0 26px; padding: 10px 16px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    font-size: 13px; color: var(--ink); align-items: center;
+  }
+  .legend .item { display: flex; align-items: center; gap: 8px; }
+  .legend svg { width: 46px; height: 10px; flex: none; }
+
+  .notes {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px; margin-top: 8px;
+  }
+  .note {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; font-size: 14px;
+  }
+  .note h2 { font-size: 15px; font-weight: 650; margin-bottom: 6px; }
+  .note p + p { margin-top: 8px; }
+  .note .lcd {
+    display: inline-block; background: #20241f; color: #ffb300;
+    font-family: Consolas, monospace; font-size: 12px;
+    padding: 2px 8px; border-radius: 3px; letter-spacing: 1px;
+  }
+  footer { margin-top: 22px; color: var(--muted); font-size: 12.5px; max-width: 80em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>P38 Range Rover (GEMS 4.0/4.6 V8, 1995–98) — how the electronics work</h1>
+  <p>One shared K-line wire carries <strong>all diagnostics</strong>; a handful of dedicated point-to-point
+     wires and slow proprietary serial links do <strong>all the coordination while driving</strong>.
+     There is no bus, no gateway, and no network discovery anywhere on this truck.</p>
+</header>
+
+<div class="legend">
+  <strong>Wire types:</strong>
+  <span class="item"><svg viewBox="0 0 46 10"><line x1="0" y1="5" x2="46" y2="5" stroke="#1b7a34" stroke-width="5"/></svg> K-line — shared diagnostic wire (ISO 9141)</span>
+  <span class="item"><svg viewBox="0 0 46 10"><line x1="0" y1="5" x2="46" y2="5" stroke="#1565c0" stroke-width="3" stroke-dasharray="6,4"/></svg> proprietary serial datalink</span>
+  <span class="item"><svg viewBox="0 0 46 10"><line x1="0" y1="5" x2="46" y2="5" stroke="#c62828" stroke-width="3"/></svg> dedicated hardwired signal</span>
+  <span class="item"><svg viewBox="0 0 46 10"><line x1="0" y1="5" x2="46" y2="5" stroke="#6a1b9a" stroke-width="3"/></svg> coded immobiliser signal</span>
+  <span class="item"><svg viewBox="0 0 46 10"><line x1="0" y1="5" x2="46" y2="5" stroke="#757575" stroke-width="2.5" stroke-dasharray="2,3"/></svg> plain analogue / switched 12V</span>
+</div>
+
+<div class="panel diagram">
+<svg viewBox="0 0 1400 665" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="P38 Range Rover GEMS electronics: TestBook T4 diagnostic chain, shared K-line to seven ECUs, and point-to-point operating wires">
+  <style>
+    text { font-family: "Segoe UI", system-ui, Arial, sans-serif; fill: #2c2a26; }
+    .name  { font-size: 14px; font-weight: 650; }
+    .role  { font-size: 11px; fill: #6b675f; }
+    .addr  { font-size: 11px; font-weight: 700; fill: #1b7a34; }
+    .wlab  { font-size: 11px; font-weight: 550; paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .klab  { font-size: 12px; font-weight: 650; fill: #1b7a34; }
+    .kinfo { font-size: 11.5px; fill: #1b7a34; }
+    .cap   { font-size: 12px; fill: #6b675f; font-style: italic; }
+    .head  { font-size: 15px; font-weight: 750; fill: #8c2f00; letter-spacing: 0.02em; }
+    .htext { font-size: 11.5px; fill: #5a4632; }
+    /* Color classes for wire-label text. A bare fill="..." attribute loses to
+       ANY css rule (even the plain `text{fill:...}` above), so these labels
+       need their color set via a class, not a presentation attribute. */
+    .lab-immob  { fill: #6a1b9a; }
+    .lab-serial { fill: #1565c0; }
+    .lab-analog { fill: #757575; }
+    .lcd-msg    { font-family: Consolas, monospace; font-size: 11px; fill: #ffb300; letter-spacing: 1px; }
+    .kline    { stroke: #1b7a34; stroke-width: 5; fill: none; }
+    .tap      { stroke: #1b7a34; stroke-width: 3; fill: none; }
+    .serial   { stroke: #1565c0; stroke-width: 2.5; fill: none; stroke-dasharray: 6,4; }
+    .hardwire { stroke: #c62828; stroke-width: 2.5; fill: none; }
+    .immob    { stroke: #6a1b9a; stroke-width: 2.5; fill: none; }
+    .analog   { stroke: #757575; stroke-width: 2; fill: none; stroke-dasharray: 2,3; }
+    .diagbox  { fill: #eef3e6; stroke: #55702c; stroke-width: 2; }
+  </style>
+
+  <defs>
+    <marker id="a-red"  markerWidth="9" markerHeight="8" refX="8" refY="3" orient="auto-start-reverse"><polygon points="0 0, 9 3, 0 6" fill="#c62828"/></marker>
+    <marker id="a-blue" markerWidth="9" markerHeight="8" refX="8" refY="3" orient="auto-start-reverse"><polygon points="0 0, 9 3, 0 6" fill="#1565c0"/></marker>
+    <marker id="a-pur"  markerWidth="9" markerHeight="8" refX="8" refY="3" orient="auto-start-reverse"><polygon points="0 0, 9 3, 0 6" fill="#6a1b9a"/></marker>
+    <marker id="a-grey" markerWidth="9" markerHeight="8" refX="8" refY="3" orient="auto-start-reverse"><polygon points="0 0, 9 3, 0 6" fill="#757575"/></marker>
+    <marker id="a-green" markerWidth="9" markerHeight="8" refX="8" refY="3" orient="auto-start-reverse"><polygon points="0 0, 9 3, 0 6" fill="#1b7a34"/></marker>
+  </defs>
+
+  <!-- ============ TOP: DIAGNOSTIC CHAIN ============ -->
+  <rect x="60" y="30" width="160" height="60" rx="6" class="diagbox"/>
+  <text class="name" x="140" y="55" text-anchor="middle">TestBook T4</text>
+  <text class="role" x="140" y="73" text-anchor="middle">RDS 5.06 · “T4 Lite”</text>
+
+  <line x1="220" y1="60" x2="278" y2="60" class="hardwire" marker-end="url(#a-red)"/>
+
+  <rect x="280" y="30" width="160" height="60" rx="6" class="diagbox"/>
+  <text class="name" x="360" y="55" text-anchor="middle">VCSI</text>
+  <text class="role" x="360" y="73" text-anchor="middle">FPGA interface box</text>
+
+  <line x1="440" y1="60" x2="498" y2="60" class="hardwire" marker-end="url(#a-red)"/>
+
+  <rect x="500" y="30" width="160" height="60" rx="6" class="diagbox"/>
+  <text class="name" x="580" y="55" text-anchor="middle">J1962 socket</text>
+  <text class="role" x="580" y="73" text-anchor="middle">16-pin, under dash</text>
+
+  <!-- headline card -->
+  <rect x="690" y="30" width="650" height="60" rx="6" fill="#fdf0e3" stroke="#c96f2e" stroke-width="1.5"/>
+  <text class="head" x="710" y="52">NO CAN BUS.</text>
+  <text class="htext" x="710" y="68">Every computer on this truck hangs off one diagnostic wire, and the modules never talk to each other on it.</text>
+  <text class="htext" x="710" y="82">CAN only arrives at Land Rover with the BMW-engineered L322 Range Rover in 2002.</text>
+
+  <!-- drop to K-line -->
+  <line x1="580" y1="90" x2="580" y2="200" class="kline"/>
+  <text class="klab" x="592" y="150">pin 7 — the K-line</text>
+
+  <!-- ============ THE K-LINE ============ -->
+  <text class="klab" x="90" y="186">ONE shared diagnostic wire — every ECU taps the same K-line; the tester polls each by address</text>
+  <text class="kinfo" x="1340" y="186" text-anchor="end">ISO 9141 · ~10.4 kbit/s · half-duplex</text>
+  <line x1="90" y1="200" x2="1340" y2="200" class="kline"/>
+  <circle cx="580" cy="200" r="5" fill="#1b7a34"/>
+
+  <!-- taps -->
+  <line x1="160"  y1="200" x2="160"  y2="240" class="tap"/><circle cx="160"  cy="200" r="4" fill="#1b7a34"/><text class="addr" x="168"  y="228">$10</text>
+  <line x1="347"  y1="200" x2="347"  y2="240" class="tap"/><circle cx="347"  cy="200" r="4" fill="#1b7a34"/><text class="addr" x="355"  y="228">$F1</text>
+  <line x1="534"  y1="200" x2="534"  y2="240" class="tap"/><circle cx="534"  cy="200" r="4" fill="#1b7a34"/><text class="addr" x="542"  y="228">$74</text>
+  <line x1="721"  y1="200" x2="721"  y2="240" class="tap"/><circle cx="721"  cy="200" r="4" fill="#1b7a34"/><text class="addr" x="729"  y="228">$78</text>
+  <line x1="908"  y1="200" x2="908"  y2="240" class="tap"/><circle cx="908"  cy="200" r="4" fill="#1b7a34"/><text class="addr" x="916"  y="228">$80</text>
+  <line x1="1095" y1="200" x2="1095" y2="240" class="tap"/><circle cx="1095" cy="200" r="4" fill="#1b7a34"/><text class="addr" x="1103" y="228">$B8</text>
+  <line x1="1282" y1="200" x2="1282" y2="240" class="tap"/><circle cx="1282" cy="200" r="4" fill="#1b7a34"/><text class="addr" x="1290" y="228">$B0</text>
+
+  <!-- ============ ECU ROW ============ -->
+  <rect x="80" y="240" width="160" height="90" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+  <text class="name" x="160" y="264" text-anchor="middle">GEMS ECM</text>
+  <text class="role" x="160" y="284" text-anchor="middle">4.0/4.6 V8 fuel + ignition</text>
+  <text class="role" x="160" y="300" text-anchor="middle">Lucas/Sagem · wasted spark</text>
+  <text class="role" x="160" y="316" text-anchor="middle">hot-wire MAF</text>
+
+  <rect x="267" y="240" width="160" height="90" rx="6" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2"/>
+  <text class="name" x="347" y="264" text-anchor="middle">EAT ECU</text>
+  <text class="role" x="347" y="284" text-anchor="middle">ZF 4HP24</text>
+  <text class="role" x="347" y="300" text-anchor="middle">automatic gearbox</text>
+
+  <rect x="454" y="240" width="160" height="90" rx="6" fill="#e0f2f1" stroke="#00695c" stroke-width="2"/>
+  <text class="name" x="534" y="264" text-anchor="middle">ABS ECU</text>
+  <text class="role" x="534" y="284" text-anchor="middle">Wabco ABS +</text>
+  <text class="role" x="534" y="300" text-anchor="middle">electronic traction control</text>
+
+  <rect x="641" y="240" width="160" height="90" rx="6" fill="#e1f5fe" stroke="#0277bd" stroke-width="2"/>
+  <text class="name" x="721" y="264" text-anchor="middle">EAS ECU</text>
+  <text class="role" x="721" y="284" text-anchor="middle">air suspension: height sensors,</text>
+  <text class="role" x="721" y="300" text-anchor="middle">compressor, valve block</text>
+
+  <rect x="828" y="240" width="160" height="90" rx="6" fill="#fce4ec" stroke="#c2185b" stroke-width="3"/>
+  <text class="name" x="908" y="264" text-anchor="middle">BeCM</text>
+  <text class="role" x="908" y="284" text-anchor="middle">body control: locks, alarm,</text>
+  <text class="role" x="908" y="300" text-anchor="middle">lighting, wipers, immobiliser</text>
+  <text class="role" x="908" y="316" text-anchor="middle">lives under the driver’s seat</text>
+
+  <rect x="1015" y="240" width="160" height="90" rx="6" fill="#f1f8e9" stroke="#558b2f" stroke-width="2"/>
+  <text class="name" x="1095" y="264" text-anchor="middle">HEVAC ECU</text>
+  <text class="role" x="1095" y="284" text-anchor="middle">climate control, blend motors</text>
+  <text class="role" x="1095" y="300" text-anchor="middle">“book symbol” fault indicator</text>
+
+  <rect x="1202" y="240" width="160" height="90" rx="6" fill="#f5f5f5" stroke="#757575" stroke-width="2"/>
+  <text class="name" x="1282" y="264" text-anchor="middle">SRS ECU</text>
+  <text class="role" x="1282" y="284" text-anchor="middle">airbags</text>
+  <text class="cap" x="1282" y="348" text-anchor="middle">diagnostic island — K-line only</text>
+
+  <!-- ============ OPERATING WIRES (point-to-point) ============ -->
+  <!-- EAT <-> GEMS: torque reduction -->
+  <path d="M225,330 V380 H300 V330" class="hardwire" marker-start="url(#a-red)" marker-end="url(#a-red)"/>
+  <text class="wlab" x="262" y="371" text-anchor="middle">torque reduction request during shifts</text>
+
+  <!-- EAS -> BeCM: faults to message centre -->
+  <path d="M770,330 V380 H845 V330" class="serial" marker-end="url(#a-blue)"/>
+  <text class="wlab" x="807" y="371" text-anchor="middle">EAS faults &amp; height mode → message centre</text>
+
+  <!-- ABS -> GEMS + instruments: road-speed pulse -->
+  <path d="M534,330 V415 H175 V330" class="hardwire" marker-end="url(#a-red)"/>
+  <path d="M534,415 H820 V518" class="hardwire" marker-end="url(#a-red)"/>
+  <text class="wlab" x="350" y="407" text-anchor="middle">road-speed pulse (hardwired)</text>
+
+  <!-- BeCM -> GEMS: immobiliser -->
+  <path d="M940,330 V450 H125 V330" class="immob" marker-end="url(#a-pur)"/>
+  <text class="wlab lab-immob" x="532" y="442" text-anchor="middle">coded mobilisation signal — no code, no start → “ENGINE IMMOBILISED”</text>
+
+  <!-- BeCM <-> instrument pack -->
+  <path d="M895,330 V518" class="serial" marker-start="url(#a-blue)" marker-end="url(#a-blue)"/>
+  <text class="wlab lab-serial" x="886" y="472" text-anchor="end">serial datalink — gauge data + message-centre text</text>
+
+  <!-- BeCM <-> door outstations -->
+  <path d="M965,330 V480 H1130 V518" class="serial" marker-start="url(#a-blue)" marker-end="url(#a-blue)"/>
+  <text class="wlab lab-serial" x="1140" y="473">serial links</text>
+
+  <!-- HEVAC -> GEMS: analogue -->
+  <path d="M1095,330 V495 H95 V330" class="analog" marker-end="url(#a-grey)"/>
+  <text class="wlab lab-analog" x="350" y="488" text-anchor="middle">plain analogue / switched 12V — A/C request, fuel gauge, etc.</text>
+
+  <!-- ============ SATELLITES (not on K-line) ============ -->
+  <rect x="750" y="520" width="200" height="90" rx="6" fill="#fdf3f7" stroke="#c2185b" stroke-width="2" stroke-dasharray="6,4"/>
+  <text class="name" x="850" y="543" text-anchor="middle">Instrument pack</text>
+  <text class="role" x="850" y="559" text-anchor="middle">NOT on the K-line — reached only via BeCM</text>
+  <rect x="765" y="568" width="170" height="26" rx="3" fill="#20241f"/>
+  <text class="lcd-msg" x="850" y="585" text-anchor="middle">EAS FAULT · SLOW 35 MPH</text>
+
+  <rect x="1030" y="520" width="200" height="90" rx="6" fill="#fdf3f7" stroke="#c2185b" stroke-width="2" stroke-dasharray="6,4"/>
+  <text class="name" x="1130" y="546" text-anchor="middle">Door outstations ×4</text>
+  <text class="role" x="1130" y="564" text-anchor="middle">windows · locks · switches</text>
+  <text class="role" x="1130" y="580" text-anchor="middle">no K-line — BeCM serial only</text>
+
+  <!-- bottom caption -->
+  <text class="cap" x="700" y="650" text-anchor="middle">Below the K-line: the operating wires. Dedicated point-to-point signals and slow proprietary serial links — no bus, so every system is an island.</text>
+</svg>
+</div>
+
+<div class="notes">
+  <div class="note">
+    <h2>Why a TestBook at all — OBD-II is only half-true</h2>
+    <p>Only the <strong>GEMS engine ECM</strong> is genuinely OBD-II compliant (especially on North American trucks), serving emissions data over ISO 9141-2. Everything else — EAS, BeCM, ABS, HEVAC, SRS — speaks <strong>proprietary Rover/Lucas protocols</strong> on the very same wire.</p>
+    <p>That is why a generic ELM327 scanner plugged into the same socket sees almost nothing beyond the engine, and why the dealer tool got full fault codes, ~108 live measures, actuator drives and adaptations.</p>
+  </div>
+  <div class="note">
+    <h2>The BeCM is the truck’s nervous system</h2>
+    <p>A large body computer under the driver’s seat that runs nearly all body electrics <em>directly</em>: locks, alarm, lighting, wipers, relays. It drives the message centre over a serial datalink — many “warning lights” are actually BeCM text messages — and it sends the coded mobilisation signal without which the engine will not start.</p>
+    <p>Canon failures: refusing to <strong>sleep</strong> (flat battery overnight) and BeCM/ECM immobiliser sync faults — <span class="lcd">ENGINE IMMOBILISED</span></p>
+  </div>
+  <div class="note">
+    <h2>Every system is an island</h2>
+    <p>There is no gateway module and no network discovery. The TestBook cannot ask the vehicle what is fitted — which is exactly why its <strong>VIN-first vehicle-configuration step</strong> exists: the tool must be told which systems are on the truck before it knows which addresses to poll.</p>
+    <p>Coordination while driving happens over the handful of dedicated wires shown, nothing more.</p>
+  </div>
+  <div class="note">
+    <h2>The waiting is authentic</h2>
+    <p>The K-line is <strong>tester-initiated half-duplex at ~10.4 kbit/s</strong>, shared by every module. “Communicating with ECU… please wait” was a fact of life, not bad software.</p>
+    <p>Live data has a real bandwidth trade-off: ~20 samples/s watching a single measure, degrading to roughly one sample every 2 seconds with all ~108 selected. Selecting more gauges visibly slows the screen.</p>
+  </div>
+</div>
+
+<footer>
+  Diagnostic addresses shown ($10, $F1, $74, $78, $80, $B8, $B0) are representative — exact values vary by market and model year.
+  GEMS (Lucas/Sagem) ran from launch to the 1999 model year, when Bosch Motronic M5.2.1 (“Thor”) replaced it; “GEMS or Thor?” is the first fork in every P38 engine procedure.
+  Sources: <code>docs/land-rover-electronics.md</code> and <code>CLAUDE.md</code> in this project.
+</footer>
+
+</div>
+</body>
+</html>

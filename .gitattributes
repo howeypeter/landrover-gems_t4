@@ -1,0 +1,17 @@
+# Normalize line endings to LF for all text files, in the repo AND the working
+# tree. This makes behavior deterministic regardless of each machine's
+# core.autocrlf setting (Windows defaults to autocrlf=true, which would otherwise
+# rewrite these LF files to CRLF on checkout). LF everywhere is the modern default
+# and is handled fine by every editor.
+* text=auto eol=lf
+
+# Binary files — never apply line-ending or text conversion.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.bin  binary
+*.uf2  binary
+*.elf  binary
