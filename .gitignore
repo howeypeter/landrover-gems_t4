@@ -9,7 +9,8 @@ __pycache__/
 .eggs/
 build/
 dist/
-*.spec                 # PyInstaller build spec (Phase 6)
+*.spec                 # stray auto-generated PyInstaller specs...
+!packaging/*.spec      # ...but keep our intentional packaging spec
 
 # --- Test / type / lint caches ---
 .pytest_cache/

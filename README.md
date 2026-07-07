@@ -75,7 +75,7 @@ or the in-memory `VirtualTransport`, so the whole stack is testable off-car.
 ## Development
 
 ```bash
-pytest        # 93 passed with the [gui] extra; 65 passed + 7 skipped without PySide6
+pytest        # 99 passed with the [gui] extra; 65 passed + 8 skipped without PySide6
 ```
 
 Build contracts: [`INTERFACES.md`](INTERFACES.md) (core) and

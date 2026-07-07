@@ -5,9 +5,26 @@ metadata:
   type: project
 ---
 
-**Phases 1–5 of the gems_t4 tool are built and validated. 93 passing tests.**
-(Phase 3 real-hardware on-car validation still pending HW; Phase 6 polish + the
-optional Td5/MEMS3 reflash profile not started.)
+**Phases 1–5 complete; Phase 6 in progress. 99 passing tests** (65 + 8 skipped
+without the PySide6 `[gui]` extra). Phase 3 real-hardware on-car validation still
+pending HW.
+
+## Phase 6 progress (2026-07-07)
+- **Gauge widgets DONE:** `app/gui/widgets.py` — QPainter `DialGauge` (270° arc,
+  needle, redline), `BarGauge`, `LcdReadout`; `build_gauge(spec)` dispatches by
+  style. `app/gui/gauge_specs.py` — per-param scale/redline/decimals/style
+  (`GAUGE_SPECS` keyed by live-data local id; `spec_for` synthesises a dial for
+  unlisted ids). Gauges are FIXED-size (184×150 dial / 184×66 bar+lcd) so the grid
+  lays out; live_data screen rebuilds a `QGridLayout` (4 cols, top-left aligned)
+  and pushes values each timer tick. Visually verified via `w.grab()` PNGs.
+- **PyInstaller build DONE:** `packaging/gems_t4.spec` (one-dir console exe,
+  `collect_all("PySide6")`), `packaging/_entry.py` shim, `packaging/README.md`.
+  Built exe validated (`--version`, `scenarios`). `build` extra in pyproject.
+  Build to `dist/gems_t4/` (gitignored). `.gitignore` has `!packaging/*.spec` so
+  the hand-written spec is trackable despite the `*.spec` rule.
+- **Still to do (Phase 6):** "the waiting" latency overlay, background worker
+  thread (only needed for slow real HW), full Win98 skin refinement, windowed
+  GUI-only exe variant, more $61 params (24/~35).
 
 ## What exists
 - Python package `gems_t4` at the repo root. Deps via `requirements.txt` (or

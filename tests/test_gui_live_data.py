@@ -1,9 +1,9 @@
-"""Headless GUI tests for :class:`LiveDataScreen`.
+"""Headless GUI tests for the gauge-based :class:`LiveDataScreen`.
 
-Verifies real behaviour: the table populates from the backend, the gauge-count
-selector drives both the row count and the timer cadence (more gauges = slower),
-a timer tick refreshes cell text in place, and the timer stops on leave.
-Requires the ``gui`` extra; skips cleanly if PySide6 is not installed.
+Verifies real behaviour: gauges are built from the backend selection, the
+gauge-count selector drives both the gauge count and the timer cadence (more
+gauges = slower), values are pushed onto gauges, and the timer stops on leave /
+pause.
 """
 from __future__ import annotations
 
@@ -15,87 +15,52 @@ from gems_t4.app.backend import Backend
 from gems_t4.app.gui.screens.live_data import LiveDataScreen
 
 
-def _make(qtbot) -> LiveDataScreen:
+def test_gauges_built_and_timer_runs(qtbot):
     screen = LiveDataScreen(Backend("healthy"))
     qtbot.addWidget(screen)
-    return screen
-
-
-def test_populates_and_shows_coolant(qtbot) -> None:
-    screen = _make(qtbot)
     screen.on_enter()
-
-    # default selection is 4 gauges → 4 rows
-    assert screen._table.rowCount() == 4
-
-    names = {
-        screen._table.item(r, 0).text()
-        for r in range(screen._table.rowCount())
-    }
-    assert any("Coolant" in n for n in names)
-
-    # value/unit cells are filled, not empty
-    assert screen._table.item(0, 1) is not None
-    assert screen._table.item(0, 1).text() != ""
-
-    # timer is running after entry
+    assert len(screen._gauges) == screen._selected_count()
+    # coolant (0x01) gauge exists and shows a warmed-up value.
+    assert 0x01 in screen._gauges
+    assert 70 <= screen._gauges[0x01].value() <= 95
     assert screen._timer.isActive()
-
     screen.on_leave()
     assert not screen._timer.isActive()
 
 
-def test_more_gauges_means_slower(qtbot) -> None:
-    screen = _make(qtbot)
+def test_more_gauges_slows_refresh(qtbot):
+    screen = LiveDataScreen(Backend("healthy"))
+    qtbot.addWidget(screen)
     screen.on_enter()
-
-    # 1 gauge → fastest
-    screen._count_box.setCurrentIndex(0)
-    assert screen._table.rowCount() == 1
+    screen._count_box.setCurrentIndex(0)  # 1 gauge
     fast = screen._interval_ms()
-
-    # all gauges → slowest, and more rows
-    all_index = screen._count_box.count() - 1
-    screen._count_box.setCurrentIndex(all_index)
+    n_few = len(screen._gauges)
+    screen._count_box.setCurrentIndex(4)  # all gauges
     slow = screen._interval_ms()
-
-    assert screen._table.rowCount() > 4
-    assert slow > fast  # the bandwidth trade-off is real
-
+    assert slow > fast
+    assert len(screen._gauges) > n_few
     screen.on_leave()
-    assert not screen._timer.isActive()
 
 
-def test_tick_refreshes_in_place(qtbot) -> None:
-    screen = _make(qtbot)
-    screen.on_enter()
-
-    rows_before = screen._table.rowCount()
-    ids_before = {id(screen._table.item(r, 1)) for r in range(rows_before)}
-
-    # simulate a timer tick directly
-    screen._refresh()
-
-    # same row objects reused (updated in place, not rebuilt)
-    rows_after = screen._table.rowCount()
-    ids_after = {id(screen._table.item(r, 1)) for r in range(rows_after)}
-    assert rows_after == rows_before
-    assert ids_before == ids_after
-
-    screen.on_leave()
-    assert not screen._timer.isActive()
-
-
-def test_pause_stops_timer(qtbot) -> None:
-    screen = _make(qtbot)
+def test_pause_stops_timer(qtbot):
+    screen = LiveDataScreen(Backend("healthy"))
+    qtbot.addWidget(screen)
     screen.on_enter()
     assert screen._timer.isActive()
-
     screen.on_tick()  # pause
     assert not screen._timer.isActive()
-
+    assert screen.tick_label() == "Resume"
     screen.on_tick()  # resume
     assert screen._timer.isActive()
-
     screen.on_leave()
-    assert not screen._timer.isActive()
+
+
+def test_refresh_pushes_values(qtbot):
+    screen = LiveDataScreen(Backend("healthy"))
+    qtbot.addWidget(screen)
+    screen.on_enter()
+    # rpm gauge should hold a positive value after a refresh.
+    screen._count_box.setCurrentIndex(4)  # ensure rpm (0x02) is shown
+    screen._refresh()
+    assert screen._gauges[0x02].value() > 0
+    screen.on_leave()

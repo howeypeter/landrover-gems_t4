@@ -426,13 +426,24 @@ were dropped. See `memory/tech-stack-decision.md`.)
    `immo status|learn`) and GUI (programming sub-menu → coding / immobiliser /
    maps screens). Td5/MEMS3 real-reflash profile still optional/not started.
 6. Polish → full Win98 T4 skin; PyInstaller Windows build.
+   ◑ IN PROGRESS (2026-07-07): **Real gauge widgets** — `app/gui/widgets.py`
+   (QPainter `DialGauge`/`BarGauge`/`LcdReadout`) + `app/gui/gauge_specs.py`
+   (per-param scale/redline/style); the live-data screen now renders a grid of
+   analog gauges (was a table), keeping the gauge-count → refresh-rate trade-off.
+   **PyInstaller build** — `packaging/gems_t4.spec` (one-dir console exe, PySide6
+   bundled); validated: `dist/gems_t4/gems_t4.exe --version`/`scenarios` run.
+   `build` extra added (`pip install -e ".[build]"`). Still to do: the "the
+   waiting" latency overlay, a background worker thread (needed only for slow real
+   hardware), full Win98 skin refinement, a windowed GUI-only exe variant, more
+   $61 params (24/~35).
 
 ### Build status
 
-**Where the project stands (2026-07-07):** Phases **1, 2, 4, 5 complete**;
+**Where the project stands (2026-07-07):** Phases **1, 2, 4, 5 complete;
+Phase 6 in progress** (gauge widgets + PyInstaller build done — see phase list);
 Phase 3 (Pico adapter) built + unit-tested but needs real hardware for on-car
-validation; Phase 6 (polish/PyInstaller) not started. **93 passing tests** (or
-"65 passed, 7 skipped" without the PySide6 `[gui]` extra). Runs via
+validation. **99 passing tests** (or "65 passed, 8 skipped" without the PySide6
+`[gui]` extra — 8 GUI test files). Runs via
 `python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI via
 `gems_t4 gui` (needs `[gui]`). Python 3.14 venv at `.venv/`. ~68 Python files,
 11 GUI screens.
