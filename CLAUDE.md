@@ -468,9 +468,12 @@ fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
   links to the HTML docs; `README.html` = full styled docs. GitHub can't render
   `.html` inline, so `README.md` links use **htmlpreview.github.io** (zero-setup
   proxy that renders `https://htmlpreview.github.io/?https://github.com/...`)
-  to show the rendered pages. Can't embed styled HTML into .md (GitHub strips CSS).
-  Keep them roughly in sync. **Gotcha:** OneDrive/editor keeps re-encoding
-  `README.md` to UTF-16 — re-convert to UTF-8 if `file README.md` shows UTF-16.
+  to show the rendered pages. Links reference the **`main` branch** (target merge
+  destination), not version branches. Ideal future: fully dynamic URLs via GitHub
+  Pages (always resolves to the default branch without hardcoding) or a CI workflow.
+  Can't embed styled HTML into .md (GitHub strips CSS). Keep them roughly in sync.
+  **Gotcha:** OneDrive/editor keeps re-encoding `README.md` to UTF-16 — re-convert
+  to UTF-8 if `file README.md` shows UTF-16.
 - Full detail in `memory/repo-git-state.md`.
 
 **GUI added 2026-07-07:** Phase 4 PySide6 kiosk done. Launch `gems_t4 gui`;

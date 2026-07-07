@@ -13,9 +13,9 @@ K-line adapter over USB.
 
 ## 📄 Full Documentation
 
-> **📗 [Full styled docs — README.html (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/v0.0.1/README.html)**
+> **📗 [Full styled docs — README.html (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/README.html)**
 > 
-> **🚗 [Vehicle electronics overview — P38/GEMS network diagram (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/v0.0.1/diagrams/p38-gems-electronics.html)**
+> **🚗 [Vehicle electronics overview — P38/GEMS network diagram (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/p38-gems-electronics.html)**
 >
 > *Note: This Markdown file is the short landing page. The HTML pages above have complete detail and styled formatting.*
 
