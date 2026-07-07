@@ -9,9 +9,17 @@ It speaks the GEMS K-line (KWP2000 / ISO-14230) dialect and ships with a built-i
 When you're ready for real hardware, the same code drives a Raspberry Pi Pico
 K-line adapter over USB.
 
-> 📄 **Full, styled documentation lives in [`README.html`](README.html)** — open it
-> in a browser (best viewed locally; GitHub shows `.html` as source, not rendered).
-> This Markdown file is the short version for the GitHub landing page.
+---
+
+## 📄 Full Documentation
+
+> **📗 [Full styled docs — README.html (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/v0.0.1/README.html)**
+> 
+> **🚗 [Vehicle electronics overview — P38/GEMS network diagram (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/v0.0.1/diagrams/p38-gems-electronics.html)**
+>
+> *Note: This Markdown file is the short landing page. The HTML pages above have complete detail and styled formatting.*
+
+---
 
 > **Scope note.** GEMS engine maps live in socketed UV-EPROMs and are **not**
 > reflashable over the K-line — that capability never existed for GEMS. This tool

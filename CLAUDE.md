@@ -464,9 +464,11 @@ fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
 - `.gitignore` (excludes `.venv`, caches, `__pycache__`, egg-info, OneDrive junk,
   firmware build output) and `.gitattributes` (`* text=auto eol=lf` — pins LF to
   silence Windows `core.autocrlf=true` CRLF churn) are in place.
-- **Two READMEs**: `README.md` = concise Markdown GitHub landing page (links to
-  the HTML); `README.html` = full styled docs (open in a browser; GitHub can't
-  render `.html` inline). Can't embed styled HTML into .md (GitHub strips CSS).
+- **Two READMEs**: `README.md` = concise Markdown GitHub landing page with prominent
+  links to the HTML docs; `README.html` = full styled docs. GitHub can't render
+  `.html` inline, so `README.md` links use **htmlpreview.github.io** (zero-setup
+  proxy that renders `https://htmlpreview.github.io/?https://github.com/...`)
+  to show the rendered pages. Can't embed styled HTML into .md (GitHub strips CSS).
   Keep them roughly in sync. **Gotcha:** OneDrive/editor keeps re-encoding
   `README.md` to UTF-16 — re-convert to UTF-8 if `file README.md` shows UTF-16.
 - Full detail in `memory/repo-git-state.md`.
