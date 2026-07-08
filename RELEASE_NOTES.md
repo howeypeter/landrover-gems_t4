@@ -42,8 +42,7 @@ New parameters (local ids shown):
 **Scenario coherence:** `misfire_cyl3` now tells the per-cylinder story — cylinder 3's count climbs while cylinders 1–2 and 4–8 stay at 0. Real diagnostic tool behavior.
 
 #### 4. Windows Desktop Launcher
-- New **`gems_t4 GUI.lnk`** desktop shortcut created automatically during first setup
-- Also included: **`launch_gui.bat`** (quick-launch batch file) and **`create_shortcut.ps1`** (PowerShell script to re-create the shortcut)
+- New **`launch_gui.bat`** (quick-launch batch file) and **`create_shortcut.ps1`** (PowerShell script that creates a **`gems_t4 GUI.lnk`** desktop shortcut — run it once from the project root)
 
 #### 5. Two-Exe Windows Build
 - **`gems_t4.exe`** (console) — the CLI, for scripting and diagnostics
@@ -65,7 +64,7 @@ New **`tests/test_gui_e2e.py`** (6 comprehensive tests) walks the production GUI
 **Result:** No integration bugs found. All tests pass headless.
 
 #### New Waiting Overlay Tests
-**`tests/test_gui_wait.py`** (5 tests) validates the background worker and latency model:
+**`tests/test_gui_wait.py`** (9 tests) validates the background worker and latency model:
 - Instant mode runs synchronously (env var `GEMS_T4_INSTANT=1`)
 - Async path completes correctly
 - Error handling routes to callbacks

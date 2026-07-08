@@ -75,4 +75,4 @@ client = KwpClient(PicoAdapterTransport("COM5"))
 client.connect(mode="slow")   # 5-baud init on the Pico
 ```
 
-Or from the CLI: `gems-t4 live --port COM5`.
+Or from the CLI: `gems_t4 live --port COM5`.

@@ -51,8 +51,9 @@ validation still pending HW.
 ## What exists
 - Python package `gems_t4` at the repo root. Deps via `requirements.txt` (or
   `pip install -e .`, which also adds a `gems_t4` console script). Run with
-  `python -m gems_t4 <cmd>`. ~2,500 LOC, **45 passing pytest tests**, no hardware
-  needed. Python 3.14 venv at `.venv/`. NOTE: command is `gems_t4` (underscore,
+  `python -m gems_t4 <cmd>`. **123 passing pytest tests** (76 tracked .py files:
+  50 package + 24 tests + 2 packaging), no hardware needed. Python 3.14 venv at
+  `.venv/`. NOTE: command is `gems_t4` (underscore,
   matching the folder) — the old `gems-t4` hyphen name was removed 2026-07-07.
 - Layers: `transport/` (base, virtual, pico, ftdi-stub) · `protocol/` (messages,
   framing, timing, init, security, client) · `gems/` (types, ecu_base, dtc,

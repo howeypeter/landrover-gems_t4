@@ -81,7 +81,7 @@
     <span class="pill">Python 3.11+</span>
     <span class="pill">Virtual ECU — no car needed</span>
     <span class="pill">K-line / KWP2000</span>
-    <span class="pill">45 tests passing</span>
+    <span class="pill">123 tests passing</span>
   </div>
 </header>
 
@@ -101,8 +101,7 @@ Pico K-line adapter over USB.</p>
 <p>New to the P38/GEMS platform? See
 <a href="diagrams/p38-gems-electronics.html"><strong>How the electronics work</strong></a> —
 a visual walkthrough of the K-line diagnostic star, the BeCM hub, and how the ECU, EAT,
-ABS, EAS, and body systems talk to each other. A network diagram is also in
-<a href="diagrams/p38-gems-network.svg"><code>diagrams/p38-gems-network.svg</code></a>.</p>
+ABS, EAS, and body systems talk to each other.</p>
 
 <ul class="tos">
   <li><a href="#requirements">Requirements</a></li>
@@ -121,7 +120,7 @@ ABS, EAS, and body systems talk to each other. A network diagram is also in
 <h2 id="requirements">Requirements</h2>
 <ul>
   <li><strong>Python 3.11 or newer</strong> (developed on 3.14).</li>
-  <li>Windows, macOS, or Linux for the CLI. (The planned GUI targets Windows.)</li>
+  <li>Windows, macOS, or Linux for the CLI. (The GUI is developed and packaged on Windows.)</li>
   <li>No hardware required for <code>--fake</code> mode (the default).</li>
 </ul>
 
@@ -260,7 +259,7 @@ python -m gems_t4 live --port /dev/ttyACM0    # Linux</code></pre>
 <pre><code>gems_t4/
   transport/   the only I/O layer — virtual ECU link, Pico adapter (USB), FTDI stub
   protocol/    KWP2000 framing, init, services, security, the KwpClient
-  gems/        GEMS meaning — DTCs, $61 live data, actuators, virtual ECU, scenarios
+  gems/        GEMS meaning — DTCs, $61 live data, actuators, immobiliser, maps, virtual ECU
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
 firmware/      Pico sketch + the USB-CDC host-protocol spec + wiring guide
 tests/         pytest suite (runs with no hardware)

@@ -110,10 +110,11 @@ Per Andrew Revill's MEMS3 reverse-engineering (https://andrewrevill.co.uk/MEMS3T
 
 Representative vehicle: **P38 Range Rover 4.0/4.6 V8 with GEMS engine
 management (1995–1998)** — the user's own vehicle type. Detailed reference in
-`docs/land-rover-electronics.md`. Network diagram in
-`diagrams/p38-gems-network.svg` — a consolidated view of both the diagnostic
-K-line star topology and the point-to-point wiring for real-time coordination
-(BeCM-centric message centre, EAS faults, immobiliser, outstations).
+`docs/land-rover-electronics.md`. Network diagram: use
+`diagrams/p38-gems-electronics.html` (built from the docs). ⚠️ The older
+`diagrams/p38-gems-network.svg` was reported **incorrect by the user
+(2026-07-06)** — do not use it as a reference; fix or delete it once the user
+says what is wrong.
 
 ### GEMS in one paragraph
 
@@ -293,13 +294,13 @@ as static lookalikes for now.
 - `docs/land-rover-electronics.md` — Standalone reference on late-90s Land Rover
   electronics, now centred on the GEMS P38; modules, protocols, and why there's
   no CAN bus. Discovery 2 retained as an era variation.
-- `diagrams/p38-gems-network.svg` — Consolidated diagnostic + operating network:
-  TestBook → VCSI → J1962 → K-line diagnostic star to all eight ECUs. Visually
-  distinguishes **integrated real-time coordination network** (GEMS, EAT, ABS,
-  EAS, BeCM hub, Instruments, door outstations) from **isolated systems** (SRS:
-  K-line only for safety-critical crash detection; HEVAC: K-line + analogue 12V
-  for climate). All verified by three independent agents (rendering, components,
-  connections).
+- `diagrams/p38-gems-electronics.html` — the network diagram to use (built from
+  `docs/land-rover-electronics.md`); linked from `README.md` via
+  htmlpreview.github.io.
+- `diagrams/p38-gems-network.svg` — older consolidated diagnostic + operating
+  network diagram. ⚠️ **Reported incorrect by the user (2026-07-06)** despite an
+  earlier "verified by three agents" claim — do not reference it; ask the user
+  what's wrong, then fix or delete it.
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
@@ -461,9 +462,26 @@ validation. **123 passing tests** (or "74 passed, 10 skipped" without the
 PySide6 `[gui]` extra — 10 GUI test files; both counts verified empirically).
 Runs via `python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI
 via `gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14
-venv at `.venv/`. ~70 Python files, 11 GUI screens, 37 live-data params.
+venv at `.venv/`. 76 tracked Python files, 11 GUI screens, 37 live-data params.
 Remaining polish candidates (not started, optional): windowed-exe icon/version
 resources, more guided fault trees, Td5/MEMS3 real-reflash profile.
+
+**Full regression sweep 2026-07-07 (v0.0.3, commit b3abce7) — all green:**
+`pytest` in `.venv` → **123 passed**; a genuinely clean disposable venv with
+only `requirements.txt` → **74 passed, 10 skipped** (all 10 GUI files skip via
+`importorskip`). Every CLI command smoke-tested against the virtual ECU:
+`scenarios`, `live` (single + all params), `dtc read/clear` (all four
+scenarios produce their documented codes — P0118, P0303+P1303, P1185), the
+fuel-pump refusal interlock (engine "running" at idle → REFUSED, by design),
+`actuator mil`, `coding read` + gated `write` (verified), `immo status/learn`
+(recovers ENGINE IMMOBILISED). Docs re-checked: all UTF-8 (no UTF-16 drift),
+stale test counts fixed in `requirements.txt` + memory. The `dist/` exes were
+found **stale** (built 10:38, source changed ~17:49 — the documented
+PyInstaller gotcha, plus two running `gems_t4_gui.exe` instances locking the
+folder) and were rebuilt from clean `build/`+`dist/`. Note: the Python package
+version is **0.1.0** (`pyproject.toml`/`__init__.py`/`--version`) while git
+tags/release notes use **v0.0.x** — two schemes, flagged for the user to
+reconcile.
 
 **Quick start & known limitations (2026-07-07):**
 - **Launcher scripts:** `launch_gui.bat` (quick launch) and `create_shortcut.ps1`
@@ -513,13 +531,14 @@ starts with `pytest.importorskip("PySide6")` so a plain `requirements.txt` insta
 gives "N passed, K skipped" not errors. Contracts: `INTERFACES.md` (core),
 `GUI_INTERFACES.md` (screens).
 
-**Fixed 2026-07-07:** the 4 GUI test files each start with
+**Fixed 2026-07-07:** the GUI test files each start with
 `pytest.importorskip("PySide6")` so `pytest` after a plain `pip install -r
-requirements.txt` (no PySide6) gives a clean "45 passed, 4 skipped" instead of
+requirements.txt` (no PySide6) gives a clean "N passed, K skipped" instead of
 collection errors. Verified against a genuinely clean disposable venv, not just
-reasoning about it. Two ways to get the GUI tests running too:
-`pip install -e ".[gui]"` or `pip install -e ".[dev]"` (adds pytest-qt) → "63
-passed" either way.
+reasoning about it. (Counts at the time were "45 passed, 4 skipped" / "63
+passed"; as of Phase 6 they are **"74 passed, 10 skipped"** / **"123 passed"**
+— re-verified in a clean venv 2026-07-07.) Two ways to get the GUI tests running
+too: `pip install -e ".[gui]"` or `pip install -e ".[dev]"` (adds pytest-qt).
 
 Phases 1–2 complete and validated: **45 passing pytest tests, ~2,500 LOC**,
 runnable via `python -m gems_t4` (or the `gems_t4` script after `pip install -e .`;
