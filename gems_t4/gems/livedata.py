@@ -8,10 +8,13 @@ The two emulator-only fields ``state_key`` and ``nominal`` let the virtual ECU
 build its baseline state and answer reads from a single source of truth; they do
 not affect the wire encoding.
 
-This is a representative ~24-parameter subset of the ~35 GEMS live measures in
+This is a representative ~37-parameter set drawn from the GEMS live measures in
 ``memory/research/gems-data-catalog.md`` (coolant/fuel/air temps, RPM, MAF,
-throttle, O2, fuel trims, IACV steps, road speed, loop status, misfire count,
-immobiliser state, ...). More can be appended without touching other modules.
+throttle, O2, fuel trims, IACV steps, road speed, loop status, misfire counts —
+total AND per-cylinder across the V8's eight pots, the T4's headline misfire
+display — injector pulse width, coil charge time, purge duty, fuel pump state,
+engine run time, immobiliser state, ...). More can be appended without touching
+other modules.
 """
 from __future__ import annotations
 
@@ -94,8 +97,26 @@ _DEFS: tuple[ParamDef, ...] = (
     ParamDef(0x14, "A/C request", "", 1, 1.0, 0.0, False, "ac_request", 0),
     ParamDef(0x15, "Ignition switch", "", 1, 1.0, 0.0, False, "ignition_switch", 1),
     ParamDef(0x16, "Gearbox torque retard", "%", 1, 1.0, 0.0, False, "gearbox_retard", 17),
+    ParamDef(0x17, "Injector pulse width", "ms", 2, 0.01, 0.0, False, "injector_pw", 2.5),
+    ParamDef(0x18, "Coil charge time", "ms", 2, 0.01, 0.0, False, "coil_charge", 3.0),
     ParamDef(0x19, "Security learn state", "", 1, 1.0, 0.0, False, "security_learn", 1),
     ParamDef(0x1A, "Immobiliser mobilised", "", 1, 1.0, 0.0, False, "mobilised", 1),
+    ParamDef(0x1B, "Purge valve duty", "%", 1, 0.5, 0.0, False, "purge_duty", 0),
+    ParamDef(0x1C, "Fuel pump state", "", 1, 1.0, 0.0, False, "fuel_pump", 1),
+    # Fed from the virtual ECU's sim clock while the engine runs; a 2-byte
+    # counter saturates at ~18h12m, which the encode() clamp handles for free.
+    ParamDef(0x1D, "Engine run time", "s", 2, 1.0, 0.0, False, "run_time", 0),
+    # Per-cylinder misfire counters, cylinders 1-8 (firing order aside, the
+    # display is numeric-order — this is the T4 party piece a generic OBD-II
+    # scanner never shows). One byte each; a real counter saturates too.
+    ParamDef(0x20, "Misfire count cyl 1", "", 1, 1.0, 0.0, False, "misfire_cyl1", 0),
+    ParamDef(0x21, "Misfire count cyl 2", "", 1, 1.0, 0.0, False, "misfire_cyl2", 0),
+    ParamDef(0x22, "Misfire count cyl 3", "", 1, 1.0, 0.0, False, "misfire_cyl3", 0),
+    ParamDef(0x23, "Misfire count cyl 4", "", 1, 1.0, 0.0, False, "misfire_cyl4", 0),
+    ParamDef(0x24, "Misfire count cyl 5", "", 1, 1.0, 0.0, False, "misfire_cyl5", 0),
+    ParamDef(0x25, "Misfire count cyl 6", "", 1, 1.0, 0.0, False, "misfire_cyl6", 0),
+    ParamDef(0x26, "Misfire count cyl 7", "", 1, 1.0, 0.0, False, "misfire_cyl7", 0),
+    ParamDef(0x27, "Misfire count cyl 8", "", 1, 1.0, 0.0, False, "misfire_cyl8", 0),
 )
 
 #: All live-data parameters, keyed by local id.

@@ -81,9 +81,16 @@ class ActuatorsScreen(Screen):
 
     # -- running ------------------------------------------------------------ #
     def _run(self, actuator_id: int, state: int) -> None:
-        """Command an actuator test and display its outcome distinctly."""
-        outcome: ActuatorOutcome = self.backend.run_actuator(actuator_id, state)
-        self._show_outcome(outcome)
+        """Command an actuator test and display its outcome distinctly.
+
+        Runs behind the "Communicating with ECU" wait — commanding a drive over
+        the K-line took visible time on the real tool, and so does the refusal.
+        """
+        self.run_with_wait(
+            "Running actuator test",
+            lambda: self.backend.run_actuator(actuator_id, state),
+            self._show_outcome,
+        )
 
     def _show_outcome(self, outcome: ActuatorOutcome) -> None:
         """Render an outcome: green for success, red for a refusal."""

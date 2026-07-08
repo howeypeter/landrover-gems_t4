@@ -161,14 +161,18 @@ or <code>--port /dev/ttyACM0</code> (Linux) to talk to a real Pico adapter inste
 <h2 id="gui">Graphical interface</h2>
 <p>A PySide6 kiosk GUI reproduces the Win98 dealer-tool look over the same engine: a
 boot splash, VIN-first vehicle identification (where you pick the fault scenario), a
-system menu, and screens for fault codes, live data (with the authentic gauge-count →
-refresh-rate trade-off), actuator tests (refusals and all), toolbox self-tests, and a
-Programming sub-menu (gated coding editor, immobiliser Security-Learn re-sync, and the
-read-only fuel/ignition map viewer).</p>
+system menu, and screens for fault codes, live data (37 measures on painted analog
+gauges, with the authentic gauge-count → refresh-rate trade-off), actuator tests
+(refusals and all), toolbox self-tests, and a Programming sub-menu (gated coding editor,
+immobiliser Security-Learn re-sync, and the read-only fuel/ignition map viewer).
+Operations show the period-authentic "Communicating with ECU - please wait" progress
+overlay — click it to skip the wait, or launch with <code>--instant</code> to disable
+the waits entirely.</p>
 <p>It needs the <code>gui</code> extra (PySide6). Install and launch:</p>
 <pre><code>pip install -e ".[gui]"
 python -m gems_t4 gui                         # or: python -m gems_t4.app.gui
-python -m gems_t4 gui --scenario coolant_sensor</code></pre>
+python -m gems_t4 gui --scenario coolant_sensor
+python -m gems_t4 gui --instant               # no simulated ECU-communication waits</code></pre>
 <p class="note">The CLI and the GUI are thin presentations over the same
 <code>Backend</code>/<code>gems_core</code> — no diagnostic logic is duplicated between them.</p>
 
@@ -268,9 +272,9 @@ or the in-memory <code>VirtualTransport</code>, so the whole stack is testable o
 <h2 id="dev">Development</h2>
 <p>Run the test suite (no hardware needed):</p>
 <pre><code>pytest</code></pre>
-<p>Expected: <strong>99 passed</strong> if you installed the <code>gui</code> extra
-(<code>pip install -e ".[gui]"</code>), or <strong>65 passed, 8 skipped</strong> without it
-— the 7 GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
+<p>Expected: <strong>123 passed</strong> if you installed the <code>gui</code> extra
+(<code>pip install -e ".[gui]"</code>), or <strong>74 passed, 10 skipped</strong> without it
+— the 10 GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
 it's absent, since <code>requirements.txt</code> deliberately doesn't include it (see
 "Graphical interface" above).</p>
 <p>If you extend the code, keep to <code>INTERFACES.md</code> — it pins the wire format, the
@@ -292,11 +296,21 @@ client.start_session()
 print([d.code for d in dtc.read_dtcs(client)])     # ['P0118']
 print(livedata.read_all(client)[0].formatted())     # coolant temperature</code></pre>
 
+<h2 id="build">Windows build</h2>
+<p>PyInstaller packaging (see <code>packaging/README.md</code>) produces a single
+<code>dist/gems_t4/</code> folder containing two executables: <code>gems_t4.exe</code>
+(console — the CLI) and <code>gems_t4_gui.exe</code> (windowed, no console — the kiosk
+experience). Build with the <code>[build]</code> extra:
+<code>pip install -e ".[build]"</code>.</p>
+
 <h2 id="status">Status</h2>
-<p>Phases 1–2 complete: the virtual ECU, full protocol stack, CLI, Pico
-firmware/transport, and a 45-test suite. Next up: the PySide6 Win98 kiosk GUI over the same
-core, and on-car validation of the Pico adapter. See the “Tech stack” and “Build status”
-sections of <code>CLAUDE.md</code> for the roadmap.</p>
+<p>Phases 1–6 complete: the virtual ECU, full protocol stack, CLI, Pico
+firmware/transport, the PySide6 Win98 kiosk GUI (full period skin, painted gauges, the
+"Communicating with ECU" latency model), gated programming/coding/immobiliser/maps, 37
+live-data parameters including per-cylinder misfire counts, and the two-exe Windows
+build — backed by a 123-test suite including an end-to-end GUI tour. Remaining: on-car
+validation of the Pico adapter (needs real hardware). See the “Tech stack” and “Build
+status” sections of <code>CLAUDE.md</code> for the roadmap.</p>
 
 <footer>
   gems_t4 · Lucas/SAGEM GEMS V8 (P38 Range Rover / Discovery 1) · diagnostic + emulated

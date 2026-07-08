@@ -90,8 +90,22 @@ class VehicleIdScreen(Screen):
         return {"back", "tick"}
 
     def on_tick(self) -> None:
-        """Commit the chosen scenario, then advance to the system menu."""
+        """Commit the chosen scenario, then advance to the system menu.
+
+        The scenario change (re)connects the diagnostic session, so it runs
+        behind the "Communicating with ECU" wait — the authentic pause before
+        the tool trusts its vehicle configuration.
+        """
         chosen = self._scenario.currentText()
-        self.backend.set_scenario(chosen)
+
+        def work() -> str:
+            self.backend.set_scenario(chosen)
+            self.backend.connect()  # idempotent; opens the session if closed
+            return chosen
+
+        self.run_with_wait("Configuring vehicle systems", work, self._on_configured)
+
+    def _on_configured(self, chosen: str) -> None:
+        """The session is (re)configured — announce it and move on."""
         self.status.emit(f"Vehicle configured · scenario: {chosen}")
         self.navigate.emit("system_menu")

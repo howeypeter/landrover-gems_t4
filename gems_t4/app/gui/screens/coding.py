@@ -13,6 +13,12 @@ The confirmation is a two-step *inline* one (arm on first press, commit on the
 second) — modelled on ``fault_codes.py``'s clear — rather than a blocking modal,
 which keeps the kiosk flow and the headless tests simple. Read-only fields are
 visibly non-editable and the Write action refuses them with a reason.
+
+The block read (populate) and the backup+write commit run behind the
+"Communicating with ECU" wait (``run_with_wait``) — a coding write is several
+K-line exchanges (read, backup-verify, write, verify) and the pause before the
+verified result is authentic. In instant mode this degrades to the old
+synchronous behaviour.
 """
 from __future__ import annotations
 
@@ -111,17 +117,33 @@ class CodingScreen(Screen):
         self._readout.setText("")
         self._populate()
 
-    def _populate(self) -> None:
-        """Fill the table from ``coding_fields()`` + ``read_coding_text``."""
+    def _populate(self, reselect: str | None = None) -> None:
+        """Read the whole coding block behind the wait, then fill the table.
+
+        ``reselect`` names a field key to re-select once the table is rebuilt
+        (used after a write, when the refresh would otherwise drop selection).
+        """
         fields = list(self._fields.values())
-        self._table.setRowCount(len(fields))
-        for row, f in enumerate(fields):
-            try:
-                value = self.backend.read_coding_text(f.key)
-            except Exception as exc:  # pragma: no cover - defensive
-                value = f"<error: {exc}>"
-            self._set_row(row, f, value)
-        self.status.emit(f"{len(fields)} coding field(s)")
+
+        def work() -> list[tuple[CodingField, str]]:
+            rows: list[tuple[CodingField, str]] = []
+            for f in fields:
+                try:
+                    value = self.backend.read_coding_text(f.key)
+                except Exception as exc:  # pragma: no cover - defensive
+                    value = f"<error: {exc}>"
+                rows.append((f, value))
+            return rows
+
+        def done(rows: list[tuple[CodingField, str]]) -> None:
+            self._table.setRowCount(len(rows))
+            for row, (f, value) in enumerate(rows):
+                self._set_row(row, f, value)
+            self.status.emit(f"{len(rows)} coding field(s)")
+            if reselect is not None:
+                self._reselect(reselect)
+
+        self.run_with_wait("Reading coding block", work, done)
 
     def _set_row(self, row: int, f: CodingField, value: str) -> None:
         key_item = QTableWidgetItem(f.name)
@@ -210,24 +232,29 @@ class CodingScreen(Screen):
             self._show_failure(f"Bad value: {exc}")
             return
 
-        try:
+        # backup + gated write are several K-line exchanges — behind the wait.
+        def work():
             backup = self.backend.backup_coding(key)
-            result = self.backend.write_coding(
+            return self.backend.write_coding(
                 key, value, backup=backup, confirm=lambda: True
             )
-        except ProgrammingRefused as exc:
-            self._show_failure(f"Refused: {exc}")
-            return
-        except ValueError as exc:  # pragma: no cover - encode already caught
-            self._show_failure(f"Bad value: {exc}")
-            return
 
-        if result.ok:
-            self._show_success(f"{f.name}: {result.message}")
-            self._populate()
-            self._reselect(key)
-        else:
-            self._show_failure(f"{f.name}: {result.message}")
+        def done(result) -> None:
+            if result.ok:
+                self._show_success(f"{f.name}: {result.message}")
+                self._populate(reselect=key)
+            else:
+                self._show_failure(f"{f.name}: {result.message}")
+
+        def fail(exc: Exception) -> None:
+            if isinstance(exc, ProgrammingRefused):
+                self._show_failure(f"Refused: {exc}")
+            elif isinstance(exc, ValueError):  # pragma: no cover - encode caught
+                self._show_failure(f"Bad value: {exc}")
+            else:  # pragma: no cover - defensive
+                self._show_failure(f"Error: {exc}")
+
+        self.run_with_wait(f"Writing {f.name}", work, done, fail)
 
     def _reselect(self, key: str) -> None:
         """Re-select the row for ``key`` after a table refresh."""

@@ -89,6 +89,12 @@ class VirtualEcu:
                 self.state["coolant_temp"] = min(88.0, ct + 4.0 * dt)
             base = float(self._coerce(self.state.get("idle_target", 750)))
             self.state["rpm"] = base + 15.0 * math.sin(self._clock)
+            # Engine run time simply tracks the sim clock while running ($61
+            # id 0x1D); it holds its last value when the engine stops.
+            self.state["run_time"] = self._clock
+        # The fuel pump runs whenever the engine does (relay held in by the
+        # ECU); mirrored so the $61 fuel-pump-state read stays coherent.
+        self.state["fuel_pump"] = 1 if self.state.get("engine_running") else 0
         # Fault overrides always win over the nominal simulation.
         self._scenario.perturb(self.state)
 

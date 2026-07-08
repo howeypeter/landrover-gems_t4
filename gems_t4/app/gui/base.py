@@ -8,8 +8,16 @@ so the Back button returns to the previous screen. The three global nav buttons
 (tick/cross/back) delegate to the *current* screen's ``on_tick``/``on_cross``/
 ``on_back`` handlers, and each screen declares which buttons it wants via
 ``nav_buttons()``.
+
+"The waiting": one-shot ECU operations run through ``run_with_wait`` (on both
+``Screen`` and ``KioskWindow``), which shows the "Communicating with ECU"
+overlay, runs the work on a background thread, and enforces the authentic
+minimum display time — see :mod:`gems_t4.app.gui.wait` and CLAUDE.md design
+pillar 5.
 """
 from __future__ import annotations
+
+from typing import Callable, TypeVar
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -25,6 +33,9 @@ from PySide6.QtWidgets import (
 
 from gems_t4.app.backend import Backend
 from gems_t4.app.gui.style import SCREEN_H, SCREEN_W, WIN98_QSS
+from gems_t4.app.gui.wait import WaitController, run_inline
+
+T = TypeVar("T")
 
 
 class Screen(QWidget):
@@ -75,6 +86,32 @@ class Screen(QWidget):
         """Handle Back. Return True if handled; False to let the window pop history."""
         return False
 
+    # -- "the waiting" ------------------------------------------------------- #
+    def run_with_wait(
+        self,
+        label: str,
+        fn: Callable[[], T],
+        on_done: Callable[[T], None],
+        on_error: Callable[[Exception], None] | None = None,
+    ) -> None:
+        """Run a backend operation behind the ECU-communication overlay.
+
+        Delegates to the hosting :class:`KioskWindow` when there is one (the
+        overlay + background worker + minimum wait). Standalone — a bare screen
+        in a headless test — it falls back to running inline, so screens behave
+        identically with or without the kiosk shell. Default error handling
+        reports the exception on the status bar.
+        """
+        if on_error is None:
+            on_error = lambda exc: self.status.emit(  # noqa: E731
+                f"ECU communication error: {exc}"
+            )
+        win = self.window()
+        if isinstance(win, KioskWindow):
+            win.run_with_wait(label, fn, on_done, on_error)
+        else:
+            run_inline(fn, on_done, on_error)
+
 
 class KioskWindow(QMainWindow):
     """Full-screen-feel 800x600 appliance window hosting the screens."""
@@ -104,7 +141,15 @@ class KioskWindow(QMainWindow):
         self._status = QLabel("", objectName="StatusBar")
         root.addWidget(self._status)
 
-        root.addWidget(self._build_button_bar())
+        self._bar = self._build_button_bar()
+        root.addWidget(self._bar)
+
+        # "The waiting" — overlay + background worker over the content area.
+        self._wait = WaitController(
+            area=self._stack,
+            set_busy=self._set_wait_busy,
+            default_error=self._show_wait_error,
+        )
 
     # -- button bar --------------------------------------------------------- #
     def _build_button_bar(self) -> QFrame:
@@ -127,6 +172,33 @@ class KioskWindow(QMainWindow):
         lay.addWidget(self._btn_tick)
 
         return bar
+
+    # -- "the waiting" ------------------------------------------------------- #
+    def run_with_wait(
+        self,
+        label: str,
+        fn: Callable[[], T],
+        on_done: Callable[[T], None],
+        on_error: Callable[[Exception], None] | None = None,
+    ) -> None:
+        """Run ``fn`` behind the "Communicating with ECU" overlay.
+
+        Shows the overlay over the content area, disables the nav button bar,
+        runs ``fn`` on a background thread, and enforces the authentic minimum
+        display time before calling ``on_done(result)`` (or ``on_error(exc)``)
+        back on the GUI thread. A click on the overlay skips the remaining
+        minimum wait. In instant mode (``GEMS_T4_INSTANT`` set, or min-wait 0)
+        the whole thing runs synchronously inline instead.
+        """
+        self._wait.run(label, fn, on_done, on_error)
+
+    def _set_wait_busy(self, busy: bool) -> None:
+        """Disable/enable the tick/cross/back bar while a wait is in flight."""
+        self._bar.setEnabled(not busy)
+
+    def _show_wait_error(self, exc: Exception) -> None:
+        """Default error route: report the failure on the status bar."""
+        self._status.setText(f"ECU communication error: {exc}")
 
     # -- registration / navigation ----------------------------------------- #
     def register(self, name: str, screen: Screen) -> None:

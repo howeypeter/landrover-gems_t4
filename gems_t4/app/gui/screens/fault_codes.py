@@ -4,6 +4,11 @@ This is the reference screen for how a screen talks to the backend: ``on_enter``
 reads via ``backend.read_dtcs()`` and fills a table; the tick re-reads; the cross
 clears (with a two-step inline confirmation — no blocking modal dialog, which
 keeps the kiosk flow and the headless tests simple).
+
+Reads and clears go through ``run_with_wait`` — the "Communicating with ECU"
+overlay — because pulling codes over the half-duplex K-line took visible time
+on the real tool (CLAUDE.md design pillar 5). In instant mode this degrades to
+the old synchronous behaviour.
 """
 from __future__ import annotations
 
@@ -18,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from gems_t4.app.backend import Backend
 from gems_t4.app.gui.base import Screen
+from gems_t4.gems.types import Dtc
 
 
 class FaultCodesScreen(Screen):
@@ -55,8 +61,12 @@ class FaultCodesScreen(Screen):
         self._read()
 
     def _read(self) -> None:
+        """Read the stored codes behind the ECU-communication wait."""
         self._pending_clear = False
-        dtcs = self.backend.read_dtcs()
+        self.run_with_wait("Reading fault codes", self.backend.read_dtcs, self._show)
+
+    def _show(self, dtcs: list[Dtc]) -> None:
+        """Fill the table from a freshly read DTC list (GUI thread)."""
         self._table.setRowCount(len(dtcs))
         for row, d in enumerate(dtcs):
             self._table.setItem(row, 0, QTableWidgetItem(d.code))
@@ -75,9 +85,13 @@ class FaultCodesScreen(Screen):
             self.status.emit("Clear all stored codes? Press ✗ again to confirm.")
             self._hint.setText("⚠ Press ✗ again to confirm clear")
             return
-        self.backend.clear_dtcs()
-        self.status.emit("Fault codes cleared.")
-        self._read()
+        self._pending_clear = False
+
+        def work() -> list[Dtc]:
+            self.backend.clear_dtcs()
+            return self.backend.read_dtcs()  # re-read to confirm the clear
+
+        self.run_with_wait("Clearing fault codes", work, self._show)
 
     # -- nav buttons -------------------------------------------------------- #
     def nav_buttons(self) -> set[str]:

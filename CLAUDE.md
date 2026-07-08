@@ -426,27 +426,44 @@ were dropped. See `memory/tech-stack-decision.md`.)
    `immo status|learn`) and GUI (programming sub-menu → coding / immobiliser /
    maps screens). Td5/MEMS3 real-reflash profile still optional/not started.
 6. Polish → full Win98 T4 skin; PyInstaller Windows build.
-   ◑ IN PROGRESS (2026-07-07): **Real gauge widgets** — `app/gui/widgets.py`
+   ✅ DONE (2026-07-07): **Real gauge widgets** — `app/gui/widgets.py`
    (QPainter `DialGauge`/`BarGauge`/`LcdReadout`) + `app/gui/gauge_specs.py`
-   (per-param scale/redline/style); the live-data screen now renders a grid of
+   (per-param scale/redline/style); the live-data screen renders a grid of
    analog gauges (was a table), keeping the gauge-count → refresh-rate trade-off.
-   **PyInstaller build** — `packaging/gems_t4.spec` (one-dir console exe, PySide6
-   bundled); validated: `dist/gems_t4/gems_t4.exe --version`/`scenarios` run.
-   `build` extra added (`pip install -e ".[build]"`). Still to do: the "the
-   waiting" latency overlay, a background worker thread (needed only for slow real
-   hardware), full Win98 skin refinement, a windowed GUI-only exe variant, more
-   $61 params (24/~35).
+   **"The waiting"** — `app/gui/wait.py`: "Communicating with ECU - please wait"
+   overlay + `KioskWindow.run_with_wait` running backend ops on a background
+   worker thread with an enforced minimum wait (click to skip); wired into
+   vehicle-id, fault-codes, actuators, immobiliser, coding. `GEMS_T4_INSTANT=1`
+   env var / `gui --instant` flag = synchronous instant mode (tests set it in
+   `tests/conftest.py`). **Full Win98 skin** — style.py rebuilt on per-side bevel
+   fragments (white top-left / dark bottom-right), chunky 16px scrollbars, combo
+   drop-downs, tooltip (#ffffe1), checkbox/radio, dotted focus, segmented
+   marching-blocks QProgressBar; arrow/check glyphs are tiny PNGs rasterised at
+   import (pure-QSS border-triangles render as black rectangles — known Qt
+   gotcha); gauges got bevel rings/sunken tracks to match. Verified against
+   real screenshots (native platform; offscreen has no fonts). **$61 params
+   24 → 37** — injector PW, coil charge, purge duty, fuel pump, run time (fed
+   from sim clock), per-cylinder misfire counts 0x20–0x27 (misfire_cyl3 puts
+   the count on cyl 3 only; 1-byte counters saturate at 255). **Windowed exe**
+   — `packaging/_entry_gui.py` + second EXE in `gems_t4.spec`: one
+   `dist/gems_t4/` bundle now holds console `gems_t4.exe` AND no-console
+   `gems_t4_gui.exe`. **E2E QA** — `tests/test_gui_e2e.py` (6 tests through the
+   production `build_window` wiring: full nav tour, misfire diagnostic session,
+   gauge sweep + bandwidth monotonicity, refusal propagation, overlay
+   lifecycle, all-screen paint smoke). Built by a 5-agent fan-out (two stalled
+   mid-stream and were resumed — same failure mode as Phase 1-2).
 
 ### Build status
 
-**Where the project stands (2026-07-07):** Phases **1, 2, 4, 5 complete;
-Phase 6 in progress** (gauge widgets + PyInstaller build done — see phase list);
+**Where the project stands (2026-07-07):** Phases **1, 2, 4, 5, 6 complete**;
 Phase 3 (Pico adapter) built + unit-tested but needs real hardware for on-car
-validation. **99 passing tests** (or "65 passed, 8 skipped" without the PySide6
-`[gui]` extra — 8 GUI test files). Runs via
-`python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI via
-`gems_t4 gui` (needs `[gui]`). Python 3.14 venv at `.venv/`. ~68 Python files,
-11 GUI screens.
+validation. **123 passing tests** (or "74 passed, 10 skipped" without the
+PySide6 `[gui]` extra — 10 GUI test files; both counts verified empirically).
+Runs via `python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI
+via `gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14
+venv at `.venv/`. ~70 Python files, 11 GUI screens, 37 live-data params.
+Remaining polish candidates (not started, optional): windowed-exe icon/version
+resources, more guided fault trees, Td5/MEMS3 real-reflash profile.
 
 **Phase 5 (2026-07-07):** programming/coding/immobiliser/maps — `gems/
 immobiliser.py` (Security-Learn), `gems/maps.py` (chip-swap lookalike), `gems/

@@ -11,10 +11,12 @@ The screen:
   in an LCD-style readout — green for MOBILISED, red for ENGINE IMMOBILISED.
 * "Simulate ENGINE IMMOBILISED" forces the failure mode so a technician can demo
   it, then refreshes the status.
-* "Run Security-Learn" runs ``backend.security_learn(on_progress=...)``,
-  streaming each step live into the log area, then shows the
-  :class:`~gems_t4.gems.immobiliser.SecurityLearnResult` and refreshes the
-  status (which should become MOBILISED on success).
+* "Run Security-Learn" runs ``backend.security_learn()`` behind the
+  "Communicating with ECU" wait (a genuine multi-exchange K-line write — the
+  one operation that *should* take time), then replays the step log from the
+  returned :class:`~gems_t4.gems.immobiliser.SecurityLearnResult` (``.steps``
+  carries every progress line, so nothing touches widgets from the worker
+  thread) and refreshes the status (which should become MOBILISED on success).
 """
 from __future__ import annotations
 
@@ -104,24 +106,29 @@ class ImmobiliserScreen(Screen):
         self._refresh_status()
 
     def _run_security_learn(self) -> None:
-        """Run Security-Learn, streaming each step live into the log."""
+        """Run Security-Learn behind the wait, then replay its step log."""
         self._log.clear()
         self._readout.setStyleSheet(f"color: {LCD_AMBER}; font-weight: bold;")
         self._readout.setText("SECURITY-LEARN IN PROGRESS…")
         self.status.emit("Running Security-Learn…")
 
-        result: SecurityLearnResult = self.backend.security_learn(
-            on_progress=self._on_step
+        # The whole learn runs on the worker; ``result.steps`` already carries
+        # every progress line, so the log is filled afterwards on the GUI
+        # thread — no widget access from the worker.
+        self.run_with_wait(
+            "Security-Learn - re-syncing BeCM/ECM",
+            self.backend.security_learn,
+            self._on_learned,
         )
 
+    def _on_learned(self, result: SecurityLearnResult) -> None:
+        """Replay the learn's step log, show the outcome, refresh the status."""
+        for line in result.steps:
+            self._log.addItem(line)
         prefix = "OK" if result.ok else "FAILED"
         self._log.addItem(f"{prefix}: {result.message}")
         # Refresh the status — should read MOBILISED on success.
         self._refresh_status()
-
-    def _on_step(self, message: str) -> None:
-        """Progress callback: append one Security-Learn step to the log."""
-        self._log.addItem(message)
 
     # -- nav buttons -------------------------------------------------------- #
     def nav_buttons(self) -> set[str]:
