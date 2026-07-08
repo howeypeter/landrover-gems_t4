@@ -465,6 +465,19 @@ venv at `.venv/`. ~70 Python files, 11 GUI screens, 37 live-data params.
 Remaining polish candidates (not started, optional): windowed-exe icon/version
 resources, more guided fault trees, Td5/MEMS3 real-reflash profile.
 
+**Quick start & known limitations (2026-07-07):**
+- **Launcher scripts:** `launch_gui.bat` (quick launch) and `create_shortcut.ps1`
+  (create desktop shortcut on Windows) are in the project root for convenience.
+- **PyInstaller bytecode cache gotcha:** If the bundled exe (`dist/gems_t4/gems_t4_gui.exe`)
+  doesn't reflect the latest source changes, run from the venv instead:
+  `python -m gems_t4 gui`. This is a known Qt/PyInstaller interaction where
+  bytecode caches persist even after `--clean` rebuilds. To force a fresh exe,
+  manually delete `packaging/build/` and `dist/` before rebuilding.
+- **GUI waits:** By default, `gui` shows the period-authentic "Communicating with
+  ECU - please wait" overlay (click it to skip). Use `gui --instant` to disable
+  waits entirely, or set env var `GEMS_T4_INSTANT=1` (used by all tests for
+  determinism).
+
 **Phase 5 (2026-07-07):** programming/coding/immobiliser/maps — `gems/
 immobiliser.py` (Security-Learn), `gems/maps.py` (chip-swap lookalike), `gems/
 programming.py` codecs, virtual-ECU `$31` + `immobilised` flag, backend methods,
