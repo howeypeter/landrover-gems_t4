@@ -1,17 +1,18 @@
 # Packaging — PyInstaller Windows build (Phase 6)
 
-Builds a standalone Windows executable of `gems_t4` so it runs on a machine
-with no Python installed. The default build is a **console** app: every CLI
-subcommand works from the exe (`scenarios`, `live`, `dtc`, `actuator`,
-`coding`, `immo`, and `gui`). The `gui` subcommand launches the PySide6
-window, so PySide6/Qt is bundled.
+Builds standalone Windows executables of `gems_t4` so it runs on a machine
+with no Python installed. One build produces **two exes side by side in a
+single one-dir bundle**, sharing one copy of the PySide6/Qt payload:
 
-Two variants are described here:
+1. **Console CLI** — `gems_t4.exe`. Every CLI subcommand works from the exe
+   (`scenarios`, `live`, `dtc`, `actuator`, `coding`, `immo`, and `gui`).
+   This is the dev/hacking tool; `gems_t4.exe gui` still opens the GUI window
+   (with a console behind it).
+2. **Windowed GUI kiosk** — `gems_t4_gui.exe` (`console=False`). Boots straight
+   into the PySide6 T4 GUI with **no console window** — the kiosk experience.
+   Double-click it, or pass `--scenario` to boot into a specific fault.
 
-1. **Console CLI** (built and validated) — `packaging/gems_t4.spec`. One folder,
-   `gems_t4.exe` opens a console; `gems_t4.exe gui` still opens the GUI window.
-2. **Windowed GUI kiosk** (documented, not built) — a `console=False` variant
-   that boots straight into the GUI with no console window.
+Both are built by the one spec, `packaging/gems_t4.spec`, into `dist/gems_t4/`.
 
 ## Prerequisites
 
@@ -28,7 +29,7 @@ Or, equivalently, install the packaging extra added to `pyproject.toml`:
 .venv\Scripts\python.exe -m pip install -e ".[gui,build]"
 ```
 
-## Build (console CLI)
+## Build
 
 Run from the **repo root** (not from `packaging/`):
 
@@ -36,11 +37,17 @@ Run from the **repo root** (not from `packaging/`):
 .venv\Scripts\python.exe -m PyInstaller packaging/gems_t4.spec --distpath dist --workpath build/pyi --noconfirm
 ```
 
-- **Output**: `dist/gems_t4/` (a one-dir bundle; `dist/` is gitignored).
-- **Entry point**: `packaging/_entry.py` → `gems_t4.app.cli:main`.
+- **Output**: `dist/gems_t4/` (a one-dir bundle; `dist/` is gitignored)
+  containing BOTH `gems_t4.exe` and `gems_t4_gui.exe`.
+- **Entry points**: `packaging/_entry.py` -> `gems_t4.app.cli:main` (console);
+  `packaging/_entry_gui.py` -> `gems_t4.app.gui.app:run` (windowed).
 - **Mode**: one-dir (`COLLECT`). One-dir is deliberate — it is far more reliable
   for the large PySide6/Qt payload than one-file, which unpacks Qt to a temp
   directory on every launch (slow start, occasional AV false-positives).
+- **Spec shape**: the two entry scripts each get their own `Analysis` (built by
+  a shared `make_analysis()` helper so options cannot drift), two `EXE`s
+  (`console=True` / `console=False`), and ONE `COLLECT` — so the two exes share
+  a single `_internal/` payload instead of shipping Qt twice.
 
 The spec collects PySide6 wholesale via `collect_all("PySide6")` plus a few
 defensive `hiddenimports` for the `gems_t4.app` packages, and excludes test-only
@@ -48,18 +55,27 @@ packages (`pytest`, `pytest_qt`, `tkinter`).
 
 ## Run
 
+Console CLI:
+
 ```
 dist\gems_t4\gems_t4.exe --version      # -> gems_t4 0.1.0
 dist\gems_t4\gems_t4.exe scenarios      # lists the 4 fault scenarios
 dist\gems_t4\gems_t4.exe live --scenario coolant_sensor
 dist\gems_t4\gems_t4.exe dtc read --scenario misfire_cyl3
-dist\gems_t4\gems_t4.exe gui            # opens the PySide6 window
+dist\gems_t4\gems_t4.exe gui            # opens the PySide6 window (console behind)
 ```
 
-Ship the **entire `dist/gems_t4/` folder** — `gems_t4.exe` depends on the DLLs
-and `_internal/` payload beside it. To distribute, zip the folder.
+Windowed GUI kiosk (no console window — double-click or run from a shortcut):
 
-### Validated output (console build)
+```
+dist\gems_t4\gems_t4_gui.exe
+dist\gems_t4\gems_t4_gui.exe --scenario coolant_sensor
+```
+
+Ship the **entire `dist/gems_t4/` folder** — both exes depend on the DLLs
+and `_internal/` payload beside them. To distribute, zip the folder.
+
+### Validated output
 
 ```
 > dist\gems_t4\gems_t4.exe --version
@@ -73,45 +89,16 @@ Available fault scenarios:
   - lambda_heater
 ```
 
-## Windowed GUI-only kiosk variant (not built — documentation only)
-
-For a kiosk build that boots straight into the GUI with **no console window**,
-create a second spec (e.g. `packaging/gems_t4_gui.spec`) that is identical to
-`gems_t4.spec` except:
-
-- **Entry script**: a shim that calls the GUI directly instead of the CLI:
-
-  ```python
-  # packaging/_entry_gui.py
-  import sys
-  from gems_t4.app.gui.app import run
-  if __name__ == "__main__":
-      sys.exit(run())
-  ```
-
-- **`EXE(... console=False ...)`** — no console window; unhandled tracebacks go
-  to a dialog rather than stdout.
-- **`name="gems_t4_gui"`** on both `EXE(...)` and `COLLECT(...)` so it lands in
-  `dist/gems_t4_gui/` and does not collide with the console build.
-- (Optional) add an `icon="...ico"` argument to `EXE(...)` for a branded kiosk
-  icon.
-
-Build it the same way:
-
-```
-.venv\Scripts\python.exe -m PyInstaller packaging/gems_t4_gui.spec --distpath dist --workpath build/pyi --noconfirm
-```
-
-Output: `dist/gems_t4_gui/gems_t4_gui.exe` — double-clicking opens the T4 GUI
-directly. `gems_t4.app.gui.app:run(scenario="healthy")` is the entry; pass a
-different scenario by editing the shim if the kiosk should boot a specific fault.
+`gems_t4_gui.exe` validated headless (`QT_QPA_PLATFORM=offscreen`): launches,
+stays alive with clean stderr (with and without `--scenario coolant_sensor`),
+and shows no console window (`console=False`).
 
 ## Notes / gotchas
 
 - **`.gitignore` ignores `*.spec`.** The repo's `.gitignore` has a broad
   `*.spec` rule (intended for PyInstaller *build output*), which also matches
-  the hand-written `packaging/gems_t4.spec` and `packaging/gems_t4_gui.spec`.
-  These specs are source, not build output — force-add them so they are tracked:
+  the hand-written `packaging/gems_t4.spec`. The spec is source, not build
+  output — force-add it so it is tracked:
 
   ```
   git add -f packaging/gems_t4.spec
@@ -120,6 +107,14 @@ different scenario by editing the shim if the kiosk should boot a specific fault
   (Alternatively, add a negation to `.gitignore`: `!packaging/*.spec`.)
 - **Build from the repo root**, so `pathex`/`SPECPATH` resolve `gems_t4` on the
   import path. Building from inside `packaging/` will fail to find the package.
+- **Windowed mode swallows tracebacks.** With `console=False` there is no
+  stdout/stderr; an unhandled exception at startup shows a small error dialog
+  (or nothing). If `gems_t4_gui.exe` dies silently, debug via the console
+  build first: `gems_t4.exe gui` exercises the same GUI code with visible
+  tracebacks.
+- **No extra Qt plugin work was needed for windowed mode** — both exes share
+  the same `collect_all("PySide6")` payload (platform plugins included), so
+  windowed vs console only changes the bootloader subsystem flag.
 - **Clean rebuild**: delete `build/pyi/gems_t4` and `dist/gems_t4` (or just pass
   `--noconfirm`, which overwrites in place).
 - **One-file** is possible (`--onefile` / an `EXE` with `exclude_binaries=False`

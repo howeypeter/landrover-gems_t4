@@ -17,6 +17,7 @@ Examples::
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from gems_t4 import __version__
@@ -85,6 +86,10 @@ def _cmd_dtc(args: argparse.Namespace) -> int:
 
 
 def _cmd_gui(args: argparse.Namespace) -> int:
+    if getattr(args, "instant", False):
+        # Disable "the waiting" (the ECU-communication overlay's minimum
+        # display time) for impatient users - see gems_t4/app/gui/wait.py.
+        os.environ["GEMS_T4_INSTANT"] = "1"
     try:
         from gems_t4.app.gui.app import run
     except ImportError:
@@ -227,6 +232,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("gui", help="launch the PySide6 Win98 kiosk GUI")
     sp.add_argument("--scenario", default="healthy",
                     choices=sorted(SCENARIOS), help="initial fault scenario")
+    sp.add_argument("--instant", action="store_true",
+                    help="skip the 'Communicating with ECU' waits "
+                         "(sets GEMS_T4_INSTANT=1)")
     sp.set_defaults(func=_cmd_gui)
 
     return parser

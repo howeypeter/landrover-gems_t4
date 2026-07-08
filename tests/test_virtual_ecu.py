@@ -69,3 +69,43 @@ def test_tick_warms_coolant_over_time():
     for _ in range(50):
         ecu.tick(0.1)
     assert float(ecu.state["coolant_temp"]) > 20.0
+
+
+def test_all_live_ids_answer_with_nominals():
+    # Every $61 parameter must answer positively; a fresh healthy ECU should
+    # decode straight back to its own nominal (within one LSB of the scale).
+    ecu = VirtualEcu()
+    for local_id, p in livedata.PARAMETERS.items():
+        resp = ecu.handle(Request(0x21, bytes([local_id])))
+        assert not resp.is_negative, f"id 0x{local_id:02X} refused"
+        assert resp.data[0] == local_id
+        m = livedata.decode_measure(local_id, resp.data[1:])
+        if isinstance(p.nominal, (int, float)):
+            assert abs(float(m.value) - float(p.nominal)) <= p.scale + 1e-9
+
+
+def test_run_time_tracks_sim_clock():
+    ecu = VirtualEcu()
+    for _ in range(20):
+        ecu.tick(0.5)  # 10 s of sim time
+    resp = ecu.handle(Request(0x21, b"\x1d"))
+    assert not resp.is_negative
+    assert livedata.decode_measure(0x1D, resp.data[1:]).value == 10
+
+
+def test_misfire_scenario_counts_climb_on_cylinder_3_only():
+    ecu = VirtualEcu(get_scenario("misfire_cyl3"))
+    ecu.tick(0.1)
+    ecu.tick(0.1)
+
+    def read(lid: int) -> float:
+        resp = ecu.handle(Request(0x21, bytes([lid])))
+        assert not resp.is_negative
+        return float(livedata.decode_measure(lid, resp.data[1:]).value)
+
+    cyl3 = read(0x22)
+    assert cyl3 > 0
+    # one-byte counter saturates at 255; the running total keeps climbing
+    assert cyl3 == min(255, float(ecu.state["misfire_total"]))
+    for lid in (0x20, 0x21, 0x23, 0x24, 0x25, 0x26, 0x27):
+        assert read(lid) == 0

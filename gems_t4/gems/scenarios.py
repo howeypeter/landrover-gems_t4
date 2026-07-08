@@ -135,6 +135,9 @@ class CoolantSensorScenario(_BaseScenario):
         state["coolant_temp"] = self.FAILSAFE_COOLANT_C
         # A cold-reading ECT makes the ECU over-fuel: idle hunts a little high.
         state["rpm"] = max(state.get("rpm", 0.0), 900.0) if state.get("engine_running") else state.get("rpm", 0.0)
+        # ...and the same cold-start enrichment stretches the injector pulse
+        # width well past the ~2.5 ms warm-idle figure ($61 id 0x17).
+        state["injector_pw"] = 3.8
 
     def blocks_actuator(self, actuator_id: int) -> bool:
         return False
@@ -159,11 +162,15 @@ class MisfireCyl3Scenario(_BaseScenario):
         ]
 
     def perturb(self, state: dict) -> None:
-        # Per-cylinder misfire counter (1-indexed cylinders).
+        # Every misfire lands on cylinder 3, so the climbing total IS the
+        # cylinder-3 count: the per-cylinder $61 counter (id 0x22) tracks
+        # ``misfire_total`` exactly while cylinders 1,2,4..8 stay at zero.
+        state["misfire_total"] = state.get("misfire_total", 0) + 25
+        state["misfire_cyl3"] = state["misfire_total"]
+        # Keep the legacy internal counts list coherent with the same story.
         counts = state.setdefault("misfire_counts", [0] * 8)
         if isinstance(counts, list) and len(counts) >= 3:
-            counts[2] = max(counts[2], 25)  # cylinder 3
-        state["misfire_total"] = state.get("misfire_total", 0) + 25
+            counts[2] = state["misfire_total"]  # cylinder 3 (1-indexed)
         # A dead-ish cylinder drops and roughens idle.
         if state.get("engine_running"):
             state["rpm"] = min(state.get("rpm", 750.0), 680.0)

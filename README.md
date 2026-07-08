@@ -55,12 +55,12 @@ python -m gems_t4 gui                               # the Win98 kiosk GUI (needs
 | Area | What |
 |---|---|
 | **Fault codes** | Read / clear GEMS DTCs (P0118, P0303, P1185, …) |
-| **Live data** | ~24 `$61` measures with the authentic gauge-count → refresh-rate trade-off |
+| **Live data** | 37 `$61` measures (incl. per-cylinder misfire counts) on analog gauges, with the authentic gauge-count → refresh-rate trade-off |
 | **Actuator tests** | MIL, O2 heater, fuel pump, etc. — with the "engine running" refusals |
 | **Coding** | Gated read/edit/write (backup + verify + confirm) of VIN, dealer id, 4.0/4.6, … |
 | **Security-Learn** | The one genuine GEMS K-line write — recover "ENGINE IMMOBILISED" |
 | **Maps** | Read-only 16×16 fuel/ignition viewer (chip-swap lookalike; no K-line reflash) |
-| **GUI** | PySide6 Win98 kiosk over the same engine as the CLI |
+| **GUI** | PySide6 Win98 kiosk over the same engine as the CLI — authentic "Communicating with ECU" waits included (skip with `gui --instant`) |
 
 Four fault scenarios (`healthy`, `coolant_sensor`, `misfire_cyl3`, `lambda_heater`)
 produce coherent symptoms across every screen.
@@ -83,7 +83,7 @@ or the in-memory `VirtualTransport`, so the whole stack is testable off-car.
 ## Development
 
 ```bash
-pytest        # 99 passed with the [gui] extra; 65 passed + 8 skipped without PySide6
+pytest        # 123 passed with the [gui] extra; 74 passed + 10 skipped without PySide6
 ```
 
 Build contracts: [`INTERFACES.md`](INTERFACES.md) (core) and
@@ -97,9 +97,16 @@ A Raspberry Pi **Pico or Pico 2** + an ISO 9141 Click (L9637D) transceiver over 
 flashing. The Pico owns the K-line timing; the PC talks to it over a simple USB
 protocol.
 
+## Windows build (optional)
+
+PyInstaller packaging in [`packaging/`](packaging/README.md) produces one
+`dist/gems_t4/` folder with two exes: `gems_t4.exe` (console — the CLI) and
+`gems_t4_gui.exe` (windowed, no console — the kiosk). Build with the `[build]`
+extra installed: `pip install -e ".[build]"`, then follow `packaging/README.md`.
+
 ## Status
 
-Phases 1–5 complete (virtual ECU, full protocol stack, CLI, PySide6 GUI, gated
-programming/coding/immobiliser/maps). Pending: on-car validation of the Pico
-adapter, and Phase-6 polish (real gauge widgets, PyInstaller build). See the "Tech
+Phases 1–6 complete (virtual ECU, full protocol stack, CLI, PySide6 GUI, gated
+programming/coding/immobiliser/maps, Win98 skin + gauges + latency model +
+Windows exes). Pending: on-car validation of the Pico adapter. See the "Tech
 stack" / "Build status" sections of [`CLAUDE.md`](CLAUDE.md) for the roadmap.

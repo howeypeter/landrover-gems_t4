@@ -42,6 +42,21 @@ _ACCENT = QColor("#1f6b4c")
 _LCD_BG = QColor("#20241f")
 _LCD_AMBER = QColor("#ffb300")
 _BAR_FILL = QColor("#1f6b4c")
+# Win98 bevel shades (match style.py) so the gauges sit on the silver kiosk.
+_BEVEL_LIGHT = QColor("#ffffff")
+_BEVEL_SHADOW = QColor("#808080")
+_BEVEL_DARK = QColor("#404040")
+
+
+def _draw_sunken_rect(p: QPainter, rect: QRectF) -> None:
+    """1px Win98 sunken bevel around ``rect`` (dark top-left, light bottom-right)."""
+    p.setBrush(Qt.NoBrush)
+    p.setPen(QPen(_BEVEL_SHADOW, 1))
+    p.drawLine(rect.topLeft(), rect.topRight())
+    p.drawLine(rect.topLeft(), rect.bottomLeft())
+    p.setPen(QPen(_BEVEL_LIGHT, 1))
+    p.drawLine(rect.bottomLeft(), rect.bottomRight())
+    p.drawLine(rect.topRight(), rect.bottomRight())
 
 
 class _GaugeBase(QWidget):
@@ -94,6 +109,14 @@ class DialGauge(_GaugeBase):
         cx, cy = w / 2.0, (h - 12) / 2.0 + 4
         r = side / 2.0 - 6
         face = QRectF(cx - r, cy - r, 2 * r, 2 * r)
+
+        # subtle Win98 bevel ring around the face (light top-left = raised)
+        ring = face.adjusted(-3, -3, 3, 3)
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(_BEVEL_LIGHT, 2))
+        p.drawArc(ring, 45 * 16, 180 * 16)       # top-left highlight
+        p.setPen(QPen(_BEVEL_SHADOW, 2))
+        p.drawArc(ring, 225 * 16, 180 * 16)      # bottom-right shadow
 
         # face
         p.setPen(QPen(_MUTED, 1))
@@ -158,17 +181,19 @@ class BarGauge(_GaugeBase):
         p.setPen(_INK)
         p.drawText(QRectF(6, 2, w - 12, 14), Qt.AlignRight | Qt.AlignVCenter, text)
 
+        # sunken white track (square corners, Win98 field look)
         track = QRectF(6, h / 2.0, w - 12, h / 3.0)
-        p.setPen(QPen(_MUTED, 1))
-        p.setBrush(QColor("#ffffff"))
-        p.drawRoundedRect(track, 3, 3)
-
-        fill = QRectF(track)
-        fill.setWidth(track.width() * self._fraction())
-        over = self._spec.redline is not None and self._value >= self._spec.redline
         p.setPen(Qt.NoPen)
+        p.setBrush(QColor("#ffffff"))
+        p.drawRect(track)
+
+        fill = QRectF(track).adjusted(1, 1, 0, -1)
+        fill.setWidth(max(0.0, (track.width() - 2) * self._fraction()))
+        over = self._spec.redline is not None and self._value >= self._spec.redline
         p.setBrush(_RED if over else _BAR_FILL)
-        p.drawRoundedRect(fill, 3, 3)
+        p.drawRect(fill)
+
+        _draw_sunken_rect(p, track)
         p.end()
 
 
@@ -189,10 +214,12 @@ class LcdReadout(_GaugeBase):
         p.setFont(f)
         p.drawText(QRectF(4, 2, w - 8, 14), Qt.AlignCenter, self._spec.label)
 
+        # dark LCD panel with the same sunken inset as the QLabel#Lcd readouts
         panel = QRectF(6, 18, w - 12, h - 24)
-        p.setPen(QPen(QColor("#404040"), 1))
+        p.setPen(Qt.NoPen)
         p.setBrush(_LCD_BG)
-        p.drawRoundedRect(panel, 3, 3)
+        p.drawRect(panel)
+        _draw_sunken_rect(p, panel)
 
         p.setPen(_LCD_AMBER)
         vf = QFont("Consolas"); vf.setPointSize(13); vf.setBold(True)

@@ -5,26 +5,48 @@ metadata:
   type: project
 ---
 
-**Phases 1–5 complete; Phase 6 in progress. 99 passing tests** (65 + 8 skipped
-without the PySide6 `[gui]` extra). Phase 3 real-hardware on-car validation still
-pending HW.
+**Phases 1–6 COMPLETE. 123 passing tests** (74 + 10 skipped without the PySide6
+`[gui]` extra; both counts verified empirically). Phase 3 real-hardware on-car
+validation still pending HW.
 
-## Phase 6 progress (2026-07-07)
-- **Gauge widgets DONE:** `app/gui/widgets.py` — QPainter `DialGauge` (270° arc,
-  needle, redline), `BarGauge`, `LcdReadout`; `build_gauge(spec)` dispatches by
-  style. `app/gui/gauge_specs.py` — per-param scale/redline/decimals/style
-  (`GAUGE_SPECS` keyed by live-data local id; `spec_for` synthesises a dial for
-  unlisted ids). Gauges are FIXED-size (184×150 dial / 184×66 bar+lcd) so the grid
-  lays out; live_data screen rebuilds a `QGridLayout` (4 cols, top-left aligned)
-  and pushes values each timer tick. Visually verified via `w.grab()` PNGs.
-- **PyInstaller build DONE:** `packaging/gems_t4.spec` (one-dir console exe,
-  `collect_all("PySide6")`), `packaging/_entry.py` shim, `packaging/README.md`.
-  Built exe validated (`--version`, `scenarios`). `build` extra in pyproject.
-  Build to `dist/gems_t4/` (gitignored). `.gitignore` has `!packaging/*.spec` so
-  the hand-written spec is trackable despite the `*.spec` rule.
-- **Still to do (Phase 6):** "the waiting" latency overlay, background worker
-  thread (only needed for slow real HW), full Win98 skin refinement, windowed
-  GUI-only exe variant, more $61 params (24/~35).
+## Phase 6 COMPLETE (2026-07-07) — built by a 5-agent fan-out
+- **Gauge widgets:** `app/gui/widgets.py` — QPainter `DialGauge` (270° arc,
+  needle, redline, bevel ring), `BarGauge` (sunken track), `LcdReadout`;
+  `build_gauge(spec)` dispatches by style. `app/gui/gauge_specs.py` — per-param
+  scale/redline/decimals/style; `spec_for` synthesises a dial for unlisted ids.
+  Gauges FIXED-size (184×150 dial / 184×66 bar+lcd); live_data screen rebuilds a
+  `QGridLayout` (4 cols) and pushes values each timer tick.
+- **"The waiting":** `app/gui/wait.py` — "Communicating with ECU - please wait"
+  overlay + `KioskWindow.run_with_wait(label, fn, on_done, on_error)`: runs
+  backend ops on a background thread, enforces a minimum display time, click
+  skips the remaining wait, nav bar disabled in flight. `GEMS_T4_INSTANT=1` (or
+  `gui --instant`) = synchronous instant mode; tests/conftest.py sets it so all
+  GUI tests are deterministic. Wired into vehicle_id, fault_codes, actuators,
+  immobiliser, coding (NOT live_data — its QTimer IS the bandwidth model; NOT
+  boot — own timed sequence).
+- **Win98 skin:** style.py rebuilt on per-side bevel fragments (white
+  top-left/dark bottom-right), 16px beveled scrollbars, combo drop-downs,
+  #ffffe1 tooltip, checkbox/radio, dotted focus, segmented marching-blocks
+  progress bar. GOTCHA: pure-QSS border-triangle arrows render as black
+  rectangles in Qt — style.py rasterises tiny glyph PNGs via QImage at import
+  (pre-QApplication-safe) and references them with url(). Screenshot iteration
+  must use the native `windows` platform (offscreen has no fonts → tofu).
+- **$61 params 24 → 37:** injector PW (0x17), coil charge (0x18), purge duty
+  (0x1B), fuel pump (0x1C), run time (0x1D, fed from sim clock in tick()),
+  per-cylinder misfires 0x20–0x27 (1-byte, saturate at 255). misfire_cyl3 puts
+  the whole count on cyl 3 (`misfire_cyl3 = misfire_total`), others 0.
+  coolant_sensor adds injector_pw=3.8 (cold-reading enrichment).
+- **Two-exe PyInstaller bundle:** `packaging/gems_t4.spec` builds console
+  `gems_t4.exe` (entry `_entry.py`) AND windowed `gems_t4_gui.exe` (entry
+  `_entry_gui.py`, console=False) into ONE `dist/gems_t4/` COLLECT. Validated:
+  console exe --version/scenarios; GUI exe stays alive offscreen.
+- **E2E QA:** `tests/test_gui_e2e.py` — 6 tests through the production
+  `build_window` wiring (nav tour incl. back-stack unwind, misfire diagnostic
+  session read→clear→re-read, gauge sweep + interval monotonicity, refusal
+  propagation to status bar, wait-overlay lifecycle, all-screen paint smoke).
+  All derive counts dynamically from PARAMETERS/registry — sibling-safe.
+- **Fan-out lesson (again):** 4 parallel agents → 2 stalled mid-stream (API),
+  resumed via SendMessage with updated baselines and finished clean.
 
 ## What exists
 - Python package `gems_t4` at the repo root. Deps via `requirements.txt` (or
@@ -73,19 +95,16 @@ pending HW.
   `.ino` both implement it; unit-tested via a fake serial loopback.
 
 ## How to validate
-`.venv/Scripts/python.exe -m pytest`  (expect `93 passed` with the `[gui]`/`[dev]`
-extra; `~75 passed, N skipped` on a plain requirements.txt install without PySide6).
+`.venv/Scripts/python.exe -m pytest`  (expect `123 passed` with the `[gui]`/`[dev]`
+extra; `74 passed, 10 skipped` on a plain requirements.txt install without PySide6).
 
 ## Not yet built (next steps)
 - **Phase 3 real hardware:** on-car / bench validation of the Pico path (needs
   the hardware); FTDI transport is still a documented stub.
-- **Phase 6 polish:** real gauge widgets (live-data + maps are table-based), the
-  "the waiting" latency overlay, a background worker thread for slow real hardware
-  (GUI is single-threaded / QTimer-polled — fine for the instant virtual ECU),
-  full Win98 skin refinement, PyInstaller Windows build.
 - Optional Td5/MEMS3 profile for a *real* documented over-the-wire reflash demo
   (the one flashable Rover engine ECU — contrast to GEMS's chip-swap).
-- More of the ~35 live params (24 implemented).
+- Optional polish: exe icon/version resources, guided fault trees, Pico 2 W
+  wireless read-only mode (parked — see CLAUDE.md, do not start unprompted).
 
 Related: [[tech-stack-decision]], [[research-synthesis]],
 [[research-python-architecture]], [[workflow-directives]].

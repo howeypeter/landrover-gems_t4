@@ -57,8 +57,23 @@ _SPECS: tuple[GaugeSpec, ...] = (
     GaugeSpec(0x14, "A/C request", "", 0, 1, decimals=0, style=STYLE_LCD),
     GaugeSpec(0x15, "Ignition sw", "", 0, 1, decimals=0, style=STYLE_LCD),
     GaugeSpec(0x16, "Gbx retard", "%", 0, 100, decimals=0, style=STYLE_BAR),
+    GaugeSpec(0x17, "Inj pulse", "ms", 0, 20, redline=15, decimals=2),
+    GaugeSpec(0x18, "Coil charge", "ms", 0, 10, redline=8, decimals=2),
     GaugeSpec(0x19, "Security learn", "", 0, 1, decimals=0, style=STYLE_LCD),
     GaugeSpec(0x1A, "Mobilised", "", 0, 1, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x1B, "Purge duty", "%", 0, 100, decimals=0, style=STYLE_BAR),
+    GaugeSpec(0x1C, "Fuel pump", "", 0, 1, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x1D, "Run time", "s", 0, 65535, decimals=0, style=STYLE_LCD),
+    # Per-cylinder misfire counters (V8, cylinders 1-8): small amber readouts
+    # with a redline so a climbing counter reads at a glance on the grid.
+    GaugeSpec(0x20, "Misfire cyl 1", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x21, "Misfire cyl 2", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x22, "Misfire cyl 3", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x23, "Misfire cyl 4", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x24, "Misfire cyl 5", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x25, "Misfire cyl 6", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x26, "Misfire cyl 7", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
+    GaugeSpec(0x27, "Misfire cyl 8", "", 0, 255, redline=20, decimals=0, style=STYLE_LCD),
 )
 
 GAUGE_SPECS: dict[int, GaugeSpec] = {s.local_id: s for s in _SPECS}
