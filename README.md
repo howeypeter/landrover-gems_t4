@@ -75,6 +75,7 @@ gems_t4/
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
 firmware/      Pico sketch + USB-CDC host-protocol spec + wiring guide
 tests/         pytest suite (runs headless, no hardware)
+tests_regression/  independent regression suite written from the frozen contracts (v0.0.4)
 ```
 
 The load-bearing seam is `KwpClient(transport)`: it takes a real serial transport
@@ -83,7 +84,8 @@ or the in-memory `VirtualTransport`, so the whole stack is testable off-car.
 ## Development
 
 ```bash
-pytest        # 123 passed with the [gui] extra; 74 passed + 10 skipped without PySide6
+pytest                    # 123 passed with the [gui] extra; 74 passed + 10 skipped without PySide6
+pytest tests_regression   # 233 passed — the independent v0.0.4 regression suite (run explicitly)
 ```
 
 Build contracts: [`INTERFACES.md`](INTERFACES.md) (core) and

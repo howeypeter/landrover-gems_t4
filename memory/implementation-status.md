@@ -9,6 +9,18 @@ metadata:
 `[gui]` extra; both counts verified empirically). Phase 3 real-hardware on-car
 validation still pending HW.
 
+## v0.0.4 (2026-07-07) — bugfix/quality release
+- Package version aligned to the tag: 0.1.0 → **0.0.4** everywhere.
+- **`tests_regression/` added: 233 independent tests** (4-agent fan-out from
+  the frozen contracts, forbidden from reading `tests/`); run explicitly via
+  `pytest tests_regression` (outside pyproject `testpaths`).
+- Bugs fixed: CLI `coding write` auto-confirmed → now interactive `[y/N]`
+  prompt (EOF ⇒ refuse; `--yes`/`-y` for scripts; strips PowerShell-pipe BOM);
+  HOST_PROTOCOL.md example KWP checksums were stale placeholders (now C0/00);
+  stale "~24-parameter" comment in live_data.py.
+- `git rm`'d `diagrams/p38-gems-network.svg` (user-reported incorrect).
+- Deferred hardware-path observations recorded in RELEASE_NOTES.md.
+
 ## Phase 6 COMPLETE (2026-07-07) — built by a 5-agent fan-out
 - **Gauge widgets:** `app/gui/widgets.py` — QPainter `DialGauge` (270° arc,
   needle, redline, bevel ring), `BarGauge` (sunken track), `LcdReadout`;

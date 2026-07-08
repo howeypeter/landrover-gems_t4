@@ -37,22 +37,25 @@ Pico -> Host:  0x5A  <status>  <len>  <payload[len]>  <crc8>
 
 ## Worked example — SEND_RECV a TesterPresent
 
-Host sends KWP frame `80 10 F1 01 3E 60` (TesterPresent):
+Host sends KWP frame `80 10 F1 01 3E C0` (TesterPresent — the trailing `C0`
+is the KWP checksum: the 8-bit sum of all preceding bytes,
+`80+10+F1+01+3E = 0x1C0` → `C0`):
 
 ```
-A5 03 06 80 10 F1 01 3E 60 <crc8>
+A5 03 06 80 10 F1 01 3E C0 <crc8>
    |  |  \__________________/
    |  |   payload (the KWP frame, 6 bytes)
    |  len = 6
    cmd = SEND_RECV
-crc8 = 03 ^ 06 ^ 80 ^ 10 ^ F1 ^ 01 ^ 3E ^ 60
+crc8 = 03 ^ 06 ^ 80 ^ 10 ^ F1 ^ 01 ^ 3E ^ C0
 ```
 
 Pico puts those bytes on the K-line (cancelling the half-duplex echo), collects
 the ECU's reply framed by the P1 inter-byte timeout, and returns e.g.:
 
 ```
-5A 00 06 80 F1 10 01 7E 60 <crc8>   (status OK, the 6-byte KWP response frame)
+5A 00 06 80 F1 10 01 7E 00 <crc8>   (status OK, the 6-byte KWP response frame;
+                                     80+F1+10+01+7E = 0x200 → KWP checksum 00)
 ```
 
 ## Notes

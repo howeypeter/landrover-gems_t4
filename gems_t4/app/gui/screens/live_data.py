@@ -30,7 +30,7 @@ from gems_t4.app.gui.gauge_specs import spec_for
 from gems_t4.app.gui.widgets import build_gauge
 from gems_t4.gems.livedata import PARAMETERS
 
-#: Selectable gauge counts: a focused few vs. the whole ~24-parameter sweep.
+#: Selectable gauge counts: a focused few vs. the whole 37-parameter sweep.
 _COUNT_CHOICES: tuple[tuple[str, int], ...] = (
     ("1 gauge", 1),
     ("4 gauges", 4),

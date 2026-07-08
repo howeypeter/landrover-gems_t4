@@ -5,20 +5,23 @@ metadata:
   type: project
 ---
 
-**As of 2026-07-07.** Repo hygiene set up; **nothing meaningful is committed yet.**
+**As of 2026-07-07 (v0.0.4).** Everything is committed and the repo lives on
+GitHub (`howeypeter/landrover-gems_t4`).
 
 ## Git state
-- It IS a git repo. Current branch: **`v0.0.1`**. Branches: `main`, `v0.0.1`
-  (current), `remotes/origin/main`. Remote `origin` exists (only `main` pushed).
-- **Only ONE file is tracked/committed: `README.md`** (originally a GitHub
-  auto-generated stub). Everything else — all 68 Python files, both READMEs,
-  CLAUDE.md, INTERFACES.md, GUI_INTERFACES.md, firmware, memory, etc. — is
-  **untracked** (`??`). It's all safe on disk but not in git history.
-- ⚠️ **Next session: the work is not durably saved in git.** A stray
-  `git checkout`/`reset --hard`/`clean` could wipe untracked files. Recommend a
-  first real commit: `git add -A && git commit -m "..."` on `v0.0.1`.
-- Branch switches so far did NOT lose anything (untracked files travel across
-  switches). Verified via full test run (93 passed) after the switch.
+- Work proceeds on **version branches `v0.0.x`** (currently `v0.0.4`, the
+  bugfix/quality branch) with `main` as the merge destination. Branches
+  `v0.0.1`–`v0.0.4` exist; `v0.0.1`–`v0.0.3` are pushed to `origin`.
+- The Python **package version tracks the release tag** as of v0.0.4
+  (`pyproject.toml` / `gems_t4/__init__.py` / `--version` all say 0.0.4 —
+  before that they said 0.1.0, a mismatch found by the v0.0.3 regression
+  sweep). Keep them in lockstep when cutting a version.
+- **Release-notes convention:** `RELEASE_NOTES.md` = the CURRENT release;
+  `RELEASE_NOTES_v0.0.x.md` = archive. When cutting a new version, `git mv`
+  the old `RELEASE_NOTES.md` to its versioned name first.
+- v0.0.4 removed `diagrams/p38-gems-network.svg` (`git rm`; user-reported
+  incorrect) and added `tests_regression/` — a 233-test independent suite
+  outside pyproject `testpaths` (run `pytest tests_regression` explicitly).
 
 ## .gitignore (added/expanded this session)
 Ignores: `.venv/`, `__pycache__/`, `*.py[cod]`, `*.egg-info/`, build/dist,

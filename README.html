@@ -215,6 +215,8 @@ verify + confirm). Writable identity fields (VIN last-6, dealer id, 4.0/4.6 sele
 transmission, build code) vs read-only factory fields (market, part number).</p>
 <pre><code>python -m gems_t4 coding read
 python -m gems_t4 coding write --field vin_last6 --value 654321   # ASCII for vin/part, else hex</code></pre>
+<p class="note">Writes ask for confirmation (<code>Write VIN (last 6): '123456' -&gt; '654321'? [y/N]</code>)
+before touching the ECU; pass <code>--yes</code>/<code>-y</code> to skip the prompt in scripts.</p>
 
 <h3><code>immo {status|learn}</code> — immobiliser Security-Learn</h3>
 <p>The one genuine GEMS over-the-wire write: re-sync the BeCM↔ECM mobilisation
@@ -263,6 +265,7 @@ python -m gems_t4 live --port /dev/ttyACM0    # Linux</code></pre>
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
 firmware/      Pico sketch + the USB-CDC host-protocol spec + wiring guide
 tests/         pytest suite (runs with no hardware)
+tests_regression/  independent regression suite from the frozen contracts (v0.0.4)
 requirements.txt  runtime + test dependencies
 INTERFACES.md  the frozen build contract (wire format, service map, module APIs)</code></pre>
 <p>The load-bearing seam is <code>KwpClient(transport)</code>: it takes a real serial transport
@@ -270,12 +273,16 @@ or the in-memory <code>VirtualTransport</code>, so the whole stack is testable o
 
 <h2 id="dev">Development</h2>
 <p>Run the test suite (no hardware needed):</p>
-<pre><code>pytest</code></pre>
+<pre><code>pytest                    # the original suite
+pytest tests_regression   # the independent v0.0.4 regression suite (run explicitly)</code></pre>
 <p>Expected: <strong>123 passed</strong> if you installed the <code>gui</code> extra
 (<code>pip install -e ".[gui]"</code>), or <strong>74 passed, 10 skipped</strong> without it
 — the 10 GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
 it's absent, since <code>requirements.txt</code> deliberately doesn't include it (see
-"Graphical interface" above).</p>
+"Graphical interface" above). <code>tests_regression/</code> (new in v0.0.4) is a
+<strong>233-test independent suite</strong> written from the frozen contracts —
+deliberately not derived from <code>tests/</code> — and lives outside the default
+<code>testpaths</code>, so run it explicitly.</p>
 <p>If you extend the code, keep to <code>INTERFACES.md</code> — it pins the wire format, the
 service/SID map, and every module's public API so the layers stay compatible. Guidelines:
 Python 3.11+, full type hints, docstrings, and <strong>no I/O or <code>sleep</code> in

@@ -135,8 +135,25 @@ def _cmd_coding(args: argparse.Namespace) -> int:
             try:
                 value = programming.encode_field(args.field, args.value)
                 backup = programming.backup(client, args.field)
+
+                def _confirm() -> bool:
+                    if args.yes:
+                        return True
+                    field = programming.CODING_FIELDS[args.field]
+                    old = programming.decode_field(args.field, backup.data)
+                    try:
+                        reply = input(
+                            f"Write {field.name}: '{old}' -> '{args.value}'? [y/N] "
+                        )
+                    except EOFError:
+                        return False
+                    # PowerShell pipes ("echo y | ...") prepend a UTF-8 BOM,
+                    # seen as U+FEFF (utf-8 stdin) or "\xef\xbb\xbf" (cp1252).
+                    reply = reply.lstrip("\ufeff\xef\xbb\xbf").strip().lower()
+                    return reply in ("y", "yes")
+
                 result = programming.write_coding(
-                    client, args.field, value, backup=backup, confirm=lambda: True
+                    client, args.field, value, backup=backup, confirm=_confirm
                 )
             except (KeyError, ValueError, programming.ProgrammingRefused) as exc:
                 render.console.print(f"[red]{exc}[/]")
@@ -220,6 +237,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("coding_action", choices=["read", "write"])
     sp.add_argument("--field", help="coding field key (e.g. vin_last6)")
     sp.add_argument("--value", help="new value (ASCII for vin/part, else hex)")
+    sp.add_argument("--yes", "-y", action="store_true",
+                    help="skip the interactive write confirmation prompt")
     sp.set_defaults(func=_cmd_coding)
 
     sp = sub.add_parser("immo", help="immobiliser status / Security-Learn re-sync")

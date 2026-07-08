@@ -123,7 +123,7 @@ dist\gems_t4\gems_t4.exe scenarios
 
 ## Next Steps
 
-**v0.0.3 completes Phase 6:** Full Win98 skin, latency overlays, 37 params, per-cylinder misfires, windowed GUI exe, and comprehensive E2E tests. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.0.3 details.
+**v0.0.3 completes Phase 6:** Full Win98 skin, latency overlays, 37 params, per-cylinder misfires, windowed GUI exe, and comprehensive E2E tests. See [RELEASE_NOTES_v0.0.3.md](RELEASE_NOTES_v0.0.3.md) for v0.0.3 details.
 
 ---
 

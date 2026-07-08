@@ -111,10 +111,9 @@ Per Andrew Revill's MEMS3 reverse-engineering (https://andrewrevill.co.uk/MEMS3T
 Representative vehicle: **P38 Range Rover 4.0/4.6 V8 with GEMS engine
 management (1995–1998)** — the user's own vehicle type. Detailed reference in
 `docs/land-rover-electronics.md`. Network diagram: use
-`diagrams/p38-gems-electronics.html` (built from the docs). ⚠️ The older
-`diagrams/p38-gems-network.svg` was reported **incorrect by the user
-(2026-07-06)** — do not use it as a reference; fix or delete it once the user
-says what is wrong.
+`diagrams/p38-gems-electronics.html` (built from the docs). The older
+`p38-gems-network.svg` was reported incorrect by the user (2026-07-06) and was
+**removed (`git rm`) on v0.0.4** — build any new diagrams from the docs.
 
 ### GEMS in one paragraph
 
@@ -296,11 +295,8 @@ as static lookalikes for now.
   no CAN bus. Discovery 2 retained as an era variation.
 - `diagrams/p38-gems-electronics.html` — the network diagram to use (built from
   `docs/land-rover-electronics.md`); linked from `README.md` via
-  htmlpreview.github.io.
-- `diagrams/p38-gems-network.svg` — older consolidated diagnostic + operating
-  network diagram. ⚠️ **Reported incorrect by the user (2026-07-06)** despite an
-  earlier "verified by three agents" claim — do not reference it; ask the user
-  what's wrong, then fix or delete it.
+  htmlpreview.github.io. (An older `p38-gems-network.svg` was reported incorrect
+  by the user and removed on v0.0.4 — it survives only in git history.)
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
@@ -478,10 +474,25 @@ fuel-pump refusal interlock (engine "running" at idle → REFUSED, by design),
 stale test counts fixed in `requirements.txt` + memory. The `dist/` exes were
 found **stale** (built 10:38, source changed ~17:49 — the documented
 PyInstaller gotcha, plus two running `gems_t4_gui.exe` instances locking the
-folder) and were rebuilt from clean `build/`+`dist/`. Note: the Python package
-version is **0.1.0** (`pyproject.toml`/`__init__.py`/`--version`) while git
-tags/release notes use **v0.0.x** — two schemes, flagged for the user to
-reconcile.
+folder) and were rebuilt from clean `build/`+`dist/`. (The 0.1.0-vs-v0.0.x
+version split found by this sweep was reconciled on v0.0.4 — package version
+now tracks the release tag.)
+
+**v0.0.4 (2026-07-07) — bugfix/quality release:** package version aligned to
+the tag (0.0.4); **`tests_regression/` added — a 233-test INDEPENDENT
+regression suite** written by a 4-agent fan-out from the frozen contracts
+(agents were forbidden from reading `tests/`), run explicitly via
+`pytest tests_regression` (outside pyproject `testpaths` on purpose). Bugs it
+found, fixed: CLI `coding write` auto-confirmed (`confirm=lambda: True`) —
+now an interactive `[y/N]` prompt (EOF ⇒ refuse; `--yes`/`-y` for scripts;
+strips the BOM PowerShell pipes prepend); HOST_PROTOCOL.md worked-example KWP
+checksums were stale placeholders (now `C0`/`00` with arithmetic); stale
+"~24-parameter" comment in live_data.py. `git rm`'d the user-reported-bad
+`diagrams/p38-gems-network.svg`. Audited-but-kept: `protocol/init.py`
+(INTERFACES-pinned constants, not yet imported) and `transport/ftdi.py`
+(deliberate stub). Deferred hardware-path observations (Pico set_timing gap,
+receive-after-close, case-sensitive mode strings, ECU-side $3B write
+acceptance) are recorded in RELEASE_NOTES.md.
 
 **Quick start & known limitations (2026-07-07):**
 - **Launcher scripts:** `launch_gui.bat` (quick launch) and `create_shortcut.ps1`
@@ -502,13 +513,16 @@ programming.py` codecs, virtual-ECU `$31` + `immobilised` flag, backend methods,
 CLI (`coding read|write`, `immo status|learn`), and 4 GUI screens via a 3-agent
 fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
 
-### Repository / git state (2026-07-07)
+### Repository / git state (updated 2026-07-07, v0.0.4)
 
-- Git repo, branch **`v0.0.1`** (also `main`, `origin/main`). **Only `README.md`
-  is committed** (a GitHub stub) — **everything else is untracked**, safe on disk
-  but NOT in git history. First real commit still pending (`git add -A && git
-  commit` on `v0.0.1`). Don't run destructive git (`reset --hard`/`clean`) before
-  committing — it could wipe untracked work.
+- Git repo on GitHub (`howeypeter/landrover-gems_t4`). Everything is committed;
+  work proceeds on **version branches `v0.0.x`** (currently `v0.0.4`, the
+  bugfix branch) with `main` as the merge destination. The Python package
+  version (`pyproject.toml` / `__version__` / `--version`) **tracks the release
+  tag** (0.0.4) as of v0.0.4 — keep them in lockstep when cutting a version.
+  Release notes: `RELEASE_NOTES.md` = the CURRENT release;
+  `RELEASE_NOTES_v0.0.x.md` = the archive (keep this convention: `git mv` the
+  old one when cutting a new version).
 - `.gitignore` (excludes `.venv`, caches, `__pycache__`, egg-info, OneDrive junk,
   firmware build output) and `.gitattributes` (`* text=auto eol=lf` — pins LF to
   silence Windows `core.autocrlf=true` CRLF churn) are in place.
