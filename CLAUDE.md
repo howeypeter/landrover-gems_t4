@@ -585,6 +585,18 @@ writes — the bridge won't stop it. Fine as long as `serve` stays on localhost 
 behind an SSH tunnel (the documented setup); worth server-side enforcement
 before any real over-the-network use.
 
+**Suggested triage (not yet actioned — user decides scope):**
+- *Quick fixes (small, low-risk, do anytime):* #11 em-dash → ASCII/UTF-8;
+  #10 add a confirm prompt to CLI `dtc clear`; #6 at minimum correct the doc to
+  "three gates" (or build the missing four); #8-partial add oil-temp / catalyst
+  / cooling-fan live params to nudge toward the 40–60 count.
+- *Real feature decisions (bigger; keep or drop from scope):* #1 service
+  adjustments, #2 VCSI connection-chain status, #3 EAS suspension screens,
+  #4 message-centre text, #5 injector-pulse test, #7 full-screen kiosk mode.
+- *Behaviour fix:* #9 gate the sim's rpm/engine_running on the immobilised flag.
+- *Security hardening (before any non-localhost `serve`):* enforce the write
+  policy server-side in the bridge, not just in the client.
+
 **TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
 GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork
 for both the Raspberry-Pi-at-the-car topology and the future WiFi Pico

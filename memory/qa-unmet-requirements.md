@@ -62,6 +62,17 @@ The "network is read-only" write gate is enforced only client-side (in
 could still send writes — wants server-side enforcement before real
 over-the-network use. See [[implementation-status]] (TCP transport).
 
+## Suggested triage (not yet actioned — user decides scope)
+- Quick fixes: #11 em-dash→ASCII/UTF-8; #10 add confirm to CLI `dtc clear`;
+  #6 at minimum correct the doc to "three gates" (or build the missing four);
+  #8 add oil-temp/catalyst/cooling-fan live params.
+- Real feature decisions (keep or drop): #1 service adjustments, #2 VCSI
+  connection-chain status, #3 EAS screens, #4 message-centre text, #5 injector
+  test, #7 full-screen kiosk.
+- Behaviour fix: #9 gate rpm/engine_running on the immobilised flag.
+- Security hardening (before any non-localhost `serve`): enforce the write
+  policy server-side in the bridge, not just client-side.
+
 ## Not defects (excluded from the above, per QA scope)
 The 5 future-research backlog items, guided fault-tree wizards, on-car hardware
 validation, windowed-exe icon/version resources, Td5/MEMS3 reflash demo. The
