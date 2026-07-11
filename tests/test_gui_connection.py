@@ -104,6 +104,65 @@ def test_apply_virtual_restores_local_ecu(qtbot, served_ecu):
     backend.disconnect()
 
 
+# --------------------------------------------------------------------------- #
+# "Test" action (cross button) — tests the ACTIVE connection, changes nothing
+# --------------------------------------------------------------------------- #
+
+def test_cross_is_labeled_test_and_present_in_nav():
+    screen = _make_screen(Backend())
+    assert "cross" in screen.nav_buttons()
+    assert screen.cross_label() == "Test"
+
+
+def test_on_cross_tests_the_active_virtual_connection(qtbot):
+    backend = Backend()
+    screen = _make_screen(backend)
+    qtbot.addWidget(screen)
+    screen.on_enter()
+
+    screen.on_cross()  # instant mode -> runs inline
+
+    assert "OK" in screen._test_result.text()
+    assert "Virtual ECU" in screen._test_result.text()
+    assert backend.connected  # test_connection() opened the session
+
+
+def test_on_cross_tests_active_network_connection_and_measures_latency(
+    qtbot, served_ecu
+):
+    host, port = served_ecu
+    backend = Backend()
+    backend.set_connection("network", host=host, tcp_port=port)
+    screen = _make_screen(backend)
+    qtbot.addWidget(screen)
+    screen.on_enter()
+
+    screen.on_cross()
+
+    text = screen._test_result.text()
+    assert "OK" in text
+    assert "replies" in text  # TcpTransport.ping() -> measured round trip
+    backend.disconnect()
+
+
+def test_on_cross_does_not_persist_or_change_the_form(qtbot, served_ecu, temp_config):
+    """Test is read-only: no config write, no reroute of an unrelated backend."""
+    host, port = served_ecu
+    backend = Backend()  # stays virtual; screen fields never touch it
+    screen = _make_screen(backend)
+    qtbot.addWidget(screen)
+    screen.on_enter()
+
+    screen._radio_network.setChecked(True)
+    screen._host.setText(host)
+    screen._tcp_port.setText(str(port))
+    screen.on_cross()  # tests the ACTIVE (virtual) connection, ignores the form
+
+    assert not backend.is_remote
+    assert not temp_config.exists()
+    backend.disconnect()
+
+
 def test_bad_endpoint_rolls_back_to_previous_connection(qtbot):
     """A failed connection test must NOT strand the backend on the dead
     endpoint — the previous (working) connection is restored."""

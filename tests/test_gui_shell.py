@@ -89,3 +89,46 @@ def test_nav_button_delegation_reaches_current_screen(window):
     # boot screen's tick navigates to vehicle_id
     window._delegate("on_tick")
     assert window.current_name() == "vehicle_id"
+
+
+# --------------------------------------------------------------------------- #
+# Persistent connection indicator — visible on every screen, one click to the
+# Configuration screen (so changing/testing the VCI link never requires
+# hunting through the System menu).
+# --------------------------------------------------------------------------- #
+
+def test_connection_indicator_shows_current_label(window):
+    assert window.backend.connection_label in window._btn_connection.text()
+
+
+def test_connection_indicator_present_on_every_screen(window):
+    """It lives in the persistent title-bar chrome, not per-screen content —
+    the same widget instance stays put and up to date across every
+    navigation, rather than being rebuilt or hidden per screen."""
+    indicator = window._btn_connection
+    for name in window._screens:
+        window.go(name)
+        assert window._btn_connection is indicator  # same persistent widget
+        assert "VCI:" in indicator.text()
+
+
+def test_clicking_connection_indicator_navigates_to_connection_screen(window):
+    window.go("fault_codes")
+    window._btn_connection.click()
+    assert window.current_name() == "connection"
+
+
+def test_connection_indicator_updates_after_reconnecting(window):
+    from gems_t4.app.gui.screens.connection import ConnectionScreen
+
+    window.go("connection")
+    screen = window._screens["connection"]
+    assert isinstance(screen, ConnectionScreen)
+    before = window._btn_connection.text()
+
+    window.backend.set_connection("usb", com_port="COM7")
+    screen._refresh_window_indicator()
+    after = window._btn_connection.text()
+
+    assert before != after
+    assert "COM7" in after

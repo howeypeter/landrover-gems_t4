@@ -32,6 +32,15 @@ class Screen(QWidget):
     def on_back(self) -> bool: ...         # return True if handled, else window pops history
 ```
 
+`KioskWindow` also owns a persistent "VCI: <connection_label>" button in the title
+bar, visible on every screen — click it to jump to the `connection` screen from
+anywhere (no need to route through the System menu). It refreshes automatically
+on every navigation (`KioskWindow._show`); a screen that changes the connection
+mid-visit (only `screens/connection.py` does) should call
+`self.window().update_connection_indicator()` (duck-typed — guard with
+`getattr`/`hasattr` since a bare `Screen` under test has no window) to refresh
+it immediately rather than waiting for the next nav.
+
 Rules:
 - Constructor signature MUST be `(self, backend, parent=None)` and call
   `super().__init__(backend, parent)`.
@@ -59,6 +68,14 @@ backend.apply_connection(kind, **same_kwargs) -> str
 #   set_connection + connect, atomically: rolls back to the previous
 #   transport if the new one fails to open. Returns connection_label.
 #   Used by screens/connection.py; settings persist via gems_t4.app.config.
+backend.test_connection(*, pings=3) -> ConnectionTestResult
+#   Tests the CURRENTLY ACTIVE connection (opens a session if not already
+#   open; does not build a second parallel connection). Where the transport
+#   exposes ping() (USB Pico / TCP), measures pings round-trips to the
+#   adapter/server and reports min/avg/max latency in ConnectionTestResult
+#   .latencies_ms. ConnectionTestResult(ok: bool, label: str, message: str,
+#   latencies_ms: tuple[float, ...] = ()). Used by screens/connection.py's
+#   Test action (cross button) and nothing else changes/persists.
 Backend.available_scenarios() -> list[str]          # staticmethod
 Backend.actuator_list() -> list[ActuatorDef]        # staticmethod
 backend.set_scenario(name: str) -> None             # reconnects if open

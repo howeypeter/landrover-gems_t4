@@ -12,6 +12,8 @@ screen code — the same seam the CLI already uses.
 """
 from __future__ import annotations
 
+import time
+from dataclasses import dataclass, field
 from typing import Callable
 
 from gems_t4.gems import actuators as _actuators
@@ -33,6 +35,21 @@ from gems_t4.transport.base import Transport
 from gems_t4.transport.pico import PicoAdapterTransport
 from gems_t4.transport.tcp import DEFAULT_PORT, TcpTransport
 from gems_t4.transport.virtual import VirtualTransport
+
+
+@dataclass(frozen=True, slots=True)
+class ConnectionTestResult:
+    """Outcome of :meth:`Backend.test_connection`.
+
+    ``latencies_ms`` is empty when the transport has no round-trip probe
+    (the virtual ECU, or a custom transport) — ``ok`` alone still tells you
+    whether the connection works.
+    """
+
+    ok: bool
+    label: str
+    message: str
+    latencies_ms: tuple[float, ...] = field(default_factory=tuple)
 
 
 class Backend:
@@ -208,6 +225,56 @@ class Backend:
         client.connect()
         client.start_session()
         self._client = client
+
+    def test_connection(self, *, pings: int = 3) -> ConnectionTestResult:
+        """Prove the *currently configured* connection works, and where
+        possible measure round-trip latency to the adapter/server.
+
+        Opens a session if one isn't already open — it does not create a
+        second, parallel connection (which would fail against a real serial
+        port already in use, or a ``serve`` bridge that only accepts one
+        client at a time). The round-trip probe is the host-protocol PING,
+        which reaches the USB Pico or ``gems_t4 serve`` endpoint — it proves
+        the *link* is fast; :meth:`connect` (called first) already proved the
+        ECU diagnostic session itself opens.
+        """
+        label = self._connection_label
+        if self._transport_factory is None:
+            try:
+                self.connect()
+            except Exception as exc:  # noqa: BLE001 - report, don't raise
+                return ConnectionTestResult(False, label, f"Error: {exc}")
+            return ConnectionTestResult(
+                True, label,
+                "Virtual ECU - always available (no simulated network hop).",
+            )
+        try:
+            self.connect()  # no-op if a session is already open
+        except Exception as exc:  # noqa: BLE001 - report, don't raise
+            return ConnectionTestResult(False, label, f"Connection failed: {exc}")
+
+        transport = getattr(self._client, "transport", None)
+        ping = getattr(transport, "ping", None)
+        if ping is None or pings <= 0:
+            return ConnectionTestResult(
+                True, label, "Connected (no round-trip probe on this transport)."
+            )
+        latencies: list[float] = []
+        try:
+            for _ in range(pings):
+                start = time.monotonic()
+                ping()
+                latencies.append((time.monotonic() - start) * 1000.0)
+        except Exception as exc:  # noqa: BLE001 - report, don't raise
+            return ConnectionTestResult(
+                False, label, f"Connected, but ping failed: {exc}", tuple(latencies)
+            )
+        avg = sum(latencies) / len(latencies)
+        message = (
+            f"{len(latencies)}/{pings} replies - min {min(latencies):.1f} ms, "
+            f"avg {avg:.1f} ms, max {max(latencies):.1f} ms"
+        )
+        return ConnectionTestResult(True, label, message, tuple(latencies))
 
     def disconnect(self) -> None:
         """Close the session (idempotent)."""

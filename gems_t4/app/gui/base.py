@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 from gems_t4.app.backend import Backend
-from gems_t4.app.gui.style import SCREEN_H, SCREEN_W, WIN98_QSS
+from gems_t4.app.gui.style import GREEN_OK, LCD_AMBER, SCREEN_H, SCREEN_W, WIN98_QSS
 from gems_t4.app.gui.wait import WaitController, run_inline
 
 T = TypeVar("T")
@@ -135,8 +135,25 @@ class KioskWindow(QMainWindow):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        self._title = QLabel("TestBook T4", objectName="TitleBar")
-        root.addWidget(self._title)
+        title_row = QFrame(objectName="TitleBar")
+        title_lay = QHBoxLayout(title_row)
+        title_lay.setContentsMargins(8, 0, 8, 0)
+        title_lay.setSpacing(8)
+
+        self._title = QLabel("TestBook T4")
+        title_lay.addWidget(self._title, 1)
+
+        #: Persistent connection status — visible on every screen, one click
+        #: to the Configuration screen (CLAUDE.md: change/test the VCI link
+        #: without hunting through the System menu).
+        self._btn_connection = QPushButton("", objectName="ConnectionStatus")
+        self._btn_connection.setToolTip(
+            "Current ECU connection - click to change or test it"
+        )
+        self._btn_connection.clicked.connect(lambda: self.go("connection"))
+        title_lay.addWidget(self._btn_connection)
+
+        root.addWidget(title_row)
 
         self._stack = QStackedWidget(objectName="Content")
         root.addWidget(self._stack, 1)
@@ -153,6 +170,24 @@ class KioskWindow(QMainWindow):
             set_busy=self._set_wait_busy,
             default_error=self._show_wait_error,
         )
+
+        self.update_connection_indicator()
+
+    # -- connection indicator ------------------------------------------------ #
+    def update_connection_indicator(self) -> None:
+        """Refresh the persistent connection button from the backend's current
+        state. Called on every navigation, and after applying/testing a
+        connection, so it never goes stale.
+
+        Green = a session is open; amber = configured but not yet connected
+        (e.g. before Vehicle ID commits it) — not an error, just idle. A
+        failed connection attempt is reported on the status bar by whichever
+        screen tried it, not by this indicator.
+        """
+        label = self.backend.connection_label
+        colour = GREEN_OK if self.backend.connected else LCD_AMBER
+        self._btn_connection.setText(f"VCI: {label}")
+        self._btn_connection.setStyleSheet(f"color: {colour}; font-weight: bold;")
 
     # -- button bar --------------------------------------------------------- #
     def _build_button_bar(self) -> QFrame:
@@ -228,6 +263,7 @@ class KioskWindow(QMainWindow):
         self._title.setText(screen.title)
         self._apply_nav_buttons(screen)
         self._status.setText("")
+        self.update_connection_indicator()
         screen.on_enter()
 
     def back(self) -> None:

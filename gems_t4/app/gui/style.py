@@ -156,14 +156,29 @@ WIN98_QSS = f"""
 QMainWindow, QWidget#Kiosk {{
     background: {SILVER};
 }}
-/* Title bar across the top of the kiosk */
-QLabel#TitleBar {{
+/* Title bar across the top of the kiosk: a QFrame row holding the screen
+   title (left) and the persistent connection-status button (right). */
+QFrame#TitleBar {{
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 {TITLE_BLUE}, stop:1 {TITLE_BLUE_2});
+    padding: 5px 0px;
+}}
+QFrame#TitleBar QLabel {{
+    background: transparent;
     color: white;
     font-weight: bold;
     font-size: 14px;
-    padding: 5px 10px;
+}}
+/* Compact so it fits the thin title row without stretching it */
+QPushButton#ConnectionStatus {{
+    padding: 2px 10px;
+    min-height: 0px;
+    font-size: 11px;
+}}
+QPushButton#ConnectionStatus:pressed {{
+    padding-top: 3px;
+    padding-left: 11px;
+    padding-bottom: 1px;
 }}
 QLabel#StatusBar {{
     background: {SILVER};

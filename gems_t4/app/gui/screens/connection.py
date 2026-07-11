@@ -11,6 +11,14 @@ The choice is applied through :meth:`Backend.set_connection` and persisted via
 :mod:`gems_t4.app.config`, so the Pico's IP only has to be typed once. Network
 connections are read-only unless the operator explicitly enables write
 functions (wired-only write policy).
+
+This screen is also reachable from every other screen via the persistent "VCI:
+..." button in the title bar (:meth:`KioskWindow.update_connection_indicator`)
+— you don't have to hunt through the System menu to change or test the link.
+The tick (✓) applies a new selection; the cross (✗) is repurposed as "Test" —
+it proves the *currently active* connection works and, where the transport
+supports it (USB/Network), measures round-trip latency to the adapter/server,
+without changing or persisting anything.
 """
 from __future__ import annotations
 
@@ -92,9 +100,16 @@ class ConnectionScreen(Screen):
         self._current.setWordWrap(True)
         lay.addWidget(self._current)
 
+        #: Result of the on-demand "Test" action (✗) — separate from
+        #: ``_current``, which just names the active connection.
+        self._test_result = QLabel("")
+        self._test_result.setObjectName("Lcd")
+        self._test_result.setWordWrap(True)
+        lay.addWidget(self._test_result)
+
         note = QLabel(
-            "Press ✓ to apply and test the connection. The setting is "
-            "remembered for the next session."
+            "Press ✓ to apply and test a new connection (remembered for next "
+            "time), or ✗ to test the connection that's active right now."
         )
         note.setWordWrap(True)
         note.setStyleSheet("color: #404040;")
@@ -124,6 +139,14 @@ class ConnectionScreen(Screen):
     def _show_current(self) -> None:
         self._current.setText(f"Current: {self.backend.connection_label}")
 
+    def _refresh_window_indicator(self) -> None:
+        """Nudge the persistent "VCI: ..." title-bar button (base.KioskWindow)
+        to reflect a just-applied change immediately, not just on next nav."""
+        win = self.window()
+        refresh = getattr(win, "update_connection_indicator", None)
+        if refresh is not None:
+            refresh()
+
     # -- lifecycle ------------------------------------------------------------#
     def on_enter(self) -> None:
         """Populate the form from the saved settings and show what's active."""
@@ -138,11 +161,15 @@ class ConnectionScreen(Screen):
         self._allow_writes.setChecked(cfg.allow_writes)
         self._update_enabled()
         self._show_current()
-        self.status.emit("Choose a connection and press ✓ to apply.")
+        self._test_result.setText("")
+        self.status.emit("Choose a connection and press ✓ to apply, or ✗ to test.")
 
     # -- navigation ------------------------------------------------------------#
     def nav_buttons(self) -> set[str]:
-        return {"back", "tick"}
+        return {"back", "cross", "tick"}
+
+    def cross_label(self) -> str:
+        return "Test"
 
     def on_tick(self) -> None:
         """Apply the selection: reconfigure the backend, connect, persist."""
@@ -184,10 +211,34 @@ class ConnectionScreen(Screen):
                 )
             )
             self._show_current()
+            self._refresh_window_indicator()
             self.status.emit(f"VCI configured — {label}")
 
         def failed(exc: Exception) -> None:
             self._show_current()
+            self._refresh_window_indicator()
             self.status.emit(f"Connection failed: {exc}")
 
         self.run_with_wait("Testing VCI connection", work, done, failed)
+
+    def on_cross(self) -> None:
+        """Test the connection that's ACTIVE right now — no form fields
+        involved, nothing persisted. Opens a session if one isn't already
+        open, then measures round-trip latency where the transport supports
+        it (see Backend.test_connection)."""
+        self._test_result.setText("")
+
+        def done(result) -> None:  # ConnectionTestResult
+            self._show_current()
+            self._refresh_window_indicator()
+            prefix = "OK" if result.ok else "FAILED"
+            self._test_result.setText(f"{prefix}: {result.message}")
+            self.status.emit(f"Connection test: {result.message}")
+
+        def failed(exc: Exception) -> None:
+            self._test_result.setText(f"FAILED: {exc}")
+            self.status.emit(f"Connection test error: {exc}")
+
+        self.run_with_wait(
+            "Testing VCI connection", self.backend.test_connection, done, failed
+        )
