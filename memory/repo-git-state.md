@@ -33,12 +33,13 @@ metadata:
   `testpaths` — run `pytest tests_regression` explicitly; **235 tests** as of
   the 2026-07-11 QA quick fixes (was 234; +1 for the dtc-clear-confirm test,
   count assertions bumped 37→40 live params).
-- **Deliberately left UNTRACKED (user's call, 2026-07-11):** the Phase-3
-  hardware shopping lists (now `docs/PICO_SHOPPING_LIST.*`,
-  `docs/PHASE3_SHOPPING_LIST*.md` — see root-markdown policy below) and three
+- **DELETED (user's call, 2026-07-11):** the Phase-3 hardware shopping lists
+  (`docs/PICO_SHOPPING_LIST.*`, `docs/PHASE3_SHOPPING_LIST*.md`) and three
   framework/packaging research notes under `memory/`
   (`FRAMEWORK_EVAL_SUMMARY.md`, `framework-pico-serial-eval.md`,
-  `packaging-distribution-research.md`). Still on disk; user said not to track.
+  `packaging-distribution-research.md`) were first left untracked, then
+  deleted outright (never having been in git, they're gone for good — no
+  history to recover from). Don't recreate these unless the user asks again.
 - **Root markdown policy (2026-07-11, user decision): only `CLAUDE.md`,
   `README.md`, `INSTALL.md` at the repo root.** Everything else moved into
   `docs/`: `INTERFACES.md`/`GUI_INTERFACES.md` (`git mv`'d — tracked, no code

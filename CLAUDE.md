@@ -295,9 +295,9 @@ as static lookalikes for now.
   optional hardware, optional Windows exe build).
 - **Root markdown policy (2026-07-11, user decision): only `CLAUDE.md`,
   `README.md`, and `INSTALL.md` live at the repo root.** Everything else
-  (`docs/INTERFACES.md`, `docs/GUI_INTERFACES.md`, the shopping lists, etc.)
-  goes in `docs/`. Don't add new root-level `.md` files — put them in `docs/`
-  and link to them instead.
+  (`docs/INTERFACES.md`, `docs/GUI_INTERFACES.md`, etc.) goes in `docs/`. Don't
+  add new root-level `.md` files — put them in `docs/` and link to them
+  instead.
 - `docs/INTERFACES.md` / `docs/GUI_INTERFACES.md` — the frozen build contracts
   (wire format, service map, module APIs / the GUI screen contract). Moved from
   the repo root to `docs/` on 2026-07-11 (see root markdown policy above); no
@@ -305,8 +305,10 @@ as static lookalikes for now.
 - `docs/land-rover-electronics.md` — Standalone reference on late-90s Land Rover
   electronics, now centred on the GEMS P38; modules, protocols, and why there's
   no CAN bus. Discovery 2 retained as an era variation.
-- `docs/PICO_SHOPPING_LIST.*`, `docs/PHASE3_SHOPPING_LIST*.md` — hardware
-  shopping lists (untracked in git by the user's choice; still on disk).
+- The Phase-3 hardware shopping lists (`PICO_SHOPPING_LIST.*`,
+  `PHASE3_SHOPPING_LIST*.md`) existed briefly under `docs/`, untracked, then
+  were **deleted outright 2026-07-11** at the user's request. They never made
+  it into git history — don't recreate them unless asked again.
 - `diagrams/p38-gems-electronics.html` — the network diagram to use (built from
   `docs/land-rover-electronics.md`); linked from `README.md` via
   htmlpreview.github.io. (An older `p38-gems-network.svg` was reported incorrect
@@ -382,8 +384,10 @@ were dropped. See `memory/tech-stack-decision.md`.)
     VCSI equivalent). ⚠️ 2026-07-11: the **MikroE ISO 9141 Click** (same
     L9637D chip) this section originally specified is **retired/unavailable in
     the US** (SparkFun-exclusive, delisted; verified by agent research) — buy
-    the bare E-L9637D from DigiKey/Mouser (~$2) instead; wiring/shopping list
-    in the project root. Both boards run the identical firmware unmodified
+    the bare E-L9637D from DigiKey/Mouser (~$2) instead; see
+    `firmware/README.md` for wiring. (A standalone shopping-list doc existed
+    briefly but was deleted 2026-07-11 — don't recreate it.) Both boards run
+    the identical firmware unmodified
     (the sketch only uses the portable Arduino API — `Serial`, `Serial1`,
     `pinMode`, `digitalWrite`, `delay`, `millis` — which `arduino-pico`
     implements the same on RP2040 and RP2350); only the build's `--fqbn`
