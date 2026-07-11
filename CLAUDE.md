@@ -696,16 +696,26 @@ checksums were stale placeholders (now `C0`/`00` with arithmetic); stale
 (INTERFACES-pinned constants, not yet imported) and `transport/ftdi.py`
 (deliberate stub). Deferred hardware-path observations (Pico set_timing gap,
 receive-after-close, case-sensitive mode strings, ECU-side $3B write
-acceptance) are recorded in RELEASE_NOTES.md.
+acceptance) are recorded in git history / commit messages (the standalone
+RELEASE_NOTES files were removed 2026-07-11 — see below).
 
-**Quick start & known limitations (2026-07-07):**
-- **Launcher scripts:** `launch_gui.bat` (quick launch) and `create_shortcut.ps1`
-  (create desktop shortcut on Windows) are in the project root for convenience.
-- **PyInstaller bytecode cache gotcha:** If the bundled exe (`dist/gems_t4/gems_t4_gui.exe`)
-  doesn't reflect the latest source changes, run from the venv instead:
-  `python -m gems_t4 gui`. This is a known Qt/PyInstaller interaction where
-  bytecode caches persist even after `--clean` rebuilds. To force a fresh exe,
-  manually delete `packaging/build/` and `dist/` before rebuilding.
+**Quick start & known limitations (updated 2026-07-11):**
+- **`launch_gui.bat` runs the LIVE venv source** (`.venv\Scripts\pythonw -m
+  gems_t4 gui`), NOT the bundled PyInstaller exe. This is deliberate: the source
+  always reflects the current code (network config screen, version, everything),
+  so there is nothing to "update" beyond a `git pull` — no rebuild needed. (It
+  used to launch `dist/gems_t4/gems_t4_gui.exe`, which went stale whenever source
+  changed — the cause of "the network options don't show up".) `create_shortcut.ps1`
+  makes a desktop shortcut on Windows.
+- **App version on launch:** the GUI shows `gems_t4 v<__version__>` on the boot
+  splash and in the window title, so every launch shows the version (currently
+  **v0.0.5**, tracking the branch/tag). Single source of truth is
+  `gems_t4/__init__.py` `__version__` (kept in lockstep with `pyproject.toml` /
+  `--version`; a regression test enforces this).
+- **PyInstaller exe (optional, only if you want a standalone build):** the
+  bundled `dist/gems_t4/gems_t4_gui.exe` can go stale — Qt/PyInstaller bytecode
+  caches persist even after `--clean`. Prefer the venv launcher above. To force a
+  fresh exe, delete `packaging/build/` and `dist/` before rebuilding.
 - **GUI waits:** By default, `gui` shows the period-authentic "Communicating with
   ECU - please wait" overlay (click it to skip). Use `gui --instant` to disable
   waits entirely, or set env var `GEMS_T4_INSTANT=1` (used by all tests for
@@ -723,10 +733,12 @@ fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
   work proceeds on **version branches `v0.0.x`** (currently `v0.0.4`, the
   bugfix branch) with `main` as the merge destination. The Python package
   version (`pyproject.toml` / `__version__` / `--version`) **tracks the release
-  tag** (0.0.4) as of v0.0.4 — keep them in lockstep when cutting a version.
-  Release notes: `RELEASE_NOTES.md` = the CURRENT release;
-  `RELEASE_NOTES_v0.0.x.md` = the archive (keep this convention: `git mv` the
-  old one when cutting a new version).
+  tag** — keep them in lockstep when cutting a version (a regression test
+  enforces it). **Release history lives in git tags + commit messages + this
+  Build-status section** — the standalone `RELEASE_NOTES*.md` files were removed
+  2026-07-11 to declutter the project root (they survive in git history). Do not
+  re-add them; summarize a release in its version-branch commit and, if needed,
+  a short bullet in Build status.
 - `.gitignore` (excludes `.venv`, caches, `__pycache__`, egg-info, OneDrive junk,
   firmware build output) and `.gitattributes` (`* text=auto eol=lf` — pins LF to
   silence Windows `core.autocrlf=true` CRLF churn) are in place.

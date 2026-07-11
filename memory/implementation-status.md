@@ -39,7 +39,9 @@ code for both). Same host protocol the Pico speaks over USB, now over a socket.
   (server DoS on malformed payload; `$27` ungated; immo-status wrongly blocked;
   failed-connection rollback; transport resync; GUI degrades on dead endpoint;
   config type-safety; serial-bridge robustness; firmware byte-parity + IPv6).
-- Version 0.0.4 → **0.0.5**; `RELEASE_NOTES.md` rotated (v0.0.4 archived).
+- Version 0.0.4 → **0.0.5** (shown on the GUI boot splash + window title as of
+  2026-07-11). Standalone RELEASE_NOTES files removed 2026-07-11 — see
+  [[repo-git-state]].
 
 ## v0.0.4 (2026-07-07) — bugfix/quality release
 - Package version aligned to the tag: 0.1.0 → **0.0.4** everywhere.
@@ -51,7 +53,8 @@ code for both). Same host protocol the Pico speaks over USB, now over a socket.
   HOST_PROTOCOL.md example KWP checksums were stale placeholders (now C0/00);
   stale "~24-parameter" comment in live_data.py.
 - `git rm`'d `diagrams/p38-gems-network.svg` (user-reported incorrect).
-- Deferred hardware-path observations recorded in RELEASE_NOTES.md.
+- Deferred hardware-path observations recorded in the v0.0.4 commit message /
+  git history (the RELEASE_NOTES files that held them were removed 2026-07-11).
 
 ## Phase 6 COMPLETE (2026-07-07) — built by a 5-agent fan-out
 - **Gauge widgets:** `app/gui/widgets.py` — QPainter `DialGauge` (270° arc,

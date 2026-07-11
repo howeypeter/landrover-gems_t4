@@ -19,13 +19,16 @@ metadata:
   aligned since v0.0.4, before that 0.1.0). Keep them in lockstep when cutting a
   version; `tests_regression/test_regr_cli.py::test_version_flag` now asserts
   all three match.
-- **Release-notes convention:** `RELEASE_NOTES.md` = the CURRENT release;
-  `RELEASE_NOTES_v0.0.x.md` = archive. When cutting a new version, `git mv`
-  the old `RELEASE_NOTES.md` to its versioned name first. (v0.0.5 archived
-  v0.0.4 this way → `RELEASE_NOTES_v0.0.4.md`.)
+- **Release notes: REMOVED 2026-07-11.** The standalone `RELEASE_NOTES*.md`
+  files (current + v0.0.1–v0.0.4 archives) were `git rm`'d to declutter the
+  project root (they survive in git history). Release history now = git tags +
+  version-branch commit messages + CLAUDE.md "Build status". Do NOT re-add
+  RELEASE_NOTES files; the old "current + versioned archive" convention is
+  retired.
 - `tests_regression/` (added v0.0.4) is an independent suite outside pyproject
-  `testpaths` — run `pytest tests_regression` explicitly; **234 tests** as of
-  v0.0.5 (was 233; updated for the 12-screen/6-menu-item contract).
+  `testpaths` — run `pytest tests_regression` explicitly; **235 tests** as of
+  the 2026-07-11 QA quick fixes (was 234; +1 for the dtc-clear-confirm test,
+  count assertions bumped 37→40 live params).
 - **Deliberately left UNTRACKED (user's call, 2026-07-11):** the Phase-3
   hardware shopping lists (`PICO_SHOPPING_LIST.*`, `PHASE3_SHOPPING_LIST*.md`)
   and three framework/packaging research notes under `memory/`

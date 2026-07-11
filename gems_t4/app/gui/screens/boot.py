@@ -8,6 +8,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QLabel, QProgressBar, QVBoxLayout, QWidget
 
+from gems_t4 import __version__
 from gems_t4.app.backend import Backend
 from gems_t4.app.gui.base import Screen
 
@@ -31,6 +32,12 @@ class BootScreen(Screen):
         sub.setAlignment(Qt.AlignCenter)
         sub.setStyleSheet("font-size: 16px; color: #000080;")
         lay.addWidget(sub)
+
+        #: The application's own version, shown on every launch.
+        ver = QLabel(f"gems_t4  v{__version__}")
+        ver.setAlignment(Qt.AlignCenter)
+        ver.setStyleSheet("font-size: 12px; color: #404040;")
+        lay.addWidget(ver)
 
         lay.addSpacing(20)
 
