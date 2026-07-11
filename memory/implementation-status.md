@@ -174,6 +174,18 @@ PySide6). Regression suite runs separately: `pytest tests_regression` → 234.
   (the one flashable Rover engine ECU — contrast to GEMS's chip-swap).
 - Optional polish: windowed-exe icon/version resources, guided fault trees.
 
+**QA-found unmet SPEC requirements (2026-07-11 sweep) — see
+[[qa-unmet-requirements]].** Distinct from the future-research items above:
+things already promised in CLAUDE.md that the code doesn't do yet. Never built:
+service adjustments (timing/idle), VCSI connection-chain link status, EAS
+suspension screens, message-centre text, injector brief-pulse test. Partial /
+doc-overstates: coding write enforces 3 of the 7 advertised gates (no
+security/precondition/dry-run); not full-screen kiosk (normal 800×600 window);
+37 live params (<40–60 aim; missing oil temp / catalyst / fan); immobilised not
+coherent on live-data; CLI `dtc clear` doesn't prompt; em-dash garbles on
+Windows console. Plus a security note: network write-gate is client-side only,
+not enforced by `serve`. Product is otherwise healthy (153+234 tests green).
+
 Related: [[tech-stack-decision]], [[research-synthesis]],
 [[research-python-architecture]], [[workflow-directives]],
 [[pico-board-support]], [[eprom-programmability-question]], [[repo-git-state]].

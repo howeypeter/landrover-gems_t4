@@ -512,6 +512,79 @@ up):**
   "ECU-to-engine matching" procedure. Ties into
   [EPROM programmability] and [4.0/4.6 toggle] above.
 
+### Backlog / QA-found unmet requirements (found 2026-07-11 by a full QA sweep)
+
+A requirements-vs-code QA pass found the product is healthy and all tests pass,
+but these things were written into the spec (design pillars / locked-in
+decisions / v1 scope) yet never actually built, or built only partway. They are
+NOT features today — they are the to-do list of "what the spec promised but the
+code doesn't do yet." (Full detail in [[qa-unmet-requirements]] in memory.)
+
+**A. Promised features that were never built:**
+1. **Service adjustments.** The real T4 let a tech nudge ignition timing (−6°
+   to +3°) and idle speed to compensate for engine wear/fuel. We planned this
+   ("Rover party piece") but there is no screen or command for it — timing/idle
+   are read-only gauges only. *Tech:* no write path for these; add an
+   adjustment service + screen.
+2. **Connection-chain status ("which cable is unplugged").** The plan was to
+   model the real signal path — laptop → VCSI interface box → OBD lead → ECU —
+   as separate links, each able to be "unplugged" to produce an authentic
+   failure like "VCI not responding." Today the connection is just one on/off
+   flag; the Toolbox "VCI check" always prints a hardcoded "present." *Tech:*
+   `VirtualTransport` has a single `_open` bool; no VCSI/J1962 nodes, no
+   per-link state. This was a *locked-in* spec decision, not an open question.
+3. **Air-suspension (EAS) height/calibration screens.** A P38 "party piece" we
+   said we'd include; no EAS code exists at all.
+4. **Message-centre text.** The P38 dashboard shows warning text (e.g. "ENGINE
+   IMMOBILISED", "EAS FAULT"); we said the tool would mirror the active fault as
+   message-centre text across screens. Only the immobiliser screen shows one
+   such line; the coolant/misfire/lambda faults produce no message text.
+5. **Injector "brief pulse only" test.** The spec says injector tests should
+   fire brief pulses, never run continuously (a safety behaviour). There is no
+   injector actuator test at all — injector pulse-width is only a read-only
+   gauge.
+
+**B. Built, but incomplete or the docs oversell it:**
+6. **"Every ECU write is fully gated" — the docs claim more than the code
+   does.** CLAUDE.md advertises seven safety gates on every ECU write (backup,
+   verify, checksum, security-access, precondition checks, dry-run,
+   confirmation). The coding-write path actually enforces **three** of them —
+   backup, verify-after-write, and operator confirmation (these are real and
+   can't be skipped). **Missing:** it does NOT require security-access ($27)
+   before a coding write, has no precondition interlocks, and no dry-run;
+   "checksum" is only the wire-level frame checksum, not a coding-block one.
+   (The immobiliser Security-Learn write *does* enforce security + sequence.)
+   Fix: either build the missing gates or correct the doc to say "three gates."
+7. **Full-screen kiosk on boot.** Design pillar 1 wants the app to "take over
+   the screen" like an appliance. It actually runs as an ordinary 800×600
+   window with a normal title bar — the Win98 *look* is there, but it never goes
+   full-screen/borderless. *Tech:* no `showFullScreen`/frameless code exists.
+8. **Live-data breadth.** We aimed for ~40–60 live parameters to start (the real
+   T4 had ~108); there are **37**. Also three named categories are missing
+   specific readings: **oil temperature**, **catalyst state**, and **cooling-fan
+   operation** (A/C request is present, the fan itself is not).
+9. **"Immobilised" isn't consistent across screens.** When the ECU is set to the
+   ENGINE-IMMOBILISED failure, the immobiliser screen says so correctly — but
+   the simulation still shows the engine running (RPM idling) on the live-data
+   screen. A truly immobilised engine shouldn't be running. *Tech:*
+   `virtual_ecu` never gates `engine_running`/rpm on the `_mobilised` flag.
+10. **Clearing fault codes doesn't always confirm.** V1 flow said clearing codes
+   should prompt for confirmation. The GUI does prompt; the **command-line
+   `dtc clear` wipes them immediately with no prompt.**
+11. **A dash prints as a garbled character on Windows.** Some authentic messages
+   use a "—" (em-dash) that shows as "�" on the default Windows command-line.
+   Cosmetic, but it's on the target platform. *Tech:* literal em-dash in
+   `gems/actuators.py` refusal message (and similar); use ASCII "-" or force
+   UTF-8 console.
+
+**C. Security note (by design, but know it):** the "network is read-only" rule
+is enforced only on the laptop side (in `KwpClient`), not by the `serve`
+bridge. If you ever run `serve --port COMx --listen 0.0.0.0` (exposing a real
+Pico-on-a-real-car to the network), a misbehaving client could still send
+writes — the bridge won't stop it. Fine as long as `serve` stays on localhost /
+behind an SSH tunnel (the documented setup); worth server-side enforcement
+before any real over-the-network use.
+
 **TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
 GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork
 for both the Raspberry-Pi-at-the-car topology and the future WiFi Pico
