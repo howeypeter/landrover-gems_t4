@@ -30,10 +30,19 @@ metadata:
   the 2026-07-11 QA quick fixes (was 234; +1 for the dtc-clear-confirm test,
   count assertions bumped 37→40 live params).
 - **Deliberately left UNTRACKED (user's call, 2026-07-11):** the Phase-3
-  hardware shopping lists (`PICO_SHOPPING_LIST.*`, `PHASE3_SHOPPING_LIST*.md`)
-  and three framework/packaging research notes under `memory/`
+  hardware shopping lists (now `docs/PICO_SHOPPING_LIST.*`,
+  `docs/PHASE3_SHOPPING_LIST*.md` — see root-markdown policy below) and three
+  framework/packaging research notes under `memory/`
   (`FRAMEWORK_EVAL_SUMMARY.md`, `framework-pico-serial-eval.md`,
   `packaging-distribution-research.md`). Still on disk; user said not to track.
+- **Root markdown policy (2026-07-11, user decision): only `CLAUDE.md`,
+  `README.md`, `INSTALL.md` at the repo root.** Everything else moved into
+  `docs/`: `INTERFACES.md`/`GUI_INTERFACES.md` (`git mv`'d — tracked, no code
+  reads them by path, doc-only move) and the untracked shopping lists (plain
+  `mv`, stayed untracked). New `INSTALL.md` was created at the root — split out
+  of README.md's old "Install & run"/"Windows build"/"Hardware" sections, which
+  are now short pointers to it. Do not add new root-level `.md` files going
+  forward; put them in `docs/` and link to them from README.md/CLAUDE.md.
 
 ## .gitignore (added/expanded this session)
 Ignores: `.venv/`, `__pycache__/`, `*.py[cod]`, `*.egg-info/`, build/dist,

@@ -29,17 +29,16 @@ K-line adapter over USB.
 
 ## Install & run
 
+**See [`INSTALL.md`](INSTALL.md)** for full setup instructions (venv, GUI vs
+CLI-only install, the Windows launcher, optional hardware, and the optional
+standalone `.exe` build). Quick version:
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1          # Windows; on macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt     # CLI only
-# ...or, for the GUI too:  pip install -e ".[gui]"
+pip install -e ".[gui]"             # or: pip install -r requirements.txt for CLI-only
 python -m gems_t4 scenarios
 ```
-
-Use the venv's Python (activate once, or prefix with `.venv\Scripts\`). PySide6
-(the GUI) is intentionally kept out of `requirements.txt` — it's a large optional
-dependency; install it via the `[gui]` extra.
 
 ## What it does
 
@@ -92,6 +91,7 @@ gems_t4/
   gems/        GEMS meaning — DTCs, live data, actuators, immobiliser, maps, virtual ECU
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
 firmware/      Pico sketch + USB-CDC host-protocol spec + wiring guide
+docs/          build contracts (INTERFACES.md, GUI_INTERFACES.md) + reference docs
 tests/         pytest suite (runs headless, no hardware)
 tests_regression/  independent regression suite written from the frozen contracts (v0.0.4)
 ```
@@ -102,27 +102,19 @@ or the in-memory `VirtualTransport`, so the whole stack is testable off-car.
 ## Development
 
 ```bash
-pytest                    # 153 passed with the [gui] extra (GUI tests skip without PySide6)
-pytest tests_regression   # 234 passed — the independent regression suite (run explicitly)
+pytest                    # 155 passed with the [gui] extra (GUI tests skip without PySide6)
+pytest tests_regression   # 235 passed — the independent regression suite (run explicitly)
 ```
 
-Build contracts: [`INTERFACES.md`](INTERFACES.md) (core) and
-[`GUI_INTERFACES.md`](GUI_INTERFACES.md) (screens) pin the wire format, service
-map, and every module's public API.
+Build contracts: [`docs/INTERFACES.md`](docs/INTERFACES.md) (core) and
+[`docs/GUI_INTERFACES.md`](docs/GUI_INTERFACES.md) (screens) pin the wire format,
+service map, and every module's public API.
 
-## Hardware (optional)
+## Hardware & Windows build (optional)
 
-A Raspberry Pi **Pico or Pico 2** + an ISO 9141 Click (L9637D) transceiver over USB
-— see [`firmware/README.md`](firmware/README.md) for the parts list, wiring, and
-flashing. The Pico owns the K-line timing; the PC talks to it over a simple USB
-protocol.
-
-## Windows build (optional)
-
-PyInstaller packaging in [`packaging/`](packaging/README.md) produces one
-`dist/gems_t4/` folder with two exes: `gems_t4.exe` (console — the CLI) and
-`gems_t4_gui.exe` (windowed, no console — the kiosk). Build with the `[build]`
-extra installed: `pip install -e ".[build]"`, then follow `packaging/README.md`.
+Both are optional — the virtual ECU covers the full feature set with no
+hardware. See [`INSTALL.md`](INSTALL.md) for the Pico adapter setup and the
+standalone `.exe` build.
 
 ## Status
 

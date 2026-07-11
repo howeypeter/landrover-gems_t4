@@ -129,8 +129,9 @@ code for both). Same host protocol the Pico speaks over USB, now over a socket.
   COMx` → Pico.
 
 ## Key facts for the next session
-- **Frozen contract is `INTERFACES.md`** at the repo root — wire format, SID map,
-  each module's public API, module ownership. Build against it.
+- **Frozen contract is `docs/INTERFACES.md`** (moved from the repo root to
+  `docs/` on 2026-07-11 — root markdown policy, see [[repo-git-state]]) — wire
+  format, SID map, each module's public API, module ownership. Build against it.
 - Wire frame: `[0x80][TGT][SRC][LEN][data][CS]`, CS = sum mod 256. Stylized
   KWP2000 (GEMS bytes not public — the virtual ECU defines a coherent dialect).
 - Load-bearing seam: `KwpClient(transport)` takes VirtualTransport or

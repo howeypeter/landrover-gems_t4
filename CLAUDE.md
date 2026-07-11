@@ -290,9 +290,23 @@ as static lookalikes for now.
 ## Files in this directory
 
 - `CLAUDE.md` — This file, the spec of record. Every detail the next bot needs.
+- `README.md` / `README.html` — the dual-doc landing page (see "Repository / git
+  state" below); `INSTALL.md` — the full setup guide (venv, GUI launcher,
+  optional hardware, optional Windows exe build).
+- **Root markdown policy (2026-07-11, user decision): only `CLAUDE.md`,
+  `README.md`, and `INSTALL.md` live at the repo root.** Everything else
+  (`docs/INTERFACES.md`, `docs/GUI_INTERFACES.md`, the shopping lists, etc.)
+  goes in `docs/`. Don't add new root-level `.md` files — put them in `docs/`
+  and link to them instead.
+- `docs/INTERFACES.md` / `docs/GUI_INTERFACES.md` — the frozen build contracts
+  (wire format, service map, module APIs / the GUI screen contract). Moved from
+  the repo root to `docs/` on 2026-07-11 (see root markdown policy above); no
+  code reads these by path, so the move was doc-only.
 - `docs/land-rover-electronics.md` — Standalone reference on late-90s Land Rover
   electronics, now centred on the GEMS P38; modules, protocols, and why there's
   no CAN bus. Discovery 2 retained as an era variation.
+- `docs/PICO_SHOPPING_LIST.*`, `docs/PHASE3_SHOPPING_LIST*.md` — hardware
+  shopping lists (untracked in git by the user's choice; still on disk).
 - `diagrams/p38-gems-electronics.html` — the network diagram to use (built from
   `docs/land-rover-electronics.md`); linked from `README.md` via
   htmlpreview.github.io. (An older `p38-gems-network.svg` was reported incorrect

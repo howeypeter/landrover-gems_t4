@@ -267,7 +267,8 @@ firmware/      Pico sketch + the USB-CDC host-protocol spec + wiring guide
 tests/         pytest suite (runs with no hardware)
 tests_regression/  independent regression suite from the frozen contracts (v0.0.4)
 requirements.txt  runtime + test dependencies
-INTERFACES.md  the frozen build contract (wire format, service map, module APIs)</code></pre>
+docs/INTERFACES.md  the frozen build contract (wire format, service map, module APIs)
+INSTALL.md     full setup guide (venv, GUI launcher, hardware, Windows build)</code></pre>
 <p>The load-bearing seam is <code>KwpClient(transport)</code>: it takes a real serial transport
 or the in-memory <code>VirtualTransport</code>, so the whole stack is testable off-car.</p>
 
@@ -275,15 +276,15 @@ or the in-memory <code>VirtualTransport</code>, so the whole stack is testable o
 <p>Run the test suite (no hardware needed):</p>
 <pre><code>pytest                    # the original suite
 pytest tests_regression   # the independent v0.0.4 regression suite (run explicitly)</code></pre>
-<p>Expected: <strong>153 passed</strong> if you installed the <code>gui</code> extra
+<p>Expected: <strong>155 passed</strong> if you installed the <code>gui</code> extra
 (<code>pip install -e ".[gui]"</code>), or fewer passed with the GUI files skipped without it
 — the GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
 it's absent, since <code>requirements.txt</code> deliberately doesn't include it (see
 "Graphical interface" above). <code>tests_regression/</code> (new in v0.0.4) is a
-<strong>234-test independent suite</strong> written from the frozen contracts —
+<strong>235-test independent suite</strong> written from the frozen contracts —
 deliberately not derived from <code>tests/</code> — and lives outside the default
 <code>testpaths</code>, so run it explicitly.</p>
-<p>If you extend the code, keep to <code>INTERFACES.md</code> — it pins the wire format, the
+<p>If you extend the code, keep to <code>docs/INTERFACES.md</code> — it pins the wire format, the
 service/SID map, and every module's public API so the layers stay compatible. Guidelines:
 Python 3.11+, full type hints, docstrings, and <strong>no I/O or <code>sleep</code> in
 <code>protocol/</code> or <code>gems/</code></strong> (timing lives only in <code>transport/</code>).</p>
