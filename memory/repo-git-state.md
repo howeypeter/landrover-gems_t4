@@ -11,9 +11,13 @@ metadata:
 ## Git state
 - Work proceeds on **version branches `v0.0.x`** (currently **`v0.0.5`**, the
   TCP/network-transport release) with `main` as the merge destination. Branches
-  `v0.0.1`–`v0.0.5` exist; all pushed to `origin`. **v0.0.5 is committed
-  (`599a8bb`) and pushed but NOT yet merged to main — the user handles the
-  merge/tag themselves.**
+  `v0.0.1`–`v0.0.5` exist; all pushed to `origin`. **v0.0.5 merged into `main`
+  2026-07-11** (`git merge --no-ff v0.0.5`, merge commit `2ab5eb6`, pushed to
+  `origin/main`). No conflicts — `main` had only diverged by its own PR-merge
+  wrapper commit, already content-identical to what v0.0.5 carried forward.
+  `main` is now the current/authoritative branch; no separate tag was cut (the
+  version lives in `pyproject.toml`/`__version__`, not a git tag, per the
+  existing convention).
 - The Python **package version tracks the release tag** (`pyproject.toml` /
   `gems_t4/__init__.py` / `--version` all say **0.0.5** as of this branch —
   aligned since v0.0.4, before that 0.1.0). Keep them in lockstep when cutting a
