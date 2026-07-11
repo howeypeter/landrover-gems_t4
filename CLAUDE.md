@@ -391,8 +391,15 @@ were dropped. See `memory/tech-stack-decision.md`.)
     from a Raspberry Pi at the car). A future WiFi Pico just answers the same
     frames `serve` answers now — do not build that firmware until explicitly
     picked up.
-- **Build the virtual ECU first**; **every ECU write gated**: backup + verify +
-  checksum + session/security + precondition interlocks + dry-run + confirmation.
+- **Build the virtual ECU first**; **every ECU write gated.** As built: the
+  coding-write path enforces **backup + verify-after-write + operator
+  confirmation** (and refuses read-only fields), and the immobiliser
+  Security-Learn write additionally enforces **security-access ($27) + routine
+  sequence**. The fuller gate set once imagined (a coding-block checksum,
+  security-access on *coding* writes too, precondition interlocks, a dry-run
+  mode) is only partly present — see the QA note "Every ECU write is fully
+  gated — docs vs code" under "Backlog / QA-found unmet requirements". Aim: no
+  ungated writes; close the remaining gate gaps before real-hardware coding.
 
 ### Recommended phased build
 
@@ -472,7 +479,7 @@ tests** in `tests/` + **234 in `tests_regression/`** (GUI files skip without
 the PySide6 `[gui]` extra via `importorskip`). Runs via `python -m gems_t4
 <cmd>` or `gems_t4` after `pip install -e .`; GUI via `gems_t4 gui` (needs
 `[gui]`; `--instant` skips the waits). Python 3.14 venv at `.venv/`. 12 GUI
-screens, 37 live-data params. Remaining polish candidates (not started,
+screens, 40 live-data params. Remaining polish candidates (not started,
 optional): windowed-exe icon/version resources, more guided fault trees,
 Td5/MEMS3 real-reflash profile.
 
@@ -554,28 +561,33 @@ code doesn't do yet." (Full detail in [[qa-unmet-requirements]] in memory.)
    before a coding write, has no precondition interlocks, and no dry-run;
    "checksum" is only the wire-level frame checksum, not a coding-block one.
    (The immobiliser Security-Learn write *does* enforce security + sequence.)
-   Fix: either build the missing gates or correct the doc to say "three gates."
+   **✓ Doc corrected (2026-07-11):** the Tech-stack "every ECU write gated" line
+   now states the three gates actually enforced (plus the immobiliser's
+   security+sequence). Building the missing four gates remains an optional
+   feature decision.
 7. **Full-screen kiosk on boot.** Design pillar 1 wants the app to "take over
    the screen" like an appliance. It actually runs as an ordinary 800×600
    window with a normal title bar — the Win98 *look* is there, but it never goes
    full-screen/borderless. *Tech:* no `showFullScreen`/frameless code exists.
 8. **Live-data breadth.** We aimed for ~40–60 live parameters to start (the real
-   T4 had ~108); there are **37**. Also three named categories are missing
-   specific readings: **oil temperature**, **catalyst state**, and **cooling-fan
-   operation** (A/C request is present, the fan itself is not).
+   T4 had ~108). **✓ FIXED (2026-07-11):** was 37, now **40** — added oil
+   temperature (0x1E), catalyst temperature (0x1F), and cooling-fan state (0x28),
+   the three categories that were missing. (Still well under the real ~108, but
+   now meets the stated floor.)
 9. **"Immobilised" isn't consistent across screens.** When the ECU is set to the
    ENGINE-IMMOBILISED failure, the immobiliser screen says so correctly — but
    the simulation still shows the engine running (RPM idling) on the live-data
    screen. A truly immobilised engine shouldn't be running. *Tech:*
    `virtual_ecu` never gates `engine_running`/rpm on the `_mobilised` flag.
 10. **Clearing fault codes doesn't always confirm.** V1 flow said clearing codes
-   should prompt for confirmation. The GUI does prompt; the **command-line
-   `dtc clear` wipes them immediately with no prompt.**
+   should prompt for confirmation. **✓ FIXED (2026-07-11):** CLI `dtc clear` now
+   asks "Clear all stored fault codes? [y/N]" (EOF/empty stdin ⇒ declined, exit
+   1); `--yes`/`-y` skips it for scripts. (GUI already prompted.)
 11. **A dash prints as a garbled character on Windows.** Some authentic messages
-   use a "—" (em-dash) that shows as "�" on the default Windows command-line.
-   Cosmetic, but it's on the target platform. *Tech:* literal em-dash in
-   `gems/actuators.py` refusal message (and similar); use ASCII "-" or force
-   UTF-8 console.
+   used a "—" (em-dash) that showed as "�" on the default Windows command-line.
+   **✓ FIXED (2026-07-11):** the runtime CLI-printed messages (actuator refusal,
+   Security-Learn, coding-write, serve banners) now use an ASCII "-". (GUI
+   labels keep the em-dash — Qt renders Unicode fine.)
 
 **C. Security note (by design, but know it):** the "network is read-only" rule
 is enforced only on the laptop side (in `KwpClient`), not by the `serve`
@@ -585,11 +597,10 @@ writes — the bridge won't stop it. Fine as long as `serve` stays on localhost 
 behind an SSH tunnel (the documented setup); worth server-side enforcement
 before any real over-the-network use.
 
-**Suggested triage (not yet actioned — user decides scope):**
-- *Quick fixes (small, low-risk, do anytime):* #11 em-dash → ASCII/UTF-8;
-  #10 add a confirm prompt to CLI `dtc clear`; #6 at minimum correct the doc to
-  "three gates" (or build the missing four); #8-partial add oil-temp / catalyst
-  / cooling-fan live params to nudge toward the 40–60 count.
+**Suggested triage:**
+- *Quick fixes — ✓ ALL DONE 2026-07-11:* #11 em-dash→ASCII, #10 CLI `dtc clear`
+  confirm prompt, #6 doc corrected to three gates, #8 live params 37→40
+  (oil-temp / catalyst / cooling-fan added). Tests: 153 + 235 green.
 - *Real feature decisions (bigger; keep or drop from scope):* #1 service
   adjustments, #2 VCSI connection-chain status, #3 EAS suspension screens,
   #4 message-centre text, #5 injector-pulse test, #7 full-screen kiosk mode.

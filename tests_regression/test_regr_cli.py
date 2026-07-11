@@ -98,9 +98,20 @@ def test_dtc_read_lambda_heater():
 
 
 def test_dtc_clear_exits_zero():
-    proc = run_cli("dtc", "clear", "--scenario", "misfire_cyl3", "--latency", "0")
+    # --yes skips the interactive confirmation prompt for scripted use.
+    proc = run_cli("dtc", "clear", "--yes", "--scenario", "misfire_cyl3",
+                   "--latency", "0")
     assert proc.returncode == 0
     assert "cleared" in proc.stdout.lower()
+
+
+def test_dtc_clear_without_yes_is_refused_on_empty_stdin():
+    # No --yes and no interactive stdin -> EOF -> the clear is declined (exit 1),
+    # the fault codes are NOT cleared.
+    proc = run_cli("dtc", "clear", "--scenario", "misfire_cyl3", "--latency", "0")
+    assert proc.returncode == 1
+    assert "cancelled" in proc.stdout.lower()
+    assert "cleared" not in proc.stdout.lower()
 
 
 # --------------------------------------------------------------------------- #
@@ -115,13 +126,13 @@ def test_live_selected_ids_renders_coolant_and_rpm():
     assert "Communicating with ECU" in proc.stdout
 
 
-def test_live_full_read_shows_37_parameter_rows():
+def test_live_full_read_shows_40_parameter_rows():
     proc = run_cli("live", "--latency", "0")
     assert proc.returncode == 0
     # each table row carries exactly one raw-hex cell ("0x..."); nothing else
     # in the output contains "0x", so the count equals the parameter row count
     raws = re.findall(r"0x[0-9A-Fa-f]+", proc.stdout)
-    assert len(raws) == 37, f"expected 37 live parameter rows, found {len(raws)}"
+    assert len(raws) == 40, f"expected 40 live parameter rows, found {len(raws)}"
 
 
 # --------------------------------------------------------------------------- #

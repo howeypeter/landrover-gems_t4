@@ -66,7 +66,9 @@ def test_unsupported_local_id_answers_negative_out_of_range():
     (the '$7f' answer the T4 stylization documents for unsupported ids)."""
     _, client = make_stack()
     with pytest.raises(NegativeResponse) as exc:
-        client.read_data_by_local_id(0x1E)  # gap between 0x1D and 0x20
+        # 0x50 is above the live-data block (0x01..0x28) and below the coding
+        # block (0x81..0x87) — no parameter or coding field claims it.
+        client.read_data_by_local_id(0x50)
     assert exc.value.nrc == NRC.REQUEST_OUT_OF_RANGE
     assert exc.value.service == 0x21
 

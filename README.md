@@ -55,7 +55,7 @@ python -m gems_t4 gui                               # the Win98 kiosk GUI (needs
 | Area | What |
 |---|---|
 | **Fault codes** | Read / clear GEMS DTCs (P0118, P0303, P1185, …) |
-| **Live data** | 37 `$61` measures (incl. per-cylinder misfire counts) on analog gauges, with the authentic gauge-count → refresh-rate trade-off |
+| **Live data** | 40 `$61` measures (incl. per-cylinder misfire counts) on analog gauges, with the authentic gauge-count → refresh-rate trade-off |
 | **Actuator tests** | MIL, O2 heater, fuel pump, etc. — with the "engine running" refusals |
 | **Coding** | Gated read/edit/write (backup + verify + confirm) of VIN, dealer id, 4.0/4.6, … |
 | **Security-Learn** | The one genuine GEMS K-line write — recover "ENGINE IMMOBILISED" |

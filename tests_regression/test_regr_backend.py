@@ -108,7 +108,7 @@ def test_read_methods_autoconnect():
 def test_read_live_all_and_selected():
     b = Backend("healthy")
     all_measures = b.read_live()
-    assert len(all_measures) == 37, "CLAUDE.md: '37 live-data params'"
+    assert len(all_measures) == 40, "CLAUDE.md: '40 live-data params'"
     two = b.read_live([0x01, 0x02])
     assert [m.name for m in two] == ["Coolant temperature", "Engine speed"]
     assert two[0].unit == "degC"

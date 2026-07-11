@@ -113,6 +113,31 @@ Startup-connection precedence was extracted into a testable
   as the primary transceiver now specify the bare **ST L9637D** (same chip,
   breadboarded); a shopping list is in the project root.
 
+## QA quick fixes (post-review, same branch)
+
+A full requirements-vs-code QA sweep confirmed the product is healthy and found
+11 unmet/partial spec items (recorded in the backlog). The four low-risk "quick
+fixes" were applied here:
+
+- **Live data 37 → 40 parameters** — added oil temperature (0x1E), catalyst
+  temperature (0x1F), and cooling-fan state (0x28), the three categories the
+  sweep found missing. Ids are now contiguous 0x01..0x28; the virtual ECU serves
+  them automatically.
+- **`dtc clear` now confirms** — the CLI asks "Clear all stored fault codes?
+  [y/N]" before wiping codes (EOF/empty stdin declines, exit 1); `--yes`/`-y`
+  skips it for scripts. (The GUI already prompted.)
+- **Windows console text** — runtime CLI messages (actuator refusal,
+  Security-Learn, coding, `serve` banners) now use an ASCII "-" instead of an
+  em-dash that garbled on the default Windows codepage.
+- **Doc accuracy** — the "every ECU write gated" line now states the three gates
+  the coding path actually enforces (backup + verify + confirmation), rather
+  than the seven once advertised.
+
+The larger unmet items (service adjustments, VCSI connection-chain status, EAS
+screens, message-centre text, injector-pulse test, full-screen kiosk,
+immobilised-state coherence, server-side write enforcement) remain open in the
+backlog as scope decisions.
+
 ## Tests
 
 - `tests/`: **153 passed** (was 141) — new `test_tcp_transport.py` (full stack
@@ -120,7 +145,8 @@ Startup-connection precedence was extracted into a testable
   sequential clients, timeout resync, the serial bridge via a fake serial) and
   `test_gui_connection.py` (connection screen, rollback, startup precedence,
   config validation).
-- `tests_regression/`: **234 passed** — updated for the 12-screen / 6-menu-item
-  contract; the version test now asserts `__version__` / `--version` /
-  `pyproject.toml` stay in lockstep.
+- `tests_regression/`: **235 passed** — updated for the 12-screen / 6-menu-item
+  contract and the 40-parameter live-data count; new coverage for the
+  `dtc clear` confirmation; the version test asserts `__version__` /
+  `--version` / `pyproject.toml` stay in lockstep.
 - No test requires real hardware or a real serial port.

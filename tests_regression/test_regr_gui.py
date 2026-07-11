@@ -344,7 +344,7 @@ def test_live_data_tick_pauses_and_resumes(window_factory):
 
 
 # ---------------------------------------------------------------------------
-# 7. Gauge widgets + specs for all 37 live parameters
+# 7. Gauge widgets + specs for all 40 live parameters
 # ---------------------------------------------------------------------------
 
 
@@ -367,12 +367,12 @@ def test_gauge_widgets_construct_and_accept_values(qtbot):
         assert not g.grab().isNull()
 
 
-def test_spec_for_covers_all_37_parameters(qtbot):
-    """CLAUDE.md: 37 live-data params; every one gets a usable gauge spec."""
+def test_spec_for_covers_all_40_parameters(qtbot):
+    """CLAUDE.md: 40 live-data params; every one gets a usable gauge spec."""
     from gems_t4.app.gui.gauge_specs import spec_for
     from gems_t4.app.gui.widgets import build_gauge
 
-    assert len(PARAMETERS) == 37
+    assert len(PARAMETERS) == 40
     for lid in PARAMETERS:
         spec = spec_for(lid)
         assert spec.label, f"param 0x{lid:02X} needs a label"

@@ -64,6 +64,22 @@ def _source_label(args: argparse.Namespace) -> str:
     return f"scenario '{args.scenario}'"
 
 
+def _prompt_yes_no(prompt: str) -> bool:
+    """Interactive ``[y/N]`` confirmation. Only 'y'/'yes' confirms.
+
+    EOF (a non-interactive/empty stdin) is treated as "no" so a scripted run
+    never blocks or silently proceeds. Tolerates the UTF-8 BOM PowerShell
+    prepends when piping (``echo y | ...``), seen as U+FEFF (utf-8 stdin) or
+    ``\\xef\\xbb\\xbf`` (cp1252).
+    """
+    try:
+        reply = input(prompt)
+    except EOFError:
+        return False
+    reply = reply.lstrip("﻿\xef\xbb\xbf").strip().lower()
+    return reply in ("y", "yes")
+
+
 def _cmd_scenarios(args: argparse.Namespace) -> int:
     render.console.print("[bold]Available fault scenarios:[/]")
     for name in SCENARIOS:
@@ -88,6 +104,14 @@ def _cmd_live(args: argparse.Namespace) -> int:
 
 
 def _cmd_dtc(args: argparse.Namespace) -> int:
+    # Clearing fault codes is destructive; confirm before touching the ECU
+    # (unless --yes). The confirmation is asked up front so a declined clear
+    # never opens a session.
+    if args.dtc_action == "clear" and not args.yes and not _prompt_yes_no(
+        "Clear all stored fault codes? [y/N] "
+    ):
+        render.console.print("Clear cancelled.")
+        return 1
     client, _ = _build_client(args)
     render.communicating()
     client.connect()
@@ -143,7 +167,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     if args.port:
         render.console.print(
             f"[bold]Bridging USB Pico on {args.port}[/] at "
-            f"{listen_host}:{listen_port} — Ctrl+C to stop."
+            f"{listen_host}:{listen_port} - Ctrl+C to stop."
         )
         try:
             run_serial_bridge(
@@ -166,7 +190,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     host, port = server.address
     render.console.print(
         f"[bold]Serving virtual GEMS ECU[/] (scenario '{args.scenario}') at "
-        f"{host}:{port} — Ctrl+C to stop."
+        f"{host}:{port} - Ctrl+C to stop."
     )
     if listen_host == "127.0.0.1":
         render.console.print(
@@ -222,16 +246,9 @@ def _cmd_coding(args: argparse.Namespace) -> int:
                         return True
                     field = programming.CODING_FIELDS[args.field]
                     old = programming.decode_field(args.field, backup.data)
-                    try:
-                        reply = input(
-                            f"Write {field.name}: '{old}' -> '{args.value}'? [y/N] "
-                        )
-                    except EOFError:
-                        return False
-                    # PowerShell pipes ("echo y | ...") prepend a UTF-8 BOM,
-                    # seen as U+FEFF (utf-8 stdin) or "\xef\xbb\xbf" (cp1252).
-                    reply = reply.lstrip("\ufeff\xef\xbb\xbf").strip().lower()
-                    return reply in ("y", "yes")
+                    return _prompt_yes_no(
+                        f"Write {field.name}: '{old}' -> '{args.value}'? [y/N] "
+                    )
 
                 result = programming.write_coding(
                     client, args.field, value, backup=backup, confirm=_confirm
@@ -311,6 +328,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("dtc", help="read or clear fault codes")
     add_common(sp)
     sp.add_argument("dtc_action", choices=["read", "clear"], help="read or clear")
+    sp.add_argument("--yes", "-y", action="store_true",
+                    help="skip the confirmation prompt when clearing")
     sp.set_defaults(func=_cmd_dtc)
 
     sp = sub.add_parser("actuator", help="run an actuator test")

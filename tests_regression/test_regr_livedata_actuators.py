@@ -4,9 +4,10 @@ Written from the frozen contract (INTERFACES.md), CLAUDE.md and
 RELEASE_NOTES.md — NOT derived from the original tests/ suite.
 
 Documented claims under test:
-* exactly 37 $61 parameters, including the v0.0.3 additions
+* exactly 40 $61 parameters, including the v0.0.3 additions
   (0x17 injector PW, 0x18 coil charge, 0x1B purge duty, 0x1C fuel pump,
-  0x1D engine run time, 0x20-0x27 per-cylinder misfire counts);
+  0x1D engine run time, 0x20-0x27 per-cylinder misfire counts) and the
+  2026-07-11 additions (0x1E oil temp, 0x1F catalyst temp, 0x28 cooling fan);
 * the common ids from the docs (0x01 coolant, 0x02 rpm, 0x03 battery,
   0x04 throttle, 0x05 MAF, 0x07 O2 bank A, 0x0A IACV steps, 0x0F fuel temp);
 * encode/decode round trips and 1-byte saturation at 255;
@@ -38,14 +39,14 @@ def make_stack(scenario: str = "healthy", **ecu_kwargs):
 # The parameter catalogue
 # --------------------------------------------------------------------------- #
 
-def test_exactly_37_parameters():
-    """RELEASE_NOTES.md v0.0.3: '24 -> 37 $61 measures'."""
-    assert len(livedata.PARAMETERS) == 37
+def test_exactly_40_parameters():
+    """37 (v0.0.3) + 3 (2026-07-11: oil temp, catalyst temp, cooling fan)."""
+    assert len(livedata.PARAMETERS) == 40
 
 
 def test_parameter_id_layout():
-    """Contiguous 0x01..0x1D block plus the 0x20..0x27 per-cylinder block."""
-    expected = set(range(0x01, 0x1E)) | set(range(0x20, 0x28))
+    """Contiguous 0x01..0x28 (0x01..0x1F block + 0x20..0x28 cylinder/fan block)."""
+    expected = set(range(0x01, 0x29))
     assert set(livedata.PARAMETERS) == expected
 
 
@@ -128,12 +129,15 @@ def test_decode_measure_unknown_id_is_generic_not_a_crash():
     assert m.raw == 0x12
 
 
-def test_read_all_returns_all_37_measures():
+def test_read_all_returns_all_40_measures():
     _, client = make_stack()
     measures = livedata.read_all(client)
-    assert len(measures) == 37
+    assert len(measures) == 40
     names = {m.name for m in measures}
     assert "Coolant temperature" in names
+    assert "Oil temperature" in names
+    assert "Catalyst temperature (bank A)" in names
+    assert "Cooling fan state" in names
 
 
 # --------------------------------------------------------------------------- #

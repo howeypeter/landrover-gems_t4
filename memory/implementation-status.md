@@ -176,15 +176,16 @@ PySide6). Regression suite runs separately: `pytest tests_regression` → 234.
 
 **QA-found unmet SPEC requirements (2026-07-11 sweep) — see
 [[qa-unmet-requirements]].** Distinct from the future-research items above:
-things already promised in CLAUDE.md that the code doesn't do yet. Never built:
+things promised in CLAUDE.md that the code didn't do yet. **Four quick fixes
+DONE 2026-07-11:** #6 doc corrected to the 3 real coding-write gates; #8 live
+params 37→**40** (added oil temp 0x1E, catalyst temp 0x1F, cooling-fan 0x28 —
+ids now contiguous 0x01..0x28); #10 CLI `dtc clear` now prompts (`--yes` skips);
+#11 runtime CLI messages use ASCII "-" not em-dash. **Still OPEN:** never built —
 service adjustments (timing/idle), VCSI connection-chain link status, EAS
-suspension screens, message-centre text, injector brief-pulse test. Partial /
-doc-overstates: coding write enforces 3 of the 7 advertised gates (no
-security/precondition/dry-run); not full-screen kiosk (normal 800×600 window);
-37 live params (<40–60 aim; missing oil temp / catalyst / fan); immobilised not
-coherent on live-data; CLI `dtc clear` doesn't prompt; em-dash garbles on
-Windows console. Plus a security note: network write-gate is client-side only,
-not enforced by `serve`. Product is otherwise healthy (153+234 tests green).
+suspension screens, message-centre text, injector brief-pulse test; behaviour —
+immobilised not coherent on live-data (rpm keeps idling); not full-screen kiosk;
+plus a security note (network write-gate is client-side only, not enforced by
+`serve`). Product healthy: **153 tests + 235 regression green**.
 
 Related: [[tech-stack-decision]], [[research-synthesis]],
 [[research-python-architecture]], [[workflow-directives]],

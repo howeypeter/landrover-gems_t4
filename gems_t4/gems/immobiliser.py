@@ -111,7 +111,7 @@ def security_learn(
         ROUTINE_SUBMIT_CODE, bytes([(becm_code >> 8) & 0xFF, becm_code & 0xFF])
     )
     if resp.is_negative:
-        return SecurityLearnResult(False, f"Code rejected ({resp.nrc_name}) — nothing stored.", steps)
+        return SecurityLearnResult(False, f"Code rejected ({resp.nrc_name}) - nothing stored.", steps)
     step("BeCM code accepted and stored as new master.")
 
     # 5. confirm mobilised

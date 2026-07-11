@@ -160,7 +160,7 @@ or <code>--port /dev/ttyACM0</code> (Linux) to talk to a real Pico adapter inste
 <h2 id="gui">Graphical interface</h2>
 <p>A PySide6 kiosk GUI reproduces the Win98 dealer-tool look over the same engine: a
 boot splash, VIN-first vehicle identification (where you pick the fault scenario), a
-system menu, and screens for fault codes, live data (37 measures on painted analog
+system menu, and screens for fault codes, live data (40 measures on painted analog
 gauges, with the authentic gauge-count → refresh-rate trade-off), actuator tests
 (refusals and all), toolbox self-tests, and a Programming sub-menu (gated coding editor,
 immobiliser Security-Learn re-sync, and the read-only fuel/ignition map viewer).
@@ -312,7 +312,7 @@ experience). Build with the <code>[build]</code> extra:
 <h2 id="status">Status</h2>
 <p>Phases 1–6 complete: the virtual ECU, full protocol stack, CLI, Pico
 firmware/transport, the PySide6 Win98 kiosk GUI (full period skin, painted gauges, the
-"Communicating with ECU" latency model), gated programming/coding/immobiliser/maps, 37
+"Communicating with ECU" latency model), gated programming/coding/immobiliser/maps, 40
 live-data parameters including per-cylinder misfire counts, and the two-exe Windows
 build — backed by a 153-test suite including an end-to-end GUI tour. The ECU link can also run over TCP (<code>gems_t4 serve</code> + <code>--connect HOST[:PORT]</code>, or the GUI’s Configuration → VCI connection screen) — read-only over the network unless writes are explicitly enabled; see README.md “Remote / network use”. Remaining: on-car
 validation of the Pico adapter (needs real hardware). See the “Tech stack” and “Build
