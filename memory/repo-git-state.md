@@ -5,23 +5,32 @@ metadata:
   type: project
 ---
 
-**As of 2026-07-07 (v0.0.4).** Everything is committed and the repo lives on
-GitHub (`howeypeter/landrover-gems_t4`).
+**As of 2026-07-11 (v0.0.5).** The repo lives on GitHub
+(`howeypeter/landrover-gems_t4`).
 
 ## Git state
-- Work proceeds on **version branches `v0.0.x`** (currently `v0.0.4`, the
-  bugfix/quality branch) with `main` as the merge destination. Branches
-  `v0.0.1`–`v0.0.4` exist; `v0.0.1`–`v0.0.3` are pushed to `origin`.
-- The Python **package version tracks the release tag** as of v0.0.4
-  (`pyproject.toml` / `gems_t4/__init__.py` / `--version` all say 0.0.4 —
-  before that they said 0.1.0, a mismatch found by the v0.0.3 regression
-  sweep). Keep them in lockstep when cutting a version.
+- Work proceeds on **version branches `v0.0.x`** (currently **`v0.0.5`**, the
+  TCP/network-transport release) with `main` as the merge destination. Branches
+  `v0.0.1`–`v0.0.5` exist; all pushed to `origin`. **v0.0.5 is committed
+  (`599a8bb`) and pushed but NOT yet merged to main — the user handles the
+  merge/tag themselves.**
+- The Python **package version tracks the release tag** (`pyproject.toml` /
+  `gems_t4/__init__.py` / `--version` all say **0.0.5** as of this branch —
+  aligned since v0.0.4, before that 0.1.0). Keep them in lockstep when cutting a
+  version; `tests_regression/test_regr_cli.py::test_version_flag` now asserts
+  all three match.
 - **Release-notes convention:** `RELEASE_NOTES.md` = the CURRENT release;
   `RELEASE_NOTES_v0.0.x.md` = archive. When cutting a new version, `git mv`
-  the old `RELEASE_NOTES.md` to its versioned name first.
-- v0.0.4 removed `diagrams/p38-gems-network.svg` (`git rm`; user-reported
-  incorrect) and added `tests_regression/` — a 233-test independent suite
-  outside pyproject `testpaths` (run `pytest tests_regression` explicitly).
+  the old `RELEASE_NOTES.md` to its versioned name first. (v0.0.5 archived
+  v0.0.4 this way → `RELEASE_NOTES_v0.0.4.md`.)
+- `tests_regression/` (added v0.0.4) is an independent suite outside pyproject
+  `testpaths` — run `pytest tests_regression` explicitly; **234 tests** as of
+  v0.0.5 (was 233; updated for the 12-screen/6-menu-item contract).
+- **Deliberately left UNTRACKED (user's call, 2026-07-11):** the Phase-3
+  hardware shopping lists (`PICO_SHOPPING_LIST.*`, `PHASE3_SHOPPING_LIST*.md`)
+  and three framework/packaging research notes under `memory/`
+  (`FRAMEWORK_EVAL_SUMMARY.md`, `framework-pico-serial-eval.md`,
+  `packaging-distribution-research.md`). Still on disk; user said not to track.
 
 ## .gitignore (added/expanded this session)
 Ignores: `.venv/`, `__pycache__/`, `*.py[cod]`, `*.egg-info/`, build/dist,

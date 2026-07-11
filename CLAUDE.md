@@ -476,6 +476,16 @@ screens, 37 live-data params. Remaining polish candidates (not started,
 optional): windowed-exe icon/version resources, more guided fault trees,
 Td5/MEMS3 real-reflash profile.
 
+**Backlog / open research items (not started — do not investigate until picked
+up):**
+- **EPROM programmability by model year.** The current stance (see "⚠️
+  'Programming' a GEMS ECU means three things" above) is that GEMS maps live on
+  socketed UV-EPROMs with NO K-line reflash path — a bench chip-swap only.
+  Open question to research later: does that hold across *all* GEMS model years,
+  or do certain years/variants allow the EPROM (or its calibration) to be
+  programmed some other way (in-system, a different chip revision, a
+  factory/dealer path)? Revisit before treating "no reflash, ever" as absolute.
+
 **TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
 GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork
 for both the Raspberry-Pi-at-the-car topology and the future WiFi Pico
