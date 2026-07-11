@@ -159,6 +159,12 @@ PySide6). Regression suite runs separately: `pytest tests_regression` → 234.
   maps are bench EPROM chip-swap only, no K-line reflash ever. Open question:
   does that hold across ALL GEMS model years/variants, or do some allow the
   EPROM/calibration to be programmed another way?
+- **4.0/4.6 engine-variant toggle (open, do not start until picked up)** — see
+  [[engine-variant-toggle]]. One GEMS ECU may hold both 4.0 L and 4.6 L
+  calibrations with a selectable active variant (ECUs get cross-fitted). A
+  writable `engine` coding field (0x83) already exists in `gems/programming.py`
+  as an opaque byte; backlog is to research the real capability and promote it
+  to a first-class, coherently-modelled toggle.
 - Optional Td5/MEMS3 profile for a *real* documented over-the-wire reflash demo
   (the one flashable Rover engine ECU — contrast to GEMS's chip-swap).
 - Optional polish: windowed-exe icon/version resources, guided fault trees.

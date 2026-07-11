@@ -485,6 +485,17 @@ up):**
   or do certain years/variants allow the EPROM (or its calibration) to be
   programmed some other way (in-system, a different chip revision, a
   factory/dealer path)? Revisit before treating "no reflash, ever" as absolute.
+- **4.0/4.6 engine-variant toggle.** A single GEMS ECU may carry the
+  calibration for *both* the 4.0 L and 4.6 L V8, with which one is active
+  selectable — because in practice a 4.6 ECU can end up on a 4.0 engine and
+  vice versa, and the ECU must be told which it's driving. A writable coding
+  field already exists (`CodingField("engine", 0x83, "Engine (4.0/4.6
+  select)")` in `gems/programming.py`), so the mechanism is stubbed. Backlog:
+  research the *real* capability (does one ECU genuinely hold both maps? what
+  byte/coding actually flips it? does it affect fuel/ignition maps, rev limit,
+  drive-by-wire, etc.?) and, once known, make the toggle a first-class,
+  correctly-modelled feature rather than an opaque coding byte — including
+  whatever downstream live-data / actuator differences the choice implies.
 
 **TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
 GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork
