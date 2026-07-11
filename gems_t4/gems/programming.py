@@ -139,7 +139,7 @@ def write_coding(
                 ok=False,
                 message=(
                     f"verify FAILED: wrote {value.hex()} but read back "
-                    f"{readback.hex()} — restore from backup"
+                    f"{readback.hex()} - restore from backup"
                 ),
                 backup=backup,
             )

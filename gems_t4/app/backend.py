@@ -30,6 +30,8 @@ from gems_t4.gems.virtual_ecu import VirtualEcu
 from gems_t4.protocol.client import KwpClient
 from gems_t4.protocol.security import compute_key
 from gems_t4.transport.base import Transport
+from gems_t4.transport.pico import PicoAdapterTransport
+from gems_t4.transport.tcp import DEFAULT_PORT, TcpTransport
 from gems_t4.transport.virtual import VirtualTransport
 
 
@@ -58,6 +60,9 @@ class Backend:
         self._transport_factory = transport_factory
         self._client: KwpClient | None = None
         self._ecu: VirtualEcu | None = None
+        self._connection_label = (
+            "Custom transport" if transport_factory is not None else "Virtual ECU"
+        )
 
     # -- introspection ------------------------------------------------------ #
     @property
@@ -69,10 +74,25 @@ class Backend:
         return self._client is not None
 
     @property
+    def is_remote(self) -> bool:
+        """True when a transport factory (USB/network/custom) replaces the
+        local virtual ECU — scenario/immobilised toggles don't apply then."""
+        return self._transport_factory is not None
+
+    @property
+    def connection_label(self) -> str:
+        """Human-readable description of the selected connection."""
+        return self._connection_label
+
+    @property
     def is_wireless(self) -> bool:
-        """False for the wired/virtual paths; a future WiFi transport sets True."""
+        """True on a network transport (write policy applies). Checks the live
+        client's transport when connected, else the configured factory's kind."""
         t = getattr(self._client, "transport", None)
-        return bool(getattr(t, "is_wireless", False))
+        if t is not None:
+            return bool(getattr(t, "is_wireless", False))
+        factory = self._transport_factory
+        return bool(getattr(factory, "is_wireless", False))
 
     @staticmethod
     def available_scenarios() -> list[str]:
@@ -90,6 +110,87 @@ class Backend:
         if self.connected:
             self.disconnect()
             self.connect()
+
+    def set_connection(
+        self,
+        kind: str,
+        *,
+        com_port: str | None = None,
+        host: str | None = None,
+        tcp_port: int = DEFAULT_PORT,
+        allow_writes: bool = False,
+    ) -> None:
+        """Select how the tool reaches the ECU, then disconnect (lazy reconnect).
+
+        ``kind`` is ``"virtual"`` (built-in simulated ECU), ``"usb"`` (Pico
+        adapter on ``com_port``) or ``"network"`` (TCP endpoint ``host``:
+        ``tcp_port`` — a ``gems_t4 serve`` bridge or a WiFi Pico). Network
+        connections are read-only unless ``allow_writes`` is set (CLAUDE.md
+        write policy). The next operation reconnects through the new transport.
+        """
+        if kind == "virtual":
+            factory = None
+            label = "Virtual ECU"
+        elif kind == "usb":
+            if not com_port:
+                raise ValueError("usb connection needs a COM port")
+            port = com_port
+
+            def factory() -> Transport:
+                return PicoAdapterTransport(port)
+
+            label = f"USB connector — {port}"
+        elif kind == "network":
+            if not host:
+                raise ValueError("network connection needs a host/IP")
+            endpoint_host, endpoint_port, writes = host, tcp_port, allow_writes
+
+            def factory() -> Transport:
+                return TcpTransport(
+                    endpoint_host, endpoint_port, allow_writes=writes
+                )
+
+            factory.is_wireless = True  # type: ignore[attr-defined]
+            mode = "writes enabled" if writes else "read-only"
+            label = f"Network — {endpoint_host}:{endpoint_port} ({mode})"
+        else:
+            raise ValueError(f"unknown connection kind {kind!r}")
+        self.disconnect()
+        self._transport_factory = factory
+        self._connection_label = label
+
+    def apply_connection(
+        self,
+        kind: str,
+        *,
+        com_port: str | None = None,
+        host: str | None = None,
+        tcp_port: int = DEFAULT_PORT,
+        allow_writes: bool = False,
+    ) -> str:
+        """:meth:`set_connection` + :meth:`connect`, atomically.
+
+        If the new connection cannot be opened, the previous transport (and
+        label) are restored so a typo'd endpoint never strands the tool on a
+        dead connection. Returns the applied :attr:`connection_label`.
+        """
+        prev_factory = self._transport_factory
+        prev_label = self._connection_label
+        self.set_connection(
+            kind,
+            com_port=com_port,
+            host=host,
+            tcp_port=tcp_port,
+            allow_writes=allow_writes,
+        )
+        try:
+            self.connect()
+        except Exception:
+            self.disconnect()
+            self._transport_factory = prev_factory
+            self._connection_label = prev_label
+            raise
+        return self._connection_label
 
     def connect(self) -> None:
         """Open a diagnostic session (build the stack, init, start session)."""

@@ -14,15 +14,17 @@ both RP2040 (Pico) and RP2350 (Pico 2) boards — **no firmware source changes
 between them**, only the build target (see "Build & flash" below).
 
 Do **not** use a Pico W / Pico 2 W for now. Those add a wireless radio this
-project doesn't use yet — see "Planned: Pico 2 W wireless mode" in `CLAUDE.md`
-for the read-only WiFi mode that's tracked as a future addition, not yet built.
+firmware doesn't use yet. The laptop side of the wireless mode already exists
+(`gems_t4.transport.tcp` + `gems_t4 serve` speak this same host protocol over
+TCP, read-only by default) — only the Pico WiFi *firmware* remains unbuilt; see
+"Pico 2 W wireless (WiFi) mode" under Tech stack → Hardware in `CLAUDE.md`.
 
 ## Bill of materials
 
 | Part | Notes |
 |---|---|
 | Raspberry Pi **Pico** or **Pico 2** (non-wireless) | USB-CDC to the laptop |
-| MikroElektronika **ISO 9141 Click** (ST **L9637D**) | K-line transceiver, no bare-chip soldering |
+| ST **L9637D** K-line transceiver (bare DIP-8 chip + breadboard) | The MikroE **ISO 9141 Click** used the same chip but is retired/unavailable in the US (verified 2026-07-11) — wire the bare L9637D instead; same pins, see the shopping list in the project root |
 | OBD-II (J1962) male pigtail | to the car's diagnostic socket |
 | Inline fuse (1–2 A) | on the +12 V tap (pin 16 is always live) |
 
@@ -75,4 +77,4 @@ client = KwpClient(PicoAdapterTransport("COM5"))
 client.connect(mode="slow")   # 5-baud init on the Pico
 ```
 
-Or from the CLI: `gems-t4 live --port COM5`.
+Or from the CLI: `gems_t4 live --port COM5`.

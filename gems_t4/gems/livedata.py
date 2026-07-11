@@ -8,13 +8,13 @@ The two emulator-only fields ``state_key`` and ``nominal`` let the virtual ECU
 build its baseline state and answer reads from a single source of truth; they do
 not affect the wire encoding.
 
-This is a representative ~37-parameter set drawn from the GEMS live measures in
-``memory/research/gems-data-catalog.md`` (coolant/fuel/air temps, RPM, MAF,
-throttle, O2, fuel trims, IACV steps, road speed, loop status, misfire counts —
-total AND per-cylinder across the V8's eight pots, the T4's headline misfire
-display — injector pulse width, coil charge time, purge duty, fuel pump state,
-engine run time, immobiliser state, ...). More can be appended without touching
-other modules.
+This is a representative ~40-parameter set drawn from the GEMS live measures in
+``memory/research/gems-data-catalog.md`` (coolant/oil/fuel/air temps, RPM, MAF,
+throttle, O2, fuel trims, catalyst temp, IACV steps, road speed, loop status,
+misfire counts — total AND per-cylinder across the V8's eight pots, the T4's
+headline misfire display — injector pulse width, coil charge time, purge duty,
+fuel pump + cooling-fan state, engine run time, immobiliser state, ...). More
+can be appended without touching other modules.
 """
 from __future__ import annotations
 
@@ -106,6 +106,8 @@ _DEFS: tuple[ParamDef, ...] = (
     # Fed from the virtual ECU's sim clock while the engine runs; a 2-byte
     # counter saturates at ~18h12m, which the encode() clamp handles for free.
     ParamDef(0x1D, "Engine run time", "s", 2, 1.0, 0.0, False, "run_time", 0),
+    ParamDef(0x1E, "Oil temperature", "degC", 1, 1.0, -40.0, False, "oil_temp", 90),
+    ParamDef(0x1F, "Catalyst temperature (bank A)", "degC", 2, 1.0, 0.0, False, "cat_temp", 420),
     # Per-cylinder misfire counters, cylinders 1-8 (firing order aside, the
     # display is numeric-order — this is the T4 party piece a generic OBD-II
     # scanner never shows). One byte each; a real counter saturates too.
@@ -117,6 +119,7 @@ _DEFS: tuple[ParamDef, ...] = (
     ParamDef(0x25, "Misfire count cyl 6", "", 1, 1.0, 0.0, False, "misfire_cyl6", 0),
     ParamDef(0x26, "Misfire count cyl 7", "", 1, 1.0, 0.0, False, "misfire_cyl7", 0),
     ParamDef(0x27, "Misfire count cyl 8", "", 1, 1.0, 0.0, False, "misfire_cyl8", 0),
+    ParamDef(0x28, "Cooling fan state", "", 1, 1.0, 0.0, False, "cooling_fan", 0),
 )
 
 #: All live-data parameters, keyed by local id.

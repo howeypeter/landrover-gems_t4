@@ -119,7 +119,10 @@ class KioskWindow(QMainWindow):
     def __init__(self, backend: Backend) -> None:
         super().__init__()
         self.backend = backend
-        self.setWindowTitle("TestBook T4 — RDS 5.06 / T4 Lite")
+        from gems_t4 import __version__
+        self.setWindowTitle(
+            f"TestBook T4 — RDS 5.06 / T4 Lite — v{__version__}"
+        )
         self.setFixedSize(SCREEN_W, SCREEN_H)
         self.setStyleSheet(WIN98_QSS)
 

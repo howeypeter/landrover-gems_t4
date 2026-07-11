@@ -13,4 +13,4 @@ The load-bearing seam is ``KwpClient(transport)``: it takes a real serial
 transport OR a VirtualTransport, so the whole stack runs and is tested off-car.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.0.5"

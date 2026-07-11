@@ -79,7 +79,7 @@ def run(client: "KwpClient", actuator_id: int, state: int) -> ActuatorOutcome:
     label = act.name if act else f"actuator 0x{actuator_id:02X}"
     if resp.is_negative:
         if resp.nrc == NRC.CONDITIONS_NOT_CORRECT:
-            msg = f"{label}: test not available — conditions not correct"
+            msg = f"{label}: test not available - conditions not correct"
         else:
             msg = f"{label}: refused ({resp.nrc_name})"
         return ActuatorOutcome(actuator_id=actuator_id, ok=False, message=msg)

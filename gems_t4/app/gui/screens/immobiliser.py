@@ -87,8 +87,18 @@ class ImmobiliserScreen(Screen):
 
     # -- status ------------------------------------------------------------- #
     def _refresh_status(self) -> None:
-        """Read the immobiliser status and render it in the LCD readout."""
-        status: ImmobiliserStatus = self.backend.immobiliser_status()
+        """Read the immobiliser status and render it in the LCD readout.
+
+        Runs unguarded ECU I/O from on_enter — a dead remote endpoint must
+        degrade to an error readout, not raise out of screen navigation.
+        """
+        try:
+            status: ImmobiliserStatus = self.backend.immobiliser_status()
+        except Exception as exc:  # noqa: BLE001 - transport/protocol errors
+            self._readout.setStyleSheet(f"color: {RED_BAD}; font-weight: bold;")
+            self._readout.setText(f"STATUS UNAVAILABLE — {exc}")
+            self.status.emit(f"ECU communication error: {exc}")
+            return
         self._show_status(status)
 
     def _show_status(self, status: ImmobiliserStatus) -> None:

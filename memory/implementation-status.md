@@ -5,9 +5,56 @@ metadata:
   type: project
 ---
 
-**Phases 1–6 COMPLETE. 123 passing tests** (74 + 10 skipped without the PySide6
-`[gui]` extra; both counts verified empirically). Phase 3 real-hardware on-car
-validation still pending HW.
+**Phases 1–6 COMPLETE. 153 passing tests in `tests/` + 234 in
+`tests_regression/`** (GUI files skip without the PySide6 `[gui]` extra via
+`importorskip`). Phase 3 real-hardware on-car validation still pending HW.
+
+## v0.0.5 (2026-07-11) — TCP/network transport (committed on branch `v0.0.5`, pushed)
+Adds a network path to the ECU alongside USB — groundwork for a
+Raspberry-Pi-at-the-car bridge AND a future WiFi Pico 2 W (identical laptop-side
+code for both). Same host protocol the Pico speaks over USB, now over a socket.
+- **`gems_t4/transport/tcp.py`** — `TcpTransport(host, port, *, allow_writes=False)`,
+  4th `Transport`; `is_wireless=True`; default port **9141**; drains a stale
+  late reply after a timeout (no off-by-one desync); IPv6-aware
+  `parse_endpoint`.
+- **`gems_t4/app/server.py`** — `gems_t4 serve`: `TcpFrameServer` answers from a
+  local virtual ECU (ticks the sim by wall-clock between exchanges) OR
+  `--port COMx` bridges a USB Pico (raw byte passthrough). `127.0.0.1:9141`
+  default; `--listen 0.0.0.0:9141` for the LAN. One client at a time. Survives
+  malformed frames (catch-all → BUS_ERROR; a real Pico can't crash either).
+- **Wireless write gate** (`protocol/client.py`): `WirelessWriteRefused` for
+  `$27`/`$30`/`$3B` + the `$31` learn routines over a wireless transport unless
+  `allow_writes`. Allowed: reads, `$14` clear, `$31` routine `0x03` (immo status
+  = pure read). `$27` is blocked (mutates security state, only precedes writes).
+- **CLI:** `--connect HOST[:PORT]` + `--allow-writes` on live/dtc/actuator/
+  coding/immo/gui (`--port`/`--connect` mutually exclusive).
+- **GUI connection screen** (`app/gui/screens/connection.py`, System menu →
+  "Configuration — VCI connection"): Virtual / USB COM / Network radio, applies
+  via `Backend.apply_connection` (tests link, rolls back on failure), persists
+  to `~/.gems_t4.json` (`GEMS_T4_CONFIG` overrides path; `app/config.py`,
+  strict field validation). Launch precedence via `app.gui.app.
+  apply_startup_connection`: flags > saved config > virtual. **GUI screens now
+  12** (was 11); system menu has **6** items.
+- **6-agent adversarial review before commit → 9 confirmed findings fixed**
+  (server DoS on malformed payload; `$27` ungated; immo-status wrongly blocked;
+  failed-connection rollback; transport resync; GUI degrades on dead endpoint;
+  config type-safety; serial-bridge robustness; firmware byte-parity + IPv6).
+- Version 0.0.4 → **0.0.5** (shown on the GUI boot splash + window title as of
+  2026-07-11). Standalone RELEASE_NOTES files removed 2026-07-11 — see
+  [[repo-git-state]].
+
+## v0.0.4 (2026-07-07) — bugfix/quality release
+- Package version aligned to the tag: 0.1.0 → **0.0.4** everywhere.
+- **`tests_regression/` added: 233 independent tests** (4-agent fan-out from
+  the frozen contracts, forbidden from reading `tests/`); run explicitly via
+  `pytest tests_regression` (outside pyproject `testpaths`).
+- Bugs fixed: CLI `coding write` auto-confirmed → now interactive `[y/N]`
+  prompt (EOF ⇒ refuse; `--yes`/`-y` for scripts; strips PowerShell-pipe BOM);
+  HOST_PROTOCOL.md example KWP checksums were stale placeholders (now C0/00);
+  stale "~24-parameter" comment in live_data.py.
+- `git rm`'d `diagrams/p38-gems-network.svg` (user-reported incorrect).
+- Deferred hardware-path observations recorded in the v0.0.4 commit message /
+  git history (the RELEASE_NOTES files that held them were removed 2026-07-11).
 
 ## Phase 6 COMPLETE (2026-07-07) — built by a 5-agent fan-out
 - **Gauge widgets:** `app/gui/widgets.py` — QPainter `DialGauge` (270° arc,
@@ -51,8 +98,9 @@ validation still pending HW.
 ## What exists
 - Python package `gems_t4` at the repo root. Deps via `requirements.txt` (or
   `pip install -e .`, which also adds a `gems_t4` console script). Run with
-  `python -m gems_t4 <cmd>`. ~2,500 LOC, **45 passing pytest tests**, no hardware
-  needed. Python 3.14 venv at `.venv/`. NOTE: command is `gems_t4` (underscore,
+  `python -m gems_t4 <cmd>`. **123 passing pytest tests** (76 tracked .py files:
+  50 package + 24 tests + 2 packaging), no hardware needed. Python 3.14 venv at
+  `.venv/`. NOTE: command is `gems_t4` (underscore,
   matching the folder) — the old `gems-t4` hyphen name was removed 2026-07-07.
 - Layers: `transport/` (base, virtual, pico, ftdi-stub) · `protocol/` (messages,
   framing, timing, init, security, client) · `gems/` (types, ecu_base, dtc,
@@ -81,8 +129,9 @@ validation still pending HW.
   COMx` → Pico.
 
 ## Key facts for the next session
-- **Frozen contract is `INTERFACES.md`** at the repo root — wire format, SID map,
-  each module's public API, module ownership. Build against it.
+- **Frozen contract is `docs/INTERFACES.md`** (moved from the repo root to
+  `docs/` on 2026-07-11 — root markdown policy, see [[repo-git-state]]) — wire
+  format, SID map, each module's public API, module ownership. Build against it.
 - Wire frame: `[0x80][TGT][SRC][LEN][data][CS]`, CS = sum mod 256. Stylized
   KWP2000 (GEMS bytes not public — the virtual ECU defines a coherent dialect).
 - Load-bearing seam: `KwpClient(transport)` takes VirtualTransport or
@@ -95,16 +144,53 @@ validation still pending HW.
   `.ino` both implement it; unit-tested via a fake serial loopback.
 
 ## How to validate
-`.venv/Scripts/python.exe -m pytest`  (expect `123 passed` with the `[gui]`/`[dev]`
-extra; `74 passed, 10 skipped` on a plain requirements.txt install without PySide6).
+`.venv/Scripts/python.exe -m pytest` (expect `153 passed` with the `[gui]`/`[dev]`
+extra; fewer + GUI files skipped on a plain requirements.txt install without
+PySide6). Regression suite runs separately: `pytest tests_regression` → 234.
 
-## Not yet built (next steps)
-- **Phase 3 real hardware:** on-car / bench validation of the Pico path (needs
-  the hardware); FTDI transport is still a documented stub.
+## Backlog / not yet built (next steps)
+- **Phase 3 real hardware (the critical-path item):** on-car / bench validation
+  of the Pico path (needs the hardware); FTDI transport is still a documented
+  stub. Hardware note: buy the **bare ST L9637D** transceiver + breadboard — the
+  MikroE ISO 9141 Click (same chip) is retired/unavailable in the US
+  (agent-verified 2026-07-11). See [[pico-board-support]].
+- **Pico 2 W WiFi firmware** — the laptop side is now BUILT (v0.0.5 TCP
+  transport + `serve` + connection screen). Only the Pico WiFi *firmware*
+  remains: join WiFi, answer the same host-protocol frames over TCP that
+  `serve` answers now. Read-only over the air. See [[pico-board-support]].
+- **EPROM programmability by model year (open research, do not start until
+  picked up)** — see [[eprom-programmability-question]]. Current stance: GEMS
+  maps are bench EPROM chip-swap only, no K-line reflash ever. Open question:
+  does that hold across ALL GEMS model years/variants, or do some allow the
+  EPROM/calibration to be programmed another way?
+- **4.0/4.6 engine-variant toggle (open, do not start until picked up)** — see
+  [[engine-variant-toggle]]. One GEMS ECU may hold both 4.0 L and 4.6 L
+  calibrations with a selectable active variant (ECUs get cross-fitted). A
+  writable `engine` coding field (0x83) already exists in `gems/programming.py`
+  as an opaque byte; backlog is to research the real capability and promote it
+  to a first-class, coherently-modelled toggle.
+- **Cross-fitted ECU → engine matching (open, do not start until picked up)** —
+  see [[ecu-engine-swap-matching]]. Parts-car ECU on a different engine/year:
+  which mismatches are reconcilable by coding + immobiliser Security-Learn vs.
+  which force an EPROM chip-swap or a different ECU. Starting assessment
+  recorded; turn into a guided procedure when picked up.
 - Optional Td5/MEMS3 profile for a *real* documented over-the-wire reflash demo
   (the one flashable Rover engine ECU — contrast to GEMS's chip-swap).
-- Optional polish: exe icon/version resources, guided fault trees, Pico 2 W
-  wireless read-only mode (parked — see CLAUDE.md, do not start unprompted).
+- Optional polish: windowed-exe icon/version resources, guided fault trees.
+
+**QA-found unmet SPEC requirements (2026-07-11 sweep) — see
+[[qa-unmet-requirements]].** Distinct from the future-research items above:
+things promised in CLAUDE.md that the code didn't do yet. **Four quick fixes
+DONE 2026-07-11:** #6 doc corrected to the 3 real coding-write gates; #8 live
+params 37→**40** (added oil temp 0x1E, catalyst temp 0x1F, cooling-fan 0x28 —
+ids now contiguous 0x01..0x28); #10 CLI `dtc clear` now prompts (`--yes` skips);
+#11 runtime CLI messages use ASCII "-" not em-dash. **Still OPEN:** never built —
+service adjustments (timing/idle), VCSI connection-chain link status, EAS
+suspension screens, message-centre text, injector brief-pulse test; behaviour —
+immobilised not coherent on live-data (rpm keeps idling); not full-screen kiosk;
+plus a security note (network write-gate is client-side only, not enforced by
+`serve`). Product healthy: **153 tests + 235 regression green**.
 
 Related: [[tech-stack-decision]], [[research-synthesis]],
-[[research-python-architecture]], [[workflow-directives]].
+[[research-python-architecture]], [[workflow-directives]],
+[[pico-board-support]], [[eprom-programmability-question]], [[repo-git-state]].

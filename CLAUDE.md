@@ -110,10 +110,10 @@ Per Andrew Revill's MEMS3 reverse-engineering (https://andrewrevill.co.uk/MEMS3T
 
 Representative vehicle: **P38 Range Rover 4.0/4.6 V8 with GEMS engine
 management (1995–1998)** — the user's own vehicle type. Detailed reference in
-`docs/land-rover-electronics.md`. Network diagram in
-`diagrams/p38-gems-network.svg` — a consolidated view of both the diagnostic
-K-line star topology and the point-to-point wiring for real-time coordination
-(BeCM-centric message centre, EAS faults, immobiliser, outstations).
+`docs/land-rover-electronics.md`. Network diagram: use
+`diagrams/p38-gems-electronics.html` (built from the docs). The older
+`p38-gems-network.svg` was reported incorrect by the user (2026-07-06) and was
+**removed (`git rm`) on v0.0.4** — build any new diagrams from the docs.
 
 ### GEMS in one paragraph
 
@@ -290,16 +290,27 @@ as static lookalikes for now.
 ## Files in this directory
 
 - `CLAUDE.md` — This file, the spec of record. Every detail the next bot needs.
+- `README.md` / `README.html` — the dual-doc landing page (see "Repository / git
+  state" below); `INSTALL.md` — the full setup guide (venv, GUI launcher,
+  optional hardware, optional Windows exe build).
+- **Root markdown policy (2026-07-11, user decision): only `CLAUDE.md`,
+  `README.md`, and `INSTALL.md` live at the repo root.** Everything else
+  (`docs/INTERFACES.md`, `docs/GUI_INTERFACES.md`, the shopping lists, etc.)
+  goes in `docs/`. Don't add new root-level `.md` files — put them in `docs/`
+  and link to them instead.
+- `docs/INTERFACES.md` / `docs/GUI_INTERFACES.md` — the frozen build contracts
+  (wire format, service map, module APIs / the GUI screen contract). Moved from
+  the repo root to `docs/` on 2026-07-11 (see root markdown policy above); no
+  code reads these by path, so the move was doc-only.
 - `docs/land-rover-electronics.md` — Standalone reference on late-90s Land Rover
   electronics, now centred on the GEMS P38; modules, protocols, and why there's
   no CAN bus. Discovery 2 retained as an era variation.
-- `diagrams/p38-gems-network.svg` — Consolidated diagnostic + operating network:
-  TestBook → VCSI → J1962 → K-line diagnostic star to all eight ECUs. Visually
-  distinguishes **integrated real-time coordination network** (GEMS, EAT, ABS,
-  EAS, BeCM hub, Instruments, door outstations) from **isolated systems** (SRS:
-  K-line only for safety-critical crash detection; HEVAC: K-line + analogue 12V
-  for climate). All verified by three independent agents (rendering, components,
-  connections).
+- `docs/PICO_SHOPPING_LIST.*`, `docs/PHASE3_SHOPPING_LIST*.md` — hardware
+  shopping lists (untracked in git by the user's choice; still on disk).
+- `diagrams/p38-gems-electronics.html` — the network diagram to use (built from
+  `docs/land-rover-electronics.md`); linked from `README.md` via
+  htmlpreview.github.io. (An older `p38-gems-network.svg` was reported incorrect
+  by the user and removed on v0.0.4 — it survives only in git history.)
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
@@ -339,9 +350,12 @@ were dropped. See `memory/tech-stack-decision.md`.)
     **virtual ECU**. The engine; runs in CLI, tests, and the GUI.
   - `transport/` — the only Python code that touches I/O (the *timing* lives in
     the adapter firmware, not here). Implementations: **Virtual** (in-memory →
-    virtual ECU) and **PicoAdapter** via `pyserial` — a USB-CDC link to the Pico
-    smart adapter (**canonical real transport**). A raw **FTDI KKL cable**
-    transport is a secondary quick-start/read option. **No BLE.**
+    virtual ECU), **PicoAdapter** via `pyserial` — a USB-CDC link to the Pico
+    smart adapter (**canonical real transport**) — and **Tcp** (`transport/
+    tcp.py`, 2026-07-11): the identical host protocol over a TCP socket
+    (`--connect HOST[:PORT]`, default port 9141), read-only by default (see the
+    wireless note below). A raw **FTDI KKL cable** transport is a secondary
+    quick-start/read option. **No BLE.**
   - `firmware/` — Raspberry Pi **Pico (RP2040)** sketch (Arduino C++). Owns the
     K-line: 5-baud/fast init, P1–P4 byte timing, half-duplex echo cancellation,
     frame-by-inter-byte-timeout. Exposes a simple **length-prefixed host protocol
@@ -363,29 +377,43 @@ were dropped. See `memory/tech-stack-decision.md`.)
   (Alternative weighed: pywebview + `98.css` for pixel-authentic chrome via
   HTML/CSS — rejected to stay single-language and keep realtime gauges snappy.)
 - **Hardware, wired only** (see `memory/research/hardware-interfaces.md`):
-  - **Primary rig: Raspberry Pi Pico *or* Pico 2 + MikroE ISO 9141 Click (L9637D)
-    over USB** — the smart adapter (modern VCSI equivalent). Both boards run
-    the identical firmware unmodified (the sketch only uses the portable
-    Arduino API — `Serial`, `Serial1`, `pinMode`, `digitalWrite`, `delay`,
-    `millis` — which `arduino-pico` implements the same on RP2040 and RP2350);
-    only the build's `--fqbn` target differs (`rpipico` vs `rpipico2`). Either
-    is fine for reads AND writes (immobiliser sync, coding), immune to USB
-    latency jitter. Canonical transport. BLE dropped → a plain (non-W) Pico is
-    fine, no wireless needed for the wired path.
+  - **Primary rig: Raspberry Pi Pico *or* Pico 2 + a bare ST L9637D K-line
+    transceiver (DIP-8, breadboarded) over USB** — the smart adapter (modern
+    VCSI equivalent). ⚠️ 2026-07-11: the **MikroE ISO 9141 Click** (same
+    L9637D chip) this section originally specified is **retired/unavailable in
+    the US** (SparkFun-exclusive, delisted; verified by agent research) — buy
+    the bare E-L9637D from DigiKey/Mouser (~$2) instead; wiring/shopping list
+    in the project root. Both boards run the identical firmware unmodified
+    (the sketch only uses the portable Arduino API — `Serial`, `Serial1`,
+    `pinMode`, `digitalWrite`, `delay`, `millis` — which `arduino-pico`
+    implements the same on RP2040 and RP2350); only the build's `--fqbn`
+    target differs (`rpipico` vs `rpipico2`). Either is fine for reads AND
+    writes (immobiliser sync, coding), immune to USB latency jitter. Canonical
+    transport. BLE dropped → a plain (non-W) Pico is fine, no wireless needed
+    for the wired path.
   - **Quick start: genuine FTDI KKL 409.1 cable** (`pyserial`) — cheap, good for
     first reads and capturing traffic; marginal for writes.
-  - **Planned, not yet built: Pico 2 W wireless (WiFi) mode, read-only.** Decided
-    2026-07-07: eventually add an opt-in wireless transport for live-data/DTC
-    monitoring only (no coding/actuator/Security-Learn writes over it — those
-    stay wired-only). Likely shape: WiFi/TCP reusing the same host-protocol
-    framing (not BLE — BLE's small MTU would need chunking the 255-byte frames
-    for no benefit, and BLE was already ruled out for ECU work generally); the
-    write-refusal enforced in the Python `KwpClient` by checking a
-    `Transport.is_wireless` flag, not in firmware (firmware stays a dumb timed
-    pipe). Do not build a Pico W / Pico 2 W adapter yet — not supported until
-    this lands.
-- **Build the virtual ECU first**; **every ECU write gated**: backup + verify +
-  checksum + session/security + precondition interlocks + dry-run + confirmation.
+  - **Pico 2 W wireless (WiFi) mode: laptop side BUILT 2026-07-11; Pico WiFi
+    firmware still NOT built.** Decided 2026-07-07, landed as planned:
+    `TcpTransport` reuses the host-protocol framing over WiFi/TCP (not BLE —
+    small MTU, ruled out); the write-refusal lives in the Python `KwpClient`
+    (checks `Transport.is_wireless`; coding/actuator/Security-Learn = SIDs
+    $30/$31/$3B refused; DTC *clear* allowed as part of read→diagnose→clear),
+    with an explicit `allow_writes`/`--allow-writes` opt-in for trusted links.
+    Firmware stays a dumb timed pipe. `gems_t4 serve` provides the network
+    endpoint today (virtual ECU, or `--port COMx` to bridge a USB Pico, e.g.
+    from a Raspberry Pi at the car). A future WiFi Pico just answers the same
+    frames `serve` answers now — do not build that firmware until explicitly
+    picked up.
+- **Build the virtual ECU first**; **every ECU write gated.** As built: the
+  coding-write path enforces **backup + verify-after-write + operator
+  confirmation** (and refuses read-only fields), and the immobiliser
+  Security-Learn write additionally enforces **security-access ($27) + routine
+  sequence**. The fuller gate set once imagined (a coding-block checksum,
+  security-access on *coding* writes too, precondition interlocks, a dry-run
+  mode) is only partly present — see the QA note "Every ECU write is fully
+  gated — docs vs code" under "Backlog / QA-found unmet requirements". Aim: no
+  ungated writes; close the remaining gate gaps before real-hardware coding.
 
 ### Recommended phased build
 
@@ -401,9 +429,11 @@ were dropped. See `memory/tech-stack-decision.md`.)
    ◑ PARTIAL: host protocol + Pico firmware + PicoAdapter built & unit-tested vs a
    fake serial; runs on Pico or Pico 2 (same firmware, build target only differs;
    2026-07-07); FTDI transport is a documented stub; on-car validation pending HW.
-3b. **Future, not started:** Pico 2 W wireless (WiFi) read-only mode — see the
-   "Planned, not yet built" note under Tech stack → Hardware above. Do not begin
-   until explicitly picked up.
+3b. **Laptop side DONE (2026-07-11); Pico WiFi firmware not started.** TCP
+   transport + serve endpoint + GUI connection screen — see "TCP/network
+   transport" under Build status below and the wireless note under Tech stack →
+   Hardware. Only the Pico W/2 W WiFi *firmware* remains; do not begin it until
+   explicitly picked up.
 4. **PySide6 GUI shell** over the same `gems_core` — Win98 kiosk, live gauges.
    ✅ DONE (2026-07-07): `gems_t4/app/gui/` — a Qt-free `Backend` facade
    (`app/backend.py`) + `KioskWindow`/`Screen` shell + 7 screens (boot, vehicle
@@ -455,24 +485,251 @@ were dropped. See `memory/tech-stack-decision.md`.)
 
 ### Build status
 
-**Where the project stands (2026-07-07):** Phases **1, 2, 4, 5, 6 complete**;
+**Where the project stands (2026-07-11):** Phases **1, 2, 4, 5, 6 complete**;
 Phase 3 (Pico adapter) built + unit-tested but needs real hardware for on-car
-validation. **123 passing tests** (or "74 passed, 10 skipped" without the
-PySide6 `[gui]` extra — 10 GUI test files; both counts verified empirically).
-Runs via `python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI
-via `gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14
-venv at `.venv/`. ~70 Python files, 11 GUI screens, 37 live-data params.
-Remaining polish candidates (not started, optional): windowed-exe icon/version
-resources, more guided fault trees, Td5/MEMS3 real-reflash profile.
+validation (parts ordered 2026-07-11: bare **L9637D** transceiver + breadboard —
+the MikroE ISO 9141 Click is retired/unavailable in the US). **153 passing
+tests** in `tests/` + **234 in `tests_regression/`** (GUI files skip without
+the PySide6 `[gui]` extra via `importorskip`). Runs via `python -m gems_t4
+<cmd>` or `gems_t4` after `pip install -e .`; GUI via `gems_t4 gui` (needs
+`[gui]`; `--instant` skips the waits). Python 3.14 venv at `.venv/`. 12 GUI
+screens, 40 live-data params. Remaining polish candidates (not started,
+optional): windowed-exe icon/version resources, more guided fault trees,
+Td5/MEMS3 real-reflash profile.
 
-**Quick start & known limitations (2026-07-07):**
-- **Launcher scripts:** `launch_gui.bat` (quick launch) and `create_shortcut.ps1`
-  (create desktop shortcut on Windows) are in the project root for convenience.
-- **PyInstaller bytecode cache gotcha:** If the bundled exe (`dist/gems_t4/gems_t4_gui.exe`)
-  doesn't reflect the latest source changes, run from the venv instead:
-  `python -m gems_t4 gui`. This is a known Qt/PyInstaller interaction where
-  bytecode caches persist even after `--clean` rebuilds. To force a fresh exe,
-  manually delete `packaging/build/` and `dist/` before rebuilding.
+**Backlog / open research items (not started — do not investigate until picked
+up):**
+- **EPROM programmability by model year.** The current stance (see "⚠️
+  'Programming' a GEMS ECU means three things" above) is that GEMS maps live on
+  socketed UV-EPROMs with NO K-line reflash path — a bench chip-swap only.
+  Open question to research later: does that hold across *all* GEMS model years,
+  or do certain years/variants allow the EPROM (or its calibration) to be
+  programmed some other way (in-system, a different chip revision, a
+  factory/dealer path)? Revisit before treating "no reflash, ever" as absolute.
+- **4.0/4.6 engine-variant toggle.** A single GEMS ECU may carry the
+  calibration for *both* the 4.0 L and 4.6 L V8, with which one is active
+  selectable — because in practice a 4.6 ECU can end up on a 4.0 engine and
+  vice versa, and the ECU must be told which it's driving. A writable coding
+  field already exists (`CodingField("engine", 0x83, "Engine (4.0/4.6
+  select)")` in `gems/programming.py`), so the mechanism is stubbed. Backlog:
+  research the *real* capability (does one ECU genuinely hold both maps? what
+  byte/coding actually flips it? does it affect fuel/ignition maps, rev limit,
+  drive-by-wire, etc.?) and, once known, make the toggle a first-class,
+  correctly-modelled feature rather than an opaque coding byte — including
+  whatever downstream live-data / actuator differences the choice implies.
+- **Reconciling a cross-fitted ECU to a different engine (the parts-car
+  scenario).** Real user situation: an ECU from a parts car onto a different
+  engine that may differ in displacement and/or model year — can the tool
+  "reprogram" the ECU to match the engine? Starting assessment (to verify, not
+  gospel): (a) the true calibration match is the fuel/ignition **maps = EPROM
+  chips**, a bench swap, NOT over the wire — so a genuinely mismatched
+  displacement can't be software-converted via K-line; (b) getting it to
+  *start* is the **immobiliser Security-Learn** BeCM↔ECM re-sync (the one real
+  GEMS write — already modelled); (c) config **coding** (VIN/dealer/4.0-4.6
+  select/transmission) partly applies but its real fidelity is unvalidated and
+  much VIN/market coding lives in the **BeCM, not the engine ECU**. Backlog:
+  work out exactly which mismatches are reconcilable by coding/Security-Learn
+  vs. which force a chip swap or a different ECU, and turn that into a guided
+  "ECU-to-engine matching" procedure. Ties into
+  [EPROM programmability] and [4.0/4.6 toggle] above.
+
+### Backlog / QA-found unmet requirements (found 2026-07-11 by a full QA sweep)
+
+A requirements-vs-code QA pass found the product is healthy and all tests pass,
+but these things were written into the spec (design pillars / locked-in
+decisions / v1 scope) yet never actually built, or built only partway. They are
+NOT features today — they are the to-do list of "what the spec promised but the
+code doesn't do yet." (Full detail in [[qa-unmet-requirements]] in memory.)
+
+**A. Promised features that were never built:**
+1. **Service adjustments.** The real T4 let a tech nudge ignition timing (−6°
+   to +3°) and idle speed to compensate for engine wear/fuel. We planned this
+   ("Rover party piece") but there is no screen or command for it — timing/idle
+   are read-only gauges only. *Tech:* no write path for these; add an
+   adjustment service + screen.
+2. **Connection-chain status ("which cable is unplugged").** The plan was to
+   model the real signal path — laptop → VCSI interface box → OBD lead → ECU —
+   as separate links, each able to be "unplugged" to produce an authentic
+   failure like "VCI not responding." Today the connection is just one on/off
+   flag; the Toolbox "VCI check" always prints a hardcoded "present." *Tech:*
+   `VirtualTransport` has a single `_open` bool; no VCSI/J1962 nodes, no
+   per-link state. This was a *locked-in* spec decision, not an open question.
+3. **Air-suspension (EAS) height/calibration screens.** A P38 "party piece" we
+   said we'd include; no EAS code exists at all.
+4. **Message-centre text.** The P38 dashboard shows warning text (e.g. "ENGINE
+   IMMOBILISED", "EAS FAULT"); we said the tool would mirror the active fault as
+   message-centre text across screens. Only the immobiliser screen shows one
+   such line; the coolant/misfire/lambda faults produce no message text.
+5. **Injector "brief pulse only" test.** The spec says injector tests should
+   fire brief pulses, never run continuously (a safety behaviour). There is no
+   injector actuator test at all — injector pulse-width is only a read-only
+   gauge.
+
+**B. Built, but incomplete or the docs oversell it:**
+6. **"Every ECU write is fully gated" — the docs claim more than the code
+   does.** CLAUDE.md advertises seven safety gates on every ECU write (backup,
+   verify, checksum, security-access, precondition checks, dry-run,
+   confirmation). The coding-write path actually enforces **three** of them —
+   backup, verify-after-write, and operator confirmation (these are real and
+   can't be skipped). **Missing:** it does NOT require security-access ($27)
+   before a coding write, has no precondition interlocks, and no dry-run;
+   "checksum" is only the wire-level frame checksum, not a coding-block one.
+   (The immobiliser Security-Learn write *does* enforce security + sequence.)
+   **✓ Doc corrected (2026-07-11):** the Tech-stack "every ECU write gated" line
+   now states the three gates actually enforced (plus the immobiliser's
+   security+sequence). Building the missing four gates remains an optional
+   feature decision.
+7. **Full-screen kiosk on boot.** Design pillar 1 wants the app to "take over
+   the screen" like an appliance. It actually runs as an ordinary 800×600
+   window with a normal title bar — the Win98 *look* is there, but it never goes
+   full-screen/borderless. *Tech:* no `showFullScreen`/frameless code exists.
+8. **Live-data breadth.** We aimed for ~40–60 live parameters to start (the real
+   T4 had ~108). **✓ FIXED (2026-07-11):** was 37, now **40** — added oil
+   temperature (0x1E), catalyst temperature (0x1F), and cooling-fan state (0x28),
+   the three categories that were missing. (Still well under the real ~108, but
+   now meets the stated floor.)
+9. **"Immobilised" isn't consistent across screens.** When the ECU is set to the
+   ENGINE-IMMOBILISED failure, the immobiliser screen says so correctly — but
+   the simulation still shows the engine running (RPM idling) on the live-data
+   screen. A truly immobilised engine shouldn't be running. *Tech:*
+   `virtual_ecu` never gates `engine_running`/rpm on the `_mobilised` flag.
+10. **Clearing fault codes doesn't always confirm.** V1 flow said clearing codes
+   should prompt for confirmation. **✓ FIXED (2026-07-11):** CLI `dtc clear` now
+   asks "Clear all stored fault codes? [y/N]" (EOF/empty stdin ⇒ declined, exit
+   1); `--yes`/`-y` skips it for scripts. (GUI already prompted.)
+11. **A dash prints as a garbled character on Windows.** Some authentic messages
+   used a "—" (em-dash) that showed as "�" on the default Windows command-line.
+   **✓ FIXED (2026-07-11):** the runtime CLI-printed messages (actuator refusal,
+   Security-Learn, coding-write, serve banners) now use an ASCII "-". (GUI
+   labels keep the em-dash — Qt renders Unicode fine.)
+
+**C. Security note (by design, but know it):** the "network is read-only" rule
+is enforced only on the laptop side (in `KwpClient`), not by the `serve`
+bridge. If you ever run `serve --port COMx --listen 0.0.0.0` (exposing a real
+Pico-on-a-real-car to the network), a misbehaving client could still send
+writes — the bridge won't stop it. Fine as long as `serve` stays on localhost /
+behind an SSH tunnel (the documented setup); worth server-side enforcement
+before any real over-the-network use.
+
+**Suggested triage:**
+- *Quick fixes — ✓ ALL DONE 2026-07-11:* #11 em-dash→ASCII, #10 CLI `dtc clear`
+  confirm prompt, #6 doc corrected to three gates, #8 live params 37→40
+  (oil-temp / catalyst / cooling-fan added). Tests: 153 + 235 green.
+- *Real feature decisions (bigger; keep or drop from scope):* #1 service
+  adjustments, #2 VCSI connection-chain status, #3 EAS suspension screens,
+  #4 message-centre text, #5 injector-pulse test, #7 full-screen kiosk mode.
+- *Behaviour fix:* #9 gate the sim's rpm/engine_running on the immobilised flag.
+- *Security hardening (before any non-localhost `serve`):* enforce the write
+  policy server-side in the bridge, not just in the client.
+
+**TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
+GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork
+for both the Raspberry-Pi-at-the-car topology and the future WiFi Pico
+(identical laptop-side code for both). Pieces:
+- `transport/tcp.py` — `TcpTransport(host, port, allow_writes=False)`: the
+  Pico host protocol (`0xA5/0x5A` frames) over a socket; `is_wireless=True`;
+  default port **9141**; `parse_endpoint("HOST[:PORT]")` helper.
+- `app/server.py` — `gems_t4 serve`: `TcpFrameServer` answers host-protocol
+  frames from a local transport. Default = virtual ECU (`--scenario`,
+  `--immobilised`, `--latency`; **the server ticks the sim by wall clock**
+  between exchanges since remote clients' local `tick()` no-ops);
+  `--port COMx` = raw TCP↔serial byte bridge to a USB Pico. Binds
+  `127.0.0.1:9141` by default; `--listen 0.0.0.0:9141` exposes on the LAN.
+  One client at a time (one tester per K-line).
+- **Wireless write gate** in `KwpClient.request`: SIDs $30/$31/$3B →
+  `WirelessWriteRefused` on a wireless transport unless `allow_writes`
+  ($14 clear stays allowed). CLI prints a clean `REFUSED:` line (exit 1).
+- CLI: `--connect HOST[:PORT]` + `--allow-writes` on live/dtc/actuator/coding/
+  immo/gui (`--port` and `--connect` are mutually exclusive); table titles show
+  the endpoint, not the (meaningless) local scenario name.
+- **GUI connection screen** (`app/gui/screens/connection.py`, System menu →
+  "Configuration — VCI connection"): radio Virtual / USB COM port / Network
+  (IP + port + allow-writes checkbox), applies via `Backend.set_connection`,
+  tests the link behind the wait overlay, persists to `~/.gems_t4.json`
+  (`GEMS_T4_CONFIG` env overrides the path — tests point it at tmp). The
+  Toolbox LAN-card self-test + canon disclaimer are untouched. Launch
+  precedence: `gui --port/--connect` flags > saved config > virtual.
+  `Backend` gained `set_connection` / `is_remote` / `connection_label`;
+  vehicle-id disables its scenario picker in remote mode (scenario lives with
+  the served/real ECU). GUI screens now 12 (was 11).
+- Tests: `tests/test_tcp_transport.py` (full stack over a real localhost
+  socket incl. gate on/off) + `tests/test_gui_connection.py`;
+  `tests_regression/test_regr_gui.py` updated for the 12-screen/6-menu-item
+  contract. Two-process smoke (serve + CLI `--connect`) verified by hand.
+- **Multi-agent review sweep (2026-07-11, 6 finder + adversarial-verifier
+  fan-out) — 9 confirmed findings, all fixed:** server no longer dies on a
+  malformed KWP payload (catch-all → BUS_ERROR; a real Pico can't crash
+  either); byte-parity with the firmware for INIT (len>=2, mode 1=fast else
+  slow, failure→TIMEOUT not BUS_ERROR) and SET_TIMING (len<8→BAD_REQUEST);
+  the gate now also blocks **$27 SecurityAccess** (it mutates ECU security
+  state and only precedes blocked writes) while **$31 routine 0x03**
+  (immobiliser STATUS) is carved out as the pure read it is — so `immo
+  status --connect` works and a read-only Security-Learn attempt is refused
+  BEFORE touching the ECU with a clean `SecurityLearnResult`, not mid-sequence;
+  `TcpTransport` drains stale late replies after a timeout (no more
+  off-by-one desync); `Backend.apply_connection` rolls back to the previous
+  transport when a connection test fails (typo'd IP no longer strands the
+  GUI); `apply_startup_connection` extracted from `run()` and tested (flags >
+  saved config > virtual, bad saved config falls back to virtual instead of
+  crashing the windowed exe); `load_config` strictly type-checks every field
+  (a JSON string "false" for allow_writes no longer truthy-enables writes);
+  live-data and immobiliser screens degrade gracefully when a remote endpoint
+  dies (stop timer / error readout, no exceptions out of Qt handlers); serial
+  bridge survives serial errors (drops client, keeps listening; testable via
+  injected fake serial + stop_event, Ctrl+C now works on an idle Windows
+  bridge); `parse_endpoint` handles IPv6 (`::1`, `[::1]:9141`). Suite counts
+  after: 153 + 234.
+
+**Full regression sweep 2026-07-07 (v0.0.3, commit b3abce7) — all green:**
+`pytest` in `.venv` → **123 passed**; a genuinely clean disposable venv with
+only `requirements.txt` → **74 passed, 10 skipped** (all 10 GUI files skip via
+`importorskip`). Every CLI command smoke-tested against the virtual ECU:
+`scenarios`, `live` (single + all params), `dtc read/clear` (all four
+scenarios produce their documented codes — P0118, P0303+P1303, P1185), the
+fuel-pump refusal interlock (engine "running" at idle → REFUSED, by design),
+`actuator mil`, `coding read` + gated `write` (verified), `immo status/learn`
+(recovers ENGINE IMMOBILISED). Docs re-checked: all UTF-8 (no UTF-16 drift),
+stale test counts fixed in `requirements.txt` + memory. The `dist/` exes were
+found **stale** (built 10:38, source changed ~17:49 — the documented
+PyInstaller gotcha, plus two running `gems_t4_gui.exe` instances locking the
+folder) and were rebuilt from clean `build/`+`dist/`. (The 0.1.0-vs-v0.0.x
+version split found by this sweep was reconciled on v0.0.4 — package version
+now tracks the release tag.)
+
+**v0.0.4 (2026-07-07) — bugfix/quality release:** package version aligned to
+the tag (0.0.4); **`tests_regression/` added — a 233-test INDEPENDENT
+regression suite** written by a 4-agent fan-out from the frozen contracts
+(agents were forbidden from reading `tests/`), run explicitly via
+`pytest tests_regression` (outside pyproject `testpaths` on purpose). Bugs it
+found, fixed: CLI `coding write` auto-confirmed (`confirm=lambda: True`) —
+now an interactive `[y/N]` prompt (EOF ⇒ refuse; `--yes`/`-y` for scripts;
+strips the BOM PowerShell pipes prepend); HOST_PROTOCOL.md worked-example KWP
+checksums were stale placeholders (now `C0`/`00` with arithmetic); stale
+"~24-parameter" comment in live_data.py. `git rm`'d the user-reported-bad
+`diagrams/p38-gems-network.svg`. Audited-but-kept: `protocol/init.py`
+(INTERFACES-pinned constants, not yet imported) and `transport/ftdi.py`
+(deliberate stub). Deferred hardware-path observations (Pico set_timing gap,
+receive-after-close, case-sensitive mode strings, ECU-side $3B write
+acceptance) are recorded in git history / commit messages (the standalone
+RELEASE_NOTES files were removed 2026-07-11 — see below).
+
+**Quick start & known limitations (updated 2026-07-11):**
+- **`launch_gui.bat` runs the LIVE venv source** (`.venv\Scripts\pythonw -m
+  gems_t4 gui`), NOT the bundled PyInstaller exe. This is deliberate: the source
+  always reflects the current code (network config screen, version, everything),
+  so there is nothing to "update" beyond a `git pull` — no rebuild needed. (It
+  used to launch `dist/gems_t4/gems_t4_gui.exe`, which went stale whenever source
+  changed — the cause of "the network options don't show up".) `create_shortcut.ps1`
+  makes a desktop shortcut on Windows.
+- **App version on launch:** the GUI shows `gems_t4 v<__version__>` on the boot
+  splash and in the window title, so every launch shows the version (currently
+  **v0.0.5**, tracking the branch/tag). Single source of truth is
+  `gems_t4/__init__.py` `__version__` (kept in lockstep with `pyproject.toml` /
+  `--version`; a regression test enforces this).
+- **PyInstaller exe (optional, only if you want a standalone build):** the
+  bundled `dist/gems_t4/gems_t4_gui.exe` can go stale — Qt/PyInstaller bytecode
+  caches persist even after `--clean`. Prefer the venv launcher above. To force a
+  fresh exe, delete `packaging/build/` and `dist/` before rebuilding.
 - **GUI waits:** By default, `gui` shows the period-authentic "Communicating with
   ECU - please wait" overlay (click it to skip). Use `gui --instant` to disable
   waits entirely, or set env var `GEMS_T4_INSTANT=1` (used by all tests for
@@ -484,13 +741,18 @@ programming.py` codecs, virtual-ECU `$31` + `immobilised` flag, backend methods,
 CLI (`coding read|write`, `immo status|learn`), and 4 GUI screens via a 3-agent
 fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
 
-### Repository / git state (2026-07-07)
+### Repository / git state (updated 2026-07-07, v0.0.4)
 
-- Git repo, branch **`v0.0.1`** (also `main`, `origin/main`). **Only `README.md`
-  is committed** (a GitHub stub) — **everything else is untracked**, safe on disk
-  but NOT in git history. First real commit still pending (`git add -A && git
-  commit` on `v0.0.1`). Don't run destructive git (`reset --hard`/`clean`) before
-  committing — it could wipe untracked work.
+- Git repo on GitHub (`howeypeter/landrover-gems_t4`). Everything is committed;
+  work proceeds on **version branches `v0.0.x`** (currently `v0.0.4`, the
+  bugfix branch) with `main` as the merge destination. The Python package
+  version (`pyproject.toml` / `__version__` / `--version`) **tracks the release
+  tag** — keep them in lockstep when cutting a version (a regression test
+  enforces it). **Release history lives in git tags + commit messages + this
+  Build-status section** — the standalone `RELEASE_NOTES*.md` files were removed
+  2026-07-11 to declutter the project root (they survive in git history). Do not
+  re-add them; summarize a release in its version-branch commit and, if needed,
+  a short bullet in Build status.
 - `.gitignore` (excludes `.venv`, caches, `__pycache__`, egg-info, OneDrive junk,
   firmware build output) and `.gitattributes` (`* text=auto eol=lf` — pins LF to
   silence Windows `core.autocrlf=true` CRLF churn) are in place.
@@ -513,13 +775,14 @@ starts with `pytest.importorskip("PySide6")` so a plain `requirements.txt` insta
 gives "N passed, K skipped" not errors. Contracts: `INTERFACES.md` (core),
 `GUI_INTERFACES.md` (screens).
 
-**Fixed 2026-07-07:** the 4 GUI test files each start with
+**Fixed 2026-07-07:** the GUI test files each start with
 `pytest.importorskip("PySide6")` so `pytest` after a plain `pip install -r
-requirements.txt` (no PySide6) gives a clean "45 passed, 4 skipped" instead of
+requirements.txt` (no PySide6) gives a clean "N passed, K skipped" instead of
 collection errors. Verified against a genuinely clean disposable venv, not just
-reasoning about it. Two ways to get the GUI tests running too:
-`pip install -e ".[gui]"` or `pip install -e ".[dev]"` (adds pytest-qt) → "63
-passed" either way.
+reasoning about it. (Counts at the time were "45 passed, 4 skipped" / "63
+passed"; as of Phase 6 they are **"74 passed, 10 skipped"** / **"123 passed"**
+— re-verified in a clean venv 2026-07-07.) Two ways to get the GUI tests running
+too: `pip install -e ".[gui]"` or `pip install -e ".[dev]"` (adds pytest-qt).
 
 Phases 1–2 complete and validated: **45 passing pytest tests, ~2,500 LOC**,
 runnable via `python -m gems_t4` (or the `gems_t4` script after `pip install -e .`;

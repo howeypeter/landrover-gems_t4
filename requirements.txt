@@ -9,13 +9,13 @@
 #
 # PySide6 (the GUI) is deliberately NOT listed here — it's a large binary
 # dependency (~200+ MB) that pure CLI/protocol work doesn't need. `pytest` with
-# only this file installed gives "45 passed, 4 skipped" (the GUI test files
+# only this file installed gives "74 passed, 10 skipped" (the GUI test files
 # skip cleanly via `pytest.importorskip("PySide6")`, not an error).
 #
 # Want the GUI too? Use pip's "extras" instead of this file:
 #     pip install -e ".[gui]"      # adds PySide6 + registers the `gems_t4` command
 #     pip install -e ".[dev]"      # adds PySide6 + pytest-qt, for running ALL tests
-# Either gives "63 passed" from `pytest`.
+# Either gives "123 passed" from `pytest`.
 
 pyserial>=3.5
 rich>=13.0

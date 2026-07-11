@@ -42,8 +42,9 @@ def test_decode_measure_unknown_id():
 
 
 def test_parameter_count_and_unique_state_keys():
-    # Phase 6 expansion: 24 originals + 13 new (0x17, 0x18, 0x1B-0x1D, 0x20-0x27).
-    assert len(livedata.PARAMETERS) == 37
+    # 24 originals + 13 (Phase 6: 0x17,0x18,0x1B-0x1D,0x20-0x27)
+    # + 3 (2026-07-11: 0x1E oil temp, 0x1F catalyst temp, 0x28 cooling fan).
+    assert len(livedata.PARAMETERS) == 40
     keys = [p.state_key for p in livedata.PARAMETERS.values()]
     assert len(keys) == len(set(keys))
 

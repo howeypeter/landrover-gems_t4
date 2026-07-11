@@ -19,6 +19,7 @@ _MENU: tuple[tuple[str, str], ...] = (
     ("Actuator tests — output drives", "actuators"),
     ("Programming & coding — write functions", "programming_menu"),
     ("Toolbox — self-tests & about", "toolbox"),
+    ("Configuration — VCI connection", "connection"),
 )
 
 
@@ -43,11 +44,16 @@ class SystemMenuScreen(Screen):
         lay.addStretch(1)
 
     def on_enter(self) -> None:
-        wireless = " · WIRELESS (read-only)" if self.backend.is_wireless else ""
-        self._header.setText(
-            f"Lucas/SAGEM GEMS 8 · simulated scenario: "
-            f"{self.backend.scenario_name}{wireless}"
-        )
+        if self.backend.is_remote:
+            # connection_label already carries read-only/writes-enabled mode.
+            self._header.setText(
+                f"Lucas/SAGEM GEMS 8 · {self.backend.connection_label}"
+            )
+        else:
+            self._header.setText(
+                f"Lucas/SAGEM GEMS 8 · simulated scenario: "
+                f"{self.backend.scenario_name}"
+            )
 
     def nav_buttons(self) -> set[str]:
         return {"back"}

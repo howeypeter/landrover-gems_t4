@@ -30,7 +30,7 @@ from gems_t4.app.gui.gauge_specs import spec_for
 from gems_t4.app.gui.widgets import build_gauge
 from gems_t4.gems.livedata import PARAMETERS
 
-#: Selectable gauge counts: a focused few vs. the whole ~24-parameter sweep.
+#: Selectable gauge counts: a focused few vs. the whole 40-parameter sweep.
 _COUNT_CHOICES: tuple[tuple[str, int], ...] = (
     ("1 gauge", 1),
     ("4 gauges", 4),
@@ -121,11 +121,23 @@ class LiveDataScreen(Screen):
         self._refresh()
 
     def _refresh(self) -> None:
-        """One sweep: advance the sim, read the selected measures, update gauges."""
+        """One sweep: advance the sim, read the selected measures, update gauges.
+
+        A remote (TCP/USB) endpoint can die mid-sweep; that must stop the
+        timer and report on the status bar, not raise out of a QTimer tick
+        once per interval forever.
+        """
         interval_s = self._interval_ms() / 1000.0
         self.backend.tick(interval_s)
         ids = self._selected_ids()
-        measures = self.backend.read_live(ids)
+        try:
+            measures = self.backend.read_live(ids)
+        except Exception as exc:  # noqa: BLE001 - transport/protocol errors
+            self._timer.stop()
+            self._paused = True
+            self._rate_label.setText("no data")
+            self.status.emit(f"ECU communication error: {exc}")
+            return
         for lid, m in zip(ids, measures):
             gauge = self._gauges.get(lid)
             if gauge is not None:

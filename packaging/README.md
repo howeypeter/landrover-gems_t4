@@ -58,7 +58,7 @@ packages (`pytest`, `pytest_qt`, `tkinter`).
 Console CLI:
 
 ```
-dist\gems_t4\gems_t4.exe --version      # -> gems_t4 0.1.0
+dist\gems_t4\gems_t4.exe --version      # -> gems_t4 0.0.4
 dist\gems_t4\gems_t4.exe scenarios      # lists the 4 fault scenarios
 dist\gems_t4\gems_t4.exe live --scenario coolant_sensor
 dist\gems_t4\gems_t4.exe dtc read --scenario misfire_cyl3
@@ -79,7 +79,7 @@ and `_internal/` payload beside them. To distribute, zip the folder.
 
 ```
 > dist\gems_t4\gems_t4.exe --version
-gems_t4 0.1.0
+gems_t4 0.0.4
 
 > dist\gems_t4\gems_t4.exe scenarios
 Available fault scenarios:

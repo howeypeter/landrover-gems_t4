@@ -25,15 +25,25 @@ from gems_t4.app import render
 from gems_t4.gems import actuators, dtc, immobiliser, livedata, programming
 from gems_t4.gems.scenarios import SCENARIOS, get_scenario
 from gems_t4.gems.virtual_ecu import VirtualEcu
-from gems_t4.protocol.client import KwpClient
+from gems_t4.protocol.client import KwpClient, WirelessWriteRefused
 from gems_t4.transport.pico import PicoAdapterTransport
+from gems_t4.transport.tcp import TcpTransport, parse_endpoint
 from gems_t4.transport.virtual import VirtualTransport
 
 
 def _build_client(args: argparse.Namespace) -> tuple[KwpClient, VirtualEcu | None]:
-    """Build a client over the virtual ECU (default) or the Pico adapter."""
+    """Build a client over the virtual ECU (default), the USB Pico adapter
+    (``--port``), or a TCP endpoint (``--connect``)."""
+    if getattr(args, "port", None) and getattr(args, "connect", None):
+        raise SystemExit("choose --port (USB) or --connect (network), not both")
     if getattr(args, "port", None):
         transport = PicoAdapterTransport(args.port)
+        return KwpClient(transport), None
+    if getattr(args, "connect", None):
+        host, tcp_port = parse_endpoint(args.connect)
+        transport = TcpTransport(
+            host, tcp_port, allow_writes=getattr(args, "allow_writes", False)
+        )
         return KwpClient(transport), None
     ecu = VirtualEcu(
         get_scenario(args.scenario), immobilised=getattr(args, "immobilised", False)
@@ -43,6 +53,31 @@ def _build_client(args: argparse.Namespace) -> tuple[KwpClient, VirtualEcu | Non
         ecu.tick(0.1)
     transport = VirtualTransport(ecu, latency=args.latency)
     return KwpClient(transport), ecu
+
+
+def _source_label(args: argparse.Namespace) -> str:
+    """Where the data comes from, for table titles."""
+    if getattr(args, "port", None):
+        return f"USB {args.port}"
+    if getattr(args, "connect", None):
+        return args.connect
+    return f"scenario '{args.scenario}'"
+
+
+def _prompt_yes_no(prompt: str) -> bool:
+    """Interactive ``[y/N]`` confirmation. Only 'y'/'yes' confirms.
+
+    EOF (a non-interactive/empty stdin) is treated as "no" so a scripted run
+    never blocks or silently proceeds. Tolerates the UTF-8 BOM PowerShell
+    prepends when piping (``echo y | ...``), seen as U+FEFF (utf-8 stdin) or
+    ``\\xef\\xbb\\xbf`` (cp1252).
+    """
+    try:
+        reply = input(prompt)
+    except EOFError:
+        return False
+    reply = reply.lstrip("﻿\xef\xbb\xbf").strip().lower()
+    return reply in ("y", "yes")
 
 
 def _cmd_scenarios(args: argparse.Namespace) -> int:
@@ -64,11 +99,19 @@ def _cmd_live(args: argparse.Namespace) -> int:
         measures = livedata.read_all(client, ids)
     finally:
         client.close()
-    render.print_live(measures, title=f"Live data - scenario '{args.scenario}'")
+    render.print_live(measures, title=f"Live data - {_source_label(args)}")
     return 0
 
 
 def _cmd_dtc(args: argparse.Namespace) -> int:
+    # Clearing fault codes is destructive; confirm before touching the ECU
+    # (unless --yes). The confirmation is asked up front so a declined clear
+    # never opens a session.
+    if args.dtc_action == "clear" and not args.yes and not _prompt_yes_no(
+        "Clear all stored fault codes? [y/N] "
+    ):
+        render.console.print("Clear cancelled.")
+        return 1
     client, _ = _build_client(args)
     render.communicating()
     client.connect()
@@ -81,7 +124,7 @@ def _cmd_dtc(args: argparse.Namespace) -> int:
         dtcs = dtc.read_dtcs(client)
     finally:
         client.close()
-    render.print_dtcs(dtcs, title=f"Fault codes - scenario '{args.scenario}'")
+    render.print_dtcs(dtcs, title=f"Fault codes - {_source_label(args)}")
     return 0
 
 
@@ -90,6 +133,9 @@ def _cmd_gui(args: argparse.Namespace) -> int:
         # Disable "the waiting" (the ECU-communication overlay's minimum
         # display time) for impatient users - see gems_t4/app/gui/wait.py.
         os.environ["GEMS_T4_INSTANT"] = "1"
+    if args.port and args.connect:
+        render.console.print("[red]choose --port (USB) or --connect, not both[/]")
+        return 2
     try:
         from gems_t4.app.gui.app import run
     except ImportError:
@@ -98,7 +144,66 @@ def _cmd_gui(args: argparse.Namespace) -> int:
             "pip install -e \".[gui]\""
         )
         return 2
-    return run(scenario=args.scenario)
+    return run(
+        scenario=args.scenario,
+        port=args.port,
+        connect=args.connect,
+        allow_writes=args.allow_writes,
+    )
+
+
+def _cmd_serve(args: argparse.Namespace) -> int:
+    """Serve the host protocol over TCP — virtual ECU or USB-Pico bridge."""
+    from gems_t4.app.server import TcpFrameServer, run_serial_bridge
+
+    try:
+        listen_host, listen_port = parse_endpoint(args.listen)
+    except ValueError as exc:
+        render.console.print(f"[red]{exc}[/]")
+        return 2
+
+    log = lambda msg: render.console.print(f"[dim]{msg}[/]")  # noqa: E731
+
+    if args.port:
+        render.console.print(
+            f"[bold]Bridging USB Pico on {args.port}[/] at "
+            f"{listen_host}:{listen_port} - Ctrl+C to stop."
+        )
+        try:
+            run_serial_bridge(
+                args.port, host=listen_host, port=listen_port, log=log
+            )
+        except KeyboardInterrupt:
+            render.console.print("Stopped.")
+        return 0
+
+    ecu = VirtualEcu(
+        get_scenario(args.scenario), immobilised=args.immobilised
+    )
+    server = TcpFrameServer(
+        VirtualTransport(ecu, latency=args.latency),
+        host=listen_host,
+        port=listen_port,
+        on_exchange=ecu.tick,
+        log=log,
+    )
+    host, port = server.address
+    render.console.print(
+        f"[bold]Serving virtual GEMS ECU[/] (scenario '{args.scenario}') at "
+        f"{host}:{port} - Ctrl+C to stop."
+    )
+    if listen_host == "127.0.0.1":
+        render.console.print(
+            "[dim]Localhost only. Use --listen 0.0.0.0:9141 to allow other "
+            "machines on your network.[/]"
+        )
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        render.console.print("Stopped.")
+    finally:
+        server.stop()
+    return 0
 
 
 def _cmd_actuator(args: argparse.Namespace) -> int:
@@ -135,8 +240,18 @@ def _cmd_coding(args: argparse.Namespace) -> int:
             try:
                 value = programming.encode_field(args.field, args.value)
                 backup = programming.backup(client, args.field)
+
+                def _confirm() -> bool:
+                    if args.yes:
+                        return True
+                    field = programming.CODING_FIELDS[args.field]
+                    old = programming.decode_field(args.field, backup.data)
+                    return _prompt_yes_no(
+                        f"Write {field.name}: '{old}' -> '{args.value}'? [y/N] "
+                    )
+
                 result = programming.write_coding(
-                    client, args.field, value, backup=backup, confirm=lambda: True
+                    client, args.field, value, backup=backup, confirm=_confirm
                 )
             except (KeyError, ValueError, programming.ProgrammingRefused) as exc:
                 render.console.print(f"[red]{exc}[/]")
@@ -189,6 +304,12 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--fake", action="store_true", default=True,
                         help="use the virtual ECU (default)")
         sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM3)")
+        sp.add_argument("--connect", metavar="HOST[:PORT]",
+                        help="TCP endpoint (gems_t4 serve bridge or WiFi Pico); "
+                             "default port 9141")
+        sp.add_argument("--allow-writes", action="store_true",
+                        help="permit coding/actuator/Security-Learn writes over "
+                             "--connect (default: network is read-only)")
         sp.add_argument("--scenario", default="healthy",
                         choices=sorted(SCENARIOS), help="fault scenario for --fake")
         sp.add_argument("--latency", type=float, default=0.0,
@@ -207,6 +328,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("dtc", help="read or clear fault codes")
     add_common(sp)
     sp.add_argument("dtc_action", choices=["read", "clear"], help="read or clear")
+    sp.add_argument("--yes", "-y", action="store_true",
+                    help="skip the confirmation prompt when clearing")
     sp.set_defaults(func=_cmd_dtc)
 
     sp = sub.add_parser("actuator", help="run an actuator test")
@@ -220,6 +343,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("coding_action", choices=["read", "write"])
     sp.add_argument("--field", help="coding field key (e.g. vin_last6)")
     sp.add_argument("--value", help="new value (ASCII for vin/part, else hex)")
+    sp.add_argument("--yes", "-y", action="store_true",
+                    help="skip the interactive write confirmation prompt")
     sp.set_defaults(func=_cmd_coding)
 
     sp = sub.add_parser("immo", help="immobiliser status / Security-Learn re-sync")
@@ -235,7 +360,32 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--instant", action="store_true",
                     help="skip the 'Communicating with ECU' waits "
                          "(sets GEMS_T4_INSTANT=1)")
+    sp.add_argument("--port", help="start connected to the USB Pico adapter "
+                                   "(e.g. COM3)")
+    sp.add_argument("--connect", metavar="HOST[:PORT]",
+                    help="start connected to a TCP endpoint (default port 9141)")
+    sp.add_argument("--allow-writes", action="store_true",
+                    help="permit write functions over --connect")
     sp.set_defaults(func=_cmd_gui)
+
+    sp = sub.add_parser(
+        "serve",
+        help="serve the ECU over TCP (virtual ECU, or bridge a USB Pico)",
+    )
+    sp.add_argument("--listen", metavar="HOST[:PORT]", default="127.0.0.1:9141",
+                    help="listen address (default 127.0.0.1:9141; use "
+                         "0.0.0.0:9141 to allow the LAN)")
+    sp.add_argument("--scenario", default="healthy",
+                    choices=sorted(SCENARIOS),
+                    help="fault scenario for the virtual ECU")
+    sp.add_argument("--immobilised", action="store_true",
+                    help="start the virtual ECU desynced (ENGINE IMMOBILISED)")
+    sp.add_argument("--latency", type=float, default=0.0,
+                    help="modeled per-exchange latency in seconds")
+    sp.add_argument("--port",
+                    help="bridge the USB Pico adapter on this serial port "
+                         "instead of serving the virtual ECU")
+    sp.set_defaults(func=_cmd_serve)
 
     return parser
 
@@ -243,7 +393,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except WirelessWriteRefused as exc:
+        render.console.print(f"[bold red]REFUSED:[/] {exc}")
+        return 1
 
 
 if __name__ == "__main__":  # pragma: no cover
