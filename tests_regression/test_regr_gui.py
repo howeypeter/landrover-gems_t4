@@ -31,7 +31,8 @@ from gems_t4.gems.livedata import PARAMETERS  # noqa: E402
 # Documented facts (from CLAUDE.md / GUI_INTERFACES.md) that the GUI must obey.
 # ---------------------------------------------------------------------------
 
-#: CLAUDE.md: 11 GUI screens; app.py registers exactly these, boot first.
+#: CLAUDE.md: 12 GUI screens; app.py registers exactly these, boot first.
+#: ("connection" — the VCI configuration screen — added with the TCP transport.)
 EXPECTED_SCREENS = [
     "boot",
     "vehicle_id",
@@ -40,6 +41,7 @@ EXPECTED_SCREENS = [
     "live_data",
     "actuators",
     "toolbox",
+    "connection",
     "programming_menu",
     "coding",
     "immobiliser",
@@ -96,8 +98,8 @@ def _table_column(table, col: int) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def test_build_window_registers_all_11_screens(window_factory):
-    """build_window constructs a KioskWindow with all 11 documented screens."""
+def test_build_window_registers_all_12_screens(window_factory):
+    """build_window constructs a KioskWindow with all 12 documented screens."""
     assert list(SCREENS) == EXPECTED_SCREENS
     win = window_factory()
     assert isinstance(win, KioskWindow)
@@ -173,8 +175,15 @@ def test_system_menu_reaches_every_major_function(window_factory):
     buttons = {
         b.text(): b for b in menu.findChildren(QPushButton) if b.objectName() == "MenuItem"
     }
-    assert len(buttons) == 5, "system menu offers the five v1 functions"
-    targets = {"fault_codes", "live_data", "actuators", "programming_menu", "toolbox"}
+    assert len(buttons) == 6, "system menu offers the five v1 functions + VCI config"
+    targets = {
+        "fault_codes",
+        "live_data",
+        "actuators",
+        "programming_menu",
+        "toolbox",
+        "connection",
+    }
     seen = set()
     for btn in buttons.values():
         btn.click()

@@ -81,7 +81,7 @@
     <span class="pill">Python 3.11+</span>
     <span class="pill">Virtual ECU — no car needed</span>
     <span class="pill">K-line / KWP2000</span>
-    <span class="pill">123 tests passing</span>
+    <span class="pill">153 tests passing</span>
   </div>
 </header>
 
@@ -259,7 +259,7 @@ python -m gems_t4 live --port /dev/ttyACM0    # Linux</code></pre>
 
 <h2 id="layout">Project layout</h2>
 <pre><code>gems_t4/
-  transport/   the only I/O layer — virtual ECU link, Pico adapter (USB), FTDI stub
+  transport/   the only I/O layer — virtual ECU link, Pico adapter (USB), TCP (network), FTDI stub
   protocol/    KWP2000 framing, init, services, security, the KwpClient
   gems/        GEMS meaning — DTCs, $61 live data, actuators, immobiliser, maps, virtual ECU
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
@@ -275,12 +275,12 @@ or the in-memory <code>VirtualTransport</code>, so the whole stack is testable o
 <p>Run the test suite (no hardware needed):</p>
 <pre><code>pytest                    # the original suite
 pytest tests_regression   # the independent v0.0.4 regression suite (run explicitly)</code></pre>
-<p>Expected: <strong>123 passed</strong> if you installed the <code>gui</code> extra
-(<code>pip install -e ".[gui]"</code>), or <strong>74 passed, 10 skipped</strong> without it
-— the 10 GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
+<p>Expected: <strong>153 passed</strong> if you installed the <code>gui</code> extra
+(<code>pip install -e ".[gui]"</code>), or fewer passed with the GUI files skipped without it
+— the GUI test files need PySide6 and skip cleanly as whole modules (not an error) when
 it's absent, since <code>requirements.txt</code> deliberately doesn't include it (see
 "Graphical interface" above). <code>tests_regression/</code> (new in v0.0.4) is a
-<strong>233-test independent suite</strong> written from the frozen contracts —
+<strong>234-test independent suite</strong> written from the frozen contracts —
 deliberately not derived from <code>tests/</code> — and lives outside the default
 <code>testpaths</code>, so run it explicitly.</p>
 <p>If you extend the code, keep to <code>INTERFACES.md</code> — it pins the wire format, the
@@ -314,7 +314,7 @@ experience). Build with the <code>[build]</code> extra:
 firmware/transport, the PySide6 Win98 kiosk GUI (full period skin, painted gauges, the
 "Communicating with ECU" latency model), gated programming/coding/immobiliser/maps, 37
 live-data parameters including per-cylinder misfire counts, and the two-exe Windows
-build — backed by a 123-test suite including an end-to-end GUI tour. Remaining: on-car
+build — backed by a 153-test suite including an end-to-end GUI tour. The ECU link can also run over TCP (<code>gems_t4 serve</code> + <code>--connect HOST[:PORT]</code>, or the GUI’s Configuration → VCI connection screen) — read-only over the network unless writes are explicitly enabled; see README.md “Remote / network use”. Remaining: on-car
 validation of the Pico adapter (needs real hardware). See the “Tech stack” and “Build
 status” sections of <code>CLAUDE.md</code> for the roadmap.</p>
 

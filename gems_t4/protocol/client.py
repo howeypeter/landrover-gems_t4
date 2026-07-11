@@ -21,6 +21,38 @@ class ProtocolError(Exception):
     echoed local id in a $61 response does not match the one requested)."""
 
 
+class WirelessWriteRefused(ProtocolError):
+    """A write-capable service was attempted over a wireless/network transport.
+
+    Policy (CLAUDE.md): coding writes, actuator commands and Security-Learn stay
+    wired-only; network transports are live-data/DTC monitoring only unless the
+    transport was built with ``allow_writes=True``.
+    """
+
+
+#: SIDs refused unconditionally over a wireless transport: SecurityAccess
+#: (0x27 — only ever a precursor to the blocked writes, and itself mutates ECU
+#: security state), ActuatorControl (0x30), WriteDataByLocalId / coding (0x3B).
+#: StartRoutine (0x31) is handled per-routine below. Reads — and
+#: ClearDiagnosticInformation (0x14), part of the read→diagnose→clear
+#: monitoring workflow — stay allowed.
+WIRELESS_BLOCKED_SERVICES = frozenset({0x27, 0x30, 0x3B})
+
+#: The one $31 routine that is a pure read: immobiliser STATUS (routine 0x03,
+#: per the SID map in INTERFACES.md). The learn routines (0x01 enter-learn,
+#: 0x02 store-code) are writes and stay blocked.
+_ROUTINE_STATUS = 0x03
+
+
+def _is_wireless_blocked(req: Request) -> bool:
+    """Whether ``req`` is a write-capable service under the wireless policy."""
+    if req.service in WIRELESS_BLOCKED_SERVICES:
+        return True
+    if req.service == 0x31:
+        return not (req.data and req.data[0] == _ROUTINE_STATUS)
+    return False
+
+
 class KwpClient:
     """A generic KWP2000 tester bound to one transport and ECU address."""
 
@@ -66,7 +98,22 @@ class KwpClient:
 
         With ``expect_positive=True`` a negative response raises
         :class:`~gems_t4.protocol.messages.NegativeResponse`.
+
+        Write-capable services (:data:`WIRELESS_BLOCKED_SERVICES`, plus the
+        $31 learn routines) are refused with :class:`WirelessWriteRefused`
+        when the transport reports ``is_wireless`` and was not built with
+        ``allow_writes=True``.
         """
+        if (
+            _is_wireless_blocked(req)
+            and getattr(self.transport, "is_wireless", False)
+            and not getattr(self.transport, "allow_writes", False)
+        ):
+            raise WirelessWriteRefused(
+                f"service 0x{req.service:02X} refused: writes are wired-only "
+                "over a network/wireless transport (enable --allow-writes to "
+                "override on a trusted link)"
+            )
         frame = framing.encode_request(
             req, ecu_address=self.ecu_address, tester_address=self.tester_address
         )

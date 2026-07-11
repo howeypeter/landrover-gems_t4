@@ -65,11 +65,29 @@ python -m gems_t4 gui                               # the Win98 kiosk GUI (needs
 Four fault scenarios (`healthy`, `coolant_sensor`, `misfire_cyl3`, `lambda_heater`)
 produce coherent symptoms across every screen.
 
+## Remote / network use
+
+The ECU link can also run over TCP — same frames the USB Pico speaks, so a
+served virtual ECU, a bridged USB Pico on another machine (e.g. a Raspberry Pi
+at the car), and a future WiFi Pico all look identical to the client:
+
+```bash
+python -m gems_t4 serve --scenario misfire_cyl3     # serve the virtual ECU on 127.0.0.1:9141
+python -m gems_t4 serve --port COM5 --listen 0.0.0.0:9141  # bridge a USB Pico to the LAN
+python -m gems_t4 dtc read --connect 192.168.1.50:9141     # live/dtc/actuator/coding/immo/gui take --connect
+python -m gems_t4 gui --connect 192.168.1.50               # GUI too (default port 9141)
+```
+
+Network connections are **read-only** (live data, fault codes) — coding,
+actuator and Security-Learn writes are refused unless you pass
+`--allow-writes` on a link you trust. In the GUI, pick Virtual / USB COM port /
+Network under **Configuration — VCI connection** (remembered between sessions).
+
 ## Layout
 
 ```
 gems_t4/
-  transport/   the only I/O layer — virtual ECU, Pico adapter (USB), FTDI stub
+  transport/   the only I/O layer — virtual ECU, Pico adapter (USB), TCP, FTDI stub
   protocol/    KWP2000 framing, init, services, security, the KwpClient
   gems/        GEMS meaning — DTCs, live data, actuators, immobiliser, maps, virtual ECU
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)
@@ -84,8 +102,8 @@ or the in-memory `VirtualTransport`, so the whole stack is testable off-car.
 ## Development
 
 ```bash
-pytest                    # 123 passed with the [gui] extra; 74 passed + 10 skipped without PySide6
-pytest tests_regression   # 233 passed — the independent v0.0.4 regression suite (run explicitly)
+pytest                    # 153 passed with the [gui] extra (GUI tests skip without PySide6)
+pytest tests_regression   # 234 passed — the independent regression suite (run explicitly)
 ```
 
 Build contracts: [`INTERFACES.md`](INTERFACES.md) (core) and

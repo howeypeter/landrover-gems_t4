@@ -248,6 +248,18 @@ Pico→Host:  0x5A <status> <len> <payload...> <crc8>
 Agent 4's `pico.py` and Agent 6's firmware must both implement exactly this.
 Agent 6 also documents it fully in `firmware/HOST_PROTOCOL.md`.
 
+### Host protocol over TCP (added 2026-07-11)
+
+The same frames also run over a TCP socket (default port **9141**):
+`transport/tcp.py` `TcpTransport(host, port, *, timeout=5.0,
+allow_writes=False)` is the client (a fourth `Transport`; `is_wireless=True`),
+and `app/server.py` `TcpFrameServer` / `gems_t4 serve` is the endpoint
+(virtual ECU, or a raw byte bridge to a USB Pico with `--port`). Write policy:
+`KwpClient.request` raises `WirelessWriteRefused` for SIDs `$30/$31/$3B` on a
+transport with `is_wireless=True` unless it has `allow_writes=True`
+(`WIRELESS_BLOCKED_SERVICES` in `protocol/client.py`); `$14` clear stays
+allowed. A future WiFi Pico implements exactly what `TcpFrameServer` answers.
+
 ## `app/cli.py` + `render.py` (Agent 5)
 
 Rich-based CLI, entry point `main()` (wired in pyproject as `gems_t4`; run via

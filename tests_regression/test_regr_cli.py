@@ -43,9 +43,21 @@ def run_cli(*args: str, stdin_text: str | None = None) -> subprocess.CompletedPr
 # version / scenarios
 # --------------------------------------------------------------------------- #
 def test_version_flag():
+    """CLAUDE.md convention (since v0.0.4): the CLI-reported version, the
+    package __version__ and pyproject.toml's version stay in lockstep."""
+    import re
+    from pathlib import Path
+
+    import gems_t4
+
     proc = run_cli("--version")
     assert proc.returncode == 0
-    assert proc.stdout.strip() == "gems_t4 0.0.4"
+    assert proc.stdout.strip() == f"gems_t4 {gems_t4.__version__}"
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    m = re.search(
+        r'^version\s*=\s*"([^"]+)"', pyproject.read_text(encoding="utf-8"), re.M
+    )
+    assert m is not None and m.group(1) == gems_t4.__version__
 
 
 def test_scenarios_lists_exactly_the_four():

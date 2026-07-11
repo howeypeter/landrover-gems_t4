@@ -1,6 +1,6 @@
 [project]
 name = "gems_t4"
-version = "0.0.4"
+version = "0.0.5"
 description = "A T4-style diagnostic and (emulated) programming tool for the Lucas/SAGEM GEMS V8 ECU (P38 Range Rover / Discovery 1)"
 requires-python = ">=3.11"
 dependencies = [

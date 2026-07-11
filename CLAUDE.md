@@ -336,9 +336,12 @@ were dropped. See `memory/tech-stack-decision.md`.)
     **virtual ECU**. The engine; runs in CLI, tests, and the GUI.
   - `transport/` — the only Python code that touches I/O (the *timing* lives in
     the adapter firmware, not here). Implementations: **Virtual** (in-memory →
-    virtual ECU) and **PicoAdapter** via `pyserial` — a USB-CDC link to the Pico
-    smart adapter (**canonical real transport**). A raw **FTDI KKL cable**
-    transport is a secondary quick-start/read option. **No BLE.**
+    virtual ECU), **PicoAdapter** via `pyserial` — a USB-CDC link to the Pico
+    smart adapter (**canonical real transport**) — and **Tcp** (`transport/
+    tcp.py`, 2026-07-11): the identical host protocol over a TCP socket
+    (`--connect HOST[:PORT]`, default port 9141), read-only by default (see the
+    wireless note below). A raw **FTDI KKL cable** transport is a secondary
+    quick-start/read option. **No BLE.**
   - `firmware/` — Raspberry Pi **Pico (RP2040)** sketch (Arduino C++). Owns the
     K-line: 5-baud/fast init, P1–P4 byte timing, half-duplex echo cancellation,
     frame-by-inter-byte-timeout. Exposes a simple **length-prefixed host protocol
@@ -360,27 +363,34 @@ were dropped. See `memory/tech-stack-decision.md`.)
   (Alternative weighed: pywebview + `98.css` for pixel-authentic chrome via
   HTML/CSS — rejected to stay single-language and keep realtime gauges snappy.)
 - **Hardware, wired only** (see `memory/research/hardware-interfaces.md`):
-  - **Primary rig: Raspberry Pi Pico *or* Pico 2 + MikroE ISO 9141 Click (L9637D)
-    over USB** — the smart adapter (modern VCSI equivalent). Both boards run
-    the identical firmware unmodified (the sketch only uses the portable
-    Arduino API — `Serial`, `Serial1`, `pinMode`, `digitalWrite`, `delay`,
-    `millis` — which `arduino-pico` implements the same on RP2040 and RP2350);
-    only the build's `--fqbn` target differs (`rpipico` vs `rpipico2`). Either
-    is fine for reads AND writes (immobiliser sync, coding), immune to USB
-    latency jitter. Canonical transport. BLE dropped → a plain (non-W) Pico is
-    fine, no wireless needed for the wired path.
+  - **Primary rig: Raspberry Pi Pico *or* Pico 2 + a bare ST L9637D K-line
+    transceiver (DIP-8, breadboarded) over USB** — the smart adapter (modern
+    VCSI equivalent). ⚠️ 2026-07-11: the **MikroE ISO 9141 Click** (same
+    L9637D chip) this section originally specified is **retired/unavailable in
+    the US** (SparkFun-exclusive, delisted; verified by agent research) — buy
+    the bare E-L9637D from DigiKey/Mouser (~$2) instead; wiring/shopping list
+    in the project root. Both boards run the identical firmware unmodified
+    (the sketch only uses the portable Arduino API — `Serial`, `Serial1`,
+    `pinMode`, `digitalWrite`, `delay`, `millis` — which `arduino-pico`
+    implements the same on RP2040 and RP2350); only the build's `--fqbn`
+    target differs (`rpipico` vs `rpipico2`). Either is fine for reads AND
+    writes (immobiliser sync, coding), immune to USB latency jitter. Canonical
+    transport. BLE dropped → a plain (non-W) Pico is fine, no wireless needed
+    for the wired path.
   - **Quick start: genuine FTDI KKL 409.1 cable** (`pyserial`) — cheap, good for
     first reads and capturing traffic; marginal for writes.
-  - **Planned, not yet built: Pico 2 W wireless (WiFi) mode, read-only.** Decided
-    2026-07-07: eventually add an opt-in wireless transport for live-data/DTC
-    monitoring only (no coding/actuator/Security-Learn writes over it — those
-    stay wired-only). Likely shape: WiFi/TCP reusing the same host-protocol
-    framing (not BLE — BLE's small MTU would need chunking the 255-byte frames
-    for no benefit, and BLE was already ruled out for ECU work generally); the
-    write-refusal enforced in the Python `KwpClient` by checking a
-    `Transport.is_wireless` flag, not in firmware (firmware stays a dumb timed
-    pipe). Do not build a Pico W / Pico 2 W adapter yet — not supported until
-    this lands.
+  - **Pico 2 W wireless (WiFi) mode: laptop side BUILT 2026-07-11; Pico WiFi
+    firmware still NOT built.** Decided 2026-07-07, landed as planned:
+    `TcpTransport` reuses the host-protocol framing over WiFi/TCP (not BLE —
+    small MTU, ruled out); the write-refusal lives in the Python `KwpClient`
+    (checks `Transport.is_wireless`; coding/actuator/Security-Learn = SIDs
+    $30/$31/$3B refused; DTC *clear* allowed as part of read→diagnose→clear),
+    with an explicit `allow_writes`/`--allow-writes` opt-in for trusted links.
+    Firmware stays a dumb timed pipe. `gems_t4 serve` provides the network
+    endpoint today (virtual ECU, or `--port COMx` to bridge a USB Pico, e.g.
+    from a Raspberry Pi at the car). A future WiFi Pico just answers the same
+    frames `serve` answers now — do not build that firmware until explicitly
+    picked up.
 - **Build the virtual ECU first**; **every ECU write gated**: backup + verify +
   checksum + session/security + precondition interlocks + dry-run + confirmation.
 
@@ -398,9 +408,11 @@ were dropped. See `memory/tech-stack-decision.md`.)
    ◑ PARTIAL: host protocol + Pico firmware + PicoAdapter built & unit-tested vs a
    fake serial; runs on Pico or Pico 2 (same firmware, build target only differs;
    2026-07-07); FTDI transport is a documented stub; on-car validation pending HW.
-3b. **Future, not started:** Pico 2 W wireless (WiFi) read-only mode — see the
-   "Planned, not yet built" note under Tech stack → Hardware above. Do not begin
-   until explicitly picked up.
+3b. **Laptop side DONE (2026-07-11); Pico WiFi firmware not started.** TCP
+   transport + serve endpoint + GUI connection screen — see "TCP/network
+   transport" under Build status below and the wireless note under Tech stack →
+   Hardware. Only the Pico W/2 W WiFi *firmware* remains; do not begin it until
+   explicitly picked up.
 4. **PySide6 GUI shell** over the same `gems_core` — Win98 kiosk, live gauges.
    ✅ DONE (2026-07-07): `gems_t4/app/gui/` — a Qt-free `Backend` facade
    (`app/backend.py`) + `KioskWindow`/`Screen` shell + 7 screens (boot, vehicle
@@ -452,15 +464,75 @@ were dropped. See `memory/tech-stack-decision.md`.)
 
 ### Build status
 
-**Where the project stands (2026-07-07):** Phases **1, 2, 4, 5, 6 complete**;
+**Where the project stands (2026-07-11):** Phases **1, 2, 4, 5, 6 complete**;
 Phase 3 (Pico adapter) built + unit-tested but needs real hardware for on-car
-validation. **123 passing tests** (or "74 passed, 10 skipped" without the
-PySide6 `[gui]` extra — 10 GUI test files; both counts verified empirically).
-Runs via `python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI
-via `gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14
-venv at `.venv/`. 76 tracked Python files, 11 GUI screens, 37 live-data params.
-Remaining polish candidates (not started, optional): windowed-exe icon/version
-resources, more guided fault trees, Td5/MEMS3 real-reflash profile.
+validation (parts ordered 2026-07-11: bare **L9637D** transceiver + breadboard —
+the MikroE ISO 9141 Click is retired/unavailable in the US). **153 passing
+tests** in `tests/` + **234 in `tests_regression/`** (GUI files skip without
+the PySide6 `[gui]` extra via `importorskip`). Runs via `python -m gems_t4
+<cmd>` or `gems_t4` after `pip install -e .`; GUI via `gems_t4 gui` (needs
+`[gui]`; `--instant` skips the waits). Python 3.14 venv at `.venv/`. 12 GUI
+screens, 37 live-data params. Remaining polish candidates (not started,
+optional): windowed-exe icon/version resources, more guided fault trees,
+Td5/MEMS3 real-reflash profile.
+
+**TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
+GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork
+for both the Raspberry-Pi-at-the-car topology and the future WiFi Pico
+(identical laptop-side code for both). Pieces:
+- `transport/tcp.py` — `TcpTransport(host, port, allow_writes=False)`: the
+  Pico host protocol (`0xA5/0x5A` frames) over a socket; `is_wireless=True`;
+  default port **9141**; `parse_endpoint("HOST[:PORT]")` helper.
+- `app/server.py` — `gems_t4 serve`: `TcpFrameServer` answers host-protocol
+  frames from a local transport. Default = virtual ECU (`--scenario`,
+  `--immobilised`, `--latency`; **the server ticks the sim by wall clock**
+  between exchanges since remote clients' local `tick()` no-ops);
+  `--port COMx` = raw TCP↔serial byte bridge to a USB Pico. Binds
+  `127.0.0.1:9141` by default; `--listen 0.0.0.0:9141` exposes on the LAN.
+  One client at a time (one tester per K-line).
+- **Wireless write gate** in `KwpClient.request`: SIDs $30/$31/$3B →
+  `WirelessWriteRefused` on a wireless transport unless `allow_writes`
+  ($14 clear stays allowed). CLI prints a clean `REFUSED:` line (exit 1).
+- CLI: `--connect HOST[:PORT]` + `--allow-writes` on live/dtc/actuator/coding/
+  immo/gui (`--port` and `--connect` are mutually exclusive); table titles show
+  the endpoint, not the (meaningless) local scenario name.
+- **GUI connection screen** (`app/gui/screens/connection.py`, System menu →
+  "Configuration — VCI connection"): radio Virtual / USB COM port / Network
+  (IP + port + allow-writes checkbox), applies via `Backend.set_connection`,
+  tests the link behind the wait overlay, persists to `~/.gems_t4.json`
+  (`GEMS_T4_CONFIG` env overrides the path — tests point it at tmp). The
+  Toolbox LAN-card self-test + canon disclaimer are untouched. Launch
+  precedence: `gui --port/--connect` flags > saved config > virtual.
+  `Backend` gained `set_connection` / `is_remote` / `connection_label`;
+  vehicle-id disables its scenario picker in remote mode (scenario lives with
+  the served/real ECU). GUI screens now 12 (was 11).
+- Tests: `tests/test_tcp_transport.py` (full stack over a real localhost
+  socket incl. gate on/off) + `tests/test_gui_connection.py`;
+  `tests_regression/test_regr_gui.py` updated for the 12-screen/6-menu-item
+  contract. Two-process smoke (serve + CLI `--connect`) verified by hand.
+- **Multi-agent review sweep (2026-07-11, 6 finder + adversarial-verifier
+  fan-out) — 9 confirmed findings, all fixed:** server no longer dies on a
+  malformed KWP payload (catch-all → BUS_ERROR; a real Pico can't crash
+  either); byte-parity with the firmware for INIT (len>=2, mode 1=fast else
+  slow, failure→TIMEOUT not BUS_ERROR) and SET_TIMING (len<8→BAD_REQUEST);
+  the gate now also blocks **$27 SecurityAccess** (it mutates ECU security
+  state and only precedes blocked writes) while **$31 routine 0x03**
+  (immobiliser STATUS) is carved out as the pure read it is — so `immo
+  status --connect` works and a read-only Security-Learn attempt is refused
+  BEFORE touching the ECU with a clean `SecurityLearnResult`, not mid-sequence;
+  `TcpTransport` drains stale late replies after a timeout (no more
+  off-by-one desync); `Backend.apply_connection` rolls back to the previous
+  transport when a connection test fails (typo'd IP no longer strands the
+  GUI); `apply_startup_connection` extracted from `run()` and tested (flags >
+  saved config > virtual, bad saved config falls back to virtual instead of
+  crashing the windowed exe); `load_config` strictly type-checks every field
+  (a JSON string "false" for allow_writes no longer truthy-enables writes);
+  live-data and immobiliser screens degrade gracefully when a remote endpoint
+  dies (stop timer / error readout, no exceptions out of Qt handlers); serial
+  bridge survives serial errors (drops client, keeps listening; testable via
+  injected fake serial + stop_event, Ctrl+C now works on an idle Windows
+  bridge); `parse_endpoint` handles IPv6 (`::1`, `[::1]:9141`). Suite counts
+  after: 153 + 234.
 
 **Full regression sweep 2026-07-07 (v0.0.3, commit b3abce7) — all green:**
 `pytest` in `.venv` → **123 passed**; a genuinely clean disposable venv with

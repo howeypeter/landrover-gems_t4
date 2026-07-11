@@ -49,7 +49,16 @@ Rules:
 ```python
 backend.scenario_name -> str
 backend.connected -> bool
-backend.is_wireless -> bool
+backend.is_wireless -> bool                         # network transport (write policy applies)
+backend.is_remote -> bool                           # any non-virtual transport (USB/network)
+backend.connection_label -> str                     # e.g. "Network — 192.168.1.50:9141 (read-only)"
+backend.set_connection(kind, *, com_port=None, host=None,
+                       tcp_port=9141, allow_writes=False) -> None
+#   kind: "virtual" | "usb" | "network". Disconnects; next op reconnects.
+backend.apply_connection(kind, **same_kwargs) -> str
+#   set_connection + connect, atomically: rolls back to the previous
+#   transport if the new one fails to open. Returns connection_label.
+#   Used by screens/connection.py; settings persist via gems_t4.app.config.
 Backend.available_scenarios() -> list[str]          # staticmethod
 Backend.actuator_list() -> list[ActuatorDef]        # staticmethod
 backend.set_scenario(name: str) -> None             # reconnects if open

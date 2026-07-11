@@ -78,7 +78,21 @@ class VehicleIdScreen(Screen):
 
     # -- data --------------------------------------------------------------- #
     def on_enter(self) -> None:
-        """Sync the combo to the backend's current scenario and prompt the user."""
+        """Sync the combo to the backend's current scenario and prompt the user.
+
+        On a remote connection (USB/network) the scenario lives with the real
+        or served ECU, not this tool — the picker is disabled.
+        """
+        remote = self.backend.is_remote
+        self._scenario.setEnabled(not remote)
+        if remote:
+            self._scenario.setToolTip(
+                "Scenario is determined by the connected ECU "
+                f"({self.backend.connection_label})"
+            )
+            self.status.emit("Confirm VIN, then press ✓ to continue.")
+            return
+        self._scenario.setToolTip("")
         current = self.backend.scenario_name
         idx = self._scenario.findText(current)
         if idx >= 0:
@@ -99,7 +113,8 @@ class VehicleIdScreen(Screen):
         chosen = self._scenario.currentText()
 
         def work() -> str:
-            self.backend.set_scenario(chosen)
+            if not self.backend.is_remote:  # scenario applies to the fake only
+                self.backend.set_scenario(chosen)
             self.backend.connect()  # idempotent; opens the session if closed
             return chosen
 
@@ -107,5 +122,10 @@ class VehicleIdScreen(Screen):
 
     def _on_configured(self, chosen: str) -> None:
         """The session is (re)configured — announce it and move on."""
-        self.status.emit(f"Vehicle configured · scenario: {chosen}")
+        if self.backend.is_remote:
+            self.status.emit(
+                f"Vehicle configured · {self.backend.connection_label}"
+            )
+        else:
+            self.status.emit(f"Vehicle configured · scenario: {chosen}")
         self.navigate.emit("system_menu")
