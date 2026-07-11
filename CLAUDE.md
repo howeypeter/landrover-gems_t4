@@ -496,6 +496,21 @@ up):**
   drive-by-wire, etc.?) and, once known, make the toggle a first-class,
   correctly-modelled feature rather than an opaque coding byte — including
   whatever downstream live-data / actuator differences the choice implies.
+- **Reconciling a cross-fitted ECU to a different engine (the parts-car
+  scenario).** Real user situation: an ECU from a parts car onto a different
+  engine that may differ in displacement and/or model year — can the tool
+  "reprogram" the ECU to match the engine? Starting assessment (to verify, not
+  gospel): (a) the true calibration match is the fuel/ignition **maps = EPROM
+  chips**, a bench swap, NOT over the wire — so a genuinely mismatched
+  displacement can't be software-converted via K-line; (b) getting it to
+  *start* is the **immobiliser Security-Learn** BeCM↔ECM re-sync (the one real
+  GEMS write — already modelled); (c) config **coding** (VIN/dealer/4.0-4.6
+  select/transmission) partly applies but its real fidelity is unvalidated and
+  much VIN/market coding lives in the **BeCM, not the engine ECU**. Backlog:
+  work out exactly which mismatches are reconcilable by coding/Security-Learn
+  vs. which force a chip swap or a different ECU, and turn that into a guided
+  "ECU-to-engine matching" procedure. Ties into
+  [EPROM programmability] and [4.0/4.6 toggle] above.
 
 **TCP/network transport (2026-07-11, uncommitted work on top of v0.0.4):** the
 GUI/CLI can now reach the ECU over TCP as an alternative to USB — groundwork

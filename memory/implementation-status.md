@@ -165,6 +165,11 @@ PySide6). Regression suite runs separately: `pytest tests_regression` → 234.
   writable `engine` coding field (0x83) already exists in `gems/programming.py`
   as an opaque byte; backlog is to research the real capability and promote it
   to a first-class, coherently-modelled toggle.
+- **Cross-fitted ECU → engine matching (open, do not start until picked up)** —
+  see [[ecu-engine-swap-matching]]. Parts-car ECU on a different engine/year:
+  which mismatches are reconcilable by coding + immobiliser Security-Learn vs.
+  which force an EPROM chip-swap or a different ECU. Starting assessment
+  recorded; turn into a guided procedure when picked up.
 - Optional Td5/MEMS3 profile for a *real* documented over-the-wire reflash demo
   (the one flashable Rover engine ECU — contrast to GEMS's chip-swap).
 - Optional polish: windowed-exe icon/version resources, guided fault trees.
