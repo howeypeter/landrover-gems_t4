@@ -489,15 +489,25 @@ were dropped. See `memory/tech-stack-decision.md`.)
 
 ### Build status
 
-**Where the project stands (2026-07-11):** Phases **1, 2, 4, 5, 6 complete**;
-Phase 3 (Pico adapter) built + unit-tested but needs real hardware for on-car
-validation (parts ordered 2026-07-11: bare **L9637D** transceiver + breadboard —
-the MikroE ISO 9141 Click is retired/unavailable in the US). **153 passing
-tests** in `tests/` + **234 in `tests_regression/`** (GUI files skip without
-the PySide6 `[gui]` extra via `importorskip`). Runs via `python -m gems_t4
-<cmd>` or `gems_t4` after `pip install -e .`; GUI via `gems_t4 gui` (needs
-`[gui]`; `--instant` skips the waits). Python 3.14 venv at `.venv/`. 12 GUI
-screens, 40 live-data params. Remaining polish candidates (not started,
+**Where the project stands (latest release: v0.0.6, 2026-07-12):** Phases
+**1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested but needs
+real hardware for on-car validation (parts ordered 2026-07-11: bare **L9637D**
+transceiver + breadboard — the MikroE ISO 9141 Click is retired/unavailable in
+the US). **169 passing tests** in `tests/` + **235 in `tests_regression/`** (GUI
+files skip without the PySide6 `[gui]` extra via `importorskip`). Runs via
+`python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI via
+`gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14 venv at
+`.venv/`. 12 GUI screens, 40 live-data params.
+
+**v0.0.6 (2026-07-12) — small UX/polish release** (see
+`docs/RELEASE_NOTES_v0.0.6.md`): persistent "VCI:" connection indicator on every
+screen (click → Configuration) + on-demand connection test with latency; the
+fault-codes list is now read-only (no misleading per-row selection) and labeled
+"Clear ALL codes" (there is no per-code clear on GEMS/T4); the fuel-pump
+actuator refusal now says "test not available while the engine is running"
+(reason-specific — the lambda-heater O2-heater refusal keeps the generic wording).
+
+Remaining polish candidates (not started,
 optional): windowed-exe icon/version resources, more guided fault trees,
 Td5/MEMS3 real-reflash profile.
 
@@ -748,15 +758,19 @@ fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
 ### Repository / git state (updated 2026-07-07, v0.0.4)
 
 - Git repo on GitHub (`howeypeter/landrover-gems_t4`). Everything is committed;
-  work proceeds on **version branches `v0.0.x`** (currently `v0.0.4`, the
-  bugfix branch) with `main` as the merge destination. The Python package
+  early releases used **version branches `v0.0.x`** merged to `main`; since
+  v0.0.5 was merged, small releases (v0.0.6) are cut directly on `main`. The
+  Python package
   version (`pyproject.toml` / `__version__` / `--version`) **tracks the release
   tag** — keep them in lockstep when cutting a version (a regression test
-  enforces it). **Release history lives in git tags + commit messages + this
-  Build-status section** — the standalone `RELEASE_NOTES*.md` files were removed
-  2026-07-11 to declutter the project root (they survive in git history). Do not
-  re-add them; summarize a release in its version-branch commit and, if needed,
-  a short bullet in Build status.
+  enforces it). Latest release: **v0.0.6** (2026-07-12, annotated git tag, cut
+  directly from `main`).
+- **Release notes (updated 2026-07-12): they live in `docs/` as
+  `docs/RELEASE_NOTES_v0.0.x.md`.** (v0.0.5 had removed the old root-level
+  RELEASE_NOTES files; the user re-requested them for v0.0.6, so they're back —
+  but under `docs/`, honoring the root-markdown policy that only
+  `CLAUDE.md`/`README.md`/`INSTALL.md` sit at the repo root. Git tags + commit
+  messages + this Build-status section remain the other record.)
 - `.gitignore` (excludes `.venv`, caches, `__pycache__`, egg-info, OneDrive junk,
   firmware build output) and `.gitattributes` (`* text=auto eol=lf` — pins LF to
   silence Windows `core.autocrlf=true` CRLF churn) are in place.

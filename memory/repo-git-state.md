@@ -23,12 +23,16 @@ metadata:
   aligned since v0.0.4, before that 0.1.0). Keep them in lockstep when cutting a
   version; `tests_regression/test_regr_cli.py::test_version_flag` now asserts
   all three match.
-- **Release notes: REMOVED 2026-07-11.** The standalone `RELEASE_NOTES*.md`
-  files (current + v0.0.1–v0.0.4 archives) were `git rm`'d to declutter the
-  project root (they survive in git history). Release history now = git tags +
-  version-branch commit messages + CLAUDE.md "Build status". Do NOT re-add
-  RELEASE_NOTES files; the old "current + versioned archive" convention is
-  retired.
+- **Latest release: v0.0.6 (2026-07-12)** — small UX/polish release cut directly
+  from `main` (annotated git tag `v0.0.6`): persistent VCI connection indicator +
+  on-demand connection test, fault-codes "Clear ALL" clarity, fuel-pump refusal
+  reason. Version 0.0.6 in lockstep (pyproject/__init__/--version).
+- **Release notes: BACK, now under `docs/` (2026-07-12).** They were removed
+  from the root on 2026-07-11; the user re-requested them for v0.0.6, so
+  `docs/RELEASE_NOTES_v0.0.x.md` is the location now (NOT the repo root — honors
+  the root-markdown policy: only CLAUDE.md/README.md/INSTALL.md at root). The
+  v0.0.1–v0.0.5 notes still survive only in git history (not restored). Git tags
+  + commit messages + CLAUDE.md "Build status" remain the other record.
 - `tests_regression/` (added v0.0.4) is an independent suite outside pyproject
   `testpaths` — run `pytest tests_regression` explicitly; **235 tests** as of
   the 2026-07-11 QA quick fixes (was 234; +1 for the dtc-clear-confirm test,
