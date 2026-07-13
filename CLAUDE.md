@@ -499,8 +499,8 @@ files skip without the PySide6 `[gui]` extra via `importorskip`). Runs via
 `gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14 venv at
 `.venv/`. 12 GUI screens, 40 live-data params.
 
-**v0.0.6 (2026-07-12) — small UX/polish release** (see
-`docs/RELEASE_NOTES_v0.0.6.md`): persistent "VCI:" connection indicator on every
+**v0.0.6 (2026-07-12) — small UX/polish release** (notes in the v0.0.6 GitHub
+Release): persistent "VCI:" connection indicator on every
 screen (click → Configuration) + on-demand connection test with latency; the
 fault-codes list is now read-only (no misleading per-row selection) and labeled
 "Clear ALL codes" (there is no per-code clear on GEMS/T4); the fuel-pump
@@ -765,12 +765,16 @@ fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
   tag** — keep them in lockstep when cutting a version (a regression test
   enforces it). Latest release: **v0.0.6** (2026-07-12, annotated git tag, cut
   directly from `main`).
-- **Release notes (updated 2026-07-12): they live in `docs/` as
-  `docs/RELEASE_NOTES_v0.0.x.md`.** (v0.0.5 had removed the old root-level
-  RELEASE_NOTES files; the user re-requested them for v0.0.6, so they're back —
-  but under `docs/`, honoring the root-markdown policy that only
-  `CLAUDE.md`/`README.md`/`INSTALL.md` sit at the repo root. Git tags + commit
-  messages + this Build-status section remain the other record.)
+- **Release notes policy (locked 2026-07-12, user decision): NO markdown
+  release-notes files in the repo.** A release is an **annotated git tag** plus a
+  **GitHub Release** (with notes) published on GitHub. (A brief
+  `docs/RELEASE_NOTES_v0.0.6.md` was added then removed the same day when the
+  user clarified they want the GitHub Release, not a repo file.) The other record
+  is git tags + commit messages + this Build-status section. **Do not create
+  RELEASE_NOTES*.md files.** Note: publishing a GitHub Release needs the `gh` CLI
+  or a GitHub API token — neither is available in this environment (SSH-only
+  remote), so the tag/commit is done here and the Release is published by the
+  user (or by an authenticated session).
 - `.gitignore` (excludes `.venv`, caches, `__pycache__`, egg-info, OneDrive junk,
   firmware build output) and `.gitattributes` (`* text=auto eol=lf` — pins LF to
   silence Windows `core.autocrlf=true` CRLF churn) are in place.

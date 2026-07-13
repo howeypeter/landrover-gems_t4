@@ -27,12 +27,16 @@ metadata:
   from `main` (annotated git tag `v0.0.6`): persistent VCI connection indicator +
   on-demand connection test, fault-codes "Clear ALL" clarity, fuel-pump refusal
   reason. Version 0.0.6 in lockstep (pyproject/__init__/--version).
-- **Release notes: BACK, now under `docs/` (2026-07-12).** They were removed
-  from the root on 2026-07-11; the user re-requested them for v0.0.6, so
-  `docs/RELEASE_NOTES_v0.0.x.md` is the location now (NOT the repo root — honors
-  the root-markdown policy: only CLAUDE.md/README.md/INSTALL.md at root). The
-  v0.0.1–v0.0.5 notes still survive only in git history (not restored). Git tags
-  + commit messages + CLAUDE.md "Build status" remain the other record.
+- **Release notes policy (LOCKED 2026-07-12): NO markdown release-notes files in
+  the repo.** A release = annotated git tag + a **GitHub Release** (with notes)
+  published on GitHub. (A `docs/RELEASE_NOTES_v0.0.6.md` was briefly added then
+  `git rm`'d the same day when the user clarified they want the GitHub Release,
+  not a repo file.) Do NOT create RELEASE_NOTES*.md. ⚠️ Publishing a GitHub
+  Release needs `gh` CLI or a GitHub API token — NEITHER is available here
+  (no gh, no token, SSH-only remote). So Claude can tag/commit/push, but the
+  actual GitHub Release is published by the user (paste notes at
+  github.com/howeypeter/landrover-gems_t4/releases/new?tag=vX). Git tags +
+  commit messages + CLAUDE.md Build-status remain the local record.
 - `tests_regression/` (added v0.0.4) is an independent suite outside pyproject
   `testpaths` — run `pytest tests_regression` explicitly; **235 tests** as of
   the 2026-07-11 QA quick fixes (was 234; +1 for the dtc-clear-confirm test,
