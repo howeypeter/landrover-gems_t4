@@ -152,6 +152,8 @@ def test_actuator_fuel_pump_refused_exit_one():
     assert proc.returncode == 1
     assert "REFUSED" in proc.stdout
     assert "not available" in proc.stdout
+    # The fuel pump names the specific engine-running reason.
+    assert "engine is running" in proc.stdout
 
 
 def test_actuator_o2_heater_refused_in_lambda_heater_scenario():
@@ -162,6 +164,9 @@ def test_actuator_o2_heater_refused_in_lambda_heater_scenario():
     )
     assert proc.returncode == 1
     assert "REFUSED" in proc.stdout
+    # A non-engine-running refusal keeps the generic wording.
+    assert "conditions not correct" in proc.stdout
+    assert "engine is running" not in proc.stdout
 
 
 def test_actuator_unknown_name_exits_two():

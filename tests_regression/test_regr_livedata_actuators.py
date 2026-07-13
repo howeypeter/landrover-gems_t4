@@ -194,6 +194,8 @@ def test_fuel_pump_refused_while_engine_running():
     outcome = act.run(client, act.ACT_FUEL_PUMP, act.STATE_ON)
     assert outcome.ok is False
     assert "test not available" in outcome.message.lower()
+    # The engine-running-sensitive actuator names the specific reason.
+    assert "engine is running" in outcome.message.lower()
 
 
 def test_fuel_pump_allowed_with_engine_stopped():
@@ -218,6 +220,9 @@ def test_o2_heater_refused_under_lambda_heater_scenario():
     outcome = act.run(client, act.ACT_O2_HEATER, act.STATE_ON)
     assert outcome.ok is False
     assert "test not available" in outcome.message.lower()
+    # A different reason keeps the generic wording (not the engine-running one).
+    assert "conditions not correct" in outcome.message.lower()
+    assert "engine is running" not in outcome.message.lower()
 
 
 def test_o2_heater_works_on_a_healthy_vehicle():

@@ -41,6 +41,8 @@ def test_fuel_pump_on_is_refused_while_engine_running(qtbot):
 
     screen._run(actuators.ACT_FUEL_PUMP, actuators.STATE_ON)
     assert screen._readout.text().startswith("REFUSED")
+    # The refusal names the specific engine-running reason.
+    assert "engine is running" in screen._readout.text().lower()
 
 
 def test_nav_buttons_back_only(qtbot):

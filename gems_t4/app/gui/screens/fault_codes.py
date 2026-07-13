@@ -45,13 +45,14 @@ class FaultCodesScreen(Screen):
         self._table.setHorizontalHeaderLabels(["Code", "State", "Description"])
         self._table.verticalHeader().setVisible(False)
         self._table.setEditTriggers(QTableWidget.NoEditTriggers)
-        self._table.setSelectionBehavior(QTableWidget.SelectRows)
+        self._table.setSelectionMode(QTableWidget.NoSelection)
+        self._table.setFocusPolicy(Qt.NoFocus)
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.setColumnWidth(0, 80)
         self._table.setColumnWidth(1, 90)
         lay.addWidget(self._table, 1)
 
-        self._hint = QLabel("✓ Read codes     ✗ Clear codes")
+        self._hint = QLabel("✓ Read codes     ✗ Clear ALL codes")
         self._hint.setStyleSheet("color: #404040;")
         lay.addWidget(self._hint)
 
@@ -74,7 +75,7 @@ class FaultCodesScreen(Screen):
             self._table.setItem(row, 2, QTableWidgetItem(d.description))
         if dtcs:
             self.status.emit(f"{len(dtcs)} fault code(s) stored")
-            self._hint.setText("✓ Read codes     ✗ Clear codes")
+            self._hint.setText("✓ Read codes     ✗ Clear ALL codes")
         else:
             self.status.emit("No fault codes stored")
             self._hint.setText("No faults · ✓ Read again")
@@ -82,8 +83,8 @@ class FaultCodesScreen(Screen):
     def _clear(self) -> None:
         if not self._pending_clear:
             self._pending_clear = True
-            self.status.emit("Clear all stored codes? Press ✗ again to confirm.")
-            self._hint.setText("⚠ Press ✗ again to confirm clear")
+            self.status.emit("Clear ALL stored codes? Press ✗ again to confirm.")
+            self._hint.setText("⚠ Press ✗ again to confirm clear ALL")
             return
         self._pending_clear = False
 

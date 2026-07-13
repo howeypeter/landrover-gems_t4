@@ -141,7 +141,8 @@ def test_actuator_ok_and_engine_running_refusal():
     refused = b.run_actuator(ACT_FUEL_PUMP, STATE_ON)
     assert not refused.ok
     assert "not available" in refused.message
-    assert "conditions not correct" in refused.message
+    # The fuel pump is engine-running-sensitive, so it names the reason.
+    assert "engine is running" in refused.message
     b.disconnect()
 
 
