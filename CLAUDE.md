@@ -313,6 +313,11 @@ as static lookalikes for now.
   `docs/land-rover-electronics.md`); linked from `README.md` via
   htmlpreview.github.io. (An older `p38-gems-network.svg` was reported incorrect
   by the user and removed on v0.0.4 — it survives only in git history.)
+- `diagrams/gems-adapter-wiring.html` / `diagrams/gems-bench-rig-wiring.html`
+  (added v0.0.7) — pin-exact hardware wiring: the Pico + L9637D adapter to the
+  OBD-II socket, and the bench PSU rig direct to the GEMS ECU connector.
+  Companion: `docs/adapter-hardware-improvements.md` (hardening notes). Pins
+  verified vs the ST L9637D datasheet + Land Rover GEMS service data.
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
@@ -489,15 +494,24 @@ were dropped. See `memory/tech-stack-decision.md`.)
 
 ### Build status
 
-**Where the project stands (latest release: v0.0.6, 2026-07-12):** Phases
-**1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested but needs
-real hardware for on-car validation (parts ordered 2026-07-11: bare **L9637D**
-transceiver + breadboard — the MikroE ISO 9141 Click is retired/unavailable in
-the US). **169 passing tests** in `tests/` + **235 in `tests_regression/`** (GUI
-files skip without the PySide6 `[gui]` extra via `importorskip`). Runs via
-`python -m gems_t4 <cmd>` or `gems_t4` after `pip install -e .`; GUI via
-`gems_t4 gui` (needs `[gui]`; `--instant` skips the waits). Python 3.14 venv at
-`.venv/`. 12 GUI screens, 40 live-data params.
+**Where the project stands (latest release: v0.0.7, 2026-08-29):** Phases
+**1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested, now with
+a full **hardware wiring reference** for on-car validation (parts: bare
+**L9637D** transceiver + breadboard — the MikroE ISO 9141 Click is
+retired/unavailable in the US). **169 passing tests** in `tests/` + **235 in
+`tests_regression/`** (GUI files skip without the PySide6 `[gui]` extra via
+`importorskip`). Runs via `python -m gems_t4 <cmd>` or `gems_t4` after
+`pip install -e .`; GUI via `gems_t4 gui` (needs `[gui]`; `--instant` skips the
+waits). Python 3.14 venv at `.venv/`. 12 GUI screens, 40 live-data params.
+
+**v0.0.7 (2026-08-29) — hardware wiring reference (docs only, no code change)**
+(notes in the v0.0.7 GitHub Release): pin-exact adapter wiring, verified against
+the ST L9637D datasheet (Doc ID 1765) and Land Rover GEMS service data via a
+multi-agent research + adversarial-review sweep. Adds `diagrams/gems-adapter-
+wiring.html` (on-car / OBD-II), `diagrams/gems-bench-rig-wiring.html` (bench PSU
+rig — GEMS ECU pins: C1033 power/ground, C1017 K-line, NAS pin 23 / non-NAS 20),
+and `docs/adapter-hardware-improvements.md` (hardening: 510 Ω K-pull-up, Vcc=3.3 V,
+optional decoupling/K caps, Vs transient clamp before on-car, pin-1 orientation).
 
 **v0.0.6 (2026-07-12) — small UX/polish release** (notes in the v0.0.6 GitHub
 Release): persistent "VCI:" connection indicator on every
@@ -759,12 +773,12 @@ fan-out against `GUI_INTERFACES.md`. All validated end-to-end headless.
 
 - Git repo on GitHub (`howeypeter/landrover-gems_t4`). Everything is committed;
   early releases used **version branches `v0.0.x`** merged to `main`; since
-  v0.0.5 was merged, small releases (v0.0.6) are cut directly on `main`. The
-  Python package
+  v0.0.5 was merged, small releases (v0.0.6, v0.0.7) are cut directly on `main`.
+  The Python package
   version (`pyproject.toml` / `__version__` / `--version`) **tracks the release
   tag** — keep them in lockstep when cutting a version (a regression test
-  enforces it). Latest release: **v0.0.6** (2026-07-12, annotated git tag, cut
-  directly from `main`).
+  enforces it). Latest release: **v0.0.7** (2026-08-29, annotated git tag, cut
+  directly from `main`) — the hardware wiring-reference (docs-only) release.
 - **Release notes policy (locked 2026-07-12, user decision): NO markdown
   release-notes files in the repo.** A release is an **annotated git tag** plus a
   **GitHub Release** (with notes) published on GitHub. (A brief

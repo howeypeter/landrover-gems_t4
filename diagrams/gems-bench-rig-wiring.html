@@ -1,0 +1,348 @@
+<title>GEMS Bench Rig Wiring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --bg:#eaeeeb; --surface:#f7f9f7; --surface-2:#e5ebe6; --sunken:#dde4df;
+    --ink:#16201b; --ink-soft:#47554e; --ink-faint:#71807a; --line:#ccd6ce;
+    --accent:#2f6b46; --accent-soft:#e2ece5;
+    --sig-pwr:#c8452f; --sig-gnd:#5f6b63; --sig-k:#1f8a5e;
+    --sig-tx:#2c6fb4; --sig-rx:#8a51ac; --sig-12v:#c99110;
+    --warn:#a9700f; --danger:#b3392b;
+    --warn-bg:#f6ecd7; --danger-bg:#f5e0dc; --ok:#2f6b46;
+    --shadow:0 1px 2px rgba(20,30,25,.06), 0 8px 24px rgba(20,30,25,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1512; --surface:#161e19; --surface-2:#1c2620; --sunken:#121a15;
+      --ink:#e7ede8; --ink-soft:#a7b3ac; --ink-faint:#7a8880; --line:#2a362f;
+      --accent:#67b78a; --accent-soft:#18271f;
+      --sig-pwr:#e0685a; --sig-gnd:#93a099; --sig-k:#48b585;
+      --sig-tx:#5c9add; --sig-rx:#b17cd4; --sig-12v:#e0b64a;
+      --warn:#dda63c; --danger:#e0685a;
+      --warn-bg:#2a2213; --danger-bg:#2c1a17; --ok:#67b78a;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+      --bg:#0f1512; --surface:#161e19; --surface-2:#1c2620; --sunken:#121a15;
+      --ink:#e7ede8; --ink-soft:#a7b3ac; --ink-faint:#7a8880; --line:#2a362f;
+      --accent:#67b78a; --accent-soft:#18271f;
+      --sig-pwr:#e0685a; --sig-gnd:#93a099; --sig-k:#48b585;
+      --sig-tx:#5c9add; --sig-rx:#b17cd4; --sig-12v:#e0b64a;
+      --warn:#dda63c; --danger:#e0685a;
+      --warn-bg:#2a2213; --danger-bg:#2c1a17; --ok:#67b78a;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1000px; margin:0 auto; padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 72px;}
+
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 10px;}
+  h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:clamp(30px,6vw,46px); line-height:1.02; letter-spacing:-.01em; text-wrap:balance; margin:0 0 12px;}
+  .lede{font-size:clamp(15px,2.2vw,18px); color:var(--ink-soft); max-width:62ch; margin:0;}
+  .lede b{color:var(--ink); font-weight:600;}
+
+  .tags{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 0;}
+  .tag{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; padding:5px 10px; border-radius:6px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft); white-space:nowrap;}
+
+  h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:22px; letter-spacing:-.005em; margin:52px 0 4px; display:flex; align-items:baseline; gap:12px;}
+  h2 .n{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--accent); border:1px solid var(--accent); border-radius:5px; padding:1px 7px; transform:translateY(-2px);}
+  .sub{color:var(--ink-soft); font-size:14.5px; margin:2px 0 20px;}
+
+  figure{margin:0}
+  .diagram{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:18px; overflow-x:auto;}
+  .diagram svg{width:100%; min-width:840px; height:auto; display:block; color:var(--ink);}
+  figcaption{color:var(--ink-soft); font-size:13.5px; margin:14px 4px 0; max-width:72ch;}
+  figcaption b{color:var(--ink); font-weight:600;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:6px 18px; margin:16px 4px 0; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft);}
+  .legend span{display:inline-flex; align-items:center; gap:7px; white-space:nowrap;}
+  .sw{width:16px; height:3px; border-radius:2px; display:inline-block;}
+
+  table{width:100%; border-collapse:collapse; margin-top:6px; font-size:14.5px; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow);}
+  thead th{text-align:left; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:13px 16px; background:var(--surface-2); border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 16px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .mono{font-family:"IBM Plex Mono",monospace; font-size:13.5px;}
+  .pin{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:8px;}
+  .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  td .role{color:var(--ink-soft); font-size:13px;}
+  .tbd{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; color:var(--danger); background:var(--danger-bg); padding:1px 7px; border-radius:5px; border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);}
+
+  .cols{display:grid; grid-template-columns:1fr; gap:16px; margin-top:6px;}
+  @media(min-width:680px){.cols{grid-template-columns:1fr 1fr;}}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow);}
+  .card h3{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:16px; font-weight:700; margin:0 0 10px;}
+  .card p{margin:0; font-size:14px; color:var(--ink-soft);}
+  .plist{list-style:none; margin:0; padding:0; font-size:14px;}
+  .plist li{display:flex; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); align-items:baseline;}
+  .plist li:last-child{border-bottom:none;}
+  .plist .p{font-family:"IBM Plex Mono",monospace; font-weight:600; min-width:74px; flex:none;}
+  .plist .yl{color:var(--sig-12v);} .plist .bk{color:var(--sig-gnd);} .plist .gr{color:var(--accent);}
+  .plist span:last-child{color:var(--ink-soft);}
+  .plist b{color:var(--ink); font-weight:600;}
+
+  .alert{border-radius:12px; padding:16px 18px; margin-top:14px; border:1px solid; display:flex; gap:14px; align-items:flex-start;}
+  .alert .ico{font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:15px; flex:none; width:26px; height:26px; border-radius:6px; display:grid; place-items:center;}
+  .alert h4{margin:0 0 3px; font-size:15px; font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700;}
+  .alert p{margin:0; font-size:13.5px; color:var(--ink-soft);}
+  .alert p + p{margin-top:6px;}
+  .alert.danger{background:var(--danger-bg); border-color:color-mix(in srgb,var(--danger) 40%,transparent);}
+  .alert.danger .ico{background:var(--danger); color:#fff;} .alert.danger h4{color:var(--danger);}
+  .alert.warn{background:var(--warn-bg); border-color:color-mix(in srgb,var(--warn) 40%,transparent);}
+  .alert.warn .ico{background:var(--warn); color:#fff;} .alert.warn h4{color:var(--warn);}
+  .alert.ok{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+  .alert.ok .ico{background:var(--accent); color:#fff;} .alert.ok h4{color:var(--accent);}
+  .alert code{font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--sunken); padding:1px 5px; border-radius:4px; color:var(--ink);}
+  .alert b{color:var(--ink);}
+
+  .foot{margin-top:44px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-faint); font-family:"IBM Plex Mono",monospace;}
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">gems_t4 · bench bring-up</p>
+  <h1>GEMS Bench Rig Wiring</h1>
+  <p class="lede">No car, no OBD socket. A PC power supply feeds <b>12&nbsp;V</b> to both the ECU and the adapter; the Pico + L9637D adapter wires straight to the GEMS ECU's connector. The goal is one thing: prove the adapter can talk to a real ECU on the bench.</p>
+
+  <div class="tags">
+    <span class="tag">PC / ATX PSU</span>
+    <span class="tag">Pico + L9637D</span>
+    <span class="tag">direct to ECU connector</span>
+    <span class="tag">read-only first</span>
+  </div>
+
+  <!-- ============ DIAGRAM ============ -->
+  <h2><span class="n">01</span> The bench rig</h2>
+  <p class="sub">Yellow is +12&nbsp;V, black is ground. Every part shares that one ground.</p>
+
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1200 560" role="img" aria-label="Bench rig. A PC power supply provides +12 volts on its yellow wire and ground on its black wire; its green wire must be jumpered to black to switch it on. The +12 volt line feeds the L9637D transceiver Vs pin through a fuse, the 510 ohm K pull-up, and the ECU's permanent battery and ignition pins (ignition via a switch). The black ground line is the common ground shared by the Pico, the L9637D pin 5, and the ECU grounds. A laptop connects to the Pico over USB; the Pico's TX, RX and 3V3 connect to the L9637D; the L9637D K pin connects to the GEMS ECU K-line pin. The ECU battery, ignition, ground and K-line pin numbers must be confirmed from the vehicle service data before power is applied.">
+        <defs>
+          <marker id="aInk" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--ink-soft)"/></marker>
+          <marker id="aTx" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-tx)"/></marker>
+          <marker id="aRx" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-rx)"/></marker>
+          <marker id="aPwr" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-pwr)"/></marker>
+          <marker id="aK" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-k)"/></marker>
+          <marker id="aKs" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-k)"/></marker>
+        </defs>
+
+        <!-- ===== LAPTOP ===== -->
+        <rect x="20" y="150" width="96" height="62" rx="9" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="68" y="181" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-weight="700" font-size="13" fill="currentColor">LAPTOP</text>
+        <text x="68" y="198" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" style="fill:var(--ink-faint)">gems_t4</text>
+        <line x1="116" y1="181" x2="234" y2="170" stroke="var(--ink-soft)" stroke-width="2.2" marker-end="url(#aInk)"/>
+        <text x="176" y="163" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" style="fill:var(--ink-soft)">USB</text>
+
+        <!-- ===== PICO ===== -->
+        <rect x="238" y="94" width="182" height="184" rx="12" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="329" y="120" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-weight="700" font-size="14" fill="currentColor">Pico / Pico 2</text>
+        <line x1="262" y1="132" x2="396" y2="132" stroke="currentColor" stroke-opacity="0.12"/>
+        <text x="408" y="160" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">GP0·TX</text>
+        <text x="408" y="190" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">GP1·RX</text>
+        <text x="408" y="220" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">3V3</text>
+        <text x="408" y="262" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">GND</text>
+
+        <!-- ===== L9637D ===== -->
+        <rect x="578" y="94" width="182" height="184" rx="12" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="669" y="120" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-weight="700" font-size="16" style="fill:var(--accent)">L9637D</text>
+        <line x1="602" y1="132" x2="736" y2="132" stroke="currentColor" stroke-opacity="0.12"/>
+        <text x="590" y="160" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">4·TX</text>
+        <text x="590" y="190" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">1·RX</text>
+        <text x="590" y="220" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">3·Vcc</text>
+        <text x="590" y="262" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">5·GND</text>
+        <text x="748" y="158" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">6·K</text>
+        <text x="748" y="230" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">7·Vs</text>
+
+        <!-- logic bundle -->
+        <line x1="422" y1="156" x2="574" y2="156" stroke="var(--sig-tx)" stroke-width="2.3" marker-end="url(#aTx)"/>
+        <line x1="574" y1="186" x2="422" y2="186" stroke="var(--sig-rx)" stroke-width="2.3" marker-end="url(#aRx)"/>
+        <line x1="422" y1="216" x2="574" y2="216" stroke="var(--sig-pwr)" stroke-width="2.3" marker-end="url(#aPwr)"/>
+        <text x="498" y="209" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" style="fill:var(--ink-faint)">3V3→Vcc</text>
+
+        <!-- ===== GEMS ECU ===== -->
+        <rect x="908" y="90" width="220" height="236" rx="12" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="1018" y="113" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-weight="700" font-size="15" fill="currentColor">GEMS ECU</text>
+        <text x="1018" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" style="fill:var(--ink-faint)">Lucas/SAGEM · two plugs</text>
+        <line x1="932" y1="142" x2="1104" y2="142" stroke="currentColor" stroke-opacity="0.12"/>
+        <text x="922" y="162" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" style="fill:var(--sig-k)">C1017 · 36-way RED</text>
+        <text x="930" y="184" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">K-line</text>
+        <text x="1114" y="184" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" style="fill:var(--accent)">pin 23 *</text>
+        <text x="922" y="216" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" style="fill:var(--sig-12v)">C1033 · 18-way BLACK</text>
+        <text x="930" y="238" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">Main +12V</text>
+        <text x="1114" y="238" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">pin 7</text>
+        <text x="930" y="260" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">Ign +12V</text>
+        <text x="1114" y="260" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">pin 8</text>
+        <text x="930" y="282" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="currentColor">Ground</text>
+        <text x="1114" y="282" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="currentColor">5·9·10·16</text>
+        <text x="1018" y="308" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8.5" style="fill:var(--ink-faint)">* NAS/US car; non-NAS uses pin 20</text>
+
+        <!-- K-line L9637D -> ECU (C1017) -->
+        <line x1="764" y1="152" x2="914" y2="180" stroke="var(--sig-k)" stroke-width="2.6" marker-start="url(#aKs)" marker-end="url(#aK)"/>
+        <text x="838" y="150" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" style="fill:var(--sig-k)">K-line</text>
+
+        <!-- 510 ohm pull-up: K net -> Vs net on the adapter -->
+        <line x1="792" y1="163" x2="792" y2="182" stroke="var(--ink-soft)" stroke-width="1.5"/>
+        <rect x="784" y="182" width="16" height="26" rx="3" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <line x1="792" y1="208" x2="792" y2="224" stroke="var(--ink-soft)" stroke-width="1.5"/>
+        <line x1="764" y1="163" x2="792" y2="163" stroke="var(--sig-k)" stroke-width="1.3" stroke-opacity="0.6"/>
+        <line x1="764" y1="224" x2="792" y2="224" stroke="var(--sig-12v)" stroke-width="1.5"/>
+        <text x="812" y="199" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="currentColor">510Ω</text>
+
+        <!-- ===== POWER: +12V bus (right) ===== -->
+        <line x1="700" y1="380" x2="1075" y2="380" stroke="var(--sig-12v)" stroke-width="3"/>
+        <text x="1075" y="372" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" style="fill:var(--sig-12v)">+12 V  (yellow)</text>
+        <!-- Vs tap via fuse -->
+        <line x1="738" y1="224" x2="738" y2="330" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <rect x="730" y="330" width="16" height="18" rx="3" fill="var(--surface)" stroke="var(--sig-pwr)" stroke-width="1.4"/>
+        <text x="726" y="343" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="8.5" style="fill:var(--sig-pwr)">FUSE</text>
+        <line x1="738" y1="348" x2="738" y2="380" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="738" cy="380" r="3.2" style="fill:var(--sig-12v)"/>
+        <!-- ECU Main +12V tap (pin 7) -->
+        <line x1="960" y1="326" x2="960" y2="380" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="960" cy="380" r="3.2" style="fill:var(--sig-12v)"/>
+        <text x="948" y="342" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="9" style="fill:var(--ink-faint)">pin 7</text>
+        <!-- ECU Ign +12V tap via switch (pin 8) -->
+        <line x1="1020" y1="326" x2="1020" y2="342" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <line x1="1020" y1="342" x2="1031" y2="355" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="1020" cy="342" r="2.6" style="fill:var(--sig-12v)"/>
+        <line x1="1020" y1="358" x2="1020" y2="380" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="1020" cy="380" r="3.2" style="fill:var(--sig-12v)"/>
+        <text x="1036" y="352" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="8.5" style="fill:var(--ink-faint)">pin 8 · IGN sw</text>
+
+        <!-- ===== POWER: GND bus (bottom) ===== -->
+        <line x1="300" y1="470" x2="1090" y2="470" stroke="var(--sig-gnd)" stroke-width="3"/>
+        <text x="1090" y="462" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" style="fill:var(--sig-gnd)">GND / 0 V  (black — this IS your ground)</text>
+        <!-- Pico GND -->
+        <line x1="360" y1="266" x2="360" y2="470" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <circle cx="360" cy="470" r="3.2" style="fill:var(--sig-gnd)"/>
+        <!-- L9637D GND (pin5) -->
+        <line x1="606" y1="266" x2="606" y2="470" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <circle cx="606" cy="470" r="3.2" style="fill:var(--sig-gnd)"/>
+        <!-- ECU GND (C1033 pins 5/9/10/16) -->
+        <line x1="1075" y1="326" x2="1075" y2="470" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <circle cx="1075" cy="470" r="3.2" style="fill:var(--sig-gnd)"/>
+        <!-- ground symbol -->
+        <line x1="470" y1="470" x2="470" y2="484" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <line x1="458" y1="484" x2="482" y2="484" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <line x1="462" y1="490" x2="478" y2="490" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <line x1="466" y1="496" x2="474" y2="496" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+
+        <!-- ===== PSU ===== -->
+        <rect x="60" y="360" width="180" height="130" rx="12" fill="var(--surface)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="150" y="388" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-weight="700" font-size="14" fill="currentColor">PC PSU (ATX)</text>
+        <!-- yellow out -->
+        <circle cx="240" cy="392" r="4" style="fill:var(--sig-12v)"/>
+        <line x1="240" y1="392" x2="700" y2="380" stroke="var(--sig-12v)" stroke-width="2.6"/>
+        <text x="150" y="414" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" style="fill:var(--sig-12v)">yellow → +12 V</text>
+        <!-- black out -->
+        <circle cx="240" cy="452" r="4" style="fill:var(--sig-gnd)"/>
+        <line x1="240" y1="452" x2="300" y2="470" stroke="var(--sig-gnd)" stroke-width="2.6"/>
+        <text x="150" y="436" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" style="fill:var(--sig-gnd)">black → GND</text>
+        <!-- green PS_ON jumper -->
+        <text x="150" y="462" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" style="fill:var(--accent)">green ↔ black</text>
+        <text x="150" y="477" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" style="fill:var(--ink-faint)">jumper to turn on</text>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span><i class="sw" style="background:var(--sig-12v)"></i>+12 V (yellow)</span>
+      <span><i class="sw" style="background:var(--sig-gnd)"></i>ground (black)</span>
+      <span><i class="sw" style="background:var(--sig-k)"></i>K-line</span>
+      <span><i class="sw" style="background:var(--sig-tx)"></i>TX</span>
+      <span><i class="sw" style="background:var(--sig-rx)"></i>RX</span>
+      <span style="color:var(--warn)">* K-line pin: NAS pin 23 / non-NAS pin 20</span>
+    </div>
+
+    <figcaption><b>The whole rig runs on one +12&nbsp;V and one ground.</b> The PSU's yellow wire is +12&nbsp;V; its black wire is the ground everything shares — the ECU grounds, the L9637D's pin&nbsp;5, and the Pico's GND all tie to it. The Pico is powered/grounded through USB from the laptop, so tie the laptop-side ground to this same black. The ECU wires into <b>two of its plugs</b>: power &amp; grounds on the 18-way black (C1033), and the K-line on the 36-way red (C1017). Pins are from Land Rover's GEMS service data — still meter-check them on your own ECU before the yellow wire goes live (see&nbsp;04).</figcaption>
+  </figure>
+
+  <!-- ============ ADAPTER ============ -->
+  <h2><span class="n">02</span> The adapter (unchanged)</h2>
+  <p class="sub">Same Pico + L9637D as the on-car build — pins verified against the ST datasheet.</p>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>Signal</th><th>Pico</th><th>L9637D (SO-8)</th><th>Goes to</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pin"><i class="dot" style="background:var(--sig-tx)"></i>Transmit</span></td><td class="mono">GP0</td><td class="mono">pin 4 · TX</td><td class="role">—</td></tr>
+      <tr><td><span class="pin"><i class="dot" style="background:var(--sig-rx)"></i>Receive</span></td><td class="mono">GP1</td><td class="mono">pin 1 · RX</td><td class="role">—</td></tr>
+      <tr><td><span class="pin"><i class="dot" style="background:var(--sig-pwr)"></i>Logic power</span></td><td class="mono">3V3</td><td class="mono">pin 3 · Vcc</td><td class="role">not 5V</td></tr>
+      <tr><td><span class="pin"><i class="dot" style="background:var(--sig-gnd)"></i>Ground</span></td><td class="mono">GND</td><td class="mono">pin 5 · GND</td><td class="mono">PSU black</td></tr>
+      <tr><td><span class="pin"><i class="dot" style="background:var(--sig-k)"></i>K-line</span></td><td class="role">—</td><td class="mono">pin 6 · K</td><td class="mono">ECU K-line</td></tr>
+      <tr><td><span class="pin"><i class="dot" style="background:var(--sig-12v)"></i>Transceiver +12V</span></td><td class="role">—</td><td class="mono">pin 7 · Vs</td><td class="mono">PSU +12V (fused)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="sub" style="margin-top:12px">Plus the <b>510&nbsp;Ω</b> pull-up from K&nbsp;(6) to Vs&nbsp;(7), and 100&nbsp;nF from Vcc&nbsp;(3) to GND — as before.</p>
+
+  <!-- ============ POWER + ECU ============ -->
+  <h2><span class="n">03</span> Power &amp; the ECU</h2>
+  <p class="sub">The PSU wires are standard PC colors. The ECU pins are the part to confirm.</p>
+
+  <div class="cols">
+    <div class="card">
+      <h3>PC PSU wires</h3>
+      <ul class="plist">
+        <li><span class="p yl">Yellow</span><span><b>+12 V.</b> Feeds L9637D Vs (via fuse) + ECU battery + ECU ignition.</span></li>
+        <li><span class="p bk">Black</span><span><b>Ground / 0 V.</b> The common ground for everything. You have one — this is it.</span></li>
+        <li><span class="p gr">Green</span><span><b>PS_ON.</b> Jumper it to any black wire or the PSU stays in standby and puts out no 12 V.</span></li>
+        <li><span class="p" style="color:var(--ink-faint)">Red / orange</span><span>+5 V / +3.3 V — not used here. Some PSUs need a small load on 5 V to stay on.</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>GEMS ECU — the pins</h3>
+      <ul class="plist">
+        <li><span class="p gr">pin 7</span><span><b>Main +12 V</b> — C1033, main-relay supply; this runs the ECU</span></li>
+        <li><span class="p gr">pin 8</span><span><b>Ignition +12 V</b> — C1033, "ON" sense; wakes it</span></li>
+        <li><span class="p gr">5·9·10·16</span><span><b>Ground</b> — C1033, all four to PSU black</span></li>
+        <li><span class="p gr">pin 23 *</span><span><b>K-line</b> — C1017 → L9637D pin 6. <b>* NAS/US = 23, non-NAS = 20</b></span></li>
+      </ul>
+      <p style="margin-top:10px"><b>18-way black plug (C1033)</b> = power + ground; <b>36-way red (C1017)</b> = K-line. Sensors, coils, injectors <b>not needed</b> for a comms test. There's no separate always-hot pin — pin 7 runs it.</p>
+    </div>
+  </div>
+
+  <!-- ============ BEFORE POWER ============ -->
+  <h2><span class="n">04</span> Before you power on</h2>
+  <p class="sub">Pins are from Land Rover service data — meter-check them, follow three rules, and one reassurance.</p>
+
+  <div class="alert danger">
+    <div class="ico">&#9888;</div>
+    <div>
+      <h4>Meter-check the ECU pins before the yellow wire goes live</h4>
+      <p>The pins above come from Land Rover's GEMS service data — cross-checked against two independent factory-derived pinouts, with the coil / MIL / fuel-pump pins validating exactly. But those tables are Discovery / Morgan GEMS, and 12 V on the wrong pin kills an ECU. So on <b>your</b> ECU, before power: ohm <b>C1033 pins 5/9/10/16</b> to the ECU case (≈0 Ω confirms grounds), and confirm the K-line pin reads continuous to <b>OBD socket pin 7</b>.</p>
+      <p><b>NAS vs non-NAS picks the K-line pin:</b> a US-market (NAS) car = <b>C1017 pin 23</b>; a UK/Euro car = <b>pin 20</b>. Wire the transceiver to the wrong one and it won't talk.</p>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="ico">i</div>
+    <div>
+      <h4>Black is your ground — and everything must share it</h4>
+      <p>The PSU's black wire is 0 V ground. Without a common ground the K-line has no reference and nothing talks. Tie <b>together</b>: PSU black, L9637D pin 5, the Pico's GND (it comes up through USB from the laptop), and the ECU's ground pins.</p>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="ico">i</div>
+    <div>
+      <h4>Turn the PSU on, and fuse the +12 V</h4>
+      <p>An ATX supply is dead until you <b>jumper the green wire to a black</b> (that's the on switch). Put a <b>1–2 A fuse</b> in the yellow +12 V line before it splits to the ECU and adapter.</p>
+    </div>
+  </div>
+
+  <div class="alert ok">
+    <div class="ico">&#10003;</div>
+    <div>
+      <h4>The immobiliser won't block you here</h4>
+      <p>You have no BeCM on the bench, but that's fine: the immobiliser only stops the engine from <b>running</b> — it doesn't block diagnostic comms. With power + ignition + K-line, the ECU should still answer an init and let you read its ID and fault codes. That's exactly the test: <code>gems_t4 live --port COM5</code>, read-only.</p>
+    </div>
+  </div>
+
+  <p class="foot">gems_t4 v0.0.6 · adapter pins per ST L9637D datasheet · GEMS ECU pins per Land Rover GEMS service data (C1033 power/ground, C1017 data link), cross-checked vs the Morgan GEMS manual · meter-verify on your ECU + confirm NAS vs non-NAS before applying 12 V</p>
+
+</div>

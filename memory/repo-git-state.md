@@ -23,10 +23,15 @@ metadata:
   aligned since v0.0.4, before that 0.1.0). Keep them in lockstep when cutting a
   version; `tests_regression/test_regr_cli.py::test_version_flag` now asserts
   all three match.
-- **Latest release: v0.0.6 (2026-07-12)** — small UX/polish release cut directly
-  from `main` (annotated git tag `v0.0.6`): persistent VCI connection indicator +
-  on-demand connection test, fault-codes "Clear ALL" clarity, fuel-pump refusal
-  reason. Version 0.0.6 in lockstep (pyproject/__init__/--version).
+- **Latest release: v0.0.7 (2026-08-29)** — hardware wiring-reference release
+  (DOCS ONLY, no code change) cut directly from `main` (annotated git tag
+  `v0.0.7`): `diagrams/gems-adapter-wiring.html` (on-car/OBD), `diagrams/
+  gems-bench-rig-wiring.html` (bench PSU rig; GEMS ECU pins C1033 power/ground +
+  C1017 K-line, NAS pin 23 / non-NAS 20), `docs/adapter-hardware-improvements.md`
+  (hardening notes). Pins verified vs ST L9637D datasheet (Doc ID 1765) + LR GEMS
+  service data via multi-agent research + adversarial review. Version 0.0.7 in
+  lockstep. Prior: v0.0.6 (2026-07-12, UX/polish: VCI indicator + connection
+  test, fault-codes Clear-ALL clarity, fuel-pump refusal reason).
 - **Release notes policy (LOCKED 2026-07-12): NO markdown release-notes files in
   the repo.** A release = annotated git tag + a **GitHub Release** (with notes)
   published on GitHub. (A `docs/RELEASE_NOTES_v0.0.6.md` was briefly added then
