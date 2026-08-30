@@ -599,8 +599,8 @@
     <dt>OBD-II / J1962</dt><dd>The 16-pin diagnostic socket under the dash. Pin 7 = K-line, pin 16 = +12 V (always live), pins 4/5 = ground.</dd>
     <dt>ISO 9141 / KWP2000</dt><dd>The rules — the "language" — spoken on the K-line.</dd>
     <dt>Transceiver (L9637D)</dt><dd>The chip that bridges the car's 12 V K-line to the Pico's 3.3 V logic. It only level-shifts; the Pico does all the thinking.</dd>
-    <dt>Vs</dt><dd>On the L9637D chip, the supply pin fed by the car/battery +12 V (pin 7).</dd>
-    <dt>Vcc</dt><dd>On the L9637D chip, the low-voltage logic-supply pin (pin 3). Feed it 3.3 V from the Pico — never 5 V.</dd>
+    <dt>Vs (supply voltage)</dt><dd>The "V" is voltage, the "s" is supply. On the L9637D chip it's the battery-side supply pin (pin 7), fed by the car/battery +12 V.</dd>
+    <dt>Vcc (supply voltage)</dt><dd>The "V" is voltage; "cc" is an old convention for a chip's positive supply rail (originally "collector-to-collector" in transistor circuits). On the L9637D it's the low-voltage logic-supply pin (pin 3) — feed it 3.3 V from the Pico, never 5 V.</dd>
     <dt>GND / ground / 0 V</dt><dd>The common reference every part shares. On a PC power supply it's the black wire.</dd>
     <dt>Pull-up (resistor)</dt><dd>A resistor that gently holds a wire "high" when nothing is pulling it low. The K-line needs one (510 Ω, from K to Vs).</dd>
     <dt>Open-drain</dt><dd>A wire that devices can only pull down to 0 V; it relies on a pull-up to ever read "high." That's how the K-line works.</dd>
