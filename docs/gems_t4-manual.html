@@ -313,6 +313,21 @@
   </ul>
   <div class="callout ok"><div class="i">&#10003;</div><div><h4>Read and write use the same wiring</h4><p>The K-line is a single bidirectional wire and the L9637D's TX/RX handle both directions, so reading and writing use the identical adapter. You never re-wire to switch between read-only and write mode — that's a software setting, not a hardware one.</p></div></div>
 
+  <h3>Powering the adapter from the Pico — use pin 36</h3>
+  <p>The L9637D's VCC (pin 3) is fed 3.3 V from the Pico. On a Raspberry Pi Pico / Pico 2 / Pico 2 W the 3.3 V comes from <b>physical pin 36, labelled <span class="mono">3V3(OUT)</span></b> — the regulated output of the Pico's onboard regulator. It's in the bottom-right corner (USB port at top). Several nearby pins look similar; only pin 36 is correct:</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Pin</th><th>Label</th><th>Use for VCC?</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">36</td><td class="mono">3V3(OUT)</td><td><b>Yes</b> — 3.3 V regulated output → L9637D VCC (pin 3). Sources ~300 mA, ample here.</td></tr>
+      <tr><td class="mono">37</td><td class="mono">3V3_EN</td><td>No — regulator <em>enable</em> (already tied high). Pulling it low switches the Pico's 3.3 V off.</td></tr>
+      <tr><td class="mono">39</td><td class="mono">VSYS</td><td>No — ~5 V system input, not 3.3 V.</td></tr>
+      <tr><td class="mono">40</td><td class="mono">VBUS</td><td>No — raw 5 V from USB.</td></tr>
+      <tr><td class="mono">35</td><td class="mono">ADC_VREF</td><td>No — analog reference, not a power rail.</td></tr>
+    </tbody>
+  </table></div>
+  <p>For ground, any of the Pico's eight <span class="mono">GND</span> pins works; <b>pin 38</b> sits right next to pin 36 and is the tidy choice → L9637D GND (pin 5). Pin 36 is an <em>output</em> — power flows out of it to the transceiver; never feed 5 V or 12 V back into it.</p>
+  <div class="callout ok"><div class="i">&#128208;</div><div><h4>Full schematic</h4><p>A complete, EE-readable circuit diagram — standard symbols, component designators (R1/C1/D1/F1/U1/J1/J2), the L9637D pin table, and datasheet-sourced parameters — is in <span class="mono">diagrams/gems-adapter-schematic.html</span> (also viewable <a href="https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html">rendered here</a>).</p></div></div>
+
   <!-- 10 -->
   <h2 id="wiring-car"><span class="k">10</span>Wiring: on-car (via OBD-II)</h2>
   <p>For diagnostics on the car — and for the immobiliser work — you plug into the <b>OBD-II (J1962) socket</b>. The transceiver bridges the Pico's 3.3 V logic to the car's single 12 V K-line, powered from the car's battery feed at the socket.</p>

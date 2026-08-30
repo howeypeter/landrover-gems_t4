@@ -22,6 +22,8 @@ K-line adapter over USB.
 > **🔌 [Hardware wiring — Pico + L9637D adapter to OBD-II (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-wiring.html)**
 > 
 > **🔧 [Hardware wiring — bench PSU rig direct to the GEMS ECU (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-bench-rig-wiring.html)** · hardening notes in [`docs/adapter-hardware-improvements.md`](docs/adapter-hardware-improvements.md)
+> 
+> **📐 [Adapter schematic — EE-grade circuit diagram (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html)** · L9637D + Pico, with designators, pin table &amp; datasheet parameters
 >
 > *Note: This Markdown file is the short landing page. The HTML pages above have complete detail and styled formatting.*
 
