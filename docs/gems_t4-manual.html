@@ -108,6 +108,21 @@
   .gloss{max-width:76ch; margin:6px 0 0;}
   .gloss dt{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px; color:var(--accent); margin-top:18px;}
   .gloss dd{margin:3px 0 0; padding:0; font-size:14.5px; color:var(--ink-soft);}
+  /* embedded circuit schematic (scoped so short class names don't collide) */
+  .schemfig svg{color:var(--ink)}
+  .schemfig text{font-family:"IBM Plex Mono",monospace; fill:var(--ink)}
+  .schemfig .w{stroke:var(--ink); stroke-width:2; fill:none}
+  .schemfig .w-rail{stroke:var(--accent); stroke-width:2.5; fill:none}
+  .schemfig .w-opt{stroke:var(--ink-faint); stroke-width:2; fill:none; stroke-dasharray:5 4}
+  .schemfig .sym{stroke:var(--ink); stroke-width:2; fill:none}
+  .schemfig .sym-opt{stroke:var(--ink-faint); stroke-width:2; fill:none; stroke-dasharray:5 4}
+  .schemfig .body{fill:var(--surface); stroke:var(--ink); stroke-width:2}
+  .schemfig .dot{fill:var(--ink)}
+  .schemfig .t-des{fill:var(--accent); font-weight:700}
+  .schemfig .t-net{fill:var(--accent); font-weight:700}
+  .schemfig .t-pin{fill:var(--ink-soft)}
+  .schemfig .t-faint{fill:var(--ink-faint)}
+  .schemfig .t-opt{fill:var(--ink-faint)}
 </style>
 
 <div class="shell">
@@ -326,7 +341,7 @@
     </tbody>
   </table></div>
   <p>For ground, any of the Pico's eight <span class="mono">GND</span> pins works; <b>pin 38</b> sits right next to pin 36 and is the tidy choice → L9637D GND (pin 5). Pin 36 is an <em>output</em> — power flows out of it to the transceiver; never feed 5 V or 12 V back into it.</p>
-  <div class="callout ok"><div class="i">&#128208;</div><div><h4>Full schematic</h4><p>A complete, EE-readable circuit diagram — standard symbols, component designators (R1/C1/D1/F1/U1/J1/J2), the L9637D pin table, and datasheet-sourced parameters — is in <span class="mono">diagrams/gems-adapter-schematic.html</span> (also viewable <a href="https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html">rendered here</a>).</p></div></div>
+  <div class="callout ok"><div class="i">&#128208;</div><div><h4>Full schematic</h4><p>A complete, EE-readable circuit diagram — standard symbols, component designators (R1/C1/D1/F1/U1/J1/J2), and net labels — is drawn in <a href="#reference">§15 (Technical reference)</a>. The standalone <span class="mono">diagrams/gems-adapter-schematic.html</span> (viewable <a href="https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html">rendered here</a>) adds the full component and datasheet-parameter tables.</p></div></div>
 
   <!-- 10 -->
   <h2 id="wiring-car"><span class="k">10</span>Wiring: on-car (via OBD-II)</h2>
@@ -552,6 +567,253 @@
 
   <!-- 15 -->
   <h2 id="reference"><span class="k">15</span>Technical reference</h2>
+  <h3>Adapter circuit (schematic)</h3>
+  <p>EE-grade circuit diagram of the adapter — standard symbols, component designators, and net labels. K-line only (the L9637D's L-line is unused: LI ties to GND, LO is no-connect). Read and write share this identical circuit; the read-only/write gate lives in software (<code>KwpClient</code>), not in the hardware. Values and pin functions are drawn from the ST L9637 datasheet (Doc ID 1765 Rev 7).</p>
+  <figure class="diagram schemfig">
+  <svg viewBox="0 0 1140 640" role="img"
+    aria-label="Electrical schematic of the GEMS K-line adapter. A 12 volt source enters through a 1 to 2 amp fuse F1 onto the plus 12 volt rail, which feeds the L9637D pin 7 Vs, a 510 ohm pull-up resistor R1 to the K node, and a TVS diode D1 to ground. The L9637D pin 6 K is the bidirectional K-line, joined to the source connector K terminal and an optional C_K capacitor C2 to ground. Pin 3 Vcc is fed 3.3 volts from the Pico with a 100 nF decoupling capacitor C1. Pin 5 is ground. Pin 4 TX comes from Pico GP0 and pin 1 RX goes to Pico GP1, both with the chip's internal pull-ups. Pin 8 LI ties to ground and pin 2 LO is no-connect because the L-line is unused.">
+    <defs>
+      <g id="gnd">
+        <line x1="0" y1="0" x2="0" y2="10" class="sym"/>
+        <line x1="-11" y1="10" x2="11" y2="10" class="sym"/>
+        <line x1="-7" y1="15" x2="7" y2="15" class="sym"/>
+        <line x1="-3" y1="20" x2="3" y2="20" class="sym"/>
+      </g>
+    </defs>
+
+    <!-- ================= U1  L9637D ================= -->
+    <rect x="430" y="230" width="220" height="250" rx="4" class="body"/>
+    <text x="540" y="215" text-anchor="middle" class="t-des" font-size="15">U1</text>
+    <text x="540" y="256" text-anchor="middle" font-size="13" font-weight="700">L9637D</text>
+    <text x="540" y="272" text-anchor="middle" class="t-faint" font-size="10">ISO 9141</text>
+    <text x="540" y="286" text-anchor="middle" class="t-faint" font-size="10">bus driver</text>
+    <text x="540" y="466" text-anchor="middle" class="t-faint" font-size="10">SO-8</text>
+
+    <!-- left pins -->
+    <line x1="400" y1="280" x2="430" y2="280" class="w"/>
+    <text x="437" y="284" class="t-pin" font-size="11">VS</text><text x="424" y="275" text-anchor="end" class="t-faint" font-size="9">7</text>
+    <line x1="400" y1="350" x2="430" y2="350" class="w"/>
+    <text x="437" y="354" class="t-pin" font-size="11">K</text><text x="424" y="345" text-anchor="end" class="t-faint" font-size="9">6</text>
+    <line x1="400" y1="430" x2="430" y2="430" class="w"/>
+    <text x="437" y="434" class="t-pin" font-size="11">GND</text><text x="424" y="425" text-anchor="end" class="t-faint" font-size="9">5</text>
+
+    <!-- right pins -->
+    <line x1="650" y1="270" x2="680" y2="270" class="w"/>
+    <text x="643" y="274" text-anchor="end" class="t-pin" font-size="11">VCC</text><text x="656" y="265" class="t-faint" font-size="9">3</text>
+    <line x1="650" y1="320" x2="680" y2="320" class="w"/>
+    <text x="643" y="324" text-anchor="end" class="t-pin" font-size="11">TX</text><text x="656" y="315" class="t-faint" font-size="9">4</text>
+    <line x1="650" y1="370" x2="680" y2="370" class="w"/>
+    <text x="643" y="374" text-anchor="end" class="t-pin" font-size="11">RX</text><text x="656" y="365" class="t-faint" font-size="9">1</text>
+    <line x1="650" y1="420" x2="680" y2="420" class="w"/>
+    <text x="643" y="424" text-anchor="end" class="t-pin" font-size="11">LI</text><text x="656" y="415" class="t-faint" font-size="9">8</text>
+    <line x1="650" y1="460" x2="680" y2="460" class="w"/>
+    <text x="643" y="464" text-anchor="end" class="t-pin" font-size="11">LO</text><text x="656" y="455" class="t-faint" font-size="9">2</text>
+
+    <!-- ================= +12 V rail ================= -->
+    <text x="120" y="150" class="t-net" font-size="12">+12 V</text>
+    <line x1="175" y1="160" x2="405" y2="160" class="w-rail"/>
+    <rect x="30" y="250" width="90" height="210" rx="4" class="body"/>
+    <text x="75" y="238" text-anchor="middle" class="t-des" font-size="14">J1</text>
+    <text x="75" y="345" text-anchor="middle" class="t-faint" font-size="9">SOURCE</text>
+    <text x="75" y="357" text-anchor="middle" class="t-faint" font-size="9">OBD-II /</text>
+    <text x="75" y="369" text-anchor="middle" class="t-faint" font-size="9">bench PSU</text>
+    <line x1="120" y1="280" x2="180" y2="280" class="w"/><line x1="180" y1="280" x2="180" y2="160" class="w"/>
+    <circle cx="180" cy="160" r="3.5" class="dot"/>
+    <text x="126" y="276" class="t-faint" font-size="9">16 +12V</text>
+    <line x1="120" y1="350" x2="360" y2="350" class="w"/>
+    <text x="126" y="344" class="t-faint" font-size="9">7 K-line</text>
+    <line x1="120" y1="430" x2="150" y2="430" class="w"/><line x1="150" y1="430" x2="150" y2="470" class="w"/>
+    <use href="#gnd" x="150" y="470"/>
+    <text x="126" y="424" class="t-faint" font-size="9">4/5 GND</text>
+
+    <!-- F1 fuse on rail -->
+    <rect x="235" y="150" width="60" height="20" rx="2" class="body"/>
+    <line x1="245" y1="160" x2="285" y2="160" class="sym"/>
+    <text x="265" y="144" text-anchor="middle" class="t-des" font-size="11">F1</text>
+    <text x="265" y="187" text-anchor="middle" class="t-faint" font-size="9">1–2 A</text>
+
+    <!-- R1 510R : rail -> K node -->
+    <circle cx="360" cy="160" r="3.5" class="dot"/>
+    <line x1="360" y1="160" x2="360" y2="212" class="w"/>
+    <polyline points="360,212 351,218 369,226 351,234 369,242 351,250 369,258 360,264" class="sym"/>
+    <line x1="360" y1="264" x2="360" y2="350" class="w"/>
+    <circle cx="360" cy="350" r="3.5" class="dot"/>
+    <text x="378" y="234" class="t-des" font-size="12">R1</text>
+    <text x="378" y="248" font-size="11">510 Ω</text>
+
+    <!-- VS feed : rail -> pin7 -->
+    <circle cx="400" cy="160" r="3.5" class="dot"/>
+    <line x1="400" y1="160" x2="400" y2="280" class="w"/>
+
+    <!-- K net -> pin6 -->
+    <line x1="360" y1="350" x2="400" y2="350" class="w"/>
+    <text x="300" y="343" class="t-net" font-size="11">K</text>
+
+    <!-- C2 optional Ck : K net -> gnd -->
+    <circle cx="250" cy="350" r="3.5" class="dot"/>
+    <line x1="250" y1="350" x2="250" y2="392" class="w-opt"/>
+    <line x1="236" y1="392" x2="264" y2="392" class="sym-opt"/>
+    <line x1="236" y1="400" x2="264" y2="400" class="sym-opt"/>
+    <line x1="250" y1="400" x2="250" y2="432" class="w-opt"/>
+    <use href="#gnd" x="250" y="432"/>
+    <text x="270" y="380" class="t-opt" font-size="11">C2</text>
+    <text x="270" y="394" class="t-opt" font-size="10">≤1.3 nF</text>
+    <text x="270" y="407" class="t-opt" font-size="9">(opt, C_K)</text>
+
+    <!-- D1 TVS : rail (supply entry) -> gnd -->
+    <circle cx="210" cy="160" r="3.5" class="dot"/>
+    <line x1="210" y1="160" x2="210" y2="196" class="w"/>
+    <line x1="196" y1="198" x2="224" y2="198" class="sym"/>
+    <line x1="196" y1="198" x2="190" y2="192" class="sym"/>
+    <line x1="224" y1="198" x2="230" y2="204" class="sym"/>
+    <polygon points="210,198 196,220 224,220" class="sym" fill="none"/>
+    <line x1="210" y1="220" x2="210" y2="244" class="w"/>
+    <use href="#gnd" x="210" y="244"/>
+    <text x="238" y="200" class="t-des" font-size="12">D1</text>
+    <text x="238" y="214" font-size="10">TVS</text>
+    <text x="238" y="227" class="t-faint" font-size="9">~24 V</text>
+
+    <!-- pin5 GND -->
+    <line x1="400" y1="430" x2="380" y2="430" class="w"/>
+    <line x1="380" y1="430" x2="380" y2="470" class="w"/>
+    <use href="#gnd" x="380" y="470"/>
+
+    <!-- ================= +3V3 net (Vcc) ================= -->
+    <line x1="680" y1="270" x2="720" y2="270" class="w"/>
+    <line x1="720" y1="270" x2="720" y2="210" class="w"/>
+    <line x1="720" y1="210" x2="900" y2="210" class="w"/>
+    <text x="726" y="204" class="t-net" font-size="11">+3V3</text>
+    <circle cx="790" cy="210" r="3.5" class="dot"/>
+    <line x1="790" y1="210" x2="790" y2="248" class="w"/>
+    <line x1="776" y1="248" x2="804" y2="248" class="sym"/>
+    <line x1="776" y1="256" x2="804" y2="256" class="sym"/>
+    <line x1="790" y1="256" x2="790" y2="288" class="w"/>
+    <use href="#gnd" x="790" y="288"/>
+    <text x="810" y="248" class="t-des" font-size="12">C1</text>
+    <text x="810" y="262" font-size="10">100 nF</text>
+
+    <!-- TX -->
+    <line x1="680" y1="320" x2="880" y2="320" class="w"/>
+    <line x1="880" y1="320" x2="880" y2="380" class="w"/>
+    <line x1="880" y1="380" x2="960" y2="380" class="w"/>
+    <text x="700" y="314" class="t-net" font-size="10">TX</text>
+    <!-- RX -->
+    <line x1="680" y1="370" x2="850" y2="370" class="w"/>
+    <line x1="850" y1="370" x2="850" y2="420" class="w"/>
+    <line x1="850" y1="420" x2="960" y2="420" class="w"/>
+    <text x="700" y="364" class="t-net" font-size="10">RX</text>
+
+    <!-- LI -> gnd -->
+    <line x1="680" y1="420" x2="710" y2="420" class="w"/>
+    <line x1="710" y1="420" x2="710" y2="456" class="w"/>
+    <use href="#gnd" x="710" y="456"/>
+    <text x="668" y="440" class="t-faint" font-size="9">L-line</text>
+    <text x="668" y="451" class="t-faint" font-size="9">unused</text>
+    <!-- LO NC -->
+    <line x1="680" y1="460" x2="712" y2="460" class="w"/>
+    <line x1="708" y1="456" x2="716" y2="464" class="sym"/>
+    <line x1="716" y1="456" x2="708" y2="464" class="sym"/>
+    <text x="724" y="464" class="t-faint" font-size="9">NC</text>
+
+    <!-- ================= J2  Pico ================= -->
+    <rect x="960" y="240" width="150" height="210" rx="4" class="body"/>
+    <text x="1035" y="228" text-anchor="middle" class="t-des" font-size="14">J2</text>
+    <text x="1035" y="330" text-anchor="middle" font-size="12" font-weight="700">Pico</text>
+    <text x="1035" y="346" text-anchor="middle" class="t-faint" font-size="9">RP2040</text>
+    <line x1="900" y1="210" x2="900" y2="270" class="w"/><line x1="900" y1="270" x2="960" y2="270" class="w"/>
+    <circle cx="900" cy="210" r="3.5" class="dot"/>
+    <text x="954" y="266" text-anchor="end" class="t-faint" font-size="9">3V3(OUT)</text>
+    <line x1="960" y1="310" x2="930" y2="310" class="w"/><line x1="930" y1="310" x2="930" y2="350" class="w"/>
+    <use href="#gnd" x="930" y="350"/>
+    <text x="954" y="306" text-anchor="end" class="t-faint" font-size="9">GND</text>
+    <line x1="960" y1="380" x2="954" y2="380" class="w"/>
+    <text x="954" y="376" text-anchor="end" class="t-faint" font-size="9">GP0 (UART0 TX)</text>
+    <line x1="960" y1="420" x2="954" y2="420" class="w"/>
+    <text x="954" y="416" text-anchor="end" class="t-faint" font-size="9">GP1 (UART0 RX)</text>
+
+    <!-- notes -->
+    <text x="610" y="520" class="t-faint" font-size="10">Bench source: J1 = PC PSU yellow (+12 V) &amp; black (GND); K-line to GEMS ECU C1017 pin 20 (non-NAS) / 23 (NAS).</text>
+    <text x="610" y="536" class="t-faint" font-size="10">On-car source: J1 = OBD-II J1962 pin 16 (+12 V), pins 4/5 (GND), pin 7 (K-line).</text>
+    <text x="610" y="552" class="t-faint" font-size="10">TX &amp; RX use the L9637D's integrated pull-ups to VCC — with VCC = 3.3 V, RX idles at 3.3 V (safe for the Pico).</text>
+    <text x="30" y="600" class="t-faint" font-size="10">All ground symbols are one common net (chassis / PSU black / OBD pins 4-5). Same wiring for read-only and write modes — the write gate is in software (KwpClient).</text>
+  </svg>
+  <figcaption>GEMS K-line adapter — L9637D (U1) + Raspberry Pi Pico (J2). A standalone copy with full component and datasheet-parameter tables is in <span class="mono">diagrams/gems-adapter-schematic.html</span> (also viewable <a href="https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html">rendered here</a>).</figcaption>
+  </figure>
+
+  <h3>Connector &amp; chip pinouts</h3>
+  <p>The transceiver's own pinout, and the two GEMS ECM connectors you land on for a bench rig. <b>Pin functions are from Land Rover GEMS service data; physical position is not fabricated here — locate each pin by the number moulded on the connector and confirm it with a multimeter before applying 12 V.</b></p>
+  <figure class="diagram">
+  <svg viewBox="0 0 1140 620" role="img" aria-label="Pinouts. L9637D SO-8 top view: left side pins 1 RX, 2 LO, 3 VCC, 4 TX; right side top to bottom 8 LI, 7 VS, 6 K, 5 GND. GEMS ECM connector C1033, 18-way black, power and ground: pin 7 main plus 12 volts, pin 8 ignition plus 12 volts, pins 5, 9, 10 and 16 ground. GEMS ECM connector C1017, 36-way red, data: pin 20 K-line on non-NAS cars, pin 23 K-line on NAS US-spec cars.">
+    <!-- ===== L9637D SO-8 ===== -->
+    <text x="40" y="52" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="16" style="fill:var(--accent)">L9637D — SO-8 (top view)</text>
+    <rect x="140" y="70" width="100" height="190" rx="6" style="fill:var(--surface);stroke:var(--ink);stroke-width:2"/>
+    <path d="M180,70 a10,10 0 0,0 20,0" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+    <circle cx="157" cy="90" r="3.5" style="fill:var(--ink)"/>
+    <!-- left pins 1-4 -->
+    <line x1="110" y1="95" x2="140" y2="95" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="152" y="99" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">1</text>
+    <text x="104" y="99" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-rx)">RX</text>
+    <line x1="110" y1="140" x2="140" y2="140" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="152" y="144" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">2</text>
+    <text x="104" y="144" text-anchor="end" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">LO</text>
+    <line x1="110" y1="185" x2="140" y2="185" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="152" y="189" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">3</text>
+    <text x="104" y="189" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--ink)">VCC</text>
+    <line x1="110" y1="230" x2="140" y2="230" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="152" y="234" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">4</text>
+    <text x="104" y="234" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-tx)">TX</text>
+    <!-- right pins 8,7,6,5 -->
+    <line x1="240" y1="95" x2="270" y2="95" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="228" y="99" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">8</text>
+    <text x="276" y="99" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">LI</text>
+    <line x1="240" y1="140" x2="270" y2="140" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="228" y="144" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">7</text>
+    <text x="276" y="144" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-12v)">VS</text>
+    <line x1="240" y1="185" x2="270" y2="185" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="228" y="189" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">6</text>
+    <text x="276" y="189" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-k)">K</text>
+    <line x1="240" y1="230" x2="270" y2="230" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="228" y="234" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">5</text>
+    <text x="276" y="234" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-gnd)">GND</text>
+
+    <!-- legend -->
+    <g font-family="IBM Plex Mono" font-size="12">
+      <rect x="430" y="84" width="16" height="16" rx="3" style="fill:var(--sig-12v)"/><text x="454" y="97" style="fill:var(--ink-soft)">VS — +12 V supply</text>
+      <rect x="430" y="112" width="16" height="16" rx="3" style="fill:var(--sig-k)"/><text x="454" y="125" style="fill:var(--ink-soft)">K — bidirectional K-line</text>
+      <rect x="430" y="140" width="16" height="16" rx="3" style="fill:var(--sig-tx)"/><text x="454" y="153" style="fill:var(--ink-soft)">TX / RX — logic to Pico (3.3 V)</text>
+      <rect x="430" y="168" width="16" height="16" rx="3" style="fill:var(--sig-gnd)"/><text x="454" y="181" style="fill:var(--ink-soft)">GND — common ground</text>
+      <rect x="430" y="196" width="16" height="16" rx="3" style="fill:var(--surface);stroke:var(--ink-faint);stroke-width:1.5"/><text x="454" y="209" style="fill:var(--ink-faint)">LI / LO — L-line, unused</text>
+    </g>
+
+    <!-- ===== C1033 ===== -->
+    <text x="40" y="326" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="16" style="fill:var(--accent)">GEMS ECM · C1033 — 18-way (black): power &amp; ground</text>
+    <rect x="40" y="342" width="1060" height="96" rx="10" style="fill:var(--surface);stroke:var(--line);stroke-width:1.5"/>
+    <!-- pin 7 -->
+    <circle cx="150" cy="386" r="16" style="fill:var(--sig-pwr);stroke:var(--ink-soft);stroke-width:1.5"/><text x="150" y="391" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" style="fill:#fff">7</text>
+    <text x="150" y="422" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-soft)">main +12 V</text>
+    <!-- pin 8 -->
+    <circle cx="360" cy="386" r="16" style="fill:var(--sig-12v);stroke:var(--ink-soft);stroke-width:1.5"/><text x="360" y="391" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" style="fill:#fff">8</text>
+    <text x="360" y="422" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-soft)">ignition +12 V</text>
+    <!-- grounds 5,9,10,16 -->
+    <circle cx="620" cy="386" r="16" style="fill:var(--sig-gnd);stroke:var(--ink-soft);stroke-width:1.5"/><text x="620" y="391" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" style="fill:#fff">5</text>
+    <circle cx="720" cy="386" r="16" style="fill:var(--sig-gnd);stroke:var(--ink-soft);stroke-width:1.5"/><text x="720" y="391" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" style="fill:#fff">9</text>
+    <circle cx="820" cy="386" r="16" style="fill:var(--sig-gnd);stroke:var(--ink-soft);stroke-width:1.5"/><text x="820" y="391" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" style="fill:#fff">10</text>
+    <circle cx="920" cy="386" r="16" style="fill:var(--sig-gnd);stroke:var(--ink-soft);stroke-width:1.5"/><text x="920" y="391" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" style="fill:#fff">16</text>
+    <text x="770" y="422" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-soft)">grounds (any one is fine)</text>
+
+    <!-- ===== C1017 ===== -->
+    <text x="40" y="490" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="16" style="fill:var(--accent)">GEMS ECM · C1017 — 36-way (red): data / K-line</text>
+    <rect x="40" y="506" width="1060" height="96" rx="10" style="fill:var(--surface);stroke:var(--line);stroke-width:1.5"/>
+    <!-- pin 20 non-NAS -->
+    <circle cx="200" cy="550" r="16" style="fill:var(--sig-k);stroke:var(--ink-soft);stroke-width:1.5"/><text x="200" y="555" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" style="fill:#fff">20</text>
+    <text x="200" y="586" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-soft)">K-line · non-NAS</text>
+    <!-- pin 23 NAS -->
+    <circle cx="520" cy="550" r="16" style="fill:var(--sig-k);stroke:var(--ink-soft);stroke-width:1.5"/><text x="520" y="555" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" style="fill:#fff">23</text>
+    <text x="520" y="586" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-soft)">K-line · NAS (US-spec)</text>
+    <text x="760" y="555" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">Use whichever your market fits — one K-line only.</text>
+  </svg>
+  <figcaption>Left/top: the L9637D transceiver (ST Doc ID 1765). Below: the GEMS ECM connectors for a bench rig — C1033 (18-way black) carries power &amp; ground, C1017 (36-way red) carries the K-line. On a P38 Range Rover these plugs are relabelled C505/C507/C509 (power/ground pins identical; K-line pin must be meter-verified). Physical pin position here is representative only — always identify pins by the numbers moulded on the connector.</figcaption>
+  </figure>
   <h3>Architecture</h3>
   <p>Four strict layers: <code>transport/</code> (the only I/O — virtual ECU, Pico adapter, TCP, FTDI stub), <code>protocol/</code> (KWP2000/ISO-14230 framing, init, services, the KwpClient), <code>gems/</code> (GEMS meaning — DTCs, live data, actuators, immobiliser, maps, virtual ECU), <code>app/</code> (Rich CLI + PySide6 GUI). The load-bearing seam is <code>KwpClient(transport)</code> — it takes a real serial transport or the in-memory virtual one, so the whole stack is testable off-car.</p>
   <h3>Wire protocol (stylized)</h3>
