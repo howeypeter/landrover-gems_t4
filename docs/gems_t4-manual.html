@@ -1,0 +1,640 @@
+<title>gems_t4 Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#eaeeeb; --surface:#f7f9f7; --surface-2:#e5ebe6; --sunken:#dde4df;
+    --ink:#16201b; --ink-soft:#47554e; --ink-faint:#71807a; --line:#ccd6ce;
+    --accent:#2f6b46; --accent-soft:#e2ece5;
+    --sig-pwr:#c8452f; --sig-gnd:#5f6b63; --sig-k:#1f8a5e;
+    --sig-tx:#2c6fb4; --sig-rx:#8a51ac; --sig-12v:#c99110;
+    --warn:#a9700f; --danger:#b3392b; --ok:#2f6b46;
+    --warn-bg:#f6ecd7; --danger-bg:#f5e0dc;
+    --shadow:0 1px 2px rgba(20,30,25,.06), 0 8px 24px rgba(20,30,25,.06);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0f1512; --surface:#161e19; --surface-2:#1c2620; --sunken:#121a15;
+    --ink:#e7ede8; --ink-soft:#a7b3ac; --ink-faint:#7a8880; --line:#2a362f;
+    --accent:#67b78a; --accent-soft:#18271f;
+    --sig-pwr:#e0685a; --sig-gnd:#93a099; --sig-k:#48b585;
+    --sig-tx:#5c9add; --sig-rx:#b17cd4; --sig-12v:#e0b64a;
+    --warn:#dda63c; --danger:#e0685a; --ok:#67b78a;
+    --warn-bg:#2a2213; --danger-bg:#2c1a17;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0f1512; --surface:#161e19; --surface-2:#1c2620; --sunken:#121a15;
+    --ink:#e7ede8; --ink-soft:#a7b3ac; --ink-faint:#7a8880; --line:#2a362f;
+    --accent:#67b78a; --accent-soft:#18271f;
+    --sig-pwr:#e0685a; --sig-gnd:#93a099; --sig-k:#48b585;
+    --sig-tx:#5c9add; --sig-rx:#b17cd4; --sig-12v:#e0b64a;
+    --warn:#dda63c; --danger:#e0685a; --ok:#67b78a;
+    --warn-bg:#2a2213; --danger-bg:#2c1a17;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent)}
+  .shell{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:0;}
+  @media(min-width:940px){.shell{grid-template-columns:236px 1fr;}}
+
+  /* ---- sidebar TOC ---- */
+  nav{padding:24px 16px; border-bottom:1px solid var(--line);}
+  @media(min-width:940px){nav{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto; border-bottom:none; border-right:1px solid var(--line);}}
+  .brand{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:20px; letter-spacing:-.01em;}
+  .brand small{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500; color:var(--accent); letter-spacing:.1em; margin-top:3px;}
+  nav ol{list-style:none; margin:16px 0 0; padding:0; counter-reset:s; font-size:13.5px;}
+  nav ol li{counter-increment:s; margin:1px 0;}
+  nav ol li a{display:flex; gap:9px; padding:5px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none;}
+  nav ol li a:hover{background:var(--surface-2); color:var(--ink);}
+  nav ol li a::before{content:counter(s,decimal-leading-zero); font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-faint); padding-top:1px;}
+
+  main{padding:clamp(24px,4vw,56px) clamp(18px,4vw,56px) 96px; min-width:0;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 10px;}
+  h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:clamp(32px,6vw,50px); line-height:1.0; letter-spacing:-.015em; text-wrap:balance; margin:0 0 14px;}
+  .lede{font-size:clamp(16px,2.4vw,19px); color:var(--ink-soft); max-width:64ch; margin:0;}
+  .lede b{color:var(--ink)}
+  h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:26px; letter-spacing:-.01em; margin:64px 0 6px; padding-top:14px; border-top:2px solid var(--line); scroll-margin-top:16px;}
+  h2 .k{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--accent); margin-right:10px;}
+  h3{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:18px; margin:30px 0 8px;}
+  p{max-width:70ch}
+  ul,ol.body{max-width:70ch}
+  li{margin:4px 0}
+  code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--sunken); padding:1.5px 5px; border-radius:4px;}
+  .tag{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:12px; padding:4px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft); margin:3px 4px 3px 0;}
+
+  table{width:100%; border-collapse:collapse; margin:10px 0; font-size:14px; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow);}
+  th{text-align:left; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint); padding:11px 14px; background:var(--surface-2); border-bottom:1px solid var(--line);}
+  td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:"IBM Plex Mono",monospace; font-size:13px;}
+  .tblwrap{overflow-x:auto}
+
+  .callout{border-radius:12px; padding:15px 18px; margin:16px 0; border:1px solid; display:flex; gap:13px; align-items:flex-start; max-width:74ch;}
+  .callout .i{font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:14px; flex:none; width:24px; height:24px; border-radius:6px; display:grid; place-items:center;}
+  .callout h4{margin:0 0 3px; font-size:15px; font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700;}
+  .callout p{margin:0; font-size:13.5px; color:var(--ink-soft); max-width:none;}
+  .callout p+p{margin-top:6px}
+  .danger{background:var(--danger-bg); border-color:color-mix(in srgb,var(--danger) 40%,transparent);}
+  .danger .i{background:var(--danger); color:#fff} .danger h4{color:var(--danger)}
+  .warn{background:var(--warn-bg); border-color:color-mix(in srgb,var(--warn) 40%,transparent);}
+  .warn .i{background:var(--warn); color:#fff} .warn h4{color:var(--warn)}
+  .ok{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+  .ok .i{background:var(--accent); color:#fff} .ok h4{color:var(--accent)}
+
+  figure{margin:20px 0; max-width:100%}
+  .diagram{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:16px; overflow-x:auto;}
+  .diagram svg{width:100%; min-width:780px; height:auto; display:block; color:var(--ink);}
+  figcaption{color:var(--ink-soft); font-size:13px; margin:10px 4px 0; max-width:74ch;}
+  .legend{display:flex; flex-wrap:wrap; gap:5px 16px; margin:12px 4px 0; font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-soft);}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .sw{width:15px; height:3px; border-radius:2px; display:inline-block}
+
+  .foot{margin-top:60px; padding-top:18px; border-top:2px solid var(--line); font-size:12.5px; color:var(--ink-faint); font-family:"IBM Plex Mono",monospace; max-width:none;}
+
+  /* ---- hover glossary: dotted terms with a definition bubble ---- */
+  .term{border-bottom:1px dotted var(--accent); cursor:help; position:relative; outline:none;}
+  .term::after{content:attr(data-tip); position:absolute; left:0; bottom:150%; z-index:40;
+    background:var(--ink); color:var(--bg); padding:9px 12px; border-radius:8px;
+    width:max-content; max-width:min(300px,78vw); font-family:"IBM Plex Sans",sans-serif;
+    font-size:12.5px; font-weight:400; line-height:1.45; white-space:normal; text-transform:none; letter-spacing:0;
+    box-shadow:0 6px 22px rgba(0,0,0,.28); opacity:0; visibility:hidden; transform:translateY(4px);
+    transition:opacity .12s ease, transform .12s ease; pointer-events:none;}
+  .term:hover::after,.term:focus::after{opacity:1; visibility:visible; transform:translateY(0);}
+
+  /* ---- glossary definition list ---- */
+  .gloss{max-width:76ch; margin:6px 0 0;}
+  .gloss dt{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px; color:var(--accent); margin-top:18px;}
+  .gloss dd{margin:3px 0 0; padding:0; font-size:14.5px; color:var(--ink-soft);}
+</style>
+
+<div class="shell">
+<nav>
+  <div class="brand">gems_t4<small>FIELD MANUAL · v0.0.7</small></div>
+  <ol>
+    <li><a href="#intro">Overview</a></li>
+    <li><a href="#safety">Safety first</a></li>
+    <li><a href="#vehicle">The vehicle: GEMS</a></li>
+    <li><a href="#cancant">What it can &amp; can't do</a></li>
+    <li><a href="#install">Install &amp; run</a></li>
+    <li><a href="#using">Using the tool</a></li>
+    <li><a href="#connect">Connections</a></li>
+    <li><a href="#bom">Bill of materials</a></li>
+    <li><a href="#hardware">Building the adapter</a></li>
+    <li><a href="#wiring-car">Wiring: on-car</a></li>
+    <li><a href="#wiring-bench">Wiring: bench rig</a></li>
+    <li><a href="#workflow">Bench → car workflow</a></li>
+    <li><a href="#ecuswap">The ECU-swap job</a></li>
+    <li><a href="#limits">Limitations &amp; honest status</a></li>
+    <li><a href="#reference">Technical reference</a></li>
+    <li><a href="#backlog">Backlog / roadmap</a></li>
+    <li><a href="#glossary">Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+  <p class="eyebrow">Land Rover GEMS V8 · diagnostic &amp; emulated-programming tool</p>
+  <h1>gems_t4 Field Manual</h1>
+  <p class="lede">Everything in one place: what the tool does, how to install and use it, how to build the K-line adapter, how to wire it on the car and on the bench, and — plainly — <b>what it can and cannot do</b> to a real GEMS ECU. Every hardware pin here is verified against the ST&nbsp;L9637D datasheet and Land&nbsp;Rover GEMS service data.</p>
+  <div style="margin-top:20px">
+    <span class="tag">P38 4.0/4.6 · Disco 1 V8i</span>
+    <span class="tag">Lucas/SAGEM GEMS</span>
+    <span class="tag">ISO 9141 / KWP2000 K-line</span>
+    <span class="tag">Python · Pico + L9637D</span>
+    <span class="tag">v0.0.7</span>
+  </div>
+
+  <!-- 01 -->
+  <h2 id="intro"><span class="k">01</span>Overview</h2>
+  <p><b>gems_t4</b> is a software recreation of the Rover / Land Rover <b>TestBook&nbsp;T4</b> dealer diagnostic tool, aimed at the <b>Lucas/SAGEM GEMS V8</b> engine ECU (P38 Range Rover 4.0/4.6 and Discovery&nbsp;1 V8i, roughly 1995 to early 1999). It ships with a built-in <b>virtual ECU</b>, so the entire program runs on a Windows laptop with <b>no car and no adapter</b> — useful for learning the workflow and for development. When you build the hardware, the same code drives a real ECU over a USB K-line adapter (or over a network link).</p>
+  <p>Two front-ends share one engine: a <b>Rich command-line interface</b> and a <b>PySide6 "Win98 kiosk" GUI</b> styled after the period tool. As of v0.0.7 it has 12 GUI screens, 40 live-data parameters, and 169 + 235 automated tests (all passing).</p>
+  <div class="callout ok"><div class="i">i</div><div><h4>What this manual assumes</h4><p>A Windows laptop, a GEMS-era vehicle (or a spare GEMS ECU), and basic comfort with a breadboard and a multimeter. No prior knowledge of the tool is assumed.</p></div></div>
+  <div class="callout ok"><div class="i">i</div><div><h4>Not an electrical engineer? Two aids for the jargon</h4><p>Technical terms with a <span class="term" data-tip="Like this — hover (or tap on a phone) any dotted-underlined term to see a plain-English definition.">dotted underline</span> show a plain-English definition when you hover or tap them. And every term is defined in the full <b><a href="#glossary">Glossary</a></b> at the end (§17). So you never have to already know what "Vs" or "decoupling" means.</p></div></div>
+
+  <!-- 02 -->
+  <h2 id="safety"><span class="k">02</span>Safety first</h2>
+  <p>Read these before any 12&nbsp;V touches the hardware. They are expanded in the wiring sections.</p>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>OBD pin 16 / the +12 V feed is battery-live at all times</h4><p>It carries +12 V even with the key off. Put an inline <b>1–2 A fuse</b> on it and never short it to ground.</p></div></div>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>Power the <span class="term" tabindex="0" data-tip="The L9637D chip — it translates between the car's 12 V K-line and the Pico's 3.3 V logic.">transceiver</span>'s <span class="term" tabindex="0" data-tip="The L9637D's logic-supply pin (pin 3). Feed it 3.3 V from the Pico.">Vcc</span> from 3.3 V — never 5 V</h4><p>The L9637D's <span class="term" tabindex="0" data-tip="The chip's receive pin (pin 1), which sends data back to the Pico. Its voltage follows Vcc.">RX output</span> idles at Vcc. At 5 V it would push 5 V into the Pico's <b>non-5 V-tolerant</b> <span class="term" tabindex="0" data-tip="A Pico input/output pin. The Pico's are not 5 V-tolerant — 5 V on one can destroy it.">GPIO</span> and can destroy it. Vcc's operating range is 3–5 V (7 V is the absolute maximum), so 3.3 V from the Pico is well in spec.</p></div></div>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>Chip orientation is what actually kills boards</h4><p>The 12 V must land on pin 7 (Vs) <b>only</b>. A flipped SO-8 or an off-by-one that puts 12 V on pins 1–4 or 8 destroys the chip and possibly the Pico. Find the pin-1 notch and confirm before powering.</p></div></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>Start every session read-only, and prove writes on the simulator first</h4><p>Reads (fault codes, live data) are low-risk. Any write (coding, immobiliser) should be rehearsed against the built-in virtual ECU before you attempt it on real hardware.</p></div></div>
+
+  <!-- 03 -->
+  <h2 id="vehicle"><span class="k">03</span>The vehicle: GEMS in brief</h2>
+  <p><b>GEMS</b> ("Generic Engine Management System", Lucas/SAGEM) ran the Rover V8 4.0/4.6 from the P38's launch until the 1999 model year, when Bosch Motronic M5.2.1 (the "Thor" engine) replaced it. A single ECM handles fuel <em>and</em> ignition — hot-wire MAF metering, distributorless wasted-spark coil packs. <b>"GEMS or Thor?"</b> is the first fork in every P38 engine procedure, so identify the vehicle first.</p>
+  <h3>No CAN bus — one shared K-line</h3>
+  <p>A late-90s Land Rover has <b>no CAN bus</b>. Every diagnosable module hangs off a single shared wire — the <b>ISO 9141 "K-line" on pin 7 of the J1962 OBD socket</b> — at about <b>10.4 kbit/s</b>, half-duplex, tester-initiated. The tester addresses each module in turn over that one wire; the modules do <em>not</em> talk to each other over it. (CAN only arrives with the BMW-era L322 in 2002.) This is why the real T4 was slow, and why the emulator's "communicating with ECU… please wait" pauses are authentic.</p>
+  <h3>The BeCM and the immobiliser</h3>
+  <p>The <b>BeCM</b> (Body electrical Control Module, under the driver's seat) runs nearly all body electrics <em>and</em> the immobiliser. The GEMS ECM will not run the engine until it receives a <b>coded mobilisation signal from the BeCM</b>. No code, no start — the canon "ENGINE IMMOBILISED" no-start. This matters hugely for the ECU-swap job (§13): re-pairing a different ECU to the car's BeCM is the "Security-Learn" operation, and it needs both modules present.</p>
+  <div class="callout warn"><div class="i">i</div><div><h4>OBD-II is only half-true here</h4><p>NAS (North-American-spec) petrol V8s are genuinely OBD-II compliant for <em>emissions</em> data. Everything else on the truck — EAS, BeCM, ABS, HEVAC, SRS — speaks proprietary Rover/Lucas protocols on the same K-line. That's exactly why a TestBook was needed and why a generic ELM327 sees almost nothing beyond the engine.</p></div></div>
+
+  <!-- 04 -->
+  <h2 id="cancant"><span class="k">04</span>What it can &amp; can't do — read this</h2>
+  <p>The word "program" means three different things on a GEMS, with very different answers. Getting this straight avoids chasing something that physically cannot exist.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>"Programming" means…</th><th>Over the K-line?</th><th>Reality</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. The tune</b> — fuel/ignition <b>maps</b></td><td><b>No — never</b></td><td>GEMS maps live on <b>write-once EPROM chips</b> (27C512 fuel, 27C1001 ignition). There is no flash and no bootloader in the ECU — nothing can receive a reflash over the wire, on any GEMS variant. Changing maps is a <b>bench chip-swap</b>.</td></tr>
+      <tr><td><b>2. Coding / config</b> — VIN last-6, dealer ID, 4.0/4.6 select, transmission, build code</td><td><b>Yes</b></td><td>Small settings written over the K-line ($3B). The tool does this, gated (backup → verify → confirm).</td></tr>
+      <tr><td><b>3. Immobiliser Security-Learn</b> — re-sync BeCM ↔ ECM</td><td><b>Yes</b></td><td>The one genuine over-the-wire <em>write</em>. Needs the <b>BeCM present and powered</b> (so: in the car), and — honestly — is unvalidated on real hardware (§14).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>You cannot "remap" a GEMS over OBD — full stop</h4><p>This was verified against the ST EPROM datasheets and Land Rover / tuning sources. GEMS maps live on <b>write-once EPROM</b>; the only electrically-erasable path is an <b>aftermarket flash-EPROM retrofit (still a bench chip swap)</b>. No factory GEMS, and no tool (TestBook, Nanocom, Faultmate), reflashes the GEMS calibration through the diagnostic port. Later Td5 "NNN" diesels and the Thor V8 <em>can</em> be flashed over OBD — but those are different, newer ECUs, not GEMS.</p></div></div>
+
+  <!-- 05 -->
+  <h2 id="install"><span class="k">05</span>Install &amp; run</h2>
+  <p>Windows laptop, Python 3.11+ (developed on 3.14). Create a virtual environment and install:</p>
+  <div class="tblwrap"><table><tbody>
+    <tr><td class="mono">python -m venv .venv</td><td>create the venv</td></tr>
+    <tr><td class="mono">.venv\Scripts\Activate.ps1</td><td>activate (PowerShell)</td></tr>
+    <tr><td class="mono">pip install -e ".[gui]"</td><td>install with the GUI; or <code>pip install -r requirements.txt</code> for CLI-only</td></tr>
+    <tr><td class="mono">python -m gems_t4 scenarios</td><td>smoke test — lists the four fault scenarios, no hardware needed</td></tr>
+  </tbody></table></div>
+  <p><b>Run the GUI:</b> <code>python -m gems_t4 gui</code>, or double-click <code>launch_gui.bat</code>. The launcher runs the <b>live venv source</b> (not a pre-built exe), so it always reflects the current code — nothing to "update" beyond a <code>git pull</code>. Add <code>--instant</code> to skip the period-authentic "communicating with ECU" pauses during testing. The version (<code>gems_t4 v0.0.7</code>) shows on the boot splash and window title.</p>
+  <p>PySide6 (the GUI) is intentionally kept out of <code>requirements.txt</code> — it's a large optional dependency, installed via the <code>[gui]</code> extra.</p>
+
+  <!-- 06 -->
+  <h2 id="using"><span class="k">06</span>Using the tool</h2>
+  <p>The flow is guided, T4-style: identify the vehicle, pick a function. Everything below works against the virtual ECU with no hardware, and against a real ECU once connected.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Function</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><b>Vehicle ID</b></td><td>VIN-first identification (the "GEMS or Thor?" fork); on the simulator it also picks the fault scenario.</td></tr>
+      <tr><td><b>Fault codes</b></td><td>Read and clear stored DTCs (P0118, P0303, P1185, …). Clearing wipes <b>all</b> codes — there is no per-code clear on GEMS — and asks for confirmation.</td></tr>
+      <tr><td><b>Live data</b></td><td><b>40</b> $61 measures on analog gauges (temps, RPM, MAF, throttle, O2, fuel trims, injector pulse width, coil charge, per-cylinder misfire counts, …). Watching more at once slows the refresh — that's the K-line, modelled honestly.</td></tr>
+      <tr><td><b>Actuator tests</b></td><td>MIL, O2 heater, fuel pump relay, A/C, condenser fan — <b>with the safety refusals</b> (e.g. the fuel pump won't run with the engine running: "test not available while the engine is running").</td></tr>
+      <tr><td><b>Coding</b></td><td>Read / edit / write VIN last-6, dealer ID, 4.0/4.6 select, transmission, build code. Gated: backup → write → read-back verify → operator confirm. Market and part-number fields are read-only.</td></tr>
+      <tr><td><b>Immobiliser</b></td><td>Security-Learn re-sync — the one genuine GEMS over-the-wire write; recovers "ENGINE IMMOBILISED". Needs the BeCM (§13/§14).</td></tr>
+      <tr><td><b>Maps</b></td><td><b>Read-only</b> 16×16 fuel/ignition viewer + EPROM chip facts. A "chip-swap lookalike" — there is deliberately no write path, because GEMS maps aren't reflashable over the wire.</td></tr>
+      <tr><td><b>Toolbox</b></td><td>Self-tests (LAN-card check with the canon dealer disclaimer, VCI check, touchscreen calibration) + About (reports "RDS 5.06 / T4 Lite").</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Four fault scenarios</b> (<code>healthy</code>, <code>coolant_sensor</code>, <code>misfire_cyl3</code>, <code>lambda_heater</code>) produce coherent symptoms across every screen — a fault shows up consistently in the codes, the live data, and the actuator refusals.</p>
+  <h3>A few CLI examples</h3>
+  <div class="tblwrap"><table><tbody>
+    <tr><td class="mono">gems_t4 live --scenario coolant_sensor</td><td>live data (simulated coolant fault)</td></tr>
+    <tr><td class="mono">gems_t4 dtc read --scenario misfire_cyl3</td><td>read fault codes</td></tr>
+    <tr><td class="mono">gems_t4 actuator fuel_pump</td><td>actuator test (shows the engine-running refusal)</td></tr>
+    <tr><td class="mono">gems_t4 coding read</td><td>the ECU coding block</td></tr>
+    <tr><td class="mono">gems_t4 immo status</td><td>immobiliser status</td></tr>
+    <tr><td class="mono">gems_t4 live --port COM5</td><td>live data from a <b>real</b> ECU on COM5</td></tr>
+  </tbody></table></div>
+
+  <!-- 07 -->
+  <h2 id="connect"><span class="k">07</span>Connections</h2>
+  <p>The tool reaches an ECU three ways, chosen on the GUI's <b>Configuration — VCI connection</b> screen (or via CLI flags). A persistent "VCI:" indicator in the title bar shows the active link on every screen, and an on-demand test measures round-trip latency.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Connection</th><th>How</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>Virtual ECU</b></td><td>default</td><td>the built-in simulator — no hardware</td></tr>
+      <tr><td><b>USB</b></td><td><code>--port COMx</code></td><td>the Pico K-line adapter on a serial port</td></tr>
+      <tr><td><b>Network / TCP</b></td><td><code>gems_t4 serve</code> + <code>--connect HOST[:PORT]</code></td><td>a served virtual ECU, a Pi-bridged Pico, or a future WiFi Pico — identical to the client</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>Network links are read-only by default</h4><p>Over a network transport, write services (coding, actuators, Security-Learn) are refused unless you explicitly pass <code>--allow-writes</code> on a link you trust. Reads and DTC-clear stay allowed. This gate is enforced on the laptop side; keep <code>serve</code> on localhost or behind an SSH tunnel for real use.</p></div></div>
+
+  <!-- 08 -->
+  <h2 id="bom"><span class="k">08</span>Bill of materials</h2>
+  <p>The core adapter is a Pico + one transceiver + one resistor. The rest is hardening and bench-rig extras. Prices are rough US ballparks. <b>Unfamiliar terms</b> (Vs, standoff, decoupling, SO-8, transceiver…) are all defined in the <a href="#glossary">Glossary</a> (§17).</p>
+  <h3>Required — the adapter</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Part</th><th>Spec</th><th>~$</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Raspberry Pi Pico or Pico 2</td><td>non-wireless</td><td>4–6</td><td>USB-CDC to the laptop. A plain (non-W) board is fine.</td></tr>
+      <tr><td>ST L9637D transceiver</td><td>SO-8</td><td>~2</td><td>The MikroE ISO 9141 Click (same chip) is retired/unavailable in the US — buy the bare chip.</td></tr>
+      <tr><td>SO-8 → DIP-8 breakout adapter</td><td>with header pins</td><td>~1</td><td>The L9637D is surface-mount; this makes it breadboard-able.</td></tr>
+      <tr><td>Resistor</td><td><b>510 Ω</b> (≤ 5 kΩ)</td><td>—</td><td>The K-line pull-up. Required.</td></tr>
+      <tr><td>Breadboard + jumper wires</td><td>—</td><td>~5</td><td></td></tr>
+      <tr><td>USB cable</td><td>micro/USB-C to match the Pico</td><td>~3</td><td>Pico → laptop</td></tr>
+      <tr><td>OBD-II (J1962) male pigtail</td><td>—</td><td>~6</td><td>For the on-car connection (§10).</td></tr>
+      <tr><td>Inline fuse holder + fuse</td><td>1–2 A</td><td>~3</td><td>On the +12 V feed.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Recommended</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Part</th><th>Spec</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Ceramic capacitor</td><td>100 nF (0.1 µF, marked "104")</td><td>Vcc decoupling, pin 3 → GND. Skip for first bench comms; add later.</td></tr>
+      <tr><td>Ceramic capacitor</td><td>~1 nF (<b>≤ 1.3 nF</b>)</td><td>K-line filter, pin 6 → GND. Optional, EMI.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Before it goes on a running vehicle</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Part</th><th>Spec</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>TVS / transient suppressor <span style="color:var(--ink-faint)">(a spike absorber)</span></td><td>~20–26 V standoff (the voltage below which it does nothing — so it clamps <em>before</em> the chip's 40 V limit)</td><td>Fits on Vs — the chip's +12 V supply pin (pin 7). Protects against load-dump (alternator) spikes. <b>Not needed on a bench PSU</b> (clean 12 V).</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Bench rig extras (§11)</h3>
+  <div class="tblwrap"><table><tbody>
+    <tr><td>PC / ATX power supply</td><td>any working 12 V PSU — use the yellow (+12 V) and black (ground) wires. It stays off until its green wire (PS_ON) is joined to a black wire — that's the "master" switch below.</td></tr>
+  </tbody></table></div>
+  <h3>Switches (recommended for the bench rig)</h3>
+  <p>A couple of small toggle switches make the rig far easier to live with. All are low-current <b>SPST</b> (plain on/off) toggles — a $2–3 part each; a jumper wire you plug and unplug also works if you'd rather not buy them.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Switch</th><th>Wired across</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><b>Master / PSU-on</b></td><td>the PSU's green PS_ON wire ↔ a black (ground) wire</td><td>One flick powers the whole rig up or down, instead of poking a jumper in and out. Skip it only if your PSU already has a usable on/off for its 12 V output.</td></tr>
+      <tr><td><b>Ignition</b></td><td>the +12 V line feeding ECU pin 8 (the ignition-sense pin)</td><td>Lets you cycle "ignition" off→on <em>without</em> dropping main power — needed for some procedures (e.g. the immobiliser re-learn) and handy for resetting the ECU. It's a low-current sense line, so any small switch is fine.</td></tr>
+      <tr><td>Pico power <span style="color:var(--ink-faint)">(optional)</span></td><td>—</td><td><b>Usually not needed.</b> The Pico is powered over USB, so unplugging the USB cable (or pressing the Pico's reset) already power-cycles it. Only add one if you want to reset the Pico without touching the USB cable.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Tools</h3>
+  <div class="tblwrap"><table><tbody>
+    <tr><td><b>Multimeter</b></td><td>essential — for the continuity/verify checks before applying 12 V</td></tr>
+    <tr><td>Soldering iron</td><td>only if your SO-8 breakout isn't pre-assembled</td></tr>
+  </tbody></table></div>
+  <h3>Optional — only if you want to change the tune (maps)</h3>
+  <div class="callout warn"><div class="i">i</div><div><h4>This is chip work, not part of the K-line adapter</h4><p>To edit the fuel/ignition maps you'd need an <b>EPROM programmer</b> (e.g. TL866 / Willem) and replacement EPROMs — or windowless flash-EPROM equivalents (e.g. an SST27SF512 for the 27C512, plus a 1 Mbit flash-EPROM equivalent for the 27C1001) so you can re-burn without a UV eraser. The chip comes out of the ECU and goes in the programmer; none of this happens over the diagnostic port.</p></div></div>
+
+  <!-- 09 -->
+  <h2 id="hardware"><span class="k">09</span>Building the adapter</h2>
+  <p>The Pico owns all K-line timing (5-baud init, byte windows, half-duplex echo cancellation); the L9637D just level-shifts between the Pico's 3.3 V UART and the car's 12 V K-line. Flash the firmware onto the Pico (Arduino-Pico core; see the project's <code>firmware/</code> folder), then wire it up.</p>
+  <h3>L9637D pinout (SO-8)</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Pin</th><th>Name</th><th>Function</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td class="mono">RX</td><td>received data out → Pico GP1 (idles at Vcc)</td></tr>
+      <tr><td class="mono">2</td><td class="mono">LO</td><td>L-line output — unused</td></tr>
+      <tr><td class="mono">3</td><td class="mono">VCC</td><td>logic supply — <b>3.3 V from the Pico, never 5 V</b></td></tr>
+      <tr><td class="mono">4</td><td class="mono">TX</td><td>transmit data in ← Pico GP0</td></tr>
+      <tr><td class="mono">5</td><td class="mono">GND</td><td>ground</td></tr>
+      <tr><td class="mono">6</td><td class="mono">K</td><td>bidirectional K-line I/O → the car / ECU</td></tr>
+      <tr><td class="mono">7</td><td class="mono">VS</td><td>battery / +12 V supply (4.5–36 V)</td></tr>
+      <tr><td class="mono">8</td><td class="mono">LI</td><td>L-line input — unused</td></tr>
+    </tbody>
+  </table></div>
+  <h3>The two extra parts, exactly where they go</h3>
+  <ul class="body">
+    <li><b>510 Ω pull-up — pin 6 (K) to pin 7 (Vs).</b> One leg on each pin; they connect <em>through</em> the 510 Ω (not a bare wire). The K-line is open-drain — devices only pull it low — so this resistor is what holds it high. Required.</li>
+    <li><b>100 nF cap — pin 3 (Vcc) to GND (pin 5),</b> close to the chip. Steadies the logic supply. Recommended; no polarity.</li>
+  </ul>
+  <div class="callout ok"><div class="i">&#10003;</div><div><h4>Read and write use the same wiring</h4><p>The K-line is a single bidirectional wire and the L9637D's TX/RX handle both directions, so reading and writing use the identical adapter. You never re-wire to switch between read-only and write mode — that's a software setting, not a hardware one.</p></div></div>
+
+  <!-- 10 -->
+  <h2 id="wiring-car"><span class="k">10</span>Wiring: on-car (via OBD-II)</h2>
+  <p>For diagnostics on the car — and for the immobiliser work — you plug into the <b>OBD-II (J1962) socket</b>. The transceiver bridges the Pico's 3.3 V logic to the car's single 12 V K-line, powered from the car's battery feed at the socket.</p>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1200 430" role="img" aria-label="On-car wiring. Laptop to Pico over USB. Pico GP0 TX, GP1 RX, 3V3 and GND to L9637D pins 4, 1, 3 and 5. L9637D pin 6 K and pin 7 Vs to OBD-II pin 7 K-line and pin 16 plus 12 volts (fused), with a 510 ohm pull-up between K and Vs. Grounds share OBD pins 4 and 5. K-line reaches the GEMS ECU.">
+        <defs>
+          <marker id="mInk" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--ink-soft)"/></marker>
+          <marker id="mTx" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-tx)"/></marker>
+          <marker id="mRx" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-rx)"/></marker>
+          <marker id="mPwr" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-pwr)"/></marker>
+          <marker id="mK" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-k)"/></marker>
+          <marker id="mKs" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-k)"/></marker>
+        </defs>
+        <text x="505" y="30" text-anchor="middle" style="fill:var(--sig-tx)" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600">3.3 V LOGIC SIDE — safe</text>
+        <text x="875" y="30" text-anchor="middle" style="fill:var(--sig-pwr)" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600">12 V VEHICLE SIDE — live</text>
+        <line x1="705" y1="60" x2="705" y2="360" stroke="currentColor" stroke-opacity="0.16" stroke-dasharray="2 5"/>
+        <rect x="24" y="176" width="102" height="72" rx="9" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="75" y="216" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="14" fill="currentColor">LAPTOP</text>
+        <line x1="126" y1="212" x2="241" y2="212" stroke="var(--ink-soft)" stroke-width="2.4" marker-end="url(#mInk)"/>
+        <text x="184" y="204" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-soft)">USB</text>
+        <rect x="248" y="96" width="196" height="220" rx="12" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="346" y="130" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="14" fill="currentColor">Pico / Pico 2</text>
+        <text x="432" y="186" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">GP0 · TX</text>
+        <text x="432" y="220" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">GP1 · RX</text>
+        <text x="432" y="254" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">3V3</text>
+        <text x="432" y="300" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">GND</text>
+        <rect x="586" y="96" width="196" height="220" rx="12" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="684" y="128" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="17" style="fill:var(--accent)">L9637D</text>
+        <text x="598" y="186" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">4 · TX</text>
+        <text x="598" y="220" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">1 · RX</text>
+        <text x="598" y="254" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">3 · Vcc</text>
+        <text x="598" y="300" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">5 · GND</text>
+        <text x="770" y="180" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">6 · K</text>
+        <text x="770" y="250" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">7 · Vs</text>
+        <line x1="446" y1="182" x2="582" y2="182" stroke="var(--sig-tx)" stroke-width="2.4" marker-end="url(#mTx)"/>
+        <line x1="582" y1="216" x2="446" y2="216" stroke="var(--sig-rx)" stroke-width="2.4" marker-end="url(#mRx)"/>
+        <line x1="446" y1="250" x2="582" y2="250" stroke="var(--sig-pwr)" stroke-width="2.4" marker-end="url(#mPwr)"/>
+        <text x="514" y="243" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" style="fill:var(--ink-faint)">3V3→Vcc</text>
+        <rect x="912" y="130" width="150" height="150" rx="12" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="987" y="160" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="14" fill="currentColor">OBD-II</text>
+        <text x="987" y="177" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" style="fill:var(--ink-faint)">J1962 socket</text>
+        <text x="926" y="205" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">7 · K</text>
+        <text x="926" y="235" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">16 · +12V</text>
+        <text x="926" y="263" text-anchor="start" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="currentColor">4/5 · GND</text>
+        <line x1="786" y1="176" x2="908" y2="199" stroke="var(--sig-k)" stroke-width="2.6" marker-start="url(#mKs)" marker-end="url(#mK)"/>
+        <text x="843" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" font-weight="600" style="fill:var(--sig-k)">K-line</text>
+        <line x1="908" y1="229" x2="836" y2="243" stroke="var(--sig-pwr)" stroke-width="2.4" marker-end="url(#mPwr)"/>
+        <line x1="786" y1="246" x2="812" y2="246" stroke="var(--sig-pwr)" stroke-width="2.4"/>
+        <rect x="812" y="239" width="20" height="14" rx="3" fill="var(--surface)" stroke="var(--sig-pwr)" stroke-width="1.4"/>
+        <text x="822" y="272" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" style="fill:var(--sig-pwr)">FUSE 1–2A</text>
+        <line x1="864" y1="188" x2="864" y2="205" stroke="var(--ink-soft)" stroke-width="1.6"/>
+        <rect x="856" y="205" width="16" height="30" rx="3" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <line x1="864" y1="235" x2="864" y2="244" stroke="var(--ink-soft)" stroke-width="1.6"/>
+        <line x1="786" y1="188" x2="864" y2="188" stroke="var(--sig-k)" stroke-width="1.4" stroke-opacity="0.65"/>
+        <text x="905" y="196" text-anchor="start" font-family="IBM Plex Mono" font-size="10.5" font-weight="600" fill="currentColor">510Ω</text>
+        <line x1="1062" y1="199" x2="1150" y2="199" stroke="var(--sig-k)" stroke-width="2.2" stroke-dasharray="5 4" marker-end="url(#mK)"/>
+        <text x="1106" y="190" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="13" fill="currentColor">GEMS ECU</text>
+        <text x="1106" y="222" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" style="fill:var(--ink-faint)">in vehicle</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--sig-pwr)"></i>+12V</span>
+      <span><i class="sw" style="background:var(--sig-gnd)"></i>ground</span>
+      <span><i class="sw" style="background:var(--sig-k)"></i>K-line</span>
+      <span><i class="sw" style="background:var(--sig-tx)"></i>TX</span>
+      <span><i class="sw" style="background:var(--sig-rx)"></i>RX</span>
+    </div>
+    <figcaption><b>OBD-II pins:</b> 7 = K-line, 16 = +12 V (fused), 4 &amp; 5 = ground. Plugging into the socket puts you on the same K-line as every module — including the BeCM, which is why the immobiliser work happens here, not on the bench.</figcaption>
+  </figure>
+
+  <!-- 11 -->
+  <h2 id="wiring-bench"><span class="k">11</span>Wiring: bench rig (no car)</h2>
+  <p>To test the adapter against a spare ECU with no vehicle, power both the ECU and the adapter from a PC PSU and wire the adapter straight to the ECU's connectors. On an ATX supply, <b>yellow = +12 V, black = ground</b>, and you jumper the <b>green</b> wire to a black to switch it on — a small toggle switch there makes a tidy master on/off (see the switch list in §08). A second toggle on the ignition line (ECU pin 8) lets you cycle "ignition" without dropping main power. Everything shares that one ground.</p>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1200 470" role="img" aria-label="Bench rig. A PC PSU yellow wire is +12 volts, black is ground, green jumpers to black to turn it on. +12 volts feeds L9637D Vs through a fuse and the ECU main power pin 7 and ignition pin 8. Ground is the common ground for Pico, L9637D pin 5 and ECU grounds. Pico connects to L9637D; L9637D K connects to the GEMS ECU C1017 K-line pin 23.">
+        <defs>
+          <marker id="bInk" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--ink-soft)"/></marker>
+          <marker id="bTx" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-tx)"/></marker>
+          <marker id="bRx" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-rx)"/></marker>
+          <marker id="bPwr" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-12v)"/></marker>
+          <marker id="bK" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-k)"/></marker>
+          <marker id="bKs" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" style="fill:var(--sig-k)"/></marker>
+        </defs>
+        <rect x="20" y="150" width="96" height="62" rx="9" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="68" y="186" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="13" fill="currentColor">LAPTOP</text>
+        <line x1="116" y1="181" x2="234" y2="170" stroke="var(--ink-soft)" stroke-width="2.2" marker-end="url(#bInk)"/>
+        <text x="176" y="162" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" style="fill:var(--ink-soft)">USB</text>
+        <rect x="238" y="94" width="182" height="184" rx="12" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="329" y="120" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="14" fill="currentColor">Pico / Pico 2</text>
+        <text x="408" y="160" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">GP0·TX</text>
+        <text x="408" y="190" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">GP1·RX</text>
+        <text x="408" y="220" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">3V3</text>
+        <text x="408" y="262" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">GND</text>
+        <rect x="578" y="94" width="182" height="184" rx="12" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="669" y="120" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="16" style="fill:var(--accent)">L9637D</text>
+        <text x="590" y="160" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">4·TX</text>
+        <text x="590" y="190" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">1·RX</text>
+        <text x="590" y="220" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">3·Vcc</text>
+        <text x="590" y="262" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">5·GND</text>
+        <text x="748" y="158" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">6·K</text>
+        <text x="748" y="230" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">7·Vs</text>
+        <line x1="422" y1="156" x2="574" y2="156" stroke="var(--sig-tx)" stroke-width="2.3" marker-end="url(#bTx)"/>
+        <line x1="574" y1="186" x2="422" y2="186" stroke="var(--sig-rx)" stroke-width="2.3" marker-end="url(#bRx)"/>
+        <line x1="422" y1="216" x2="574" y2="216" stroke="var(--sig-pwr)" stroke-width="2.3" marker-end="url(#bPwr)"/>
+        <rect x="908" y="90" width="220" height="236" rx="12" fill="var(--surface-2)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="1018" y="113" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="15" fill="currentColor">GEMS ECU</text>
+        <text x="1018" y="129" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" style="fill:var(--ink-faint)">Lucas/SAGEM · two plugs</text>
+        <text x="922" y="162" text-anchor="start" font-family="IBM Plex Mono" font-size="9.5" font-weight="600" style="fill:var(--sig-k)">C1017 · 36-way RED</text>
+        <text x="930" y="184" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">K-line</text>
+        <text x="1114" y="184" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" style="fill:var(--accent)">pin 23 *</text>
+        <text x="922" y="216" text-anchor="start" font-family="IBM Plex Mono" font-size="9.5" font-weight="600" style="fill:var(--sig-12v)">C1033 · 18-way BLACK</text>
+        <text x="930" y="238" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">Main +12V</text>
+        <text x="1114" y="238" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">pin 7</text>
+        <text x="930" y="260" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">Ign +12V</text>
+        <text x="1114" y="260" text-anchor="end" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">pin 8</text>
+        <text x="930" y="282" text-anchor="start" font-family="IBM Plex Mono" font-size="11.5" font-weight="600" fill="currentColor">Ground</text>
+        <text x="1114" y="282" text-anchor="end" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="currentColor">5·9·10·16</text>
+        <text x="1018" y="308" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" style="fill:var(--ink-faint)">* NAS/US car; non-NAS uses pin 20</text>
+        <line x1="764" y1="152" x2="914" y2="180" stroke="var(--sig-k)" stroke-width="2.6" marker-start="url(#bKs)" marker-end="url(#bK)"/>
+        <text x="838" y="150" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" font-weight="600" style="fill:var(--sig-k)">K-line</text>
+        <line x1="700" y1="380" x2="1075" y2="380" stroke="var(--sig-12v)" stroke-width="3"/>
+        <text x="1075" y="372" text-anchor="end" font-family="IBM Plex Mono" font-size="11" font-weight="600" style="fill:var(--sig-12v)">+12 V  (yellow)</text>
+        <line x1="738" y1="224" x2="738" y2="330" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <rect x="730" y="330" width="16" height="18" rx="3" fill="var(--surface)" stroke="var(--sig-pwr)" stroke-width="1.4"/>
+        <text x="726" y="343" text-anchor="end" font-family="IBM Plex Mono" font-size="8.5" style="fill:var(--sig-pwr)">FUSE</text>
+        <line x1="738" y1="348" x2="738" y2="380" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="738" cy="380" r="3.2" style="fill:var(--sig-12v)"/>
+        <line x1="960" y1="326" x2="960" y2="380" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="960" cy="380" r="3.2" style="fill:var(--sig-12v)"/>
+        <text x="948" y="342" text-anchor="end" font-family="IBM Plex Mono" font-size="9" style="fill:var(--ink-faint)">pin 7</text>
+        <line x1="1020" y1="326" x2="1020" y2="342" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <line x1="1020" y1="342" x2="1031" y2="355" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="1020" cy="342" r="2.6" style="fill:var(--sig-12v)"/>
+        <line x1="1020" y1="358" x2="1020" y2="380" stroke="var(--sig-12v)" stroke-width="2.2"/>
+        <circle cx="1020" cy="380" r="3.2" style="fill:var(--sig-12v)"/>
+        <text x="1036" y="352" text-anchor="start" font-family="IBM Plex Mono" font-size="8.5" style="fill:var(--ink-faint)">pin 8 · IGN sw</text>
+        <line x1="300" y1="470" x2="1090" y2="470" stroke="var(--sig-gnd)" stroke-width="3"/>
+        <text x="1090" y="462" text-anchor="end" font-family="IBM Plex Mono" font-size="11" font-weight="600" style="fill:var(--sig-gnd)">GND / 0 V  (black — this IS your ground)</text>
+        <line x1="360" y1="266" x2="360" y2="470" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <circle cx="360" cy="470" r="3.2" style="fill:var(--sig-gnd)"/>
+        <line x1="606" y1="266" x2="606" y2="470" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <circle cx="606" cy="470" r="3.2" style="fill:var(--sig-gnd)"/>
+        <line x1="1075" y1="326" x2="1075" y2="470" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <circle cx="1075" cy="470" r="3.2" style="fill:var(--sig-gnd)"/>
+        <line x1="672" y1="470" x2="672" y2="482" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <line x1="660" y1="482" x2="684" y2="482" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <line x1="664" y1="488" x2="680" y2="488" stroke="var(--sig-gnd)" stroke-width="2.2"/>
+        <rect x="60" y="360" width="180" height="130" rx="12" fill="var(--surface)" stroke="currentColor" stroke-opacity="0.55"/>
+        <text x="150" y="388" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="14" fill="currentColor">PC PSU (ATX)</text>
+        <circle cx="240" cy="392" r="4" style="fill:var(--sig-12v)"/>
+        <line x1="240" y1="392" x2="700" y2="380" stroke="var(--sig-12v)" stroke-width="2.6"/>
+        <text x="150" y="414" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" style="fill:var(--sig-12v)">yellow → +12 V</text>
+        <circle cx="240" cy="452" r="4" style="fill:var(--sig-gnd)"/>
+        <line x1="240" y1="452" x2="300" y2="470" stroke="var(--sig-gnd)" stroke-width="2.6"/>
+        <text x="150" y="436" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" style="fill:var(--sig-gnd)">black → GND</text>
+        <text x="150" y="462" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" style="fill:var(--accent)">green ↔ black</text>
+        <text x="150" y="477" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" style="fill:var(--ink-faint)">jumper to turn on</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--sig-12v)"></i>+12 V (yellow)</span>
+      <span><i class="sw" style="background:var(--sig-gnd)"></i>ground (black)</span>
+      <span><i class="sw" style="background:var(--sig-k)"></i>K-line</span>
+      <span style="color:var(--warn)">* K-line pin: NAS 23 / non-NAS 20</span>
+    </div>
+    <figcaption><b>The GEMS ECU has two plugs you need:</b> the 18-way black (C1033) for power &amp; ground, and the 36-way red (C1017) for the K-line. There is no separate always-hot pin — feed +12 V to pin 7 (main) and pin 8 (ignition). Pins are from Land Rover GEMS service data; meter-check on your own ECU before applying 12 V (see callout below).</figcaption>
+  </figure>
+  <h3>GEMS ECU bench pins</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Signal</th><th>ECU pin</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Main +12 V</td><td class="mono">C1033 pin 7</td><td>main-relay supply — powers the ECU</td></tr>
+      <tr><td>Ignition +12 V</td><td class="mono">C1033 pin 8</td><td>"ON" sense — wakes it</td></tr>
+      <tr><td>Ground</td><td class="mono">C1033 pins 5, 9, 10, 16</td><td>all to PSU black</td></tr>
+      <tr><td>K-line</td><td class="mono">C1017 pin 23 (NAS) / 20 (non-NAS)</td><td>→ L9637D pin 6</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>Meter-check the ECU pins before the yellow wire goes live</h4><p>These pins are from Land Rover GEMS service data (cross-checked against two independent factory-derived pinouts; the coil/MIL/fuel-pump pins validated exactly). But the source tables are Discovery/Morgan GEMS. On a <b>P38 Range Rover</b> the same three connectors are labelled <b>C505</b> (36-way black, outputs), <b>C507</b> (36-way red, K-line) and <b>C509</b> (18-way black, power/ground) — the power/ground pins on C509 match the C1033 numbers above, but the <b>K-line pin can differ on a P38, so meter-verify it</b>. Since 12 V on the wrong pin kills an ECU, on <b>your</b> ECU: ohm pins 5/9/10/16 to the ECU case (≈0 Ω = grounds), and confirm the K-line pin reads continuous to OBD socket pin 7 (NAS/US ≈ pin 23, UK/Euro ≈ pin 20).</p></div></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>Coding works on the bench; the immobiliser does not</h4><p>With only the ECU (no BeCM), you can read its ID, fault codes and live data, <b>and exercise coding writes</b> (VIN last-6, dealer ID, 4.0/4.6 select, transmission — these are straight ECU writes, no BeCM needed). Only <b>Security-Learn</b> is a BeCM↔ECM handshake, so it alone needs the BeCM present — that's a car job (§13). The transient clamp on Vs is also a pre-car item — a bench PSU's 12 V is clean.</p></div></div>
+
+  <!-- 12 -->
+  <h2 id="workflow"><span class="k">12</span>Bench → car workflow</h2>
+  <p>Prove the tool on the bench, then move to the car. The two wiring diagrams map to the two stages.</p>
+  <h3>Stage 1 — bench (validate the adapter)</h3>
+  <ol class="body">
+    <li>Wire the adapter + 510 Ω pull-up; Vcc from 3V3. <b>Triple-check pin-1 orientation.</b></li>
+    <li>Wire the bench rig (§11): PSU +12 V → ECU pin 7 &amp; pin 8; grounds common; K-line to C1017.</li>
+    <li>Meter-check grounds and the K-line pin (callout above). No transient clamp needed at this stage.</li>
+    <li>Power the PSU (flip the master switch, or join green→black). Flash/confirm the Pico; find its COM port.</li>
+    <li>First contact is <b>read-only</b>: <code>gems_t4 live --port COMx</code>, read the ECU ID and fault codes. Success here means your hardware and the read path work.</li>
+  </ol>
+  <h3>Stage 2 — car (attempt the immobiliser sync)</h3>
+  <ol class="body">
+    <li>Fit the ECU in the car. Add the <b>Vs transient clamp</b> and the fuse before live vehicle power.</li>
+    <li>Connect via the <b>OBD-II socket</b> (§10) — that puts you on the K-line with the ECU <em>and</em> the BeCM.</li>
+    <li>Ignition <b>on, engine off</b> (an immobilised engine can't run anyway) so both modules are awake.</li>
+    <li>Do reads first. The one thing that <em>needs</em> the car is the immobiliser <b>Security-Learn</b> (it's the BeCM↔ECM handshake) — <b>attempt</b> it here. (Coding you can already have done on the bench.) Keep the word "attempt" — see §14.</li>
+  </ol>
+
+  <!-- 13 -->
+  <h2 id="ecuswap"><span class="k">13</span>The ECU-swap job</h2>
+  <p>Common goal: fit a <b>spare ECU</b> to a different car. Whether it works depends mostly on the ECU matching the car — not on software.</p>
+  <h3>1 · Does the spare ECU physically match?</h3>
+  <ul class="body">
+    <li><b>Engine size (4.0 vs 4.6):</b> the maps are baked into the chips for a displacement. A 4.6 ECU on a 4.0 (or vice-versa) is calibrated wrong for that engine, and <b>no software fixes it</b> — the maps are on the chips. Same displacement = fine; different = you'd need the correct chips (or the correct ECU).</li>
+    <li><b>Year / market / spec:</b> big differences (NAS vs non-NAS, very different model year) can bring other mismatches. Closer is better.</li>
+  </ul>
+  <h3>2 · The immobiliser pairing — the "will it start" step</h3>
+  <p>A GEMS ECU is locked to <em>its own car's</em> BeCM. Drop a different ECU in and the new car's BeCM won't recognise it → "ENGINE IMMOBILISED." Re-pairing them is <b>Security-Learn</b>, done in the car with the BeCM present. This is the operation the tool implements — but read §14 before relying on it.</p>
+  <h3>3 · Coding to match</h3>
+  <p>Some config lives in the ECU (VIN last-6, dealer, 4.0/4.6 select, transmission) and is writable over the K-line — the tool does this. Note that much VIN / market / EKA coding lives in the <b>BeCM</b>, not the engine ECU.</p>
+
+  <!-- 14 -->
+  <h2 id="limits"><span class="k">14</span>Limitations &amp; honest status</h2>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>Unproven on real hardware</h4><p>Everything works against the built-in <b>simulator</b>. The tool has <b>never talked to a physical GEMS ECU</b> — on-car validation (the Pico adapter path) is the pending step this manual helps you reach. Treat every real-hardware result as an experiment until you've confirmed it.</p></div></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>The protocol is a best-effort recreation</h4><p>The exact GEMS wire bytes — especially the <b>immobiliser handshake</b> — are not publicly documented. The tool's protocol is stylized (drawn from Andrew Revill's MEMS3 reverse-engineering plus inference), so a real GEMS ECU may not respond exactly as modelled. This is the biggest uncertainty for the immobiliser write specifically.</p></div></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>It is not a replacement for a Nanocom / Faultmate</h4><p>This is a hobby / learning project, not a commercial tool. For reads and diagnostics it can become genuinely useful once validated. For the <b>immobiliser ECU↔BeCM sync</b> — the one operation where "it's an experiment" isn't good enough if you need the car to start — the known-reliable tools are a <b>Nanocom</b> or <b>Faultmate</b> (whose makers reverse-engineered these protocols). A sensible plan: use this tool to learn and to prove your hardware/diagnostics, and budget for a Nanocom for the immobiliser sync.</p></div></div>
+  <h3>Also not built (yet)</h3>
+  <p>Engine-ECU only — the other P38 modules (EAS air suspension, ABS, BeCM, airbags, climate) aren't covered yet. No service adjustments (timing/idle) yet. No guided fault-tree wizards yet.</p>
+
+  <!-- 15 -->
+  <h2 id="reference"><span class="k">15</span>Technical reference</h2>
+  <h3>Architecture</h3>
+  <p>Four strict layers: <code>transport/</code> (the only I/O — virtual ECU, Pico adapter, TCP, FTDI stub), <code>protocol/</code> (KWP2000/ISO-14230 framing, init, services, the KwpClient), <code>gems/</code> (GEMS meaning — DTCs, live data, actuators, immobiliser, maps, virtual ECU), <code>app/</code> (Rich CLI + PySide6 GUI). The load-bearing seam is <code>KwpClient(transport)</code> — it takes a real serial transport or the in-memory virtual one, so the whole stack is testable off-car.</p>
+  <h3>Wire protocol (stylized)</h3>
+  <p>Frame: <code>[0x80][target][source][len][data…][checksum]</code>, checksum = 8-bit sum mod 256. Services used: $10 session, $27 security, $21→$61 read-data, $18 read DTCs, $14 clear, $30 actuator, $31 routines (immobiliser), $3B write-coding, $1A read-ID, $3E tester-present. Unsupported live-data IDs answer $7F. There are deliberately <b>no</b> $34/$36/$37 download/transfer services — GEMS has no reflash path. The Pico↔host link is a separate length-prefixed USB protocol (<code>0xA5/0x5A</code> frames, crc8) — the Pico is a timed byte pipe, all KWP/GEMS logic lives in Python.</p>
+  <h3>The four fault scenarios</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Scenario</th><th>Symptoms</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">healthy</td><td>no faults</td></tr>
+      <tr><td class="mono">coolant_sensor</td><td>P0118, coolant reads −40 °C</td></tr>
+      <tr><td class="mono">misfire_cyl3</td><td>P0303 + P1303, per-cylinder misfire count on cyl 3</td></tr>
+      <tr><td class="mono">lambda_heater</td><td>P1185, and the O2-heater actuator test is refused</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Datasheet references</h3>
+  <p>L9637D pinout &amp; limits: ST "Monolithic bus driver with ISO 9141 interface", Doc ID 1765 Rev 7 — Vcc 3–5 V operating (7 V abs-max), Vs 4.5–36 V (abs-max 36 V / 40 V transient), K pull-up R<sub>KO</sub> ≤ 5 kΩ (510 Ω characterization value), C<sub>K</sub> ≤ 1.3 nF. GEMS ECU connector pins: Land Rover GEMS service data (C1033 power/ground, C1017 data link), cross-checked vs the Morgan GEMS manual. OBD-II J1962: pin 7 K-line, pin 16 +12 V, pins 4/5 ground.</p>
+
+  <!-- 16 -->
+  <h2 id="backlog"><span class="k">16</span>Backlog / roadmap</h2>
+  <p>What isn't done yet, in plain terms — so you know where the project stands. None of these are features today.</p>
+
+  <h3>The big one — prove it on real hardware</h3>
+  <p>Everything works against the built-in virtual (simulated) ECU, but the tool has <b>never talked to a real GEMS ECU</b>. On-bench and on-car validation with the Pico adapter is the top item — it's what turns this from a simulator into a real tool. Until then, treat reads as unproven and every write as an experiment.</p>
+
+  <h3>Features not built yet</h3>
+  <ul>
+    <li><b>The rest of the truck.</b> Engine ECU only today. Planned: the other P38 modules — air suspension (EAS), ABS, the body computer (BeCM), airbags, climate control.</li>
+    <li><b>Service adjustments</b> — the ignition-timing and idle nudges the real T4 could do.</li>
+    <li><b>An injector output test.</b></li>
+    <li><b>Step-by-step guided fault-finding</b> — today you pick from menus; the plan is guided walk-throughs.</li>
+    <li><b>A wireless (WiFi) adapter option</b> — the laptop side is built; the Pico WiFi firmware is not.</li>
+    <li><b>Message-centre text</b> and a true <b>full-screen kiosk</b> mode — period-fidelity polish.</li>
+  </ul>
+
+  <h3>Open research (not started)</h3>
+  <ul>
+    <li><b>Does EPROM programmability vary by model year?</b> The stance is "write-once chip, bench swap only" — we want to confirm that holds for every GEMS variant.</li>
+    <li><b>The 4.0/4.6 setting as a real feature</b> — it matters when an ECU ends up on the wrong-size engine.</li>
+    <li><b>Matching a used / parts-car ECU to a different engine</b> — spelling out exactly what's fixable by coding + immobiliser re-sync vs. what forces a chip swap or a different ECU (see §13).</li>
+  </ul>
+
+  <h3>Known rough edges</h3>
+  <ul>
+    <li><b>Write safety-gates are partial.</b> Coding writes enforce backup + verify + confirm (three of the seven gates once advertised); security-access, precondition and dry-run gates aren't built.</li>
+    <li><b>The "network is read-only" rule is enforced on the laptop, not the serve bridge</b> — fine on localhost, but it wants server-side enforcement before any real over-the-network use.</li>
+    <li><b>"Immobilised" isn't fully coherent</b> in the simulator — the engine still shows RPM when set to the immobilised state.</li>
+  </ul>
+
+  <p>Recently done (v0.0.6–v0.0.7): the persistent connection indicator + link test, the "Clear ALL codes" clarity, the fuel-pump refusal reason, live-data 37→40 parameters, and this hardware wiring reference.</p>
+
+  <!-- 17 -->
+  <h2 id="glossary"><span class="k">17</span>Glossary</h2>
+  <p>Plain-English definitions for the technical terms in this manual. Terms with a dotted underline elsewhere show these same definitions on hover.</p>
+  <dl class="gloss">
+    <dt>ECU / ECM</dt><dd>The engine's computer. On a GEMS car, one unit runs both fuel and ignition.</dd>
+    <dt>BeCM</dt><dd>Body electrical Control Module — the P38's big body computer under the driver's seat. It runs the immobiliser, among much else.</dd>
+    <dt>Immobiliser</dt><dd>Anti-theft: the ECU won't let the engine run unless the BeCM sends it a secret coded "OK" at each start.</dd>
+    <dt>Security-Learn</dt><dd>The procedure that re-pairs the ECU and BeCM so they share that secret again. The one genuine over-the-wire write on a GEMS — and it needs the BeCM present (a car job, not a bench job).</dd>
+    <dt>K-line</dt><dd>The single diagnostic wire the tool talks over. It idles "high" (~12 V); devices briefly pull it down to 0 V to send data.</dd>
+    <dt>OBD-II / J1962</dt><dd>The 16-pin diagnostic socket under the dash. Pin 7 = K-line, pin 16 = +12 V (always live), pins 4/5 = ground.</dd>
+    <dt>ISO 9141 / KWP2000</dt><dd>The rules — the "language" — spoken on the K-line.</dd>
+    <dt>Transceiver (L9637D)</dt><dd>The chip that bridges the car's 12 V K-line to the Pico's 3.3 V logic. It only level-shifts; the Pico does all the thinking.</dd>
+    <dt>Vs</dt><dd>On the L9637D chip, the supply pin fed by the car/battery +12 V (pin 7).</dd>
+    <dt>Vcc</dt><dd>On the L9637D chip, the low-voltage logic-supply pin (pin 3). Feed it 3.3 V from the Pico — never 5 V.</dd>
+    <dt>GND / ground / 0 V</dt><dd>The common reference every part shares. On a PC power supply it's the black wire.</dd>
+    <dt>Pull-up (resistor)</dt><dd>A resistor that gently holds a wire "high" when nothing is pulling it low. The K-line needs one (510 Ω, from K to Vs).</dd>
+    <dt>Open-drain</dt><dd>A wire that devices can only pull down to 0 V; it relies on a pull-up to ever read "high." That's how the K-line works.</dd>
+    <dt>GPIO</dt><dd>A general-purpose input/output pin on the Pico. The Pico's are not "5 V-tolerant" — 5 V on one can damage it.</dd>
+    <dt>SO-8</dt><dd>A tiny 8-pin surface-mount chip package (how the L9637D ships). It needs a breakout board to use on a breadboard.</dd>
+    <dt>DIP-8 / breakout board</dt><dd>DIP-8 is the older through-hole package that plugs straight into a breadboard; a "breakout" board adapts a surface-mount (SO-8) chip to DIP pins.</dd>
+    <dt>Capacitor</dt><dd>A component that stores a little electrical charge; used here to steady voltages and filter noise.</dd>
+    <dt>Decoupling capacitor</dt><dd>A small capacitor placed across a chip's power pins to smooth out electrical noise. Recommended on Vcc.</dd>
+    <dt>nF / µF (nanofarad / microfarad)</dt><dd>Capacitor sizes. 100 nF = 0.1 µF (often marked "104" on the part).</dd>
+    <dt>Ω (ohm)</dt><dd>The unit of electrical resistance. The K-line pull-up is 510 Ω.</dd>
+    <dt>mA (milliamp)</dt><dd>A unit of electrical current — one-thousandth of an amp. The ignition-sense line draws only a few mA.</dd>
+    <dt>TVS / transient suppressor</dt><dd>A part that clamps (caps) brief high-voltage spikes to protect the chip.</dd>
+    <dt>Standoff voltage</dt><dd>The voltage a TVS ignores; above it, the TVS starts clamping. Choose one that clamps below the chip's 40 V limit.</dd>
+    <dt>Load-dump / transient</dt><dd>A brief voltage spike on a running car's 12 V (e.g. when the alternator load suddenly changes). A clean bench PSU doesn't produce these.</dd>
+    <dt>Fuse</dt><dd>A sacrificial link that blows on a short or overcurrent, protecting the wiring. Put a 1–2 A one on the +12 V feed.</dd>
+    <dt>ATX / PC PSU</dt><dd>A computer power supply, used here as a bench 12 V source: yellow = +12 V, black = ground.</dd>
+    <dt>PS_ON</dt><dd>The ATX supply's green wire. Join it to a black (ground) wire to switch the supply on.</dd>
+    <dt>SPST switch</dt><dd>Single-Pole, Single-Throw — a plain on/off toggle switch.</dd>
+    <dt>EPROM</dt><dd>The write-once memory chip that holds the GEMS fuel/ignition maps. Changed by physically swapping the chip — not over the wire.</dd>
+    <dt>EPROM programmer</dt><dd>A bench device (e.g. a TL866) that reads and writes those chips once they're out of the ECU.</dd>
+    <dt>Multimeter</dt><dd>A meter for voltage / resistance / continuity — essential for the pre-power checks.</dd>
+    <dt>Continuity</dt><dd>Whether two points are electrically joined (reads ≈0 Ω on a meter).</dd>
+    <dt>DTC</dt><dd>Diagnostic Trouble Code — a fault code (e.g. P0118).</dd>
+    <dt>Live data</dt><dd>Real-time sensor readings streamed from the ECU.</dd>
+    <dt>Actuator test</dt><dd>Commanding an output (fuel pump, warning lamp, etc.) on or off to check it works.</dd>
+    <dt>Coding</dt><dd>Small writable settings in the ECU — VIN last-6, dealer ID, 4.0/4.6 select, transmission. Writable over the wire.</dd>
+    <dt>UART</dt><dd>The simple serial format the Pico uses to talk to the transceiver.</dd>
+    <dt>Half-duplex</dt><dd>One wire, one direction at a time — how the K-line works.</dd>
+    <dt>NAS / non-NAS</dt><dd>North American Spec vs rest-of-world. On a GEMS ECU it changes which pin is the K-line (NAS = pin 23, non-NAS = pin 20).</dd>
+    <dt>Virtual ECU</dt><dd>The built-in simulated ECU, so the whole tool runs with no car and no hardware.</dd>
+    <dt>Firmware</dt><dd>The small program that runs on the Pico itself.</dd>
+  </dl>
+
+  <p class="foot">gems_t4 field manual · generated from CLAUDE.md, README, INSTALL.md, docs/land-rover-electronics.md, docs/adapter-hardware-improvements.md, firmware docs, and the project wiring diagrams · hardware pins verified vs ST L9637D datasheet (Doc ID 1765) + Land Rover GEMS service data · v0.0.7 · reads/diagnostics low-risk; all writes are experiments until validated on real hardware</p>
+
+</main>
+</div>
