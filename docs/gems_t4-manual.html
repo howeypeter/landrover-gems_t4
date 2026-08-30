@@ -743,38 +743,39 @@
   <h3>Connector &amp; chip pinouts</h3>
   <p>The transceiver's own pinout, and the two GEMS ECM connectors you land on for a bench rig. <b>Pin functions are from Land Rover GEMS service data; physical position is not fabricated here — locate each pin by the number moulded on the connector and confirm it with a multimeter before applying 12 V.</b></p>
   <figure class="diagram">
-  <svg viewBox="0 0 1140 620" role="img" aria-label="Pinouts. L9637D SO-8 top view: left side pins 1 RX, 2 LO, 3 VCC, 4 TX; right side top to bottom 8 LI, 7 VS, 6 K, 5 GND. GEMS ECM connector C1033, 18-way black, power and ground: pin 7 main plus 12 volts, pin 8 ignition plus 12 volts, pins 5, 9, 10 and 16 ground. GEMS ECM connector C1017, 36-way red, data: pin 20 K-line on non-NAS cars, pin 23 K-line on NAS US-spec cars.">
-    <!-- ===== L9637D SO-8 ===== -->
-    <text x="40" y="52" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="16" style="fill:var(--accent)">L9637D — SO-8 (top view)</text>
-    <rect x="140" y="70" width="100" height="190" rx="6" style="fill:var(--surface);stroke:var(--ink);stroke-width:2"/>
-    <path d="M180,70 a10,10 0 0,0 20,0" style="fill:none;stroke:var(--ink);stroke-width:2"/>
-    <circle cx="157" cy="90" r="3.5" style="fill:var(--ink)"/>
-    <!-- left pins 1-4 -->
-    <line x1="110" y1="95" x2="140" y2="95" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="152" y="99" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">1</text>
-    <text x="104" y="99" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-rx)">RX</text>
-    <line x1="110" y1="140" x2="140" y2="140" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="152" y="144" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">2</text>
-    <text x="104" y="144" text-anchor="end" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">LO</text>
-    <line x1="110" y1="185" x2="140" y2="185" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="152" y="189" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">3</text>
-    <text x="104" y="189" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--ink)">VCC</text>
-    <line x1="110" y1="230" x2="140" y2="230" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="152" y="234" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">4</text>
-    <text x="104" y="234" text-anchor="end" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-tx)">TX</text>
-    <!-- right pins 8,7,6,5 -->
-    <line x1="240" y1="95" x2="270" y2="95" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="228" y="99" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">8</text>
-    <text x="276" y="99" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">LI</text>
-    <line x1="240" y1="140" x2="270" y2="140" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="228" y="144" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">7</text>
-    <text x="276" y="144" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-12v)">VS</text>
-    <line x1="240" y1="185" x2="270" y2="185" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="228" y="189" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">6</text>
-    <text x="276" y="189" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-k)">K</text>
-    <line x1="240" y1="230" x2="270" y2="230" style="stroke:var(--ink);stroke-width:2"/>
-    <text x="228" y="234" text-anchor="end" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">5</text>
-    <text x="276" y="234" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-gnd)">GND</text>
+  <svg viewBox="0 0 1140 620" role="img" aria-label="Pinouts. L9637D 8-pin, notch at left: bottom row left to right pins 1 RX, 2 LO, 3 VCC, 4 TX; top row left to right 8 LI, 7 VS, 6 K, 5 GND. GEMS ECM connector C1033, 18-way black, power and ground: pin 7 main plus 12 volts, pin 8 ignition plus 12 volts, pins 5, 9, 10 and 16 ground. GEMS ECM connector C1017, 36-way red, data: pin 20 K-line on non-NAS cars, pin 23 K-line on NAS US-spec cars.">
+    <!-- ===== L9637D 8-pin, notch left ===== -->
+    <text x="40" y="52" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="16" style="fill:var(--accent)">L9637D — 8-pin pinout (notch at left)</text>
+    <rect x="130" y="115" width="280" height="90" rx="6" style="fill:var(--surface);stroke:var(--ink);stroke-width:2"/>
+    <path d="M130,150 a10,10 0 0,0 0,20" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+    <circle cx="150" cy="192" r="3.5" style="fill:var(--ink)"/>
+    <text x="270" y="164" text-anchor="middle" font-family="IBM Plex Sans Condensed" font-weight="700" font-size="15" style="fill:var(--ink-soft)">L9637D</text>
+    <!-- bottom pins 1-4 (left to right) -->
+    <line x1="175" y1="205" x2="175" y2="238" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="175" y="199" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">1</text>
+    <text x="175" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-rx)">RX</text>
+    <line x1="245" y1="205" x2="245" y2="238" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="245" y="199" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">2</text>
+    <text x="245" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">LO</text>
+    <line x1="315" y1="205" x2="315" y2="238" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="315" y="199" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">3</text>
+    <text x="315" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--ink)">VCC</text>
+    <line x1="385" y1="205" x2="385" y2="238" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="385" y="199" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">4</text>
+    <text x="385" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-tx)">TX</text>
+    <!-- top pins 8,7,6,5 (left to right) -->
+    <line x1="175" y1="115" x2="175" y2="82" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="175" y="133" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">8</text>
+    <text x="175" y="74" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" style="fill:var(--ink-faint)">LI</text>
+    <line x1="245" y1="115" x2="245" y2="82" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="245" y="133" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">7</text>
+    <text x="245" y="74" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-12v)">VS</text>
+    <line x1="315" y1="115" x2="315" y2="82" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="315" y="133" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">6</text>
+    <text x="315" y="74" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-k)">K</text>
+    <line x1="385" y1="115" x2="385" y2="82" style="stroke:var(--ink);stroke-width:2"/>
+    <text x="385" y="133" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" style="fill:var(--ink-faint)">5</text>
+    <text x="385" y="74" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" style="fill:var(--sig-gnd)">GND</text>
 
     <!-- legend -->
     <g font-family="IBM Plex Mono" font-size="12">
