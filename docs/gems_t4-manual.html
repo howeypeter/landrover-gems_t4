@@ -514,14 +514,20 @@
   </figure>
   <h3>GEMS ECU bench pins</h3>
   <div class="tblwrap"><table>
-    <thead><tr><th>Signal</th><th>ECU pin</th><th>Notes</th></tr></thead>
+    <thead><tr><th>Signal</th><th>ECU pin</th><th>Wire colour</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td>Main +12 V</td><td class="mono">C1033 pin 7</td><td>main-relay supply — powers the ECU</td></tr>
-      <tr><td>Ignition +12 V</td><td class="mono">C1033 pin 8</td><td>"ON" sense — wakes it</td></tr>
-      <tr><td>Ground</td><td class="mono">C1033 pins 5, 9, 10, 16</td><td>all to PSU black</td></tr>
-      <tr><td>K-line</td><td class="mono">C1017 pin 23 (NAS) / 20 (non-NAS)</td><td>→ L9637D pin 6</td></tr>
+      <tr><td>Main +12 V</td><td class="mono">C1033 pin 7</td><td>identify by meter, <b>not</b> colour</td><td>main-relay supply — powers the ECU</td></tr>
+      <tr><td>Ignition +12 V</td><td class="mono">C1033 pin 8</td><td>identify by meter, <b>not</b> colour</td><td>"ON" sense — wakes it</td></tr>
+      <tr><td>Ground</td><td class="mono">C1033 pins 5, 9, 10, 16</td><td>black (B) — some with a tracer</td><td>all to PSU black</td></tr>
+      <tr><td>K-line</td><td class="mono">C1017 pin 23 (NAS) / 20 (non-NAS)</td><td>light-green / red (LG/R)&nbsp;*</td><td>→ L9637D pin 6</td></tr>
     </tbody>
   </table></div>
+  <p style="font-size:13px;color:var(--ink-faint);margin:6px 4px 0">* The diagnostic (K) line is commonly light-green/red — also reported as pink/red — from P38 diagnostic-socket wiring; treat as typical and verify on your car.</p>
+  <div class="callout warn"><div class="i">&#9888;</div><div><h4>Wire colours &amp; which way round the connector is</h4>
+    <p><b>Two-colour wires.</b> Land Rover uses the Lucas code — a base colour plus a thinner tracer stripe, written base-then-tracer. So <span class="mono">LG/R</span> (or LGR) is a <b>light-green wire with a red stripe</b>, and <span class="mono">B/P</span> is <b>black with a purple stripe</b>. Letter key: N brown · U blue · G green · LG light-green · W white · R red · P purple · S slate/grey · B black · K pink · O orange · Y yellow.</p>
+    <p><b>The pins are mirrored between the harness and the ECU.</b> A connector's pin layout is left-right reversed depending on which face you look at: the view of the <b>ECU's pin/socket face</b> is the mirror image of the view of the mating <b>harness plug's wire-entry face</b>. What sits on the left as you look at one half sits on the right on the other. Always read the pin number moulded beside each terminal and count from there — never assume left-to-right runs the same way on both halves.</p>
+    <p><b>Do not trust colour for the +12 V pins.</b> Wire colours vary by year and market, and a wrong guess on pin 7 or 8 can destroy the ECU. Confirm the two power pins by pin number and a multimeter (they read battery voltage) before you apply 12 V; use colour only as a cross-check. Authoritative per-pin colours are in the RAVE wiring diagram for your exact VIN.</p>
+  </div>
   <div class="callout danger"><div class="i">&#9888;</div><div><h4>Meter-check the ECU pins before the yellow wire goes live</h4><p>These pins are from Land Rover GEMS service data (cross-checked against two independent factory-derived pinouts; the coil/MIL/fuel-pump pins validated exactly). But the source tables are Discovery/Morgan GEMS. On a <b>P38 Range Rover</b> the same three connectors are labelled <b>C505</b> (36-way black, outputs), <b>C507</b> (36-way red, K-line) and <b>C509</b> (18-way black, power/ground) — the power/ground pins on C509 match the C1033 numbers above, but the <b>K-line pin can differ on a P38, so meter-verify it</b>. Since 12 V on the wrong pin kills an ECU, on <b>your</b> ECU: ohm pins 5/9/10/16 to the ECU case (≈0 Ω = grounds), and confirm the K-line pin reads continuous to OBD socket pin 7 (NAS/US ≈ pin 23, UK/Euro ≈ pin 20).</p></div></div>
   <div class="callout warn"><div class="i">i</div><div><h4>Coding works on the bench; the immobiliser does not</h4><p>With only the ECU (no BeCM), you can read its ID, fault codes and live data, <b>and exercise coding writes</b> (VIN last-6, dealer ID, 4.0/4.6 select, transmission — these are straight ECU writes, no BeCM needed). Only <b>Security-Learn</b> is a BeCM↔ECM handshake, so it alone needs the BeCM present — that's a car job (§13). The transient clamp on Vs is also a pre-car item — a bench PSU's 12 V is clean.</p></div></div>
 
