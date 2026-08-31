@@ -32,6 +32,16 @@ metadata:
   service data via multi-agent research + adversarial review. Version 0.0.7 in
   lockstep. Prior: v0.0.6 (2026-07-12, UX/polish: VCI indicator + connection
   test, fault-codes Clear-ALL clarity, fuel-pump refusal reason).
+- **`main` is AHEAD of the v0.0.7 tag** (not yet a new release) with the
+  **hardware bring-up + OBD work (2026-08-30/31)**, all pushed to
+  `origin/main`: the combined manual (`docs/gems_t4-manual.html`, + README link)
+  and its diagrams (`diagrams/gems-adapter-schematic.html`); the two real
+  bring-up bugfixes (`640034f` pico host timeout 2→6 s; `fca1ab9` firmware ISO
+  9141 keybyte handshake); and the **native OBD profile** (`4bfa738`:
+  `gems_t4/protocol/obd.py` + `gems_t4 obd` command + `tests/test_obd.py`);
+  manual protocol docs `6bd4ad5`. See [[real-gems-protocol]]. Consider cutting a
+  **v0.0.8** to tag the first-hardware-comms milestone when ready (bump
+  `pyproject.toml`/`__version__` in lockstep first).
 - **Release notes policy (LOCKED 2026-07-12): NO markdown release-notes files in
   the repo.** A release = annotated git tag + a **GitHub Release** (with notes)
   published on GitHub. (A `docs/RELEASE_NOTES_v0.0.6.md` was briefly added then

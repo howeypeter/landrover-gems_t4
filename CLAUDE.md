@@ -494,6 +494,22 @@ were dropped. See `memory/tech-stack-decision.md`.)
 
 ### Build status
 
+**🎉 FIRST HARDWARE LIGHT — 2026-08-31.** The homemade Pico + L9637D adapter
+**talked to a real P38 GEMS ECU** (OBD-II subset: live data + fault codes). The
+project's central goal — a homemade tool reading a physical GEMS ECU — is met.
+The *actual* wire protocol was reverse-engineered on hardware and differs from
+the stylized guess: **K-line = C1017 pin 23, 5-baud init at 0x33, keybytes 0808,
+`68 6A F1`/`48 6B E8` framing, Mode 01/03**, plus a mandatory inverted-keybyte
+handshake now in the Pico firmware. It's implemented in **`gems_t4/protocol/
+obd.py`** and run via **`gems_t4 obd live|dtc|monitor --port COMx`** (real ECU
+only; 15 unit tests). The fuller **proprietary GEMS diagnostics** (~108 T4
+measures, actuators, coding, immobiliser) are still **unmapped/experimental** —
+they ride the same `68 6A F1` envelope; `ObdClient.raw_service` is the probe hook.
+Two bring-up bugs fixed: pico host timeout 2→6 s (`640034f`), firmware ISO 9141
+keybyte handshake (`fca1ab9`); obd profile+CLI `4bfa738`. Full detail:
+`memory/real-gems-protocol.md`. NOTE: the KWP-stylized stack still backs the
+virtual ECU/GUI; the two protocols coexist.
+
 **Where the project stands (latest release: v0.0.7, 2026-08-29):** Phases
 **1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested, now with
 a full **hardware wiring reference** for on-car validation (parts: bare
