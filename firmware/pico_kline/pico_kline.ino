@@ -123,8 +123,22 @@ static int klineReadFrame(uint8_t *out, size_t maxlen) {
   return (int)n;
 }
 
-// 5-baud slow init: bit-bang the address at 200 ms/bit on the TX line, then
-// return to UART mode and read the 0x55 sync + keybytes.
+// Read one byte from the K-line within timeout_ms; returns true on success.
+static bool klineReadByte(uint8_t *b, uint32_t timeout_ms) {
+  uint32_t start = millis();
+  while (!Serial1.available()) {
+    if (millis() - start > timeout_ms) return false;
+  }
+  *b = Serial1.read();
+  return true;
+}
+
+// 5-baud slow init (ISO 9141 / KWP2000): bit-bang the address at 200 ms/bit,
+// read the 0x55 sync + two keybytes, then COMPLETE the handshake — send the
+// inverted second keybyte back inside the W4 window (25-50 ms after KB2) and
+// read the ECU's inverted-address reply. Without the inverted-KB2 step the ECU
+// hands over its keybytes but never enters the initialised state, so it ignores
+// every subsequent request. That step is why data requests were timing out.
 static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
   Serial1.end();
   pinMode(KLINE_TX_PIN, OUTPUT);
@@ -139,11 +153,21 @@ static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
   digitalWrite(KLINE_TX_PIN, HIGH); delay(200);
 
   Serial1.begin(KLINE_BAUD);
-  uint8_t buf[8];
-  int n = klineReadFrame(buf, sizeof(buf));
-  if (n < 3 || buf[0] != 0x55) return false;  // expect 0x55 sync then keybytes
-  keybytes[0] = buf[1];
-  keybytes[1] = buf[2];
+  uint8_t sync, kb1, kb2;
+  if (!klineReadByte(&sync, 500) || sync != 0x55) return false;  // W1: 60-300 ms
+  if (!klineReadByte(&kb1, 50)) return false;                    // W2: 5-20 ms
+  if (!klineReadByte(&kb2, 50)) return false;                    // W3: 0-20 ms
+
+  // W4: 25-50 ms after KB2, send the inverted second keybyte.
+  uint32_t kb2_at = millis();
+  while (millis() - kb2_at < 30) { /* spin to land inside the W4 window */ }
+  Serial1.write((uint8_t)(kb2 ^ 0xFF));
+  uint8_t echo, inv_addr;
+  klineReadByte(&echo, 50);        // discard our own half-duplex echo
+  klineReadByte(&inv_addr, 100);   // ECU's inverted address (W5) - informational
+
+  keybytes[0] = kb1;
+  keybytes[1] = kb2;
   *kb_len = 2;
   return true;
 }
