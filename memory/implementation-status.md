@@ -8,7 +8,7 @@ metadata:
 **Phases 1–6 COMPLETE. Phase 3 hardware: FIRST LIGHT achieved 2026-08-31** —
 the Pico+L9637D adapter talked to a **real P38 GEMS ECU** (OBD-II subset: live
 data + DTCs). See [[real-gems-protocol]] for the confirmed wire protocol and the
-new **`gems_t4 obd live|dtc|monitor --port COMx`** command (`protocol/obd.py`,
+new **`gems_t4 kline live|dtc|monitor --port COMx`** command (`protocol/kline.py`,
 15 tests). Proprietary GEMS diagnostics (~108 measures, actuators, immobiliser)
 still unmapped/experimental. ~199 passing tests in `tests/` (was 184 + 15 obd)
 + 235 in `tests_regression/` (GUI files skip without the PySide6 `[gui]` extra

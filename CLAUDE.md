@@ -501,10 +501,10 @@ The *actual* wire protocol was reverse-engineered on hardware and differs from
 the stylized guess: **K-line = C1017 pin 23, 5-baud init at 0x33, keybytes 0808,
 `68 6A F1`/`48 6B E8` framing, Mode 01/03**, plus a mandatory inverted-keybyte
 handshake now in the Pico firmware. It's implemented in **`gems_t4/protocol/
-obd.py`** and run via **`gems_t4 obd live|dtc|monitor --port COMx`** (real ECU
+obd.py`** and run via **`gems_t4 kline live|dtc|monitor --port COMx`** (real ECU
 only; 15 unit tests). The fuller **proprietary GEMS diagnostics** (~108 T4
 measures, actuators, coding, immobiliser) are still **unmapped/experimental** —
-they ride the same `68 6A F1` envelope; `ObdClient.raw_service` is the probe hook.
+they ride the same `68 6A F1` envelope; `KlineClient.raw_service` is the probe hook.
 Two bring-up bugs fixed: pico host timeout 2→6 s (`640034f`), firmware ISO 9141
 keybyte handshake (`fca1ab9`); obd profile+CLI `4bfa738`. Full detail:
 `memory/real-gems-protocol.md`. NOTE: the KWP-stylized stack still backs the

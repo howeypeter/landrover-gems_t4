@@ -9,7 +9,7 @@ metadata:
 talked to a **physical P38 GEMS ECU** for the first time. This is the real,
 reverse-engineered protocol — use it (not the stylized KWP format in
 `protocol/framing.py`) for anything talking to a real ECU. Implemented in
-**`gems_t4/protocol/obd.py`** and exposed as **`gems_t4 obd live|dtc|monitor
+**`gems_t4/protocol/kline.py`** and exposed as **`gems_t4 kline live|dtc|monitor
 --port COMx`**.
 
 ## The confirmed protocol (NAS GEMS = OBD-II ISO 9141-2)
@@ -33,14 +33,14 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   throttle…). Mode 01 **PID 00** = supported-PID bitmask (auto-detect PIDs).
 - **DTCs:** Mode 03. ECU stays **silent when there are zero codes** (a
   TransportTimeout that means "no codes", not an error).
-- **Real captured frames (used as test fixtures in `tests/test_obd.py`):**
+- **Real captured frames (used as test fixtures in `tests/test_kline.py`):**
   PID00 resp `48 6b e8 41 00 bf 9f f9 91 c4`; PID05 (coolant) resp
   `48 6b e8 41 05 00 e1` → 0x00 → −40 °C.
 
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
 actuator drives, coding, immobiliser — ride the **same `68 6A F1` envelope**
-but use manufacturer service bytes still to be discovered. `ObdClient.raw_service`
+but use manufacturer service bytes still to be discovered. `KlineClient.raw_service`
 is the hook to probe/add them at the bench. What's proven is only the **OBD-II
 emissions subset**; the proprietary stuff (esp. the immobiliser) is still
 experimental.
@@ -54,11 +54,22 @@ experimental.
    "init OK but all data times out" into working comms.
 
 ## How to run it (real ECU)
-`gems_t4 obd live --port COM4` (one-shot table) / `obd dtc` / `obd monitor`
-(continuous). Real-ECU only — no `--fake`; `--connect HOST` for a TCP bridge.
-`ObdClient(transport)` for code. 15 unit tests pin the decoders to the captured
-bytes. Commits: firmware `fca1ab9`, timeout `640034f`, obd module+CLI `4bfa738`,
-manual `6bd4ad5`.
+**CLI:** `gems_t4 kline live --port COM4` (one-shot table) / `kline dtc` /
+`kline monitor` (continuous). Real-ECU only — no `--fake`; `--connect HOST` for
+a TCP bridge. `KlineClient(transport)` for code.
+**GUI (works on real hardware as of e51c549):** `gems_t4 gui --port COM4` drives
+the Win98 kiosk from the REAL ECU. The Backend uses `KlineClient` when the
+connection kind is **USB** (seam: `Backend._use_kline`, set by
+`set_connection("usb")`; `Backend.on_real_ecu` property), mapping OBD live data
++ DTCs onto the shared `Measure`/`Dtc` types. The live-data screen discovers the
+ECU's supported OBD PIDs and builds gauges from them (`gauge_specs.obd_spec_for`).
+Proprietary screens (actuator/coding/immobiliser/security) raise
+`RealEcuUnsupported` and refuse gracefully (OBD-II subset only). Virtual +
+network (serve) keep the KWP-stylized stack.
+Commits: firmware `fca1ab9`, timeout `640034f`, kline module+CLI `4bfa738`,
+manual `6bd4ad5`, rename obd→kline `9f82b6b`, GUI real-ECU `e51c549`. Tests:
+`tests/test_kline.py` (decoders vs captured bytes), `tests/test_backend_kline.py`
++ `tests/test_gui_real_ecu.py` (backend/GUI real-ECU paths).
 
 ## Wireless/web forward note (from the same session)
 Architecture is already latency-safe: all K-line timing is on the Pico, host↔Pico

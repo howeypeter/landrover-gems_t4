@@ -37,8 +37,8 @@ metadata:
   `origin/main`: the combined manual (`docs/gems_t4-manual.html`, + README link)
   and its diagrams (`diagrams/gems-adapter-schematic.html`); the two real
   bring-up bugfixes (`640034f` pico host timeout 2→6 s; `fca1ab9` firmware ISO
-  9141 keybyte handshake); and the **native OBD profile** (`4bfa738`:
-  `gems_t4/protocol/obd.py` + `gems_t4 obd` command + `tests/test_obd.py`);
+  9141 keybyte handshake); and the **native K-line/OBD profile** (`4bfa738`:
+  `gems_t4/protocol/kline.py` + `gems_t4 kline` command + `tests/test_kline.py`);
   manual protocol docs `6bd4ad5`. See [[real-gems-protocol]]. Consider cutting a
   **v0.0.8** to tag the first-hardware-comms milestone when ready (bump
   `pyproject.toml`/`__version__` in lockstep first).
