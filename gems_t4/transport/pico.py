@@ -83,7 +83,7 @@ class PicoAdapterTransport(Transport):
         *,
         serial_obj: Any | None = None,
         baud: int = 115200,
-        timeout: float = 2.0,
+        timeout: float = 6.0,  # must exceed the Pico's ~3.3s 5-baud slow-init blocking time
     ) -> None:
         self._port = port
         self._serial = serial_obj
