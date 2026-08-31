@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
 
 from gems_t4.app.backend import Backend
 from gems_t4.app.gui.base import Screen
-from gems_t4.app.gui.gauge_specs import spec_for
+from gems_t4.app.gui.gauge_specs import obd_spec_for, spec_for
 from gems_t4.app.gui.widgets import build_gauge
 from gems_t4.gems.livedata import PARAMETERS
 
@@ -52,6 +52,10 @@ class LiveDataScreen(Screen):
         self._paused = False
         #: local id -> gauge widget for the current selection.
         self._gauges: dict[int, object] = {}
+        #: real-ECU (K-line / OBD-II) mode — refreshed from the backend on entry.
+        self._real = False
+        #: OBD pid -> (name, unit), discovered on entry (real ECU only).
+        self._obd_meta: dict[int, tuple[str, str]] = {}
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 10, 12, 10)
@@ -115,7 +119,12 @@ class LiveDataScreen(Screen):
                 w.deleteLater()
         self._gauges.clear()
         for i, lid in enumerate(self._selected_ids()):
-            gauge = build_gauge(spec_for(lid))
+            if self._real:
+                name, unit = self._obd_meta.get(lid, ("", ""))
+                spec = obd_spec_for(lid, name, unit)
+            else:
+                spec = spec_for(lid)
+            gauge = build_gauge(spec)
             self._grid.addWidget(gauge, i // _COLUMNS, i % _COLUMNS)
             self._gauges[lid] = gauge
         self._refresh()
@@ -138,14 +147,35 @@ class LiveDataScreen(Screen):
             self._rate_label.setText("no data")
             self.status.emit(f"ECU communication error: {exc}")
             return
-        for lid, m in zip(ids, measures):
-            gauge = self._gauges.get(lid)
-            if gauge is not None:
-                gauge.set_value(m.value)
+        if self._real:
+            # read_live ignores order and returns the selected PIDs; match each
+            # measure to its gauge by pid (Measure.raw), not by position.
+            by_pid = {m.raw: m for m in measures}
+            for lid, gauge in self._gauges.items():
+                m = by_pid.get(lid)
+                if m is not None:
+                    gauge.set_value(m.value)
+        else:
+            for lid, m in zip(ids, measures):
+                gauge = self._gauges.get(lid)
+                if gauge is not None:
+                    gauge.set_value(m.value)
 
     # -- lifecycle ---------------------------------------------------------- #
     def on_enter(self) -> None:
         self._paused = False
+        self._real = self.backend.on_real_ecu
+        if self._real:
+            # Discover the ECU's supported OBD PIDs (and labels) once, so the
+            # gauge grid reflects the real ECU rather than the stylized set.
+            try:
+                measures = self.backend.read_live()
+            except Exception:  # noqa: BLE001 - reported via status on refresh
+                measures = []
+            self._all_ids = [m.raw for m in measures]
+            self._obd_meta = {m.raw: (m.name, m.unit) for m in measures}
+        else:
+            self._all_ids = list(PARAMETERS)
         self._rebuild_gauges()
         self._timer.start(self._interval_ms())
         self._emit_rate()

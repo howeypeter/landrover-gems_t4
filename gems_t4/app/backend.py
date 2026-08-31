@@ -27,14 +27,26 @@ from gems_t4.gems.immobiliser import ImmobiliserStatus, SecurityLearnResult
 from gems_t4.gems.maps import MapTable
 from gems_t4.gems.programming import Backup, CodingField, WriteResult
 from gems_t4.gems.scenarios import SCENARIOS, get_scenario
-from gems_t4.gems.types import Dtc, Measure
+from gems_t4.gems.types import Dtc, DtcState, Measure
 from gems_t4.gems.virtual_ecu import VirtualEcu
 from gems_t4.protocol.client import KwpClient
+from gems_t4.protocol.kline import KlineClient
 from gems_t4.protocol.security import compute_key
 from gems_t4.transport.base import Transport
 from gems_t4.transport.pico import PicoAdapterTransport
 from gems_t4.transport.tcp import DEFAULT_PORT, TcpTransport
 from gems_t4.transport.virtual import VirtualTransport
+
+
+class RealEcuUnsupported(RuntimeError):
+    """Raised when an operation isn't available over the real-ECU K-line profile.
+
+    The K-line/ISO 9141-2 path (a real GEMS ECU) implements the OBD-II subset:
+    live data and fault codes. Actuator tests, coding, and the immobiliser are
+    proprietary GEMS services that aren't reverse-engineered yet, so they work
+    only against the virtual ECU. The GUI catches this to show a clear message
+    instead of a traceback.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +88,10 @@ class Backend:
         self._immobilised = immobilised
         self._transport_factory = transport_factory
         self._client: KwpClient | None = None
+        self._kline: KlineClient | None = None
+        # Real-ECU K-line profile (ISO 9141-2) vs the KWP-stylized virtual stack.
+        # Set True for USB connections (a Pico adapter → a real GEMS ECU).
+        self._use_kline = False
         self._ecu: VirtualEcu | None = None
         self._connection_label = (
             "Custom transport" if transport_factory is not None else "Virtual ECU"
@@ -88,7 +104,19 @@ class Backend:
 
     @property
     def connected(self) -> bool:
-        return self._client is not None
+        return self._client is not None or self._kline is not None
+
+    @property
+    def on_real_ecu(self) -> bool:
+        """True when the active session speaks the real-ECU K-line profile
+        (ISO 9141-2 / OBD-II) — i.e. live data + fault codes only, no actuator/
+        coding/immobiliser (those are proprietary and not mapped yet)."""
+        return self._kline is not None
+
+    def _active_transport(self) -> Transport | None:
+        """The transport of whichever client is live (KWP or K-line)."""
+        client = self._client or self._kline
+        return getattr(client, "transport", None)
 
     @property
     def is_remote(self) -> bool:
@@ -105,7 +133,7 @@ class Backend:
     def is_wireless(self) -> bool:
         """True on a network transport (write policy applies). Checks the live
         client's transport when connected, else the configured factory's kind."""
-        t = getattr(self._client, "transport", None)
+        t = self._active_transport()
         if t is not None:
             return bool(getattr(t, "is_wireless", False))
         factory = self._transport_factory
@@ -175,6 +203,10 @@ class Backend:
         self.disconnect()
         self._transport_factory = factory
         self._connection_label = label
+        # USB = a Pico adapter wired to a REAL GEMS ECU -> the ISO 9141-2 K-line
+        # profile. Virtual and network (a serve/virtual endpoint) use the
+        # KWP-stylized stack. (Real ECU over the network can be added later.)
+        self._use_kline = (kind == "usb")
 
     def apply_connection(
         self,
@@ -221,10 +253,17 @@ class Backend:
                 get_scenario(self._scenario_name), immobilised=self._immobilised
             )
             transport = VirtualTransport(self._ecu)
-        client = KwpClient(transport)
-        client.connect()
-        client.start_session()
-        self._client = client
+        if self._use_kline:
+            # Real GEMS ECU: ISO 9141-2 K-line profile (5-baud init at 0x33,
+            # OBD-II framing). No StartDiagnosticSession — OBD-II has none.
+            kline = KlineClient(transport)
+            kline.connect()
+            self._kline = kline
+        else:
+            client = KwpClient(transport)
+            client.connect()
+            client.start_session()
+            self._client = client
 
     def test_connection(self, *, pings: int = 3) -> ConnectionTestResult:
         """Prove the *currently configured* connection works, and where
@@ -253,7 +292,7 @@ class Backend:
         except Exception as exc:  # noqa: BLE001 - report, don't raise
             return ConnectionTestResult(False, label, f"Connection failed: {exc}")
 
-        transport = getattr(self._client, "transport", None)
+        transport = self._active_transport()
         ping = getattr(transport, "ping", None)
         if ping is None or pings <= 0:
             return ConnectionTestResult(
@@ -278,15 +317,24 @@ class Backend:
 
     def disconnect(self) -> None:
         """Close the session (idempotent)."""
-        if self._client is not None:
-            try:
-                self._client.close()
-            except Exception:  # pragma: no cover - best-effort
-                pass
+        for session in (self._client, self._kline):
+            if session is not None:
+                try:
+                    session.close()
+                except Exception:  # pragma: no cover - best-effort
+                    pass
         self._client = None
+        self._kline = None
         self._ecu = None
 
     def _require(self) -> KwpClient:
+        if self._kline is not None:
+            raise RealEcuUnsupported(
+                "This function isn't available on a real ECU yet. The K-line "
+                "profile implements the OBD-II subset (live data + fault codes); "
+                "actuator tests, coding, and the immobiliser are proprietary "
+                "GEMS services that aren't reverse-engineered yet."
+            )
         if self._client is None:
             self.connect()
         assert self._client is not None
@@ -302,15 +350,34 @@ class Backend:
 
     # -- diagnostic operations --------------------------------------------- #
     def read_live(self, ids: list[int] | None = None) -> list[Measure]:
-        """Read live-data measures (all known ids by default)."""
+        """Read live-data measures (all known ids by default).
+
+        On a real ECU (K-line profile) this returns every supported OBD-II Mode
+        01 PID, mapped to :class:`Measure`; the ``ids`` filter (stylized local
+        ids) doesn't apply and is ignored.
+        """
+        if self._kline is not None:
+            return [
+                Measure(name=row.name, value=row.value, unit=row.unit, raw=row.pid)
+                for row in self._kline.read_live(ids)
+            ]
         return _livedata.read_all(self._require(), ids)
 
     def read_dtcs(self) -> list[Dtc]:
         """Read stored fault codes."""
+        if self._kline is not None:
+            return [
+                Dtc(code=code, description="(OBD-II stored code)",
+                    state=DtcState.STORED)
+                for code in self._kline.read_dtcs()
+            ]
         return _dtc.read_dtcs(self._require())
 
     def clear_dtcs(self) -> None:
-        """Clear stored fault codes."""
+        """Clear stored fault codes (OBD-II Mode 04 on a real ECU)."""
+        if self._kline is not None:
+            self._kline.clear_dtcs()
+            return
         _dtc.clear_dtcs(self._require())
 
     def run_actuator(self, actuator_id: int, state: int) -> ActuatorOutcome:

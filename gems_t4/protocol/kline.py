@@ -215,12 +215,20 @@ class KlineClient:
             return None
         return data[2:]
 
-    def read_live(self) -> list[LiveRow]:
-        """Read every catalog PID the ECU supports; return decoded rows."""
+    def read_live(self, pids: list[int] | None = None) -> list[LiveRow]:
+        """Read catalog PIDs and return decoded rows.
+
+        With ``pids`` given, read only those (that are both in the catalog and
+        supported) — used by the GUI so watching fewer gauges polls fewer PIDs
+        (the authentic bandwidth trade-off). Default: every supported PID.
+        """
         supported = self.supported_pids()
+        want = set(pids) if pids is not None else None
         rows: list[LiveRow] = []
         for spec in PIDS:
             if spec.pid not in supported:
+                continue
+            if want is not None and spec.pid not in want:
                 continue
             raw = self.read_pid(spec.pid)
             if raw is None:
@@ -245,3 +253,12 @@ class KlineClient:
         if not data or data[0] != 0x47:
             return []
         return decode_dtcs(data[1:])
+
+    def clear_dtcs(self) -> bool:
+        """Mode 04 -> clear stored DTCs & freeze frames. True on a 0x44 reply.
+
+        A silent ECU (None) is treated as accepted — some ISO 9141-2 ECUs don't
+        echo a positive response to Mode 04.
+        """
+        data = self.raw_service(bytes([0x04]))
+        return data is None or (len(data) > 0 and data[0] == 0x44)

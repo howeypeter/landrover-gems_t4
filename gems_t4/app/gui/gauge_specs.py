@@ -90,3 +90,34 @@ def spec_for(local_id: int) -> GaugeSpec:
     nominal = p.nominal if isinstance(p.nominal, (int, float)) else 0
     vmax = max(1.0, float(nominal) * 2.0)
     return GaugeSpec(local_id, p.name, p.unit, 0, vmax, decimals=0)
+
+
+# ---- OBD-II Mode-01 PID gauge specs (real-ECU K-line profile) --------------- #
+# Keyed by OBD PID, not stylized local id. Used by the live screen when the
+# backend is on a real ECU (Backend.on_real_ecu).
+_OBD_SPECS: dict[int, GaugeSpec] = {
+    0x04: GaugeSpec(0x04, "Engine load", "%", 0, 100, decimals=0, style=STYLE_BAR),
+    0x05: GaugeSpec(0x05, "Coolant", "degC", -40, 120, redline=110, decimals=0),
+    0x06: GaugeSpec(0x06, "STFT B1", "%", -25, 25, decimals=1),
+    0x07: GaugeSpec(0x07, "LTFT B1", "%", -25, 25, decimals=1),
+    0x0C: GaugeSpec(0x0C, "Engine speed", "rpm", 0, 7000, redline=6000, decimals=0),
+    0x0D: GaugeSpec(0x0D, "Vehicle speed", "km/h", 0, 200, decimals=0),
+    0x0E: GaugeSpec(0x0E, "Timing adv", "deg", -10, 45, decimals=1),
+    0x0F: GaugeSpec(0x0F, "Intake air", "degC", -40, 90, decimals=0),
+    0x10: GaugeSpec(0x10, "MAF", "g/s", 0, 260, decimals=1),
+    0x11: GaugeSpec(0x11, "Throttle", "%", 0, 100, decimals=0, style=STYLE_BAR),
+    0x14: GaugeSpec(0x14, "O2 B1S1", "V", 0.0, 1.3, decimals=2),
+    0x15: GaugeSpec(0x15, "O2 B1S2", "V", 0.0, 1.3, decimals=2),
+}
+
+
+def obd_spec_for(pid: int, name: str = "", unit: str = "") -> GaugeSpec:
+    """Gauge spec for an OBD-II Mode-01 PID (real ECU K-line profile).
+
+    Falls back to a plain dial synthesised from the measure's name/unit for
+    PIDs without an explicit spec, so any supported PID still draws a gauge.
+    """
+    spec = _OBD_SPECS.get(pid)
+    if spec is not None:
+        return spec
+    return GaugeSpec(pid, name or f"PID 0x{pid:02X}", unit, 0, 100, decimals=1)
