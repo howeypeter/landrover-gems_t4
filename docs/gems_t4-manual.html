@@ -343,6 +343,23 @@
   <p>For ground, any of the Pico's eight <span class="mono">GND</span> pins works; <b>pin 38</b> sits right next to pin 36 and is the tidy choice → L9637D GND (pin 5). Pin 36 is an <em>output</em> — power flows out of it to the transceiver; never feed 5 V or 12 V back into it.</p>
   <div class="callout ok"><div class="i">&#128208;</div><div><h4>Full schematic</h4><p>A complete, EE-readable circuit diagram — standard symbols, component designators (R1/C1/D1/F1/U1/J1/J2), and net labels — is drawn in <a href="#reference">§15 (Technical reference)</a>. The standalone <span class="mono">diagrams/gems-adapter-schematic.html</span> (viewable <a href="https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html">rendered here</a>) adds the full component and datasheet-parameter tables.</p></div></div>
 
+  <h3>Flashing the Pico firmware</h3>
+  <div class="callout ok"><div class="i">i</div><div><h4>Pico 2 W is fine for the wired build</h4><p>The firmware folder warns "don't use a Pico&nbsp;W / 2&nbsp;W" — but that caution is only about the (unbuilt) <em>wireless</em> mode. For the wired USB adapter here a <b>Pico 2&nbsp;W works</b>: the radio just sits unused, and GP0/GP1/3V3 (pin&nbsp;36)/GND are identical. Just pick the <b>Pico 2&nbsp;W</b> board when you flash.</p></div></div>
+  <p>The firmware is Arduino source (<span class="mono">firmware/pico_kline/pico_kline.ino</span>) — there is no prebuilt <span class="mono">.uf2</span>, so you compile it once. The easiest route is the Arduino IDE:</p>
+  <ol class="body">
+    <li><b>Install the Arduino IDE</b>, then add the Pico core: <b>File → Preferences → "Additional boards manager URLs"</b> and add<br><span class="mono" style="font-size:12px;word-break:break-all">https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json</span><br>then <b>Tools → Board → Boards Manager</b>, search <b>pico</b>, and install <b>"Raspberry Pi Pico/RP2040/RP2350" by Earle Philhower</b>.</li>
+    <li><b>Open the sketch:</b> File → Open → <span class="mono">firmware/pico_kline/pico_kline.ino</span>.</li>
+    <li><b>Select the board:</b> Tools → Board → <b>Raspberry Pi Pico 2 W</b> (or plain "Pico 2" — same RP2350; the wired pins are identical).</li>
+    <li><b>Enter flashing mode (first time only):</b> with USB unplugged, <b>hold the BOOTSEL button</b>, plug in the USB, then release. The Pico mounts as a USB drive named <span class="mono">RP2350</span> / <span class="mono">RPI-RP2</span> — that's how you know it's ready.</li>
+    <li><b>Upload:</b> Tools → Port → pick the port that appeared, then click <b>Upload (→)</b>. It compiles, flashes, and reboots on its own.</li>
+  </ol>
+  <p>After that the Pico reboots running the firmware and shows up as an ordinary <b>COM port</b> — that's your Phase-A "does it enumerate?" check. You only need the BOOTSEL trick for the <em>first</em> flash; later re-flashes usually just work.</p>
+  <p>Prefer the command line? With <span class="mono">arduino-cli</span> and the Arduino-Pico core:</p>
+  <pre style="background:var(--sunken);padding:12px 14px;border-radius:8px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.5;margin:8px 0">arduino-cli core install rp2040:rp2040
+arduino-cli compile --fqbn rp2040:rp2040:rpipico2w firmware/pico_kline
+arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</pre>
+  <p style="font-size:13px;color:var(--ink-faint)">Replace <span class="mono">COM5</span> with your port. If <span class="mono">rpipico2w</span> isn't recognised, run <span class="mono">arduino-cli board listall</span> and look for the pico entries to get the exact target for your core version. Use a <b>data</b> USB cable (not charge-only) — that's a common "it won't enumerate" cause.</p>
+
   <!-- 10 -->
   <h2 id="wiring-car"><span class="k">10</span>Wiring: on-car (via OBD-II)</h2>
   <p>For diagnostics on the car — and for the immobiliser work — you plug into the <b>OBD-II (J1962) socket</b>. The transceiver bridges the Pico's 3.3 V logic to the car's single 12 V K-line, powered from the car's battery feed at the socket.</p>
