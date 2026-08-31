@@ -9,12 +9,13 @@ This is deliberately separate from the KWP2000-*stylized* virtual-ECU stack in
 :mod:`gems_t4.protocol.framing`: that models the T4/$61 request/response shape,
 while this speaks the actual bytes a physical ECU returns. It drives any
 :class:`~gems_t4.transport.base.Transport` — the USB Pico adapter on the bench
-or on-car, or a TCP bridge — so ``gems_t4 obd ... --port COMx`` works against a
-real ECU.
+or on-car, or a TCP bridge — so ``gems_t4 kline ... --port COMx`` works against
+a real ECU. (Named for the K-line the data rides on — bench or car — not the
+J1962 connector, which the bench doesn't use.)
 
 Scope note: the full *proprietary* GEMS/T4 diagnostics (the ~108 live measures,
 actuator drives, coding) ride the **same 68 6A F1 envelope** but use
-manufacturer service bytes not yet reverse-engineered. :meth:`ObdClient.raw_service`
+manufacturer service bytes not yet reverse-engineered. :meth:`KlineClient.raw_service`
 is the hook to add them as they are discovered at the bench.
 """
 from __future__ import annotations
@@ -24,14 +25,14 @@ from typing import Callable
 
 from gems_t4.transport.base import InitResult, Transport, TransportError, TransportTimeout
 
-OBD_INIT_ADDRESS = 0x33
+KLINE_INIT_ADDRESS = 0x33
 _REQ_HEADER = bytes([0x68, 0x6A, 0xF1])  # format, target (OBD), source (tester)
 _RESP_FMT = 0x48  # first byte of an ECU response header (48 6B <ecu>)
 
 __all__ = [
-    "OBD_INIT_ADDRESS",
-    "ObdError",
-    "ObdClient",
+    "KLINE_INIT_ADDRESS",
+    "KlineError",
+    "KlineClient",
     "Pid",
     "PIDS",
     "encode_request",
@@ -41,7 +42,7 @@ __all__ = [
 ]
 
 
-class ObdError(TransportError):
+class KlineError(TransportError):
     """OBD framing / protocol error (bad header, checksum, or short frame)."""
 
 
@@ -63,11 +64,11 @@ def decode_response(frame: bytes) -> bytes:
     ``48 6B E8 41 05 00 E1`` frame returns ``41 05 00``.
     """
     if len(frame) < 5:
-        raise ObdError(f"response too short: {frame.hex()}")
+        raise KlineError(f"response too short: {frame.hex()}")
     if frame[0] != _RESP_FMT:
-        raise ObdError(f"bad response header 0x{frame[0]:02X}: {frame.hex()}")
+        raise KlineError(f"bad response header 0x{frame[0]:02X}: {frame.hex()}")
     if obd_checksum(frame[:-1]) != frame[-1]:
-        raise ObdError(f"checksum mismatch: {frame.hex()}")
+        raise KlineError(f"checksum mismatch: {frame.hex()}")
     return frame[3:-1]
 
 
@@ -151,7 +152,7 @@ class LiveRow:
     unit: str
 
 
-class ObdClient:
+class KlineClient:
     """A minimal OBD-II (ISO 9141-2) tester over any :class:`Transport`.
 
     Talks to a *real* ECU (the confirmed protocol), independent of the virtual
@@ -167,12 +168,12 @@ class ObdClient:
     def connect(self, mode: str = "slow") -> InitResult:
         """Open the transport and 5-baud-init the ECU at address 0x33."""
         self.transport.open()
-        return self.transport.init(OBD_INIT_ADDRESS, mode)
+        return self.transport.init(KLINE_INIT_ADDRESS, mode)
 
     def close(self) -> None:
         self.transport.close()
 
-    def __enter__(self) -> "ObdClient":
+    def __enter__(self) -> "KlineClient":
         self.connect()
         return self
 

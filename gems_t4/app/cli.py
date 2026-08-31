@@ -293,8 +293,8 @@ def _cmd_immo(args: argparse.Namespace) -> int:
         client.close()
 
 
-def _obd_transport(args: argparse.Namespace):
-    """Build a real-ECU transport for the OBD profile (bench or on-car)."""
+def _kline_transport(args: argparse.Namespace):
+    """Build a real-ECU transport for the K-line (ISO 9141-2) profile."""
     if getattr(args, "port", None) and getattr(args, "connect", None):
         raise SystemExit("choose --port (USB) or --connect (network), not both")
     if getattr(args, "port", None):
@@ -307,15 +307,15 @@ def _obd_transport(args: argparse.Namespace):
             args.connect,
         )
     raise SystemExit(
-        "obd talks to a REAL ECU: pass --port COMx (bench or on-car adapter) "
+        "kline talks to a REAL ECU: pass --port COMx (bench or on-car adapter) "
         "or --connect HOST[:PORT]. It does not use the virtual ECU."
     )
 
 
-def _obd_live_table(client, source: str):
+def _kline_live_table(client, source: str):
     from rich.table import Table
 
-    table = Table(title=f"OBD-II live data - {source}")
+    table = Table(title=f"K-line live data - {source}")
     table.add_column("PID", style="dim")
     table.add_column("Parameter")
     table.add_column("Value", justify="right")
@@ -325,20 +325,20 @@ def _obd_live_table(client, source: str):
     return table
 
 
-def _cmd_obd(args: argparse.Namespace) -> int:
+def _cmd_kline(args: argparse.Namespace) -> int:
     """Talk to a REAL ECU over ISO 9141-2 / OBD-II (bench or on-car).
 
     This is the confirmed, hardware-tested protocol (5-baud init at 0x33), as
     opposed to the KWP-stylized virtual ECU used by the other commands.
     """
-    from gems_t4.protocol.obd import ObdClient
+    from gems_t4.protocol.kline import KlineClient
 
-    transport, source = _obd_transport(args)
-    client = ObdClient(transport)
+    transport, source = _kline_transport(args)
+    client = KlineClient(transport)
     render.communicating()
     init = client.connect()
     try:
-        if args.obd_action == "dtc":
+        if args.kline_action == "dtc":
             codes = client.read_dtcs()
             if codes:
                 render.console.print(f"[bold]Stored fault codes - {source}:[/]")
@@ -348,27 +348,27 @@ def _cmd_obd(args: argparse.Namespace) -> int:
                 render.console.print(f"No stored fault codes - {source}.")
             return 0
 
-        if args.obd_action == "monitor":
+        if args.kline_action == "monitor":
             import time
 
             from rich.live import Live
 
             render.console.print(
-                f"[dim]OBD-II live monitor - {source} "
+                f"[dim]K-line live monitor - {source} "
                 f"(keybytes {init.keybytes.hex()}). Ctrl+C to stop.[/]"
             )
             try:
-                with Live(_obd_live_table(client, source),
+                with Live(_kline_live_table(client, source),
                           console=render.console, refresh_per_second=4) as live:
                     while True:
-                        live.update(_obd_live_table(client, source))
+                        live.update(_kline_live_table(client, source))
                         time.sleep(0.2)
             except KeyboardInterrupt:
                 render.console.print("stopped.")
             return 0
 
         # live (one-shot)
-        table = _obd_live_table(client, source)
+        table = _kline_live_table(client, source)
         render.console.print(table)
         if table.row_count == 0:
             render.console.print("[yellow]No live PIDs returned by the ECU.[/]")
@@ -472,10 +472,10 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(func=_cmd_serve)
 
     sp = sub.add_parser(
-        "obd",
-        help="talk to a REAL ECU over ISO 9141-2 / OBD-II (bench or on-car)",
+        "kline",
+        help="talk to a REAL ECU over the K-line (ISO 9141-2 / OBD-II; bench or car)",
     )
-    sp.add_argument("obd_action", choices=["live", "dtc", "monitor"],
+    sp.add_argument("kline_action", choices=["live", "dtc", "monitor"],
                     help="one-shot live data, stored fault codes, or a "
                          "continuous live monitor")
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")
@@ -483,7 +483,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="TCP endpoint (serve bridge or WiFi Pico); default port 9141")
     sp.add_argument("--allow-writes", action="store_true",
                     help="permit writes over --connect (default: read-only)")
-    sp.set_defaults(func=_cmd_obd)
+    sp.set_defaults(func=_cmd_kline)
 
     return parser
 
