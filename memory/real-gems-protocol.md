@@ -62,19 +62,41 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   (`4600 fff8…`, TIDs 01-0D). Freeze-frame + Mode 06 populate on-car when a code
   matures — future features.
 
-## Tier-2 probe (2026-09-02) — proprietary layer NOT reachable via blind K-line probing
-On the 0x33 OBD session, **no KWP2000 service** (`$3E/$10/$1A/$21/$22/$27`)
-answers — neither with the OBD header (`68 6A F1`) NOR with KWP2000 physical
-framing (fmt `80`/`8L`/`C1` × targets `10/11/12/13/6A/33`). **Total silence, not
-even a `7F`.** Earlier 5-baud init sweep: **only 0x33 answers**. So the **OBD-II
-subset is the ceiling of this access method.** Caveats before calling it
-absolute: (a) our probe SIDs are **MEMS3-derived** (Revill = Rover K-series, not
-GEMS) — GEMS may use different SIDs entirely; (b) **fast-init not truly tried**
-(firmware's fast-init is a bare wake-pulse, no StartCommunication `$81`
-handshake); (c) the **L-line** (GEMS C1017 pin 20) is hardware-grounded here,
-untested. Realistic doors left: genuine GEMS protocol docs / RAVE, a **real-T4
-K-line capture**, an L-line rewire, or a proper fast-init. **Blind SID probing
-is exhausted — do NOT repeat it.** (Probe scripts: `~/tier2.py`, `~/tier2b.py`.)
+## Tier-2 probe (2026-09-02) + adversarial review — "OBD-II is the ceiling" was PREMATURE
+What we tried: on the 0x33 OBD session, **no KWP2000 service** (`$3E/$10/$1A/$21/
+$22/$27`) answered — neither with the OBD header (`68 6A F1`) NOR with KWP2000
+framing (fmt `80`/`8L`/`C1` × targets `10/11/12/13/6A/33`). Total silence, not
+even `7F`. Earlier 5-baud sweep: only 0x33 answered.
+**Correct conclusion (after adversarial deep-research review):** blind SID
+probing *on the established OBD session* is exhausted — DON'T repeat it — BUT the
+"ceiling" is the *configuration's*, not the rig's. Those SIDs went out on top of
+a live ISO 9141-2 OBD session, which is the emissions channel; a KWP2000
+manufacturer channel is a SEPARATE session needing its OWN init, so silence is
+expected. **Two concrete, cheap, NEVER-actually-tried doors remain (do these
+before concluding anything):**
+1. **A real KWP2000 StartCommunication fast-init.** Our firmware's "fast init" is
+   only a wake pulse — it never sends the StartCommunication frame. Documented LR
+   engine-ECU init (Rover MEMS 2J + Td5): fast-init pulse (25 ms low/25 ms high),
+   then at 10400 8N1 send **`81 13 F7 81 0C`** (fmt `81`, **dest `13`** = LR
+   engine ECU, **source `F7`** — we wrongly used `F1`, SID `81` StartComm),
+   expect **`C1 KB1 KB2`**. If dest 13 silent, sweep dest `10/11/12/33/6A`. THEN
+   `10 <session>` → `21 <lid>` / `22 <hi><lo>` for live data, `18`/`14` for DTCs.
+2. **Un-ground the L-line.** P38 wires the engine ECU to BOTH OBD pin 7 (K) AND
+   pin 15 (L); classic ISO 9141 (what T4/TestBook use) sends the 5-baud address
+   on K **and** L simultaneously. L tied to ground blocks the manufacturer 5-baud
+   channel while K-only ISO 9141-2 (0x33) still answers — EXACTLY the "only 0x33"
+   symptom. Free C1017 pin 20 (drive via the L9637D L path / a GPIO) and re-sweep
+   5-baud incl. 0x33/**0x16**, at 10400 AND **9600** (MEMS 1.9 = 0x16 @ 9600).
+Mistakes found: source addr should be **F7** not F1; never sent SID `81` init;
+L grounded during the sweep; omitted 0x16/9600. Only if #1 (real StartComm) and
+#2 (live L-line) BOTH stay silent does the ceiling harden → then a real-T4/Nanocom
+/Faultmate **K-line capture** (logic analyser on pins 7+15) is the only source of
+the service-ID map (public record IS genuinely silent on GEMS SIDs — Revill is
+MEMS3/K-series, Nanocom/Faultmate closed). P1179 confirmed = "Max Negative AMFR
+Correction Fault" (air/fuel correction limit — matches unplugged sensors).
+Sources: rovermems.com (MEMS 2J/1.9 init), SimonRafferty Td5 Arduino, ISO 9141
+K+L 5-baud, rangerovers.pub P38 OBD pinout. (Probe scripts: `~/tier2.py`,
+`~/tier2b.py`.)
 
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
