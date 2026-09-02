@@ -173,16 +173,37 @@ static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
 }
 
 // Fast init: 25 ms low / 25 ms high wake pulse, then the link is live.
-static bool fastInit(uint8_t *keybytes, uint8_t *kb_len) {
+// Fast init (ISO 14230 / KWP2000): a 25 ms low / 25 ms high wake pulse, then a
+// real StartCommunication request — 81 <dest> F7 81 <sum-checksum> — and read the
+// ECU's positive reply, which carries 0xC1 followed by the two keybytes. This is
+// the manufacturer-channel init Land Rover engine ECUs use (documented dest 0x13,
+// tester source 0xF7). `address` is the StartCommunication DEST so the host can
+// sweep it. Returns false (no keybytes) if nothing answers.
+static bool fastInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
   Serial1.end();
   pinMode(KLINE_TX_PIN, OUTPUT);
   digitalWrite(KLINE_TX_PIN, HIGH); delay(300);
   digitalWrite(KLINE_TX_PIN, LOW);  delay(25);
   digitalWrite(KLINE_TX_PIN, HIGH); delay(25);
   Serial1.begin(KLINE_BAUD);
-  keybytes[0] = 0x08; keybytes[1] = 0x08;  // conventional ISO 9141-2 keybytes
-  *kb_len = 2;
-  return true;
+
+  uint8_t sc[5] = { 0x81, address, 0xF7, 0x81, 0 };
+  sc[4] = (uint8_t)(sc[0] + sc[1] + sc[2] + sc[3]);
+  for (int i = 0; i < 5; i++) {
+    if (!klineWriteByte(sc[i])) return false;  // send + swallow half-duplex echo
+  }
+
+  uint8_t buf[16];
+  int n = klineReadFrame(buf, sizeof(buf));
+  for (int i = 0; i + 2 < n; i++) {
+    if (buf[i] == 0xC1) {
+      keybytes[0] = buf[i + 1];
+      keybytes[1] = buf[i + 2];
+      *kb_len = 2;
+      return true;
+    }
+  }
+  return false;
 }
 
 // ---- command handlers ------------------------------------------------------
@@ -190,7 +211,8 @@ static void handleInit(const uint8_t *payload, uint8_t len) {
   if (len < 2) { sendPico(ST_BAD_REQUEST, nullptr, 0); return; }
   uint8_t address = payload[0], mode = payload[1];
   uint8_t kb[2], kb_len = 0;
-  bool ok = (mode == 1) ? fastInit(kb, &kb_len) : slowInit(address, kb, &kb_len);
+  bool ok = (mode == 1) ? fastInit(address, kb, &kb_len)
+                        : slowInit(address, kb, &kb_len);
   if (ok) sendPico(ST_OK, kb, kb_len);
   else    sendPico(ST_TIMEOUT, nullptr, 0);
 }
