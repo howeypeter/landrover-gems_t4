@@ -510,7 +510,8 @@ keybyte handshake (`fca1ab9`); obd profile+CLI `4bfa738`. Full detail:
 `memory/real-gems-protocol.md`. NOTE: the KWP-stylized stack still backs the
 virtual ECU/GUI; the two protocols coexist.
 
-**Where the project stands (latest release: v0.0.7, 2026-08-29):** Phases
+**Where the project stands (latest release: v0.0.8, 2026-09-01 — the
+first-hardware-comms milestone; v0.0.7 was the docs-only wiring reference):** Phases
 **1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested, now with
 a full **hardware wiring reference** for on-car validation (parts: bare
 **L9637D** transceiver + breadboard — the MikroE ISO 9141 Click is
