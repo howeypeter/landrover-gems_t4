@@ -50,6 +50,17 @@ reverse-engineered protocol — use it (not the stylized KWP format in
 - **Real captured frames (used as test fixtures in `tests/test_kline.py`):**
   PID00 resp `48 6b e8 41 00 bf 9f f9 91 c4`; PID05 (coolant) resp
   `48 6b e8 41 05 00 e1` → 0x00 → −40 °C.
+- **OBD-II surface mapped (Tier-1 probe, 2026-09-02; `probe1.py` in ~):**
+  Mode 01 = **bank 1 only** (PID20 mask `00000001`, PID40 `00000000` — no
+  PID21-60 data). Supported Mode-01 PIDs include the **V8 bank-2** ones now
+  decoded (0x08/0x09 STFT/LTFT B2, 0x18/0x19 O2 B2S1/B2S2); 0x03 fuel-system
+  status is a string enum (CLI-only candidate, not a gauge). **Mode 09
+  (VIN/cal-id/ECU name) is NOT supported** — VIN lives in the BeCM, not GEMS →
+  **no multi-frame reassembly needed** for the OBD-II layer. **Mode 02 (freeze
+  frame)** supported (`M02 PID00` mask `7f980000`) but empty on the bench (DTC
+  `0000` — no *confirmed* code). **Mode 06 (on-board monitor tests)** supported
+  (`4600 fff8…`, TIDs 01-0D). Freeze-frame + Mode 06 populate on-car when a code
+  matures — future features.
 
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
