@@ -339,13 +339,41 @@ def _cmd_kline(args: argparse.Namespace) -> int:
     init = client.connect()
     try:
         if args.kline_action == "dtc":
-            codes = client.read_dtcs()
-            if codes:
-                render.console.print(f"[bold]Stored fault codes - {source}:[/]")
-                for code in codes:
+            stored = client.read_dtcs()
+            pending = client.read_pending_dtcs()
+            if stored:
+                render.console.print(f"[bold]Stored (confirmed) codes - {source}:[/]")
+                for code in stored:
                     render.console.print(f"  [red]{code}[/]")
             else:
-                render.console.print(f"No stored fault codes - {source}.")
+                render.console.print(f"No stored (confirmed) codes - {source}.")
+            if pending:
+                render.console.print(f"[bold]Pending codes - {source}:[/]")
+                for code in pending:
+                    render.console.print(f"  [yellow]{code}[/]")
+            else:
+                render.console.print("No pending codes.")
+            return 0
+
+        if args.kline_action == "clear":
+            if not getattr(args, "yes", False) and not _prompt_yes_no(
+                "Clear fault codes and reset readiness monitors? [y/N] "
+            ):
+                render.console.print("Clear cancelled.")
+                return 1
+            before = client.read_dtcs() + client.read_pending_dtcs()
+            ok = client.clear_dtcs()
+            after = client.read_dtcs() + client.read_pending_dtcs()
+            if ok:
+                render.console.print(f"[green]Clear command accepted - {source}.[/]")
+            else:
+                render.console.print(
+                    f"[yellow]Clear sent; ECU did not echo a positive reply - {source}.[/]"
+                )
+            render.console.print(
+                f"Codes before: {', '.join(before) or 'none'}  ->  "
+                f"after: {', '.join(after) or 'none'}"
+            )
             return 0
 
         if args.kline_action == "monitor":
@@ -475,9 +503,11 @@ def build_parser() -> argparse.ArgumentParser:
         "kline",
         help="talk to a REAL ECU over the K-line (ISO 9141-2 / OBD-II; bench or car)",
     )
-    sp.add_argument("kline_action", choices=["live", "dtc", "monitor"],
-                    help="one-shot live data, stored fault codes, or a "
-                         "continuous live monitor")
+    sp.add_argument("kline_action", choices=["live", "dtc", "monitor", "clear"],
+                    help="one-shot live data; fault codes (stored + pending); a "
+                         "continuous live monitor; or clear codes (Mode 04)")
+    sp.add_argument("--yes", "-y", action="store_true",
+                    help="skip the confirmation prompt when clearing")
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")
     sp.add_argument("--connect", metavar="HOST[:PORT]",
                     help="TCP endpoint (serve bridge or WiFi Pico); default port 9141")

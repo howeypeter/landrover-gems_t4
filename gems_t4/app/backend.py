@@ -364,13 +364,24 @@ class Backend:
         return _livedata.read_all(self._require(), ids)
 
     def read_dtcs(self) -> list[Dtc]:
-        """Read stored fault codes."""
+        """Read fault codes.
+
+        On a real ECU this returns both **stored/confirmed** (Mode 03) and
+        **pending** (Mode 07) codes — important on the bench, where a
+        freshly-detected fault is pending long before it matures to stored.
+        """
         if self._kline is not None:
-            return [
+            stored = [
                 Dtc(code=code, description="(OBD-II stored code)",
                     state=DtcState.STORED)
                 for code in self._kline.read_dtcs()
             ]
+            pending = [
+                Dtc(code=code, description="(OBD-II pending code)",
+                    state=DtcState.PENDING)
+                for code in self._kline.read_pending_dtcs()
+            ]
+            return stored + pending
         return _dtc.read_dtcs(self._require())
 
     def clear_dtcs(self) -> None:

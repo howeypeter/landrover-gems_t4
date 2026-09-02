@@ -102,6 +102,20 @@ def test_read_dtcs_maps_to_dtc_objects() -> None:
     assert [d.code for d in dtcs] == ["P0118"]
 
 
+def test_read_dtcs_includes_pending() -> None:
+    # On a real ECU (esp. a bench), a fresh fault is pending (Mode 07) long
+    # before it matures to stored (Mode 03). read_dtcs must surface both.
+    responses = dict(RESPONSES)
+    responses["07"] = _resp(0x47, 0x11, 0x79)  # pending P1179 (the real bench code)
+    backend = Backend()
+    backend._use_kline = True
+    backend._transport_factory = lambda: FakeKlineEcu(responses)
+    backend.connect()
+    by_code = {d.code: d.state.value for d in backend.read_dtcs()}
+    assert by_code["P0118"] == "stored"
+    assert by_code["P1179"] == "pending"
+
+
 def test_clear_dtcs_ok() -> None:
     backend = _real_backend()
     backend.connect()
