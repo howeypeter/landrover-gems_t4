@@ -92,9 +92,9 @@ class FaultCodesScreen(Screen):
         def work() -> list[Dtc] | None:
             self.backend.clear_dtcs()
             if real:
-                # The GEMS ECU resets after a Mode 04 clear and won't answer
-                # until the ignition is cycled; drop the stale session so the
-                # next Read re-inits cleanly instead of failing on a dead one.
+                # The GEMS ECU reboots after a Mode 04 clear and goes quiet for
+                # a minute or two; drop the stale session so the next Read
+                # re-inits cleanly instead of failing on a dead one.
                 self.backend.disconnect()
                 return None
             return self.backend.read_dtcs()  # virtual: safe to re-read at once
@@ -103,9 +103,10 @@ class FaultCodesScreen(Screen):
             if real:
                 self._table.setRowCount(0)
                 self.status.emit(
-                    "Codes cleared - cycle the ignition, then press ✓ to re-read."
+                    "Codes cleared - the ECU reboots (~1-2 min). Wait (or cycle "
+                    "the ignition), then press ✓ to re-read."
                 )
-                self._hint.setText("⚠ Cycle ignition, then ✓ Read to confirm")
+                self._hint.setText("⚠ Wait ~1-2 min or cycle ignition, then ✓ Read")
             else:
                 self._show(result or [])
 

@@ -36,10 +36,11 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   NEVER become stored. ECU stays **silent when there are zero codes** (a
   TransportTimeout that means "no codes", not an error). Confirmed pending code
   from the bench (coolant/IAT sensors unplugged): **P1179** (manufacturer-specific).
-- **Clearing DTCs (Mode 04) RESETS the ECU (confirmed 2026-09-01).** After a
-  Mode 04 clear the GEMS ECU drops the K-line session and **won't answer a fresh
-  5-baud init until the ignition is cycled** (off→on) — you get `init failed
-  (status 1)` on the next command otherwise. The tool handles it: `kline clear`
+- **Clearing DTCs (Mode 04) REBOOTS the ECU (confirmed 2026-09-01).** After a
+  Mode 04 clear the GEMS ECU drops the K-line session and **goes unresponsive
+  for ~1–2 minutes while it reboots its diagnostic subsystem**, then recovers on
+  its own (cycling the ignition can force/speed it — it is NOT strictly
+  required). You get `init failed (status 1)` on any command in the meantime. The tool handles it: `kline clear`
   does NOT re-read (it prints a "cycle the ignition" hint); the GUI clear drops
   the session (`Backend.disconnect()`) and prompts to cycle before re-reading;
   `Backend.read_*` now reconnect via `_ensure_connected()` so the post-clear
