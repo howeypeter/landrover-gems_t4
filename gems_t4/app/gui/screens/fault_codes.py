@@ -87,12 +87,29 @@ class FaultCodesScreen(Screen):
             self._hint.setText("⚠ Press ✗ again to confirm clear ALL")
             return
         self._pending_clear = False
+        real = self.backend.on_real_ecu
 
-        def work() -> list[Dtc]:
+        def work() -> list[Dtc] | None:
             self.backend.clear_dtcs()
-            return self.backend.read_dtcs()  # re-read to confirm the clear
+            if real:
+                # The GEMS ECU resets after a Mode 04 clear and won't answer
+                # until the ignition is cycled; drop the stale session so the
+                # next Read re-inits cleanly instead of failing on a dead one.
+                self.backend.disconnect()
+                return None
+            return self.backend.read_dtcs()  # virtual: safe to re-read at once
 
-        self.run_with_wait("Clearing fault codes", work, self._show)
+        def done(result: list[Dtc] | None) -> None:
+            if real:
+                self._table.setRowCount(0)
+                self.status.emit(
+                    "Codes cleared - cycle the ignition, then press ✓ to re-read."
+                )
+                self._hint.setText("⚠ Cycle ignition, then ✓ Read to confirm")
+            else:
+                self._show(result or [])
+
+        self.run_with_wait("Clearing fault codes", work, done)
 
     # -- nav buttons -------------------------------------------------------- #
     def nav_buttons(self) -> set[str]:

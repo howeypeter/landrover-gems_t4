@@ -363,16 +363,16 @@ def _cmd_kline(args: argparse.Namespace) -> int:
                 return 1
             before = client.read_dtcs() + client.read_pending_dtcs()
             ok = client.clear_dtcs()
-            after = client.read_dtcs() + client.read_pending_dtcs()
-            if ok:
-                render.console.print(f"[green]Clear command accepted - {source}.[/]")
-            else:
-                render.console.print(
-                    f"[yellow]Clear sent; ECU did not echo a positive reply - {source}.[/]"
-                )
+            state = "accepted" if ok else "sent (no positive echo)"
+            render.console.print(f"[green]Clear command {state} - {source}.[/]")
+            render.console.print(f"Codes before clear: {', '.join(before) or 'none'}.")
+            # The GEMS ECU resets after a Mode 04 clear: it drops the session and
+            # won't answer a new init until the ignition is cycled. So don't
+            # re-read here (it would fail) — tell the operator what to do next.
             render.console.print(
-                f"Codes before: {', '.join(before) or 'none'}  ->  "
-                f"after: {', '.join(after) or 'none'}"
+                "[yellow]The GEMS ECU resets after a clear — cycle the ignition "
+                "(off, then on) before it answers again, then run "
+                "'kline dtc' to confirm.[/]"
             )
             return 0
 

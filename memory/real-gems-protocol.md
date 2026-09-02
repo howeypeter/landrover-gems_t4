@@ -31,8 +31,21 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   ECU source address = **E8**.
 - **Live data:** Mode 01 works (coolant, RPM, timing, O2, fuel trims, MAF,
   throttle…). Mode 01 **PID 00** = supported-PID bitmask (auto-detect PIDs).
-- **DTCs:** Mode 03. ECU stays **silent when there are zero codes** (a
-  TransportTimeout that means "no codes", not an error).
+- **DTCs:** Mode 03 (stored/confirmed) + **Mode 07 (pending)** — on the bench a
+  fresh fault is pending long before it matures to stored; engine-off it may
+  NEVER become stored. ECU stays **silent when there are zero codes** (a
+  TransportTimeout that means "no codes", not an error). Confirmed pending code
+  from the bench (coolant/IAT sensors unplugged): **P1179** (manufacturer-specific).
+- **Clearing DTCs (Mode 04) RESETS the ECU (confirmed 2026-09-01).** After a
+  Mode 04 clear the GEMS ECU drops the K-line session and **won't answer a fresh
+  5-baud init until the ignition is cycled** (off→on) — you get `init failed
+  (status 1)` on the next command otherwise. The tool handles it: `kline clear`
+  does NOT re-read (it prints a "cycle the ignition" hint); the GUI clear drops
+  the session (`Backend.disconnect()`) and prompts to cycle before re-reading;
+  `Backend.read_*` now reconnect via `_ensure_connected()` so the post-clear
+  re-read re-inits instead of crashing on a null client. Also: pending codes for
+  a *still-present* fault (a disconnected sensor) reappear immediately —
+  clearing a live fault is inherently temporary.
 - **Real captured frames (used as test fixtures in `tests/test_kline.py`):**
   PID00 resp `48 6b e8 41 00 bf 9f f9 91 c4`; PID05 (coolant) resp
   `48 6b e8 41 05 00 e1` → 0x00 → −40 °C.

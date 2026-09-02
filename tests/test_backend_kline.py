@@ -122,6 +122,18 @@ def test_clear_dtcs_ok() -> None:
     backend.clear_dtcs()  # Mode 04 -> 0x44, must not raise
 
 
+def test_read_reconnects_after_disconnect() -> None:
+    # After a clear the GUI drops the session (the ECU resets on Mode 04); the
+    # next read must re-init the real-ECU profile, not crash on a null client.
+    backend = _real_backend()
+    backend.connect()
+    backend.disconnect()
+    assert backend.connected is False
+    dtcs = backend.read_dtcs()  # must reconnect (fresh init), not raise
+    assert backend.on_real_ecu is True
+    assert [d.code for d in dtcs] == ["P0118"]
+
+
 @pytest.mark.parametrize(
     "call",
     [

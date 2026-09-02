@@ -348,6 +348,14 @@ class Backend:
         if self._ecu is not None:
             self._ecu.tick(dt)
 
+    def _ensure_connected(self) -> None:
+        """Open a session if none is active — this *reconnects* (a fresh 5-baud
+        init) after a deliberate disconnect, e.g. the session drop after a DTC
+        clear (the GEMS ECU resets on Mode 04 and won't answer until it's
+        re-inited, which needs the ignition cycled first)."""
+        if not self.connected:
+            self.connect()
+
     # -- diagnostic operations --------------------------------------------- #
     def read_live(self, ids: list[int] | None = None) -> list[Measure]:
         """Read live-data measures (all known ids by default).
@@ -356,6 +364,7 @@ class Backend:
         01 PID, mapped to :class:`Measure`; the ``ids`` filter (stylized local
         ids) doesn't apply and is ignored.
         """
+        self._ensure_connected()
         if self._kline is not None:
             return [
                 Measure(name=row.name, value=row.value, unit=row.unit, raw=row.pid)
@@ -370,6 +379,7 @@ class Backend:
         **pending** (Mode 07) codes — important on the bench, where a
         freshly-detected fault is pending long before it matures to stored.
         """
+        self._ensure_connected()
         if self._kline is not None:
             stored = [
                 Dtc(code=code, description="(OBD-II stored code)",
@@ -385,7 +395,14 @@ class Backend:
         return _dtc.read_dtcs(self._require())
 
     def clear_dtcs(self) -> None:
-        """Clear stored fault codes (OBD-II Mode 04 on a real ECU)."""
+        """Clear fault codes (OBD-II Mode 04 on a real ECU).
+
+        The GEMS ECU resets after a Mode 04 clear — it drops the K-line session
+        and won't answer a new init until the ignition is cycled. Callers should
+        :meth:`disconnect` afterwards (so the next read re-inits) and tell the
+        operator to cycle the ignition.
+        """
+        self._ensure_connected()
         if self._kline is not None:
             self._kline.clear_dtcs()
             return
