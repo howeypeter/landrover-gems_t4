@@ -20,10 +20,17 @@ is the hook to add them as they are discovered at the bench.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Callable
 
-from gems_t4.transport.base import InitResult, Transport, TransportError, TransportTimeout
+from gems_t4.transport.base import (
+    InitError,
+    InitResult,
+    Transport,
+    TransportError,
+    TransportTimeout,
+)
 
 KLINE_INIT_ADDRESS = 0x33
 _REQ_HEADER = bytes([0x68, 0x6A, 0xF1])  # format, target (OBD), source (tester)
@@ -165,10 +172,29 @@ class KlineClient:
         self._supported: set[int] | None = None
 
     # -- lifecycle -------------------------------------------------------- #
-    def connect(self, mode: str = "slow") -> InitResult:
-        """Open the transport and 5-baud-init the ECU at address 0x33."""
+    def connect(
+        self, mode: str = "slow", *, retries: int = 4, retry_delay: float = 1.2
+    ) -> InitResult:
+        """Open the transport and 5-baud-init the ECU at address 0x33.
+
+        The 5-baud slow init fails transiently on real hardware more often than
+        you'd like — marginal bus timing, or the ECU still holding a session
+        from a just-closed prior connection (it re-inits only once that session
+        times out, a few seconds later). So retry the init a few times before
+        giving up; ``retries=1`` disables the retry. A single successful init
+        returns immediately.
+        """
         self.transport.open()
-        return self.transport.init(KLINE_INIT_ADDRESS, mode)
+        last: Exception | None = None
+        for attempt in range(max(1, retries)):
+            try:
+                return self.transport.init(KLINE_INIT_ADDRESS, mode)
+            except (InitError, TransportTimeout) as exc:
+                last = exc
+                if attempt + 1 < retries:
+                    time.sleep(retry_delay)
+        assert last is not None  # loop ran at least once
+        raise last
 
     def close(self) -> None:
         self.transport.close()

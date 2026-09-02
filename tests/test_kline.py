@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from gems_t4.protocol import kline
-from gems_t4.transport.base import InitResult, Transport, TransportTimeout
+from gems_t4.transport.base import InitError, InitResult, Transport, TransportTimeout
 
 
 class FakeKlineEcu(Transport):
@@ -138,3 +138,32 @@ def test_decode_dtcs_encoding(pair: str, code: str) -> None:
 
 def test_decode_dtcs_skips_padding() -> None:
     assert kline.decode_dtcs(bytes.fromhex("03030000")) == ["P0303"]
+
+
+class _FlakyEcu(FakeKlineEcu):
+    """Fails init the first ``fail_n`` times, then succeeds — models the
+    transient 5-baud init failures seen on real hardware."""
+
+    def __init__(self, fail_n: int) -> None:
+        super().__init__({})
+        self.fail_n = fail_n
+        self.init_calls = 0
+
+    def init(self, address: int, mode: str = "slow") -> InitResult:
+        self.init_calls += 1
+        if self.init_calls <= self.fail_n:
+            raise InitError("transient init timeout")
+        return InitResult()
+
+
+def test_connect_retries_transient_init_failure() -> None:
+    ecu = _FlakyEcu(fail_n=2)  # fails twice, succeeds on the 3rd
+    kline.KlineClient(ecu).connect(retry_delay=0)
+    assert ecu.init_calls == 3
+
+
+def test_connect_raises_after_exhausting_retries() -> None:
+    ecu = _FlakyEcu(fail_n=99)  # never succeeds
+    with pytest.raises(InitError):
+        kline.KlineClient(ecu).connect(retries=3, retry_delay=0)
+    assert ecu.init_calls == 3
