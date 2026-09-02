@@ -190,21 +190,32 @@ def _maf(d: bytes) -> float:
     return round((d[0] * 256 + d[1]) / 100, 2)
 
 
+def _volt(d: bytes) -> float:
+    return round(d[0] / 200, 3)
+
+
 # Common Mode-01 PIDs with decoders. read_live() only reads the ones the ECU
-# reports as supported (via PID 00), so listing extras here is harmless.
+# reports as supported (via PID 00), so listing extras here is harmless. The
+# bank-2 O2/trim PIDs matter on the GEMS V8 (two cylinder banks). Confirmed
+# supported on a real P38 GEMS ECU (2026-09): 03,04,05,06,07,08,09,0C-15,18,19
+# (0x03 fuel-system status is a status enum, not a gauge value — not listed).
 PIDS: list[Pid] = [
     Pid(0x04, "Engine load", "%", _pct),
     Pid(0x05, "Coolant temp", "°C", _temp),
     Pid(0x06, "Short fuel trim B1", "%", _trim),
     Pid(0x07, "Long fuel trim B1", "%", _trim),
+    Pid(0x08, "Short fuel trim B2", "%", _trim),
+    Pid(0x09, "Long fuel trim B2", "%", _trim),
     Pid(0x0C, "Engine speed", "rpm", _rpm),
     Pid(0x0D, "Vehicle speed", "km/h", lambda d: d[0]),
     Pid(0x0E, "Timing advance", "°", _timing),
     Pid(0x0F, "Intake air temp", "°C", _temp),
     Pid(0x10, "MAF rate", "g/s", _maf),
     Pid(0x11, "Throttle", "%", _pct),
-    Pid(0x14, "O2 B1S1 voltage", "V", lambda d: round(d[0] / 200, 3)),
-    Pid(0x15, "O2 B1S2 voltage", "V", lambda d: round(d[0] / 200, 3)),
+    Pid(0x14, "O2 B1S1 voltage", "V", _volt),
+    Pid(0x15, "O2 B1S2 voltage", "V", _volt),
+    Pid(0x18, "O2 B2S1 voltage", "V", _volt),
+    Pid(0x19, "O2 B2S2 voltage", "V", _volt),
 ]
 
 

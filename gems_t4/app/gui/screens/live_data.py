@@ -153,12 +153,12 @@ class LiveDataScreen(Screen):
             by_pid = {m.raw: m for m in measures}
             for lid, gauge in self._gauges.items():
                 m = by_pid.get(lid)
-                if m is not None:
+                if m is not None and isinstance(m.value, (int, float)):
                     gauge.set_value(m.value)
         else:
             for lid, m in zip(ids, measures):
                 gauge = self._gauges.get(lid)
-                if gauge is not None:
+                if gauge is not None and isinstance(m.value, (int, float)):
                     gauge.set_value(m.value)
 
     # -- lifecycle ---------------------------------------------------------- #

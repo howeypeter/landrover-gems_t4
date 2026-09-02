@@ -186,3 +186,12 @@ def test_connect_help_port_side() -> None:
 
 def test_connect_help_short_is_one_line() -> None:
     assert "\n" not in kline.connect_help_short(InitError("init failed (status 1)"))
+
+
+def test_bank2_pids_present_and_decode() -> None:
+    by_pid = {p.pid: p for p in kline.PIDS}
+    assert {0x08, 0x09, 0x18, 0x19} <= set(by_pid)  # V8 bank-2 coverage
+    assert by_pid[0x08].decode(b"\x80") == 0.0      # STFT B2: 128 -> 0%
+    assert by_pid[0x18].decode(b"\x80") == 0.64     # O2 B2S1: 128/200
+    assert by_pid[0x19].name == "O2 B2S2 voltage"
+    assert 0x03 not in by_pid  # fuel-system status is a string enum, not a gauge PID
