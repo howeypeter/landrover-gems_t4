@@ -62,6 +62,20 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   (`4600 fff8…`, TIDs 01-0D). Freeze-frame + Mode 06 populate on-car when a code
   matures — future features.
 
+## Tier-2 probe (2026-09-02) — proprietary layer NOT reachable via blind K-line probing
+On the 0x33 OBD session, **no KWP2000 service** (`$3E/$10/$1A/$21/$22/$27`)
+answers — neither with the OBD header (`68 6A F1`) NOR with KWP2000 physical
+framing (fmt `80`/`8L`/`C1` × targets `10/11/12/13/6A/33`). **Total silence, not
+even a `7F`.** Earlier 5-baud init sweep: **only 0x33 answers**. So the **OBD-II
+subset is the ceiling of this access method.** Caveats before calling it
+absolute: (a) our probe SIDs are **MEMS3-derived** (Revill = Rover K-series, not
+GEMS) — GEMS may use different SIDs entirely; (b) **fast-init not truly tried**
+(firmware's fast-init is a bare wake-pulse, no StartCommunication `$81`
+handshake); (c) the **L-line** (GEMS C1017 pin 20) is hardware-grounded here,
+untested. Realistic doors left: genuine GEMS protocol docs / RAVE, a **real-T4
+K-line capture**, an L-line rewire, or a proper fast-init. **Blind SID probing
+is exhausted — do NOT repeat it.** (Probe scripts: `~/tier2.py`, `~/tier2b.py`.)
+
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
 actuator drives, coding, immobiliser — ride the **same `68 6A F1` envelope**
