@@ -46,7 +46,66 @@ __all__ = [
     "decode_response",
     "decode_dtcs",
     "obd_checksum",
+    "connect_help",
+    "connect_help_short",
 ]
+
+
+def connect_help(exc: BaseException | None = None) -> str:
+    """A friendly, actionable checklist for a failed real-ECU connect/init.
+
+    Distinguishes the adapter (Pico/USB) side from the ECU/K-line side by the
+    exception text, so the operator is pointed at the right thing.
+    """
+    text = str(exc or "")
+    if any(k in text for k in (
+        "could not open port", "PermissionError", "FileNotFoundError",
+        "Access is denied", "No such file", "The system cannot find",
+    )):
+        return (
+            "Couldn't open the serial port. Check:\n"
+            "  - --port is the Pico's COM port (python -m serial.tools.list_ports "
+            "-v; the Pico is VID 2E8A).\n"
+            "  - Nothing else has it open - only one program can use the port at "
+            "a time (close any GUI or other kline command)."
+        )
+    if "Pico" in text:
+        return (
+            "The Pico adapter isn't responding over USB - this is the "
+            "laptop<->adapter link, not the ECU:\n"
+            "  - Use a DATA USB cable (not charge-only); try a different port.\n"
+            "  - Confirm the COM port: python -m serial.tools.list_ports -v "
+            "(the Pico is VID 2E8A).\n"
+            "  - Re-flash the pico_kline firmware if it still won't answer."
+        )
+    return (
+        "Couldn't reach the ECU - the K-line init timed out. Check, in order:\n"
+        "  1. Ignition switch ON (and the PSU master switch ON, if you use one).\n"
+        "  2. Power at the ECU: ~12 V at C1033 pin 7 (main) and pin 8 (ignition).\n"
+        "  3. Grounds solid: C1033 pins 5/9/10/16 to the negative bus\n"
+        "     (a lifted ground looks exactly like this).\n"
+        "  4. K-line intact: L9637D pin 6 -> C1017 pin 23, with the 510 ohm\n"
+        "     pull-up in place (K should idle ~12 V).\n"
+        "  5. Wiggle every breadboard jumper - one loose wire is the usual cause.\n"
+        "Just cleared codes? The GEMS ECU reboots for ~1-2 minutes after a "
+        "clear - wait, then retry."
+    )
+
+
+def connect_help_short(exc: BaseException | None = None) -> str:
+    """A one-line version of :func:`connect_help` for a GUI status bar."""
+    text = str(exc or "")
+    if any(k in text for k in (
+        "could not open port", "PermissionError", "Access is denied",
+        "FileNotFoundError", "No such file",
+    )):
+        return "Can't open the port - check the COM port and that nothing else has it open."
+    if "Pico" in text:
+        return "Pico not responding - check the USB cable/port and firmware."
+    return (
+        "ECU not responding - check ignition ON, power, grounds and the "
+        "K-line/510 ohm; wiggle the wires. Just cleared codes? Wait ~1-2 min."
+    )
 
 
 class KlineError(TransportError):

@@ -331,12 +331,18 @@ def _cmd_kline(args: argparse.Namespace) -> int:
     This is the confirmed, hardware-tested protocol (5-baud init at 0x33), as
     opposed to the KWP-stylized virtual ECU used by the other commands.
     """
-    from gems_t4.protocol.kline import KlineClient
+    from gems_t4.protocol.kline import KlineClient, connect_help
+    from gems_t4.transport.base import TransportError
 
     transport, source = _kline_transport(args)
     client = KlineClient(transport)
     render.communicating()
-    init = client.connect()
+    try:
+        init = client.connect()
+    except (TransportError, OSError) as exc:
+        render.console.print("[bold red]Could not connect to the ECU.[/]")
+        render.console.print(connect_help(exc))
+        return 1
     try:
         if args.kline_action == "dtc":
             stored = client.read_dtcs()

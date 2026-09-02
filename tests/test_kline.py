@@ -167,3 +167,22 @@ def test_connect_raises_after_exhausting_retries() -> None:
     with pytest.raises(InitError):
         kline.KlineClient(ecu).connect(retries=3, retry_delay=0)
     assert ecu.init_calls == 3
+
+
+def test_connect_help_ecu_side() -> None:
+    msg = kline.connect_help(InitError("init failed (status 1)"))
+    assert "Ignition" in msg and "C1017 pin 23" in msg and "510" in msg
+
+
+def test_connect_help_pico_side() -> None:
+    msg = kline.connect_help(TransportTimeout("no response from Pico"))
+    assert "USB" in msg and "firmware" in msg
+
+
+def test_connect_help_port_side() -> None:
+    msg = kline.connect_help(OSError("could not open port 'COM99'"))
+    assert "port" in msg.lower()
+
+
+def test_connect_help_short_is_one_line() -> None:
+    assert "\n" not in kline.connect_help_short(InitError("init failed (status 1)"))

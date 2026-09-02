@@ -103,9 +103,16 @@ class Screen(QWidget):
         reports the exception on the status bar.
         """
         if on_error is None:
-            on_error = lambda exc: self.status.emit(  # noqa: E731
-                f"ECU communication error: {exc}"
-            )
+            def on_error(exc: Exception) -> None:
+                from gems_t4.transport.base import TransportError
+                if isinstance(exc, (TransportError, OSError)):
+                    # A real-ECU connect/init failure: give the operator the
+                    # actionable checklist (ignition/power/grounds/K-line/wires),
+                    # not a raw "init failed (status 1)".
+                    from gems_t4.protocol.kline import connect_help_short
+                    self.status.emit(connect_help_short(exc))
+                else:
+                    self.status.emit(f"ECU communication error: {exc}")
         win = self.window()
         if isinstance(win, KioskWindow):
             win.run_with_wait(label, fn, on_done, on_error)
