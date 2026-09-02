@@ -578,6 +578,25 @@ up):**
   "ECU-to-engine matching" procedure. Ties into
   [EPROM programmability] and [4.0/4.6 toggle] above.
 
+### Backlog / tech debt (not started — do when the pain justifies it)
+
+- **Route the CLI `kline` command through the `Backend` facade (single-wire new
+  real-ECU features).** Today the CLI `kline` command talks to `KlineClient`
+  *directly* (in `app/cli.py` `_cmd_kline`), while the GUI goes through the
+  `Backend` facade (`app/backend.py`) — so a new real-ECU capability (e.g.
+  pending DTCs, a new PID group) has to be wired into *two* presentation layers:
+  the CLI's Rich formatting and the Backend's mapping to `Measure`/`Dtc` domain
+  objects. The underlying protocol logic is already single (in
+  `protocol/kline.py`), so this is only presentation duplication — but it means
+  every real-ECU feature is a double-touch. Refactor: have the CLI `kline`
+  command consume the same `Backend` methods the GUI uses (read live / DTCs
+  incl. pending / clear), so the next feature wires in one place and CLI+GUI stay
+  in lockstep by construction. Modest, self-contained; worth it now that we're
+  actively adding real-ECU features. (Note: the CLI's *other* commands
+  — `live`/`dtc`/`actuator` etc. — also bypass the Backend and hit `KwpClient`
+  directly, so a fuller version would unify those too, but the `kline` path is
+  the one under active development.)
+
 ### Backlog / QA-found unmet requirements (found 2026-07-11 by a full QA sweep)
 
 A requirements-vs-code QA pass found the product is healthy and all tests pass,
