@@ -98,6 +98,22 @@ Sources: rovermems.com (MEMS 2J/1.9 init), SimonRafferty Td5 Arduino, ISO 9141
 K+L 5-baud, rangerovers.pub P38 OBD pinout. (Probe scripts: `~/tier2.py`,
 `~/tier2b.py`.)
 
+## L-line experiment RESULT (2026-09-03): strong NEGATIVE
+Ran the zero-hardware K+L-tied test: C1017 **pin 20 jumpered onto the K node**,
+so the 5-baud address drives K and L together. OBD `0x33` still worked tied (no
+interference — wiring sound), but a manufacturer sweep — 5-baud slow
+(0x13/10/11/12/16/01/28/6A) AND fast-init StartComm (0x13/10/11/12/33/6A), all at
+10400 — got **total silence**. So driving the L-line in parallel opens no
+manufacturer channel either. **Every firmware/wiring-level door is now tested
+negative** (blind KWP on OBD session, fast-init StartComm, K+L-tied). Caveats NOT
+yet closed (low-probability): firmware `slowInit` only detects an OBD-style `0x55`
+sync, so a non-`0x55` response reads as "no reply" (need a raw-capture firmware
+variant to rule out); **9600 baud never tested** (firmware fixed at 10400, MEMS
+1.9 precedent); address list may be incomplete. **Blind experimentation is
+effectively exhausted** — the realistic path to the proprietary layer is now a
+real-T4/Nanocom/Faultmate **K-line capture** or **RAVE** docs, NOT more probing.
+Probe: `~/lline_probe.py`.
+
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
 actuator drives, coding, immobiliser — ride the **same `68 6A F1` envelope**
