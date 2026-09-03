@@ -51,6 +51,13 @@ static const uint8_t ST_OK = 0x00, ST_TIMEOUT = 0x01, ST_BUS_ERROR = 0x02, ST_BA
 static const uint16_t RESP_TIMEOUT_MS = 1000;  // overall budget for a K-line reply
 static const size_t   MAX_PAYLOAD = 255;
 
+// Firmware version, returned by CMD_PING so the host can confirm WHICH firmware
+// is flashed (re-flashing over USB is error-prone; a PING removes the doubt).
+// BUMP on any K-line behaviour change. History:
+//   1.0.0  original (fake fast-init, no keybyte handshake) - reported "PICO v1"
+//   2.0.0  real 5-baud keybyte W4 handshake + real fast-init StartCommunication
+static const char FW_VERSION[] = "gems_t4-pico 2.0.0";
+
 // ---- crc8 (XOR) ------------------------------------------------------------
 static uint8_t crc8(const uint8_t *buf, size_t n) {
   uint8_t c = 0;
@@ -261,7 +268,7 @@ void loop() {
   if (rxcrc != want) { sendPico(ST_BAD_REQUEST, nullptr, 0); return; }
 
   switch (cmd) {
-    case CMD_PING:       { const char *v = "PICO v1"; sendPico(ST_OK, (const uint8_t *)v, 7); break; }
+    case CMD_PING:       sendPico(ST_OK, (const uint8_t *)FW_VERSION, (uint8_t)(sizeof(FW_VERSION) - 1)); break;
     case CMD_INIT:       handleInit(payload, len); break;
     case CMD_SEND_RECV:  handleSendRecv(payload, len); break;
     case CMD_SET_TIMING: handleSetTiming(payload, len); break;

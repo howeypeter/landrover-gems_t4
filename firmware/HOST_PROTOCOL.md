@@ -21,7 +21,7 @@ Pico -> Host:  0x5A  <status>  <len>  <payload[len]>  <crc8>
 
 | cmd  | name        | payload                              | ok response payload |
 |------|-------------|--------------------------------------|---------------------|
-| 0x01 | PING        | —                                    | version string, e.g. `PICO v1` |
+| 0x01 | PING        | —                                    | firmware version string, e.g. `gems_t4-pico 2.0.0` (bumps on K-line behaviour changes; use it to confirm which firmware is flashed) |
 | 0x02 | INIT        | `[address][mode]` mode 0=slow,1=fast | keybytes (e.g. `08 08`) |
 | 0x03 | SEND_RECV   | one complete KWP frame               | the KWP response frame |
 | 0x04 | SET_TIMING  | `P1 P2 P3 P4` as 4× uint16 ms        | — |
