@@ -578,6 +578,18 @@ up):**
   "ECU-to-engine matching" procedure. Ties into
   [EPROM programmability] and [4.0/4.6 toggle] above.
 
+- **Unlock / handle the immobiliser from the bench (no BeCM present).** The
+  immobiliser Security-Learn is a BeCM↔ECM re-sync — normally a car job,
+  because the **BeCM only exists in the vehicle**, not on the bench. Research
+  whether the ECU's immobiliser can be unlocked, reset, or exercised on the
+  bench WITHOUT the BeCM: e.g. spoofing/replaying the BeCM's coded mobilisation
+  signal, a bench-only reset/learn procedure, or at least reading/clearing the
+  immobiliser state. Ties into the proprietary GEMS layer — the immobiliser
+  write is one of the T4 services we could NOT reach over the OBD-II K-line, so
+  it likely needs the same manufacturer channel we're still trying to open (the
+  L-line experiment) plus security-access ($27). See memory/real-gems-protocol.md.
+  Do not start until picked up.
+
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
 - **Route the CLI `kline` command through the `Backend` facade (single-wire new
