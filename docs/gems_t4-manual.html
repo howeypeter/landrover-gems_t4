@@ -860,6 +860,20 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
   </table></div>
   <p>This real profile is separate from the stylized KWP stack (which still backs the virtual ECU and the GUI). Two bugs were found and fixed during bring-up: the host serial timeout was shorter than the ~3&nbsp;s 5-baud init, and the firmware skipped the ISO&nbsp;9141 inverted-keybyte handshake &mdash; without which the ECU hands over its keybytes but then ignores every request.</p>
 
+  <h3>OBD-II surface &amp; the proprietary frontier (2026-09)</h3>
+  <p>A full probe of the real ECU mapped exactly what its OBD-II K-line exposes:</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Service</th><th>Confirmed on the ECU</th></tr></thead>
+    <tbody>
+      <tr><td>Mode 01 live data</td><td>Supported, <b>bank&nbsp;1 only</b> (~16 PIDs). Includes the V8's <b>bank-2</b> O2 sensors (0x18/0x19) and fuel trims (0x08/0x09); no PIDs in banks 2/3.</td></tr>
+      <tr><td>Mode 03 / 07 DTCs</td><td>Stored (03) and <b>pending</b> (07); <span class="mono">kline dtc</span> shows both. Clearing (Mode 04) <b>reboots the ECU</b> &mdash; it goes silent ~1&ndash;2&nbsp;min, then recovers.</td></tr>
+      <tr><td>Mode 02 freeze frame</td><td>Supported (empty until a code <em>confirms</em> &mdash; populates on-car).</td></tr>
+      <tr><td>Mode 06 on-board tests</td><td>Supported (monitor test results &mdash; richer on-car).</td></tr>
+      <tr><td>Mode 09 vehicle info (VIN)</td><td><b>Not supported</b> &mdash; the engine ECU has no VIN; it lives in the <b>BeCM</b>.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>The proprietary layer is not reachable over this K-line by firmware alone</h4><p>The full T4 diagnostics (~108 measures, actuators, coding, immobiliser) use manufacturer services we probed for and could not reach: <b>blind KWP2000 service requests</b> (both OBD and KWP framing, every address) and a real <b>KWP2000 fast-init StartCommunication</b> both returned <b>total silence</b>. GEMS's actual service IDs aren't public (Andrew Revill's work is Rover K-series MEMS3, not GEMS; Nanocom/Faultmate are closed). The one <em>untried</em> door &mdash; flagged by an adversarial deep-research review &mdash; is the <b>L-line (C1017 pin 20)</b>: classic ISO&nbsp;9141 (which the T4 uses) sends the 5-baud address on K <em>and</em> L together, and our L-line is unconnected. Reaching it would need a small hardware mod (drive pin&nbsp;20 in parallel with K). Failing that, the service-ID map needs the RAVE diagnostic docs or a K-line capture of a real T4/Nanocom on a GEMS car. Full detail: <span class="mono">memory/real-gems-protocol.md</span>.</p></div></div>
+
   <h3>The four fault scenarios</h3>
   <div class="tblwrap"><table>
     <thead><tr><th>Scenario</th><th>Symptoms</th></tr></thead>
