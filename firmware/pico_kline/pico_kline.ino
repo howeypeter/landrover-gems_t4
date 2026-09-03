@@ -172,7 +172,6 @@ static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
   return true;
 }
 
-// Fast init: 25 ms low / 25 ms high wake pulse, then the link is live.
 // Fast init (ISO 14230 / KWP2000): a 25 ms low / 25 ms high wake pulse, then a
 // real StartCommunication request — 81 <dest> F7 81 <sum-checksum> — and read the
 // ECU's positive reply, which carries 0xC1 followed by the two keybytes. This is
