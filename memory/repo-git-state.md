@@ -32,7 +32,20 @@ metadata:
   service data via multi-agent research + adversarial review. Version 0.0.7 in
   lockstep. Prior: v0.0.6 (2026-07-12, UX/polish: VCI indicator + connection
   test, fault-codes Clear-ALL clarity, fuel-pump refusal reason).
-- **Latest release: v0.0.8 (2026-09-01)** — **FIRST HARDWARE COMMS** milestone,
+- **Latest release: v0.0.9 (2026-09-04)** — **multi-frame DTC fix + first
+  proprietary K-line channel (0xDA)**, cut directly from `main` (commit `815cf9c`,
+  annotated tag `v0.0.9`; version 0.0.9 in lockstep). Contents: (1) fix the
+  multi-frame Mode 03/07 DTC decode in `protocol/kline.py` (>3 stored DTCs span
+  multiple `48 6B E8 43` frames — `_split_frames`/`decode_responses`; regression
+  test from a real 2nd-ECU capture P1193/P0158/P1316/P0125); (2) docs recording
+  the exhaustive K-line pentest that CONFIRMED init address **0xDA** as a real,
+  security-locked KWP2000 manufacturer channel reachable only with the **L-line
+  tied** (answers `$22` with a reproducible checksum-valid securityAccessDenied
+  that OBD `0x33` never gives; not yet unlocked) — see [[real-gems-protocol]];
+  (3) new memory [[install-editable-from-repo]]. Pentest/probe scripts stay in
+  `~` (throwaway). GitHub Release notes are published by the user (no gh/token
+  here) at github.com/howeypeter/landrover-gems_t4/releases/new?tag=v0.0.9.
+- **Prior release: v0.0.8 (2026-09-01)** — **FIRST HARDWARE COMMS** milestone,
   cut directly from `main` (annotated git tag `v0.0.8`; version 0.0.8 in lockstep
   across `pyproject.toml`/`__version__`/`--version`). The homemade Pico+L9637D
   adapter talked to a real P38 GEMS ECU (OBD-II subset: live data + DTCs).
