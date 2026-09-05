@@ -510,6 +510,29 @@ keybyte handshake (`fca1ab9`); obd profile+CLI `4bfa738`. Full detail:
 `memory/real-gems-protocol.md`. NOTE: the KWP-stylized stack still backs the
 virtual ECU/GUI; the two protocols coexist.
 
+**Exhaustive K-line pentest (2026-09-04) — 0xDA is a CONFIRMED proprietary
+channel, unlocked by the L-line.** A full raw-capture sweep (throwaway `~/pentest_scan.py` +
+separate pentest firmware `firmware/pico_kline_pentest/`, `CMD_RAW_INIT`) tried
+ALL 256 5-baud addresses and fast-init dests at **10400 AND 9600**, raw (no 0x55
+filter) — closing every "untried" caveat. Clean heartbeat-verified run
+(confirmed_silent=1016, unresolved=0). For the first time, non-0x33 addresses
+answered: **0xDA→`55 aa 55`, 0xDB→`55 66 66`, 0xDC→`55 66 66`** at 10400 (each a
+0x55 sync + 2 bytes; the 9600 `a5…` hits are the same replies misread at the
+wrong baud, i.e. artifacts). On K-only these were **refuted** (silent to a focused
+re-test) — BUT with the **L-line tied (C1017 pin 20 → K node)** they came back and,
+crucially, **0xDA is a CONFIRMED real, security-locked KWP2000 manufacturer
+channel** (`~/da_probe.py` + `~/da2_probe.py`, 2026-09-04): it answers KWP `$22`
+with a checksum-valid, echo-checked, reproducible `03 7F 22 33 D7` =
+**securityAccessDenied**, which plain OBD `0x33` never returns. **The L-line
+unlocks a proprietary door that OBD does not** — the first one found; superseding
+"OBD is the ceiling." Not yet OPENED: `$27` requestSeed was silent, but the reply
+is ISO 14230 no-address framing (we were sending the OBD envelope) — retrying with
+`<len><data><cksum>` framing via `~/da3_probe.py`. Ties to the immobiliser /
+security-access ($27) backlog. Also fixed en route: the
+**multi-frame Mode 03 DTC decode bug** in `protocol/kline.py` (>3 stored codes
+span multiple `48 6B E8 43` frames; `_split_frames`/`decode_responses`, regression
+test from a real 2nd-ECU capture). Full detail: `memory/real-gems-protocol.md`.
+
 **Where the project stands (latest release: v0.0.8, 2026-09-01 — the
 first-hardware-comms milestone; v0.0.7 was the docs-only wiring reference):** Phases
 **1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested, now with

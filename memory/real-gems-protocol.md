@@ -114,6 +114,86 @@ effectively exhausted** — the realistic path to the proprietary layer is now a
 real-T4/Nanocom/Faultmate **K-line capture** or **RAVE** docs, NOT more probing.
 Probe: `~/lline_probe.py`.
 
+## Exhaustive K-line pentest (2026-09-04) — 0xDA = REAL channel, but only with the L-line
+**⭐ K+L CONFIRMATION (2026-09-04, `~/da_probe.py` + `~/da2_probe.py`, C1017 pin 20
+TIED to the K node): 0xDA is a REAL, distinct, security-LOCKED KWP2000 manufacturer
+channel — the first proprietary channel found. The L-line is what unlocks it.**
+With the L-line in circuit, 0xDA/DB/DC reproducibly complete a 5-baud handshake
+(they were SILENT on K-only — see the refutation below), and **0xDA answers KWP
+`$22` (ReadDataByCommonID) with a checksum-valid, echo-checked `03 7F 22 33 D7` =
+securityAccessDenied (NRC 0x33)** — 10/10 identical across different record IDs,
+and UNIQUE to 0xDA (plain OBD 0x33 is silent to the exact same requests). The Pico
+can't synthesise a checksummed KWP frame and only the GEMS ECU is on the bench, so
+the ECU is exposing a second, security-gated KWP2000 channel that the L-line
+unlocks. keybytes: 0xDA=`aa55`; 0xDB/0xDC=`6666` (but DB/DC returned only ECHOes
+on reads — **0xDA is the live one**). NOT yet OPENED: `$27 01` requestSeed was
+silent — but the reply is **ISO 14230 no-address framing** (fmt byte = length,
+`03 7F…`) whereas our requests used the OBD envelope `68 6A F1…`; the fix is to
+send bare `<len><data><cksum>` frames — being tested by `~/da3_probe.py`. Ties
+straight to the immobiliser / security-access ($27) backlog. **This supersedes the
+"OBD is the only door / blind probing exhausted" verdict: there IS a proprietary
+door, it's on 0xDA, and it needs the L-line + security access.**
+
+**RESOLUTION (2026-09-04, `~/da_probe.py` Pass 1, K-only): the 0xDA/0xDB/0xDC
+"candidates" were FALSE ON K-ONLY — a transient artifact there, not a channel.
+(They ARE real with the L-line — see the K+L confirmation above.)** On a focused
+re-test each was **silent to 4× raw init** (no emission at all — not even the
+`55 aa 55`), so a real session was never even in question. The `0x33` control in
+the same run behaved perfectly (raw `55 08 08` ×4, W4 handshake -> keybytes
+`0808`, real Mode 01 supported-PID + Mode 03 multi-frame DTC reads), so the method
+is sound. The single pentest observation was almost certainly line ringing/echo in
+the continuous-sweep timing; it does not reproduce in isolation. **`0x33`/OBD-II is
+the only real K-line door.** (I overstated "deterministic, not noise" below — the
+cross-baud consistency was one observation, outweighed by 4× fresh silence.) STILL
+PENDING: the L-line pass (tie C1017 pin 20 to the K node, re-run da_probe with the
+manufacturer addresses) — the one path not yet tried with raw+handshake. The
+original (now-superseded) candidate notes are kept below for the record.
+
+Ran the full raw-capture sweep (`~/pentest_scan.py`, pentest firmware
+`gems_t4-pico-pentest 2.1.0` with `CMD_RAW_INIT`): ALL 256 5-baud addresses AND
+fast-init StartComm dests, at **10400 AND 9600**, RAW capture (no 0x55 filter) —
+i.e. it closed every caveat the earlier L-line note listed. Clean, heartbeat-
+verified run: **confirmed_silent=1016, unresolved=0**. Result is NOT a pure
+negative — for the FIRST time, non-0x33 addresses answered.
+
+**Candidate addresses (10400, the ECU's native baud), reproducible:**
+- `0x33 -> 55 08 08`  (OBD control: sync + keybytes 08 08)
+- `0xDA -> 55 aa 55`
+- `0xDB -> 55 66 66`
+- `0xDC -> 55 66 66`
+Each starts with the 0x55 sync; only these 3 (of 1016 silent) answered, and each
+reproduced as the consistent baud-shifted bytes at 9600 — so they are DETERMINISTIC
+ECU emissions, not noise. **The 9600 "hits" (`a5 …`) are artifacts** — a 10400
+reply misread at 9600 (0x55->0xA5, 0x08->0x88); `0x33@9600 = a5 88 88` proves it.
+So the real finding is just {0xDA,0xDB,0xDC} at 10400.
+
+**UNCONFIRMED — status = candidate, not a channel yet.** The sweep used the RAW
+init path (5-baud address only, NO W4 handshake), so it only proved the ECU emits
+a sync+2 bytes. Not yet known whether a real session opens. Caveats: keybytes
+`aa 55`/`66 66` are non-standard (could be genuine, or a partial 5-baud trigger
+emitting sync+garbage); 0xDA/DB/DC are adjacent (could be one channel decoding a
+range). **Definitive test = `~/da_probe.py`:** full slow init WITH the W4
+inverted-keybyte handshake on 0xDA/DB/DC (the CMD_INIT path `kline live` uses on
+0x33); if the handshake completes with stable keybytes -> real session-capable
+channel (then chase reads); if it never completes -> artifact, and 0x33 stays the
+only door. RUN da_probe.py to resolve. NOTE this supersedes the earlier
+"blind experimentation exhausted" framing — the exhaustive raw scan DID surface
+leads.
+
+## Pentest tooling notes (2026-09-04)
+`~/pentest_scan.py` (RESUMABLE via `pentest_scan.state.json`; append log
+`pentest_scan.log`) drives the pentest firmware. Two bugs found & fixed during
+bring-up: (1) the multi-frame Mode 03 decode bug in `protocol/kline.py` — >3
+stored DTCs span multiple `48 6B E8 43` frames; fixed with `_split_frames`/
+`decode_responses`/multi-frame `read_dtcs` (real 2nd-ECU capture
+`486be84311930158131604`+`486be84301250000000004` = P1193/P0158/P1316/P0125,
+pinned in tests). (2) the scan heartbeat must use the RAW init (CMD_RAW_INIT),
+NOT CMD_INIT — CMD_INIT completes the handshake and OPENS a session, and an
+in-session ECU refuses every subsequent 5-baud init, which silently poisoned a
+whole 34-min run (all 1024 unresolved). Heartbeat = 0x33 raw; it never locks a
+session. Pentest firmware is a SEPARATE sketch (`firmware/pico_kline_pentest/`),
+production `firmware/pico_kline/` untouched. [[install-editable-from-repo]].
+
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
 actuator drives, coding, immobiliser — ride the **same `68 6A F1` envelope**

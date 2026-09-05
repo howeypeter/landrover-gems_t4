@@ -128,6 +128,30 @@ def test_read_dtcs_decodes_codes() -> None:
     assert client.read_dtcs() == ["P0303", "P1185"]
 
 
+def test_read_dtcs_multiframe_real_capture() -> None:
+    # Real bytes from a SECOND physical P38 GEMS ECU (2026-09-04): four stored
+    # DTCs span two back-to-back 48 6B E8 43 frames, each with its own valid
+    # checksum (0x04). The old single-frame decoder saw the concatenation as one
+    # frame and raised "checksum mismatch"; read_dtcs must split + merge them.
+    blob = bytes.fromhex("486be84311930158131604486be84301250000000004")
+    # each half is individually valid
+    assert kline.obd_checksum(blob[:10]) == blob[10]
+    assert kline.obd_checksum(blob[11:-1]) == blob[-1]
+    client = kline.KlineClient(FakeKlineEcu({"03": blob}))
+    client.connect()
+    assert client.read_dtcs() == ["P1193", "P0158", "P1316", "P0125"]
+
+
+def test_decode_responses_splits_and_falls_back() -> None:
+    # a genuine multi-frame buffer splits into two validated frames
+    blob = bytes.fromhex("486be84311930158131604486be84301250000000004")
+    assert len(kline.decode_responses(blob)) == 2
+    # a single frame whose data happens to contain the 48 6B pair still decodes
+    one = bytes([0x48, 0x6B, 0xE8, 0x41, 0x48, 0x6B])
+    one += bytes([kline.obd_checksum(one)])
+    assert kline.decode_responses(one) == [one[3:-1]]
+
+
 @pytest.mark.parametrize(
     "pair,code",
     [("0303", "P0303"), ("0118", "P0118"), ("1185", "P1185"), ("4321", "C0321")],

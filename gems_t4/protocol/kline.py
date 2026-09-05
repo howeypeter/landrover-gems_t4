@@ -35,6 +35,7 @@ from gems_t4.transport.base import (
 KLINE_INIT_ADDRESS = 0x33
 _REQ_HEADER = bytes([0x68, 0x6A, 0xF1])  # format, target (OBD), source (tester)
 _RESP_FMT = 0x48  # first byte of an ECU response header (48 6B <ecu>)
+_RESP_ADDR = 0x6B  # second byte of the response header (tester address)
 
 __all__ = [
     "KLINE_INIT_ADDRESS",
@@ -44,6 +45,7 @@ __all__ = [
     "PIDS",
     "encode_request",
     "decode_response",
+    "decode_responses",
     "decode_dtcs",
     "obd_checksum",
     "connect_help",
@@ -138,6 +140,41 @@ def decode_response(frame: bytes) -> bytes:
     return frame[3:-1]
 
 
+def _split_frames(buf: bytes) -> list[bytes]:
+    """Split a raw received buffer into individual ``48 6B <ecu>`` frames.
+
+    A real ECU can answer ONE request with several back-to-back frames — e.g.
+    ISO 9141-2 Mode 03 carries at most 3 DTC pairs per frame, so more than 3
+    stored codes span multiple frames. The Pico collects them within its
+    inter-byte gap and returns them concatenated, so we split on the response
+    header boundary and let each frame's own checksum validate it.
+    """
+    starts = [
+        i for i in range(len(buf) - 1)
+        if buf[i] == _RESP_FMT and buf[i + 1] == _RESP_ADDR
+    ]
+    if len(starts) <= 1:
+        return [buf]
+    return [buf[a:b] for a, b in zip(starts, starts[1:] + [len(buf)])]
+
+
+def decode_responses(buf: bytes) -> list[bytes]:
+    """Validate every response frame in a (possibly multi-frame) buffer.
+
+    Returns each frame's data (service byte + rest). If the header-boundary
+    split doesn't validate — e.g. a lone frame whose data merely contains the
+    ``48 6B`` byte pair — fall back to treating ``buf`` as a single frame so a
+    coincidence can't turn a good response into a checksum error.
+    """
+    frames = _split_frames(buf)
+    if len(frames) > 1:
+        try:
+            return [decode_response(f) for f in frames]
+        except KlineError:
+            pass  # coincidental split — treat the whole buffer as one frame
+    return [decode_response(buf)]
+
+
 def decode_dtcs(data: bytes) -> list[str]:
     """Decode 2-byte DTC pairs into P/C/B/U codes (e.g. ``P0303``).
 
@@ -152,6 +189,21 @@ def decode_dtcs(data: bytes) -> list[str]:
         system = "PCBU"[(a >> 6) & 0x3]
         codes.append(f"{system}{(a >> 4) & 0x3}{a & 0xF:X}{b >> 4:X}{b & 0xF:X}")
     return codes
+
+
+def _dtcs_from_frames(frames: list[bytes] | None, service: int) -> list[str]:
+    """Concatenate the DTC bytes from every response frame and decode them.
+
+    Each frame of a multi-frame Mode 03/07 reply repeats the service byte
+    (``0x43``/``0x47``); strip it per frame, join the DTC pairs, then decode.
+    """
+    if not frames:
+        return []
+    data = bytearray()
+    for f in frames:
+        if f and f[0] == service:
+            data += f[1:]
+    return decode_dtcs(bytes(data))
 
 
 # ---- Mode-01 PID catalog ---------------------------------------------------- #
@@ -285,11 +337,21 @@ class KlineClient:
         codes. This is also the extension point for proprietary GEMS services
         that share the ``68 6A F1`` envelope.
         """
+        frames = self.raw_service_all(payload)
+        return frames[0] if frames else None
+
+    def raw_service_all(self, payload: bytes) -> list[bytes] | None:
+        """Like :meth:`raw_service` but return EVERY response frame's data.
+
+        A real ECU may answer one request with several back-to-back frames
+        (e.g. Mode 03 with more than 3 stored DTCs). Returns a list of per-frame
+        payloads (service byte + rest), or ``None`` if the ECU stays silent.
+        """
         try:
             self.transport.send(encode_request(payload))
         except TransportTimeout:
             return None
-        return decode_response(self.transport.receive())
+        return decode_responses(self.transport.receive())
 
     # -- OBD-II services -------------------------------------------------- #
     def supported_pids(self, refresh: bool = False) -> set[int]:
@@ -337,18 +399,16 @@ class KlineClient:
         return rows
 
     def read_dtcs(self) -> list[str]:
-        """Mode 03 -> stored DTC strings (empty list when there are none)."""
-        data = self.raw_service(bytes([0x03]))
-        if not data or data[0] != 0x43:
-            return []
-        return decode_dtcs(data[1:])
+        """Mode 03 -> stored DTC strings (empty list when there are none).
+
+        Handles a multi-frame reply: >3 stored codes arrive as several
+        ``48 6B E8 43 ...`` frames, which are split, validated and merged.
+        """
+        return _dtcs_from_frames(self.raw_service_all(bytes([0x03])), 0x43)
 
     def read_pending_dtcs(self) -> list[str]:
-        """Mode 07 -> pending DTC strings (empty when none)."""
-        data = self.raw_service(bytes([0x07]))
-        if not data or data[0] != 0x47:
-            return []
-        return decode_dtcs(data[1:])
+        """Mode 07 -> pending DTC strings (empty when none). Multi-frame aware."""
+        return _dtcs_from_frames(self.raw_service_all(bytes([0x07])), 0x47)
 
     def clear_dtcs(self) -> bool:
         """Mode 04 -> clear stored DTCs & freeze frames. True on a 0x44 reply.
