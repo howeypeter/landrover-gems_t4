@@ -550,6 +550,24 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
   <div class="callout danger"><div class="i">&#9888;</div><div><h4>Meter-check the ECU pins before the yellow wire goes live</h4><p>These pins are from Land Rover GEMS service data (cross-checked against two independent factory-derived pinouts; the coil/MIL/fuel-pump pins validated exactly). But the source tables are Discovery/Morgan GEMS. On a <b>P38 Range Rover</b> the same three connectors are labelled <b>C505</b> (36-way black, outputs), <b>C507</b> (36-way red, K-line) and <b>C509</b> (18-way black, power/ground) — the power/ground pins on C509 match the C1033 numbers above, but the <b>K-line pin can differ on a P38, so meter-verify it</b>. Since 12 V on the wrong pin kills an ECU, on <b>your</b> ECU: ohm pins 5/9/10/16 to the ECU case (≈0 Ω = grounds), and confirm the K-line pin reads continuous to OBD socket pin 7 (NAS/US ≈ pin 23, UK/Euro ≈ pin 20).</p></div></div>
   <div class="callout warn"><div class="i">i</div><div><h4>Coding works on the bench; the immobiliser does not</h4><p>With only the ECU (no BeCM), you can read its ID, fault codes and live data, <b>and exercise coding writes</b> (VIN last-6, dealer ID, 4.0/4.6 select, transmission — these are straight ECU writes, no BeCM needed). Only <b>Security-Learn</b> is a BeCM↔ECM handshake, so it alone needs the BeCM present — that's a car job (§13). The transient clamp on Vs is also a pre-car item — a bench PSU's 12 V is clean.</p></div></div>
 
+  <h3>Two-box build: MAIN + POWER PCBs</h3>
+  <p>The breadboard rig above cleans up into <b>two small boxes</b> for a tidy, repeatable bench tool. The full design — pin-exact schematic, end-to-end net map and a per-board bill of materials with footprints — is in <a href="https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-2pcb-solution.html">the 2-PCB solution diagram</a>. The split:</p>
+  <ul>
+    <li><b>PCB1 — MAIN (smart adapter):</b> Pico + L9637D with the 510&#937; K pull-up, Vcc decoupling and K-line caps. USB to the laptop for power and data; a single <b>4-pin Molex</b> brings in +12&nbsp;V, GND, K and L.</li>
+    <li><b>PCB2 — POWER / routing:</b> a 12&nbsp;V DC-adapter input with reverse-polarity protection and a fuse, a <b>general PWR</b> switch and an <b>IGN</b> switch (gates ECU pin 8), and two Molex connectors — the 4-pin back to PCB1 and an <b>8-pin</b> out to the ECU. K and L pass straight through from the ECU to PCB1.</li>
+  </ul>
+  <div class="tblwrap"><table>
+    <thead><tr><th>4-pin Molex (PCB1 ↔ PCB2)</th><th>8-pin Molex (PCB2 → ECU)</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">A · +12 V</td><td class="mono">L-line → C1017 pin 20</td></tr>
+      <tr><td class="mono">B · GND</td><td class="mono">K-line → C1017 pin 23</td></tr>
+      <tr><td class="mono">C · K-line</td><td class="mono">+12 V main → C1033 pin 7</td></tr>
+      <tr><td class="mono">D · L-line</td><td class="mono">+12 V ign → C1033 pin 8 (via IGN switch)</td></tr>
+      <tr><td></td><td class="mono">GND → C1033 pins 5, 9, 10, 16</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>The L-line jumper (JP1) — why PCB1 has an L pin</h4><p>PCB1 ties the incoming <b>L-line to the K node through jumper JP1, fitted closed</b>. The L9637D can only <em>drive</em> K, so the only way to put the 5-baud init on L is to tie it to K — and that tie is what opened the proprietary <span class="mono">0xDA</span> manufacturer channel on the bench (it answers with a checksum-valid KWP2000 <span class="mono">securityAccessDenied</span> that plain OBD never returns — see §15). Pop JP1 for a K-only run. No ECU in this ISO 9141 / KWP2000 family <em>replies</em> on L, so the L9637D's L-input (pin 8, LI) is simply grounded.</p></div></div>
+
   <!-- 12 -->
   <h2 id="workflow"><span class="k">12</span>Bench → car workflow</h2>
   <p>Prove the tool on the bench, then move to the car. The two wiring diagrams map to the two stages.</p>

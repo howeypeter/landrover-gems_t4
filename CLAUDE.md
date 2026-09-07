@@ -318,6 +318,13 @@ as static lookalikes for now.
   OBD-II socket, and the bench PSU rig direct to the GEMS ECU connector.
   Companion: `docs/adapter-hardware-improvements.md` (hardening notes). Pins
   verified vs the ST L9637D datasheet + Land Rover GEMS service data.
+- `diagrams/gems-2pcb-solution.html` (added 2026-09-06) — the productised
+  **two-box build**: PCB1 (MAIN: Pico + L9637D + passives) and PCB2 (POWER: DC
+  input, reverse-polarity + fuse, general-PWR & IGN switches, ECU/adapter
+  routing), joined by a 4-pin Molex; an 8-pin Molex runs PCB2→ECU. Pin-exact
+  schematic + end-to-end net map + per-PCB BOM (values/footprints). PCB1 ties the
+  L-line to the K node via jumper **JP1** (the `0xDA`-channel unlock); IGN switch
+  gates C1033 pin 8. Also summarised in the manual §11 (two-box build).
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
