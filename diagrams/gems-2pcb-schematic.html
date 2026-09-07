@@ -8,14 +8,18 @@
   body{margin:0;background:#fff;color:#111;font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:22px}
   h1{font-size:21px;margin:0 0 2px}
   h2{font-size:16px;margin:26px 0 6px}
-  p.sub{color:#555;margin:0 0 10px;max-width:1100px}
-  .wrap{max-width:1200px;margin:0 auto}
+  p.sub{color:#555;margin:0 0 10px;max-width:1120px}
+  .wrap{max-width:1280px;margin:0 auto}
   .sheet{border:1.5px solid #111;border-radius:4px;margin:12px 0 4px;background:#fff;overflow-x:auto}
   .tblk{display:flex;justify-content:space-between;border-top:1.5px solid #111;font:12px "SF Mono",Consolas,monospace;background:#f7f7f4}
   .tblk div{padding:5px 10px;border-left:1px solid #bbb}
   .tblk div:first-child{border-left:0;font-weight:700}
   .legend{font:12px "SF Mono",Consolas,monospace;color:#333;background:#f7f7f4;border:1px solid #ddd;border-radius:5px;padding:8px 12px;margin:8px 0}
-  ul{margin:6px 0 6px 18px}li{margin:2px 0}
+  .swatch{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin:0 4px 0 10px}
+  table.parts{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0 2px}
+  table.parts th,table.parts td{border:1px solid #ccc;padding:4px 8px;text-align:left;vertical-align:top}
+  table.parts th{background:#efece5}
+  td.ref,td.lc{font-family:"SF Mono",Consolas,monospace;white-space:nowrap}
   code{font-family:"SF Mono",Consolas,monospace;font-size:12.5px}
   .foot{color:#666;font-size:12px;margin-top:22px;border-top:1px solid #ccc;padding-top:8px}
   svg text{font-family:"SF Mono",Consolas,"Roboto Mono",monospace}
@@ -24,234 +28,278 @@
 <body>
 <div class="wrap">
 <h1>GEMS bench rig — electrical schematic (2 boards)</h1>
-<p class="sub">Reader's schematic for PCB1 (MAIN) and PCB2 (POWER), for PCB layout.
-<b>Net labels of the same name are electrically connected</b> (standard convention);
-power/ground symbols are global. Pin numbers on U1 are the L9637D datasheet pins;
-on U2 they are the Pico physical pin numbers. Values &amp; LCSC parts in
-<code>hardware/gems-2pcb/</code>; topology in <code>gems-2pcb-solution.html</code>.</p>
+<p class="sub">Fully-wired, colour-coded schematic for PCB1 (MAIN) and PCB2 (POWER).
+Solid lines are copper nets; a filled dot ● is a connection, wires that merely cross
+(no dot) are not connected. Component refdes/value are on the drawing; the full part
+name + LCSC number are in the table under each sheet. Pin numbers on U1 are the
+L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
 
 <div class="legend">
-symbols: ▭ resistor (IEC) · ‖ capacitor · ▷| diode/TVS (bar = cathode) ·
-⏚ ground · ⎓ +rail · ○ junction · ✕ no-connect · [n] pin number ·
-&lt;NET&gt; = named net (connects by name)
+<b>wire colours:</b>
+<span class="swatch" style="background:#c0392b"></span>+12 V / Vs / switched
+<span class="swatch" style="background:#444"></span>GND
+<span class="swatch" style="background:#1f7a3d"></span>K-line
+<span class="swatch" style="background:#8e44ad"></span>L-line
+<span class="swatch" style="background:#d35400"></span>+3V3
+<span class="swatch" style="background:#1565c0"></span>TX / RX
 </div>
 
 <!-- ============================ SHEET 1 : PCB1 MAIN ============================ -->
 <h2>Sheet 1 — PCB1 · MAIN (Pico + L9637D smart adapter)</h2>
 <div class="sheet">
-<svg viewBox="0 0 1180 640" width="100%" role="img" aria-label="PCB1 MAIN schematic">
-  <defs>
-    <marker id="jd" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3" fill="#111"/></marker>
-  </defs>
+<svg viewBox="0 0 1260 600" width="100%" role="img" aria-label="PCB1 MAIN wired schematic">
   <style>
-    .w{stroke:#111;stroke-width:1.6;fill:none}
-    .body{stroke:#111;stroke-width:1.6;fill:#fff}
-    .icf{stroke:#111;stroke-width:1.6;fill:#f3f7ff}
+    .p12{stroke:#c0392b;stroke-width:2.1;fill:none}
+    .g{stroke:#444;stroke-width:1.8;fill:none}
+    .k{stroke:#1f7a3d;stroke-width:2.1;fill:none}
+    .l{stroke:#8e44ad;stroke-width:2.1;fill:none}
+    .v3{stroke:#d35400;stroke-width:2.1;fill:none}
+    .sig{stroke:#1565c0;stroke-width:2.1;fill:none}
+    .body{stroke:#111;stroke-width:1.7;fill:#fff}
+    .icf{stroke:#111;stroke-width:1.7;fill:#f3f7ff}
     .t{font-size:12px;fill:#111}.tb{font-size:13px;font-weight:700;fill:#111}
-    .pn{font-size:10px;fill:#666}.nl{font-size:11px;fill:#0b4a86;font-weight:700}
+    .pn{font-size:10px;fill:#666}
+    .lr{font-size:11px;fill:#c0392b;font-weight:700}.lo{font-size:11px;fill:#d35400;font-weight:700}
+    .lk{font-size:11px;fill:#1f7a3d;font-weight:700}
     .dnp{font-size:10px;fill:#b23}
-    .val{font-size:11px;fill:#111}
-    .jdot{fill:#111}
   </style>
 
+  <!-- GND rail -->
+  <line class="g" x1="120" y1="530" x2="1120" y2="530"/>
+  <line class="g" x1="600" y1="530" x2="600" y2="544"/><line class="g" x1="586" y1="544" x2="614" y2="544"/><line class="g" x1="590" y1="549" x2="610" y2="549"/><line class="g" x1="594" y1="554" x2="606" y2="554"/>
+  <text class="t" x="600" y="574" text-anchor="middle" fill="#444">GND</text>
+
   <!-- U2 Pico -->
-  <rect class="icf" x="60" y="150" width="150" height="240"/>
-  <text class="tb" x="135" y="140" text-anchor="middle">U2  Raspberry Pi Pico</text>
-  <text class="pn" x="135" y="378" text-anchor="middle">USB → laptop (5V/data)</text>
-  <!-- right pins -->
-  <line class="w" x1="210" y1="185" x2="255" y2="185"/><text class="t" x="205" y="182" text-anchor="end">GP0</text><text class="pn" x="214" y="180">[1]</text><text class="nl" x="258" y="188">&lt;TX&gt;</text>
-  <line class="w" x1="210" y1="220" x2="255" y2="220"/><text class="t" x="205" y="217" text-anchor="end">GP1</text><text class="pn" x="214" y="215">[2]</text><text class="nl" x="258" y="223">&lt;RX&gt;</text>
-  <line class="w" x1="210" y1="285" x2="255" y2="285"/><text class="t" x="205" y="282" text-anchor="end">3V3</text><text class="pn" x="214" y="280">[36]</text>
-  <!-- +3V3 rail symbol -->
-  <line class="w" x1="255" y1="285" x2="255" y2="262"/><line class="w" x1="243" y1="262" x2="267" y2="262"/><text class="nl" x="255" y="255" text-anchor="middle">+3V3</text>
-  <line class="w" x1="210" y1="350" x2="255" y2="350"/><text class="t" x="205" y="347" text-anchor="end">GND</text><text class="pn" x="214" y="345">[38]</text>
-  <!-- gnd symbol -->
-  <line class="w" x1="255" y1="350" x2="255" y2="368"/><line class="w" x1="243" y1="368" x2="267" y2="368"/><line class="w" x1="247" y1="373" x2="263" y2="373"/><line class="w" x1="251" y1="378" x2="259" y2="378"/>
+  <rect class="icf" x="60" y="210" width="150" height="190"/>
+  <text class="tb" x="135" y="202" text-anchor="middle">U2  Pico</text>
+  <text class="pn" x="135" y="388" text-anchor="middle">USB → laptop</text>
+  <text class="t" x="204" y="249" text-anchor="end">GP1</text><text class="pn" x="150" y="249">[2]</text>
+  <text class="t" x="204" y="289" text-anchor="end">GP0</text><text class="pn" x="150" y="289">[1]</text>
+  <text class="t" x="204" y="344" text-anchor="end">3V3</text><text class="pn" x="150" y="344">[36]</text>
+  <text class="t" x="204" y="392" text-anchor="end">GND</text><text class="pn" x="150" y="392">[38]</text>
 
   <!-- U1 L9637D -->
-  <rect class="icf" x="470" y="170" width="190" height="200"/>
-  <text class="tb" x="565" y="160" text-anchor="middle">U1  L9637D</text>
-  <text class="pn" x="565" y="392" text-anchor="middle">C153038 · SOIC-8</text>
-  <!-- left pins 1..4 -->
-  <line class="w" x1="470" y1="200" x2="420" y2="200"/><text class="t" x="478" y="204" text-anchor="start">RX 1</text><text class="nl" x="416" y="203" text-anchor="end">&lt;RX&gt;</text>
-  <line class="w" x1="470" y1="240" x2="440" y2="240"/><text class="t" x="478" y="244" text-anchor="start">LO 2</text><text class="dnp" x="436" y="244" text-anchor="end">✕ NC</text>
-  <line class="w" x1="470" y1="280" x2="420" y2="280"/><text class="t" x="478" y="284" text-anchor="start">VCC 3</text><text class="nl" x="416" y="283" text-anchor="end">+3V3</text>
-  <line class="w" x1="470" y1="320" x2="420" y2="320"/><text class="t" x="478" y="324" text-anchor="start">TX 4</text><text class="nl" x="416" y="323" text-anchor="end">&lt;TX&gt;</text>
-  <!-- right pins 5..8 -->
-  <line class="w" x1="660" y1="320" x2="710" y2="320"/><text class="t" x="652" y="324" text-anchor="end">5 GND</text>
-  <line class="w" x1="710" y1="320" x2="710" y2="338"/><line class="w" x1="700" y1="338" x2="720" y2="338"/><line class="w" x1="703" y1="343" x2="717" y2="343"/><line class="w" x1="706" y1="348" x2="714" y2="348"/>
-  <line class="w" x1="660" y1="280" x2="720" y2="280"/><text class="t" x="652" y="284" text-anchor="end">6 K</text><text class="nl" x="724" y="283">&lt;K_NODE&gt;</text>
-  <line class="w" x1="660" y1="240" x2="720" y2="240"/><text class="t" x="652" y="244" text-anchor="end">7 VS</text><text class="nl" x="724" y="243">&lt;VS&gt;</text>
-  <line class="w" x1="660" y1="200" x2="710" y2="200"/><text class="t" x="652" y="204" text-anchor="end">8 LI</text>
-  <line class="w" x1="710" y1="200" x2="710" y2="218"/><line class="w" x1="700" y1="218" x2="720" y2="218"/><line class="w" x1="703" y1="223" x2="717" y2="223"/><line class="w" x1="706" y1="228" x2="714" y2="228"/>
+  <rect class="icf" x="470" y="210" width="170" height="205"/>
+  <text class="tb" x="555" y="202" text-anchor="middle">U1  L9637D</text>
+  <text class="pn" x="555" y="405" text-anchor="middle">C153038 · SOIC-8</text>
+  <text class="t" x="478" y="249">1 RX</text>
+  <text class="t" x="478" y="289">4 TX</text>
+  <text class="t" x="478" y="344">3 VCC</text>
+  <text class="t" x="478" y="399">2 LO</text>
+  <text class="t" x="632" y="249" text-anchor="end">VS 7</text>
+  <text class="t" x="632" y="304" text-anchor="end">K 6</text>
+  <text class="t" x="632" y="364" text-anchor="end">GND 5</text>
+  <text class="t" x="632" y="399" text-anchor="end">LI 8</text>
 
-  <!-- C1 decoupling near VCC (drawn under U1 left) -->
-  <text class="tb" x="360" y="470" text-anchor="middle">C1 100nF</text>
-  <line class="w" x1="360" y1="430" x2="360" y2="452"/><text class="nl" x="360" y="424" text-anchor="middle">+3V3</text>
-  <line class="w" x1="345" y1="452" x2="375" y2="452"/><line class="w" x1="345" y1="460" x2="375" y2="460"/>
-  <line class="w" x1="360" y1="460" x2="360" y2="482"/>
-  <line class="w" x1="348" y1="482" x2="372" y2="482"/><line class="w" x1="352" y1="487" x2="368" y2="487"/><line class="w" x1="356" y1="492" x2="364" y2="492"/>
+  <!-- signal wires -->
+  <line class="sig" x1="210" y1="245" x2="470" y2="245"/>
+  <line class="sig" x1="210" y1="285" x2="470" y2="285"/>
+  <text class="t" x="300" y="240" fill="#1565c0">RX</text><text class="t" x="300" y="280" fill="#1565c0">TX</text>
+  <!-- 3V3 -> VCC + C1 -->
+  <line class="v3" x1="210" y1="340" x2="470" y2="340"/><circle cx="330" cy="340" r="3.4"/><text class="lo" x="392" y="333">+3V3</text>
+  <line class="v3" x1="330" y1="340" x2="330" y2="450"/>
+  <line class="body" x1="315" y1="450" x2="345" y2="450"/><line class="body" x1="315" y1="460" x2="345" y2="460"/>
+  <line class="g" x1="330" y1="460" x2="330" y2="530"/><circle cx="330" cy="530" r="3.4"/>
+  <text class="t" x="352" y="437">C1</text>
+  <!-- Pico GND -->
+  <line class="g" x1="210" y1="392" x2="300" y2="392"/><line class="g" x1="300" y1="392" x2="300" y2="530"/><circle cx="300" cy="530" r="3.4"/>
+  <!-- LO no-connect -->
+  <line class="body" x1="470" y1="399" x2="452" y2="399"/><line class="body" x1="446" y1="394" x2="458" y2="406"/><line class="body" x1="446" y1="406" x2="458" y2="394"/>
+  <!-- U1 GND5, LI8 -->
+  <line class="g" x1="640" y1="360" x2="690" y2="360"/><line class="g" x1="690" y1="360" x2="690" y2="530"/><circle cx="690" cy="530" r="3.4"/>
+  <line class="g" x1="640" y1="399" x2="720" y2="399"/><line class="g" x1="720" y1="399" x2="720" y2="530"/><circle cx="720" cy="530" r="3.4"/>
 
-  <!-- passive stack: F1, R1, D1, C2 (right of U1) -->
-  <!-- F1 PPTC (DNP) : +12V -> VS -->
-  <text class="tb" x="880" y="150" text-anchor="middle">F1  PPTC 0.5A</text><text class="dnp" x="880" y="164" text-anchor="middle">(DNP – bridge if omitted)</text>
-  <text class="nl" x="820" y="196" text-anchor="end">+12V</text><line class="w" x1="822" y1="192" x2="855" y2="192"/>
-  <rect class="body" x="855" y="184" width="50" height="16"/>
-  <line class="w" x1="905" y1="192" x2="940" y2="192"/><text class="nl" x="944" y="196">&lt;VS&gt;</text>
+  <!-- VS rail + F1 + +12V -->
+  <line class="p12" x1="640" y1="245" x2="700" y2="245"/><line class="p12" x1="700" y1="245" x2="700" y2="150"/><circle cx="700" cy="150" r="3.4"/>
+  <line class="p12" x1="700" y1="150" x2="840" y2="150"/><text class="lr" x="770" y="142" text-anchor="middle">Vs</text>
+  <rect class="body" x="840" y="142" width="60" height="16"/><text class="t" x="870" y="132" text-anchor="middle">F1</text><text class="dnp" x="870" y="176" text-anchor="middle">(DNP–bridge)</text>
+  <line class="p12" x1="900" y1="150" x2="1000" y2="150"/><text class="lr" x="945" y="142" text-anchor="middle">+12V</text>
+  <line class="p12" x1="1000" y1="150" x2="1000" y2="245"/>
 
-  <!-- R1 510 : VS -> K_NODE -->
-  <text class="tb" x="880" y="238" text-anchor="middle">R1  510Ω</text>
-  <text class="nl" x="820" y="266" text-anchor="end">&lt;VS&gt;</text><line class="w" x1="822" y1="262" x2="855" y2="262"/>
-  <rect class="body" x="855" y="254" width="50" height="16"/>
-  <line class="w" x1="905" y1="262" x2="940" y2="262"/><text class="nl" x="944" y="266">&lt;K_NODE&gt;</text>
+  <!-- R1 pull-up (Vs -> K) -->
+  <line class="p12" x1="760" y1="150" x2="760" y2="200"/><circle cx="760" cy="150" r="3.4"/>
+  <rect class="body" x="745" y="200" width="30" height="46"/><text class="t" x="782" y="219">R1</text>
+  <line class="k" x1="760" y1="246" x2="760" y2="400"/><text class="lk" x="726" y="292">K</text>
+  <line class="k" x1="640" y1="300" x2="760" y2="300"/><circle cx="760" cy="300" r="3.4"/>
 
-  <!-- D1 TVS (DNP) : VS -> GND -->
-  <text class="tb" x="880" y="310" text-anchor="middle">D1  TVS SMBJ24A</text><text class="dnp" x="880" y="324" text-anchor="middle">(DNP – before-car)</text>
-  <text class="nl" x="820" y="352" text-anchor="end">&lt;VS&gt;</text><line class="w" x1="822" y1="348" x2="860" y2="348"/>
-  <polygon class="body" points="860,340 860,356 876,348"/><line class="w" x1="876" y1="340" x2="876" y2="356"/>
-  <line class="w" x1="876" y1="348" x2="900" y2="348"/>
-  <line class="w" x1="900" y1="348" x2="900" y2="366"/><line class="w" x1="888" y1="366" x2="912" y2="366"/><line class="w" x1="892" y1="371" x2="908" y2="371"/><line class="w" x1="896" y1="376" x2="904" y2="376"/>
+  <!-- D1 TVS (Vs -> GND) -->
+  <line class="p12" x1="720" y1="150" x2="720" y2="240"/><circle cx="720" cy="150" r="3.4"/>
+  <polygon class="body" points="708,240 732,240 720,258"/><line class="body" x1="708" y1="258" x2="732" y2="258"/>
+  <line class="g" x1="720" y1="258" x2="720" y2="360"/><line class="g" x1="720" y1="360" x2="740" y2="360"/><line class="g" x1="740" y1="360" x2="740" y2="470"/>
+  <line class="g" x1="728" y1="470" x2="752" y2="470"/><line class="g" x1="732" y1="475" x2="748" y2="475"/><line class="g" x1="736" y1="480" x2="744" y2="480"/>
+  <text class="t" x="676" y="203">D1</text>
 
-  <!-- C2 1nF : K_NODE -> GND -->
-  <text class="tb" x="880" y="410" text-anchor="middle">C2 1nF</text>
-  <text class="nl" x="820" y="446" text-anchor="end">&lt;K_NODE&gt;</text><line class="w" x1="822" y1="442" x2="862" y2="442"/>
-  <line class="w" x1="862" y1="430" x2="862" y2="454"/><line class="w" x1="874" y1="430" x2="874" y2="454"/>
-  <line class="w" x1="874" y1="442" x2="900" y2="442"/>
-  <line class="w" x1="900" y1="442" x2="900" y2="460"/><line class="w" x1="888" y1="460" x2="912" y2="460"/><line class="w" x1="892" y1="465" x2="908" y2="465"/><line class="w" x1="896" y1="470" x2="904" y2="470"/>
+  <!-- C2 1nF (K -> GND) -->
+  <line class="k" x1="760" y1="360" x2="820" y2="360"/><circle cx="760" cy="360" r="3.4"/>
+  <line class="k" x1="820" y1="360" x2="820" y2="446"/>
+  <line class="body" x1="805" y1="446" x2="835" y2="446"/><line class="body" x1="805" y1="456" x2="835" y2="456"/>
+  <line class="g" x1="820" y1="456" x2="820" y2="530"/><circle cx="820" cy="530" r="3.4"/>
+  <text class="t" x="842" y="437">C2</text>
 
-  <!-- JP1 L-K tie -->
-  <text class="tb" x="360" y="560" text-anchor="middle">JP1  L↔K tie (fit CLOSED)</text>
-  <text class="nl" x="250" y="592" text-anchor="end">&lt;L_IN&gt;</text><line class="w" x1="252" y1="588" x2="300" y2="588"/>
-  <circle class="jdot" cx="300" cy="588" r="3.4"/><line class="w" x1="300" y1="588" x2="360" y2="576"/>
-  <circle class="jdot" cx="420" cy="588" r="3.4"/><line class="w" x1="420" y1="588" x2="470" y2="588"/><text class="nl" x="474" y="592">&lt;K_NODE&gt;</text>
+  <!-- J1.3 K into K bus -->
+  <line class="k" x1="1000" y1="335" x2="760" y2="335"/><circle cx="760" cy="335" r="3.4"/>
+  <!-- JP1 : K bus (green) <-> L (purple) -->
+  <line class="k" x1="760" y1="400" x2="880" y2="400"/><circle cx="760" cy="400" r="3.4"/>
+  <rect class="body" x="880" y="392" width="16" height="16"/><rect class="body" x="900" y="392" width="16" height="16"/>
+  <line class="body" x1="880" y1="388" x2="916" y2="388"/>
+  <text class="t" x="898" y="430" text-anchor="middle">JP1 (closed)</text>
+  <line class="l" x1="916" y1="400" x2="1000" y2="400"/>
 
-  <!-- J1 4-pin -->
-  <rect class="body" x="1010" y="180" width="120" height="180"/>
-  <text class="tb" x="1070" y="170" text-anchor="middle">J1 → PCB2</text><text class="pn" x="1070" y="378" text-anchor="middle">4-pin harness</text>
-  <line class="w" x1="1010" y1="210" x2="970" y2="210"/><text class="t" x="1018" y="214">1</text><text class="nl" x="966" y="214" text-anchor="end">+12V</text>
-  <line class="w" x1="1010" y1="255" x2="970" y2="255"/><text class="t" x="1018" y="259">2</text><text class="nl" x="966" y="259" text-anchor="end">GND</text>
-  <line class="w" x1="1010" y1="300" x2="970" y2="300"/><text class="t" x="1018" y="304">3</text><text class="nl" x="966" y="304" text-anchor="end">&lt;K_NODE&gt;</text>
-  <line class="w" x1="1010" y1="345" x2="970" y2="345"/><text class="t" x="1018" y="349">4</text><text class="nl" x="966" y="349" text-anchor="end">&lt;L_IN&gt;</text>
-  <!-- +12V global symbol near J1.1 -->
-  <line class="w" x1="920" y1="210" x2="920" y2="192"/><line class="w" x1="908" y1="192" x2="932" y2="192"/><text class="nl" x="920" y="186" text-anchor="middle">+12V</text>
-  <line class="w" x1="920" y1="210" x2="966" y2="210"/>
-  <!-- GND near J1.2 -->
-  <line class="w" x1="920" y1="255" x2="920" y2="273"/><line class="w" x1="908" y1="273" x2="932" y2="273"/><line class="w" x1="912" y1="278" x2="928" y2="278"/><line class="w" x1="916" y1="283" x2="924" y2="283"/>
-  <line class="w" x1="920" y1="255" x2="966" y2="255"/>
+  <!-- J1 connector -->
+  <rect class="body" x="1000" y="215" width="120" height="200"/>
+  <text class="tb" x="1060" y="207" text-anchor="middle">J1 → PCB2</text><text class="pn" x="1060" y="408" text-anchor="middle">4-pin harness</text>
+  <text class="t" x="1010" y="249">1 +12V</text>
+  <text class="t" x="1010" y="294">2 GND</text>
+  <text class="t" x="1010" y="339">3 K</text>
+  <text class="t" x="1010" y="404">4 L</text>
+  <line class="g" x1="1000" y1="290" x2="960" y2="290"/><line class="g" x1="960" y1="290" x2="960" y2="530"/><circle cx="960" cy="530" r="3.4"/>
 </svg>
-<div class="tblk"><div>PCB1 · MAIN</div><div>gems_t4 GEMS bench rig</div><div>Sheet 1/2</div><div>Rev A · 2026-09-06</div></div>
+<div class="tblk"><div>PCB1 · MAIN</div><div>gems_t4 GEMS bench rig</div><div>Sheet 1/2</div><div>Rev C · 2026-09-06</div></div>
 </div>
-<div class="legend">
-Notes (Sheet 1):
-<ul>
-<li><b>12 V lands ONLY on U1 pin 7 (Vs)</b> via F1. It never reaches the Pico (USB-powered). Pins 1–4/8 are the ≤7 V domain.</li>
-<li><b>U1 Vcc = +3V3 from the Pico (pin 36), never 5 V.</b> C1 (100 nF) decouples Vcc→GND at the chip.</li>
-<li><b>K node</b> = U1.6 + R1 + C2 + JP1.2 + J1.3. R1 510 Ω pulls K up to Vs (required). C2 1 nF K→GND (≤1.3 nF).</li>
-<li><b>JP1 fitted closed</b> ties L (J1.4) to the K node — the 0xDA-channel enable.</li>
-<li>U1 pin 2 (LO) = no-connect; pin 8 (LI) = GND. Verify L9637D pin-1 orientation before power.</li>
-</ul>
-</div>
+<table class="parts">
+<tr><th>Ref</th><th>Component — what it is</th><th>LCSC #</th></tr>
+<tr><td class="ref">U1</td><td>ST <b>L9637D</b> — ISO 9141 K-line transceiver (SOIC-8)</td><td class="lc">C153038</td></tr>
+<tr><td class="ref">U2</td><td>Raspberry Pi <b>Pico / Pico 2</b> — RP2040 MCU module (USB to laptop)</td><td class="lc">module</td></tr>
+<tr><td class="ref">R1</td><td>510 Ω 0805 1% — K-line pull-up (K→Vs)</td><td class="lc">C17734</td></tr>
+<tr><td class="ref">C1</td><td>100 nF 0805 X7R — Vcc decoupling</td><td class="lc">C49678</td></tr>
+<tr><td class="ref">C2</td><td>1 nF 0805 C0G (≤1.3 nF) — K-line edge filter</td><td class="lc">C29925</td></tr>
+<tr><td class="ref">F1</td><td>PPTC ~0.5 A 1206 — resettable fuse on Vs (<b>DNP</b>; bridge for bench)</td><td class="lc">—</td></tr>
+<tr><td class="ref">D1</td><td>SMBJ24A — TVS clamp on Vs (<b>DNP</b>; fit before-car)</td><td class="lc">—</td></tr>
+<tr><td class="ref">JP1</td><td>2-pin header + shunt — L↔K tie (fit <b>closed</b>; the 0xDA enable)</td><td class="lc">—</td></tr>
+<tr><td class="ref">J1</td><td>4-pin connector + 22 AWG harness → PCB2</td><td class="lc">—</td></tr>
+</table>
 
 <!-- ============================ SHEET 2 : PCB2 POWER ============================ -->
 <h2>Sheet 2 — PCB2 · POWER (DC input, protection, switching, ECU/adapter routing)</h2>
 <div class="sheet">
-<svg viewBox="0 0 1180 640" width="100%" role="img" aria-label="PCB2 POWER schematic">
+<svg viewBox="0 0 1280 600" width="100%" role="img" aria-label="PCB2 POWER wired schematic">
   <style>
-    .w{stroke:#111;stroke-width:1.6;fill:none}
-    .body{stroke:#111;stroke-width:1.6;fill:#fff}
+    .p12{stroke:#c0392b;stroke-width:2.1;fill:none}
+    .g{stroke:#444;stroke-width:1.8;fill:none}
+    .k{stroke:#1f7a3d;stroke-width:2.1;fill:none}
+    .l{stroke:#8e44ad;stroke-width:2.1;fill:none}
+    .body{stroke:#111;stroke-width:1.7;fill:#fff}
     .t{font-size:12px;fill:#111}.tb{font-size:13px;font-weight:700;fill:#111}
-    .pn{font-size:10px;fill:#666}.nl{font-size:11px;fill:#0b4a86;font-weight:700}
-    .dnp{font-size:10px;fill:#b23}.jdot{fill:#111}
+    .pn{font-size:10px;fill:#666}
+    .lr{font-size:11px;fill:#c0392b;font-weight:700}
+    .lk{font-size:11px;fill:#1f7a3d;font-weight:700}.ll{font-size:11px;fill:#8e44ad;font-weight:700}
+    .dnp{font-size:10px;fill:#b23}
   </style>
 
+  <!-- GND rail -->
+  <line class="g" x1="90" y1="545" x2="1200" y2="545"/>
+  <line class="g" x1="300" y1="545" x2="300" y2="559"/><line class="g" x1="286" y1="559" x2="314" y2="559"/><line class="g" x1="290" y1="564" x2="310" y2="564"/><line class="g" x1="294" y1="569" x2="306" y2="569"/>
+  <text class="t" x="300" y="589" text-anchor="middle" fill="#444">GND</text>
+
   <!-- J2 DC in -->
-  <rect class="body" x="55" y="180" width="110" height="90"/>
-  <text class="tb" x="110" y="170" text-anchor="middle">J2 12V DC in</text>
-  <line class="w" x1="165" y1="205" x2="205" y2="205"/><text class="t" x="158" y="209" text-anchor="end">1 +</text><text class="nl" x="208" y="209">&lt;+12IN&gt;</text>
-  <line class="w" x1="165" y1="245" x2="205" y2="245"/><text class="t" x="158" y="249" text-anchor="end">2 −</text>
-  <line class="w" x1="205" y1="245" x2="205" y2="263"/><line class="w" x1="193" y1="263" x2="217" y2="263"/><line class="w" x1="197" y1="268" x2="213" y2="268"/><line class="w" x1="201" y1="273" x2="209" y2="273"/>
+  <rect class="body" x="60" y="200" width="110" height="90"/>
+  <text class="tb" x="115" y="192" text-anchor="middle">J2 12V DC in</text>
+  <text class="t" x="120" y="229" text-anchor="end">1 +</text>
+  <text class="t" x="120" y="269" text-anchor="end">2 −</text>
+  <line class="g" x1="170" y1="265" x2="230" y2="265"/><line class="g" x1="230" y1="265" x2="230" y2="545"/><circle cx="230" cy="545" r="3.4"/>
 
-  <!-- power chain: +12IN -> D2 -> F2 -> SW1 -> V12S rail -->
-  <text class="nl" x="248" y="229" text-anchor="end">&lt;+12IN&gt;</text>
-  <line class="w" x1="252" y1="225" x2="300" y2="225"/>
-  <!-- D2 SS54 (anode left, cathode/bar right) -->
-  <text class="tb" x="330" y="198" text-anchor="middle">D2 SS54</text><text class="pn" x="330" y="258" text-anchor="middle">rev-polarity</text>
-  <line class="w" x1="300" y1="225" x2="308" y2="225"/>
-  <polygon class="body" points="308,215 328,225 308,235"/><line class="w" x1="330" y1="213" x2="330" y2="237"/>
-  <line class="w" x1="330" y1="225" x2="380" y2="225"/>
-  <!-- F2 fuse -->
-  <text class="tb" x="415" y="200" text-anchor="middle">F2 3–5A</text>
-  <rect class="body" x="380" y="217" width="70" height="16" rx="8"/>
-  <line class="w" x1="450" y1="225" x2="500" y2="225"/>
-  <!-- SW1 general PWR (SPST, open) -->
-  <text class="tb" x="545" y="196" text-anchor="middle">SW1 PWR</text>
-  <circle class="jdot" cx="500" cy="225" r="3.4"/><line class="w" x1="500" y1="225" x2="558" y2="208"/>
-  <circle class="jdot" cx="590" cy="225" r="3.4"/><line class="w" x1="590" y1="225" x2="620" y2="225"/>
+  <!-- power chain J2.1 -> D2 -> F2 -> SW1 -> V12S -->
+  <line class="p12" x1="170" y1="225" x2="248" y2="225"/>
+  <polygon class="body" points="248,215 268,225 248,235"/><line class="body" x1="270" y1="213" x2="270" y2="237"/>
+  <line class="p12" x1="270" y1="225" x2="330" y2="225"/>
+  <text class="tb" x="259" y="200" text-anchor="middle">D2</text>
+  <rect class="body" x="330" y="217" width="70" height="16" rx="8"/><text class="tb" x="365" y="200" text-anchor="middle">F2</text>
+  <line class="p12" x1="400" y1="225" x2="450" y2="225"/>
+  <circle cx="450" cy="225" r="3.4"/><line class="p12" x1="450" y1="225" x2="505" y2="208"/><circle cx="535" cy="225" r="3.4"/>
+  <text class="tb" x="492" y="196" text-anchor="middle">SW1</text>
+  <line class="p12" x1="535" y1="225" x2="590" y2="225"/>
+
   <!-- V12S rail -->
-  <line class="w" x1="620" y1="225" x2="780" y2="225"/>
-  <line class="w" x1="620" y1="225" x2="620" y2="205"/><line class="w" x1="606" y1="205" x2="634" y2="205"/><text class="nl" x="620" y="198" text-anchor="middle">V12S (+12 switched)</text>
-  <circle class="jdot" cx="650" cy="225" r="3.4"/><circle class="jdot" cx="690" cy="225" r="3.4"/><circle class="jdot" cx="740" cy="225" r="3.4"/>
-  <!-- SW2 IGN (SPST, open) up from rail @690 -->
-  <text class="tb" x="720" y="158" text-anchor="middle">SW2 IGN</text>
-  <line class="w" x1="690" y1="225" x2="690" y2="185"/>
-  <circle class="jdot" cx="690" cy="185" r="3.4"/><line class="w" x1="690" y1="185" x2="730" y2="170"/>
-  <circle class="jdot" cx="745" cy="185" r="3.4"/><line class="w" x1="745" y1="185" x2="770" y2="185"/>
-  <text class="nl" x="774" y="189">&lt;IGN_P8&gt;</text>
-  <!-- D3 TVS (DNP): V12S rail @650 -> GND (cathode bar up to rail) -->
-  <text class="tb" x="650" y="300" text-anchor="middle">D3 TVS (DNP)</text>
-  <line class="w" x1="650" y1="225" x2="650" y2="320"/>
-  <line class="w" x1="638" y1="320" x2="662" y2="320"/><polygon class="body" points="638,338 662,338 650,320"/>
-  <line class="w" x1="650" y1="338" x2="650" y2="356"/>
-  <line class="w" x1="638" y1="356" x2="662" y2="356"/><line class="w" x1="642" y1="361" x2="658" y2="361"/><line class="w" x1="646" y1="366" x2="654" y2="366"/>
-  <!-- LED1 + R2 (DNP): V12S rail @740 -> R2 -> LED1 -> GND -->
-  <text class="tb" x="740" y="300" text-anchor="middle">R2 2.2k · LED1 (DNP)</text>
-  <line class="w" x1="740" y1="225" x2="740" y2="320"/>
-  <rect class="body" x="732" y="320" width="16" height="34"/>
-  <line class="w" x1="740" y1="354" x2="740" y2="368"/>
-  <polygon class="body" points="728,368 752,368 740,386"/><line class="w" x1="728" y1="386" x2="752" y2="386"/>
-  <line class="w" x1="740" y1="386" x2="740" y2="402"/>
-  <line class="w" x1="728" y1="402" x2="752" y2="402"/><line class="w" x1="732" y1="407" x2="748" y2="407"/><line class="w" x1="736" y1="412" x2="744" y2="412"/>
+  <line class="p12" x1="590" y1="225" x2="900" y2="225"/><text class="lr" x="620" y="217">V12S</text>
+  <circle cx="650" cy="225" r="3.4"/><circle cx="720" cy="225" r="3.4"/><circle cx="790" cy="225" r="3.4"/><circle cx="900" cy="225" r="3.4"/>
 
-  <!-- J3 4-pin to PCB1 -->
-  <rect class="body" x="880" y="180" width="120" height="180"/>
-  <text class="tb" x="940" y="170" text-anchor="middle">J3 → PCB1 (4-pin)</text>
-  <line class="w" x1="880" y1="210" x2="835" y2="210"/><text class="t" x="888" y="214">1</text><text class="nl" x="831" y="214" text-anchor="end">V12S</text>
-  <line class="w" x1="880" y1="255" x2="835" y2="255"/><text class="t" x="888" y="259">2</text><text class="nl" x="831" y="259" text-anchor="end">GND</text>
-  <line class="w" x1="880" y1="300" x2="835" y2="300"/><text class="t" x="888" y="304">3</text><text class="nl" x="831" y="304" text-anchor="end">&lt;K&gt;</text>
-  <line class="w" x1="880" y1="345" x2="835" y2="345"/><text class="t" x="888" y="349">4</text><text class="nl" x="831" y="349" text-anchor="end">&lt;L&gt;</text>
+  <!-- SW2 IGN up from rail @720 -->
+  <line class="p12" x1="720" y1="225" x2="720" y2="170"/><circle cx="720" cy="170" r="3.4"/>
+  <line class="p12" x1="720" y1="170" x2="762" y2="153"/><circle cx="790" cy="170" r="3.4"/>
+  <text class="tb" x="748" y="140" text-anchor="middle">SW2</text>
+  <line class="p12" x1="790" y1="170" x2="1010" y2="170"/><line class="p12" x1="1010" y1="170" x2="1010" y2="330"/>
 
-  <!-- J4 8-pin to ECU -->
-  <rect class="body" x="1030" y="150" width="120" height="330"/>
-  <text class="tb" x="1090" y="140" text-anchor="middle">J4 → ECU (8-pin)</text>
-  <line class="w" x1="1030" y1="180" x2="990" y2="180"/><text class="t" x="1038" y="184">1</text><text class="nl" x="986" y="184" text-anchor="end">&lt;L&gt;</text><text class="pn" x="1044" y="196">ECU p20</text>
-  <line class="w" x1="1030" y1="215" x2="990" y2="215"/><text class="t" x="1038" y="219">2</text><text class="nl" x="986" y="219" text-anchor="end">&lt;K&gt;</text><text class="pn" x="1044" y="231">ECU p23</text>
-  <line class="w" x1="1030" y1="250" x2="990" y2="250"/><text class="t" x="1038" y="254">3</text><text class="nl" x="986" y="254" text-anchor="end">V12S</text><text class="pn" x="1044" y="266">ECU p7 main</text>
-  <line class="w" x1="1030" y1="285" x2="990" y2="285"/><text class="t" x="1038" y="289">4</text><text class="nl" x="986" y="289" text-anchor="end">&lt;IGN_P8&gt;</text><text class="pn" x="1044" y="301">ECU p8 ign</text>
-  <line class="w" x1="1030" y1="330" x2="990" y2="330"/><text class="t" x="1038" y="334">5</text><text class="nl" x="986" y="334" text-anchor="end">GND</text><text class="pn" x="1044" y="346">ECU p5</text>
-  <line class="w" x1="1030" y1="365" x2="990" y2="365"/><text class="t" x="1038" y="369">6</text><text class="nl" x="986" y="369" text-anchor="end">GND</text><text class="pn" x="1044" y="381">ECU p9</text>
-  <line class="w" x1="1030" y1="400" x2="990" y2="400"/><text class="t" x="1038" y="404">7</text><text class="nl" x="986" y="404" text-anchor="end">GND</text><text class="pn" x="1044" y="416">ECU p10</text>
-  <line class="w" x1="1030" y1="435" x2="990" y2="435"/><text class="t" x="1038" y="439">8</text><text class="nl" x="986" y="439" text-anchor="end">GND</text><text class="pn" x="1044" y="451">ECU p16</text>
+  <!-- D3 TVS (DNP) rail @650 -> GND -->
+  <line class="p12" x1="650" y1="225" x2="650" y2="300"/>
+  <line class="body" x1="638" y1="300" x2="662" y2="300"/><polygon class="body" points="638,318 662,318 650,300"/>
+  <line class="g" x1="650" y1="318" x2="650" y2="360"/>
+  <line class="g" x1="638" y1="360" x2="662" y2="360"/><line class="g" x1="642" y1="365" x2="658" y2="365"/><line class="g" x1="646" y1="370" x2="654" y2="370"/>
+  <text class="t" x="600" y="300">D3</text>
+
+  <!-- R2 + LED1 (DNP) rail @790 -> GND -->
+  <line class="p12" x1="790" y1="225" x2="790" y2="300"/>
+  <rect class="body" x="782" y="300" width="16" height="40"/><text class="t" x="806" y="316">R2</text>
+  <line class="p12" x1="790" y1="340" x2="790" y2="360"/>
+  <polygon class="body" points="778,360 802,360 790,378"/><line class="body" x1="778" y1="378" x2="802" y2="378"/>
+  <line class="g" x1="790" y1="378" x2="790" y2="440"/>
+  <line class="g" x1="778" y1="440" x2="802" y2="440"/><line class="g" x1="782" y1="445" x2="798" y2="445"/><line class="g" x1="786" y1="450" x2="794" y2="450"/>
+  <text class="pn" x="812" y="372">LED1</text>
+
+  <!-- J3 (to PCB1): V12S/GND left, K/L right -->
+  <rect class="body" x="985" y="248" width="90" height="120"/>
+  <text class="tb" x="1030" y="240" text-anchor="middle">J3 → PCB1</text>
+  <text class="t" x="991" y="282">1 V12S</text>
+  <text class="t" x="991" y="347">2 GND</text>
+  <text class="t" x="1069" y="282" text-anchor="end">K 3</text>
+  <text class="t" x="1069" y="347" text-anchor="end">L 4</text>
+
+  <!-- J4 (to ECU) -->
+  <rect class="body" x="1150" y="150" width="100" height="330"/>
+  <text class="tb" x="1200" y="142" text-anchor="middle">J4 → ECU</text>
+  <text class="t" x="1158" y="184">1 L</text><text class="pn" x="1242" y="184" text-anchor="end">p20</text>
+  <text class="t" x="1158" y="219">2 K</text><text class="pn" x="1242" y="219" text-anchor="end">p23</text>
+  <text class="t" x="1158" y="256">3 +12</text><text class="pn" x="1242" y="256" text-anchor="end">p7</text>
+  <text class="t" x="1158" y="334">4 IGN</text><text class="pn" x="1242" y="334" text-anchor="end">p8</text>
+  <text class="t" x="1158" y="384">5 GND</text><text class="pn" x="1242" y="384" text-anchor="end">p5</text>
+  <text class="t" x="1158" y="409">6 GND</text><text class="pn" x="1242" y="409" text-anchor="end">p9</text>
+  <text class="t" x="1158" y="434">7 GND</text><text class="pn" x="1242" y="434" text-anchor="end">p10</text>
+  <text class="t" x="1158" y="459">8 GND</text><text class="pn" x="1242" y="459" text-anchor="end">p16</text>
+
+  <!-- V12S -> J3.1 -->
+  <line class="p12" x1="900" y1="225" x2="960" y2="225"/><line class="p12" x1="960" y1="225" x2="960" y2="278"/><line class="p12" x1="960" y1="278" x2="985" y2="278"/>
+  <!-- V12S -> J4.3 (+12 main) over the top -->
+  <line class="p12" x1="900" y1="225" x2="900" y2="205"/><line class="p12" x1="900" y1="205" x2="1130" y2="205"/><line class="p12" x1="1130" y1="205" x2="1130" y2="256"/><line class="p12" x1="1130" y1="256" x2="1150" y2="256"/>
+  <!-- J3.2 GND -> rail -->
+  <line class="g" x1="985" y1="343" x2="945" y2="343"/><line class="g" x1="945" y1="343" x2="945" y2="545"/><circle cx="945" cy="545" r="3.4"/>
+  <!-- K pass-through: J3.3 -> J4.2 (green) -->
+  <line class="k" x1="1075" y1="278" x2="1115" y2="278"/><line class="k" x1="1115" y1="278" x2="1115" y2="219"/><line class="k" x1="1115" y1="219" x2="1150" y2="219"/>
+  <!-- L pass-through: J3.4 -> J4.1 (purple) -->
+  <line class="l" x1="1075" y1="343" x2="1095" y2="343"/><line class="l" x1="1095" y1="343" x2="1095" y2="184"/><line class="l" x1="1095" y1="184" x2="1150" y2="184"/>
+  <!-- IGN: SW2 -> J4.4 -->
+  <line class="p12" x1="1010" y1="330" x2="1150" y2="330"/>
+  <!-- J4.5..8 GND bus -> rail -->
+  <line class="g" x1="1150" y1="384" x2="1135" y2="384"/><line class="g" x1="1150" y1="409" x2="1135" y2="409"/><line class="g" x1="1150" y1="434" x2="1135" y2="434"/><line class="g" x1="1150" y1="459" x2="1135" y2="459"/>
+  <line class="g" x1="1135" y1="384" x2="1135" y2="545"/><circle cx="1135" cy="545" r="3.4"/>
 </svg>
-<div class="tblk"><div>PCB2 · POWER</div><div>gems_t4 GEMS bench rig</div><div>Sheet 2/2</div><div>Rev A · 2026-09-06</div></div>
+<div class="tblk"><div>PCB2 · POWER</div><div>gems_t4 GEMS bench rig</div><div>Sheet 2/2</div><div>Rev C · 2026-09-06</div></div>
 </div>
+<table class="parts">
+<tr><th>Ref</th><th>Component — what it is</th><th>LCSC #</th></tr>
+<tr><td class="ref">J2</td><td>12 V DC input — barrel jack or 2-pos terminal (from a bench PSU/adapter)</td><td class="lc">—</td></tr>
+<tr><td class="ref">D2</td><td><b>SS54</b> — Schottky 5 A / 40 V, reverse-polarity series diode</td><td class="lc">C22452</td></tr>
+<tr><td class="ref">F2</td><td>3–5 A fuse + holder — main protection (size to ECU load)</td><td class="lc">—</td></tr>
+<tr><td class="ref">SW1</td><td>SPST toggle — general power on/off (whole rig)</td><td class="lc">—</td></tr>
+<tr><td class="ref">SW2</td><td>SPST toggle — ignition; gates +12 V to ECU pin 8</td><td class="lc">—</td></tr>
+<tr><td class="ref">D3</td><td>SMBJ24A — TVS clamp on the 12 V rail (<b>DNP</b> / optional)</td><td class="lc">—</td></tr>
+<tr><td class="ref">R2</td><td>2.2 kΩ 0805 — LED series resistor (<b>DNP</b>; place with LED1)</td><td class="lc">C17520</td></tr>
+<tr><td class="ref">LED1</td><td>0805 LED — power indicator (<b>DNP</b> / optional)</td><td class="lc">—</td></tr>
+<tr><td class="ref">J3</td><td>4-pin connector + 22 AWG harness → PCB1 (mates J1)</td><td class="lc">—</td></tr>
+<tr><td class="ref">J4</td><td>8-pin connector + 22 AWG harness → GEMS ECU (C1017 K/L + C1033 power/gnd)</td><td class="lc">—</td></tr>
+</table>
+
 <div class="legend">
-Notes (Sheet 2):
-<ul>
-<li>Power path: <b>J2(+) → D2 (reverse-polarity) → F2 (3–5 A) → SW1 → V12S.</b></li>
-<li><b>V12S</b> feeds J3-1 (to PCB1 / L9637D Vs) and J4-3 (ECU main, pin 7); <b>SW2 (IGN)</b> gates V12S → J4-4 (ECU ignition, <b>pin 8</b>).</li>
-<li>K and L pass straight through: J3-3↔J4-2 (K, ECU p23), J3-4↔J4-1 (L, ECU p20).</li>
-<li>GND is common: J2−, J3-2 and J4-5…8 (ECU p5/9/10/16) — one ground with PCB1 and the adapter.</li>
-<li>D3 (TVS) and LED1/R2 are DNP/optional for the bench.</li>
-</ul>
+Signal flow: <b>J2</b> → D2 (reverse-polarity) → F2 → SW1 → <b style="color:#c0392b">V12S</b>,
+which feeds PCB1 (via J3-1) and the ECU main (J4-3, pin 7). <b>SW2</b> switches the
+ignition feed (J4-4, ECU pin 8). <b style="color:#1f7a3d">K</b> (ECU p23) and
+<b style="color:#8e44ad">L</b> (ECU p20) pass straight through J3↔J4 to PCB1.
 </div>
 
 <p class="foot">
-Schematic for PCB layout — pairs with the topology diagram
+Fully-wired, colour-coded schematic for PCB layout — pairs with the topology diagram
 <code>gems-2pcb-solution.html</code>, the manufacturing package
-<code>hardware/gems-2pcb/</code> (fab spec, BOM w/ LCSC parts, netlists) and the
-KiCad netlist starters in <code>hardware/gems-2pcb/kicad/</code>. Confirmed pinout:
-<code>memory/real-gems-protocol.md</code>. Values/parts are the electrical intent;
-footprints &amp; final Gerbers come from the layout tool. Rev A · 2026-09-06.
+<code>hardware/gems-2pcb/</code> and the KiCad netlist starters in
+<code>hardware/gems-2pcb/kicad/</code>. Confirmed pinout:
+<code>memory/real-gems-protocol.md</code>. Rev C · 2026-09-06.
 </p>
 
 </div>
