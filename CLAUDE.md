@@ -325,6 +325,14 @@ as static lookalikes for now.
   schematic + end-to-end net map + per-PCB BOM (values/footprints). PCB1 ties the
   L-line to the K node via jumper **JP1** (the `0xDA`-channel unlock); IGN switch
   gates C1033 pin 8. Also summarised in the manual §11 (two-box build).
+- `hardware/gems-2pcb/` (added 2026-09-06) — **JLCPCB manufacturing package** for
+  the two-box build: `README.md` (fab spec, per-board SMD BOM + THT hand-solder
+  list, netlists, placement/routing plan, DRC, order workflow, part-sourcing
+  checklist) + `pcb1-main-bom.csv` / `pcb2-power-bom.csv` (JLC assembly BOMs, SMD
+  only). Assembly model: JLC does SMD top-side, user hand-solders connectors/
+  switches/Pico. Final Gerbers still come from routing in KiCad/EasyEDA. L9637D
+  confirmed in stock as `E-L9637D013TR`; LCSC C-numbers marked VERIFY (stock is
+  volatile — do not order without confirming).
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,

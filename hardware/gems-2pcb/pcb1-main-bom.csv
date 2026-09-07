@@ -1,0 +1,7 @@
+Comment,Designator,Footprint,LCSC Part #,Spec / search (VERIFY C-number on JLCPCB before ordering)
+L9637D,U1,SOIC-8,VERIFY,ST E-L9637D013TR SO-8 K-line transceiver — confirmed in stock; get its LCSC C-number (Extended likely ~$3 feeder)
+510R,R1,R0805,VERIFY,510 ohm 1% 1/8W 0805 — pick a Basic part
+100nF,C1,C0805,VERIFY,0.1uF X7R 50V 0805 — pick a Basic part
+1nF,C2,C0805,VERIFY,1nF (<=1.3nF) 50V C0G/X7R 0805 — Basic (optional K cap; may DNP for first build)
+PPTC 0.5A,F1,1206,DNP,Resettable fuse ~0.5A hold 1206 — optional Vs-branch fuse (PCB2 has the main fuse); do-not-place for first build
+TVS 24V,D1,SMB,DNP,SMBJ24A Vs transient clamp — BEFORE-CAR only; do-not-place for the bench
