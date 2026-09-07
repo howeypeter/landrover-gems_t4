@@ -14,11 +14,19 @@ you **hand-solder** the through-hole connectors, switches, barrel jack, jumper
 header and the Pico module. This is the cheapest/simplest split and keeps the
 PCBA BOM tiny.
 
-> ⚠️ **LCSC part numbers below are `VERIFY` placeholders.** LCSC stock/pricing
-> changes daily and a wrong part # in a JLC BOM mis-populates the board. Each line
-> gives the exact spec + a search string; confirm the real part # (and *Basic* vs
-> *Extended*) on the JLCPCB parts search before ordering. Ask and I'll look them
-> up live to fill these in.
+> ✅ **LCSC C-numbers are filled in** (2026-09 lookup, taken from live JLCPCB/LCSC
+> product pages) — see the two `*-bom.csv` files. Stock and Basic/Extended status
+> still drift over time, so **reconfirm each on jlcpcb.com/parts before you order**;
+> a discontinued/wrong part # mis-populates the board.
+>
+> | Ref | Value | LCSC # | Class |
+> |---|---|---|---|
+> | U1 | L9637D (E-L9637D013TR) | **C153038** | Extended |
+> | R1 | 510 Ω 0805 1% | **C17734** | Basic |
+> | C1 | 0.1 µF 0805 X7R 50V | **C49678** | Basic |
+> | C2 | 1 nF 0805 C0G 50V | **C29925** | Basic |
+> | D2 | SS54 5 A 40 V SMC | **C22452** | Basic |
+> | R2 | 2.2 kΩ 0805 1% | **C17520** | Basic |
 
 ---
 
@@ -60,7 +68,7 @@ one-off ~US$3 loading fee.
 | Ref | Part | Footprint |
 |---|---|---|
 | U2 | Raspberry Pi Pico / Pico 2 | 2× 20-pin, 2.54 mm (castellated or header) |
-| J1 | Molex Micro-Fit 3.0, 4-circuit | vertical or right-angle THT |
+| J1 | **4-pin connector + 22 AWG harness** — any cheap type (Molex, JST-XH, KF2510, Dupont…) | 2.54 mm THT (or Micro-Fit) |
 | JP1 | 2-pin header 2.54 mm + shunt | fit **closed** (L↔K tie) |
 
 ### 2.3 Netlist (route to this)
@@ -114,8 +122,8 @@ prefer, order PCB2 as a **bare board** and hand-solder D2 too — your call.)*
 | F2 | Fuse holder + 3–5 A blade fuse | THT (or use an SMD PPTC — see 3.4) |
 | SW1 | Toggle SPST, 12 V ≥5 A (general PWR) | panel |
 | SW2 | Toggle SPST, 12 V ≥3 A (IGN) | panel |
-| J3 | Molex Micro-Fit 3.0, 4-circuit (→ PCB1) | THT |
-| J4 | Molex Micro-Fit 3.0, 8-circuit (→ ECU) | THT |
+| J3 | **4-pin connector** (mates J1's harness) — any cheap type | 2.54 mm THT |
+| J4 | **8-pin connector** (→ ECU) — any cheap type | 2.54 mm THT |
 
 ### 3.3 Netlist (route to this)
 
@@ -181,13 +189,14 @@ D3 (TVS) V12S→GND (DNP for bench) ;  LED1+R2 V12S→GND (optional)
 
 ## 6 · Part-sourcing checklist (verify on LCSC/JLCPCB)
 
-- [x] **U1 L9637D** — **in stock as `E-L9637D013TR`** (SO-8 T&R). Grab its LCSC
-  C-number; expect Extended (~$3 one-off feeder fee — fine for a single IC).
-- [ ] R1 510 Ω 0805, C1 0.1 µF 0805, C2 1 nF 0805, R2 2.2 kΩ 0805 — pick the
-  **Basic** parts (zero feeder fee).
-- [ ] D2 Schottky 5 A (SS54 or equiv), SMC.
-- [ ] Molex Micro-Fit 3.0 4- and 8-circuit (J1/J3/J4) + crimp terminals + mating
-  housings for the cables.
+- [x] **U1 L9637D** — `E-L9637D013TR` = **C153038** (SO-8 T&R, Extended, ~$3 feeder).
+- [x] R1 510 Ω = **C17734** · C1 0.1 µF = **C49678** · C2 1 nF = **C29925** ·
+  R2 2.2 kΩ = **C17520** (UNIROYAL / YAGEO / FH — all **Basic**, zero feeder fee).
+- [x] D2 SS54 5 A 40 V SMC = **C22452** (Basic). *(All C-numbers: reconfirm live
+  before ordering — see the note at the top.)*
+- [ ] 4-pin + 8-pin connectors for J1/J3/J4 + a **22 AWG** harness — any cheap
+  connector works at bench currents (Molex, JST-XH, KF2510, Dupont); just keep the
+  +12 V / ECU-power contacts good for a few amps.
 - [ ] Toggle switches (SW1/SW2), barrel jack (J2), fuse holder + fuse (F2).
 - [ ] Optional/DNP for the bench: D1, D3, F1, LED1 — add the Vs TVS (D1) + real
   fusing before the rig ever goes on a running vehicle.

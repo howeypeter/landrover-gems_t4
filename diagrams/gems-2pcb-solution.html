@@ -231,7 +231,7 @@ manufacturer channel. Pop JP1 for a K-only run.</p>
 <tr><td class="mono">F1</td><td>Fuse / PTC</td><td>0.5–1 A (Vs branch)</td><td>1206 PTC or clip</td><td>rec</td></tr>
 <tr><td class="mono">D1</td><td>TVS diode</td><td>24–33 V standoff, &lt;40 V clamp</td><td>SMB</td><td>before-car</td></tr>
 <tr><td class="mono">JP1</td><td>Header + jumper</td><td>2-pin, L↔K tie (closed)</td><td>2.54 mm</td><td>req</td></tr>
-<tr><td class="mono">J1</td><td>Molex Micro-Fit 3.0</td><td>4-circuit, ≥8 A/ckt</td><td>MicroFit-4</td><td>req</td></tr>
+<tr><td class="mono">J1</td><td>4-pin connector + 22 AWG harness</td><td>any type (Molex/JST/KF2510/Dupont)</td><td>2.54 mm THT</td><td>req</td></tr>
 </table>
 
 <h3>PCB2 — POWER / ROUTING</h3>
@@ -242,8 +242,8 @@ manufacturer channel. Pop JP1 for a K-only run.</p>
 <tr><td class="mono">F2</td><td>Main fuse + holder</td><td>3–5 A (size to ECU load)</td><td>blade holder / PTC</td><td>req</td></tr>
 <tr><td class="mono">SW1</td><td>Toggle (general PWR)</td><td>SPST, 12 V ≥5 A</td><td>panel toggle</td><td>req</td></tr>
 <tr><td class="mono">SW2</td><td>Toggle (IGN)</td><td>SPST, 12 V ≥3 A</td><td>panel toggle</td><td>req</td></tr>
-<tr><td class="mono">J3</td><td>Molex Micro-Fit 3.0</td><td>4-circuit (mates J1)</td><td>MicroFit-4</td><td>req</td></tr>
-<tr><td class="mono">J4</td><td>Molex Micro-Fit 3.0</td><td>8-circuit, to ECU</td><td>MicroFit-8</td><td>req</td></tr>
+<tr><td class="mono">J3</td><td>4-pin connector (mates J1)</td><td>any type + 22 AWG</td><td>2.54 mm THT</td><td>req</td></tr>
+<tr><td class="mono">J4</td><td>8-pin connector, to ECU</td><td>any type + 22 AWG</td><td>2.54 mm THT</td><td>req</td></tr>
 <tr><td class="mono">D3</td><td>TVS diode (opt)</td><td>SMBJ ~24 V on 12 V rail</td><td>SMB</td><td>opt</td></tr>
 <tr><td class="mono">LED+R</td><td>Power indicator (opt)</td><td>LED + ~2 kΩ</td><td>0805</td><td>opt</td></tr>
 </table>
@@ -276,9 +276,11 @@ contact read-only (<code>gems_t4 kline live --port COMx</code>). The Vs TVS (D1)
 in-car fusing matter only if this ever leaves the bench for a running vehicle.
 </div>
 <div class="note">
-<b>Cabling:</b> both Molex runs carry 12 V to the ECU (a few amps with relays), so
-Micro-Fit 3.0 (8.5 A/circuit) is sized right; keep the 4-pin K/L cable short. The
-K/L pair riding alongside 12 V in the 4-pin is fine at 10.4 kbit/s.
+<b>Cabling:</b> any cheap 4-pin / 8-pin connector with a <b>22 AWG</b> harness is
+fine at bench currents (the ECU main draw is only a couple of amps with nothing
+actuating) — Molex, JST-XH, KF2510 or Dupont all work; just keep the +12 V / ECU-
+power contacts good for a few amps. Keep the 4-pin K/L cable short; the K/L pair
+riding alongside 12 V is fine at 10.4 kbit/s.
 </div>
 
 <p class="foot">

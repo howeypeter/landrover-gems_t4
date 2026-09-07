@@ -1,5 +1,5 @@
-Comment,Designator,Footprint,LCSC Part #,Spec / search (VERIFY C-number on JLCPCB before ordering)
-SS54,D2,SMC (DO-214AB),VERIFY,Schottky 5A 40V reverse-polarity series diode — pick a Basic part (SS54 or equiv); low-drop P-FET is the alt
-Power LED,LED1,LED0805,DNP,Power-indicator LED 0805 — optional
-2.2k,R2,R0805,DNP,LED series resistor ~2.2k 0805 — optional (pairs with LED1)
+Comment,Designator,Footprint,LCSC Part #,Spec / notes (C-numbers from a 2026-09 lookup — reconfirm stock + Basic/Extended at order time)
+SS54,D2,SMC (DO-214AB),C22452,MDD SS54 Schottky 5A 40V — reverse-polarity series diode; Basic
+2.2k,R2,R0805,C17520,UNIROYAL 0805W8F2201T5E 2.2k 1% 0805 — Basic; place only with LED1 (LED series)
+Power LED,LED1,LED0805,DNP,Power-indicator LED 0805 — optional (pick a Basic LED)
 TVS 24V,D3,SMB,DNP,SMBJ24A clamp on the 12V rail — optional / before-car
