@@ -325,6 +325,12 @@ as static lookalikes for now.
   schematic + end-to-end net map + per-PCB BOM (values/footprints). PCB1 ties the
   L-line to the K node via jumper **JP1** (the `0xDA`-channel unlock); IGN switch
   gates C1033 pin 8. Also summarised in the manual §11 (two-box build).
+- `diagrams/gems-2pcb-schematic.html` (added 2026-09-06) — the **reader's
+  electrical schematic** for the two boards (Sheet 1 PCB1 MAIN, Sheet 2 PCB2
+  POWER): real component symbols + refdes + values + pin numbers + named nets, in
+  the form an EE reads to lay out the PCB. Uses the net-label convention
+  (same-name = connected) + power/ground symbols. Pairs with the topology diagram
+  (`gems-2pcb-solution.html`) and the manufacturing package (`hardware/gems-2pcb/`).
 - `hardware/gems-2pcb/` (added 2026-09-06) — **JLCPCB manufacturing package** for
   the two-box build: `README.md` (fab spec, per-board SMD BOM + THT hand-solder
   list, netlists, placement/routing plan, DRC, order workflow, part-sourcing
