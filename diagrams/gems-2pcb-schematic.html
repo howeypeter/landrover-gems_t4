@@ -217,7 +217,7 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
   <line class="p12" x1="720" y1="225" x2="720" y2="170"/><circle cx="720" cy="170" r="3.4"/>
   <line class="p12" x1="720" y1="170" x2="762" y2="153"/><circle cx="790" cy="170" r="3.4"/>
   <text class="tb" x="748" y="140" text-anchor="middle">SW2</text>
-  <line class="p12" x1="790" y1="170" x2="1010" y2="170"/><line class="p12" x1="1010" y1="170" x2="1010" y2="330"/>
+  <line class="p12" x1="790" y1="170" x2="1130" y2="170"/>
 
   <!-- D3 TVS (DNP) rail @650 -> GND -->
   <line class="p12" x1="650" y1="225" x2="650" y2="300"/>
@@ -257,16 +257,16 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
 
   <!-- V12S -> J3.1 -->
   <line class="p12" x1="900" y1="225" x2="960" y2="225"/><line class="p12" x1="960" y1="225" x2="960" y2="278"/><line class="p12" x1="960" y1="278" x2="985" y2="278"/>
-  <!-- V12S -> J4.3 (+12 main) over the top -->
-  <line class="p12" x1="900" y1="225" x2="900" y2="205"/><line class="p12" x1="900" y1="205" x2="1130" y2="205"/><line class="p12" x1="1130" y1="205" x2="1130" y2="256"/><line class="p12" x1="1130" y1="256" x2="1150" y2="256"/>
+  <!-- V12S -> J4.3 (+12 main) over the top of J3 (drops at x=1100, left of the IGN drop) -->
+  <line class="p12" x1="900" y1="225" x2="900" y2="205"/><line class="p12" x1="900" y1="205" x2="1100" y2="205"/><line class="p12" x1="1100" y1="205" x2="1100" y2="256"/><line class="p12" x1="1100" y1="256" x2="1150" y2="256"/>
   <!-- J3.2 GND -> rail -->
   <line class="g" x1="985" y1="343" x2="945" y2="343"/><line class="g" x1="945" y1="343" x2="945" y2="545"/><circle cx="945" cy="545" r="3.4"/>
   <!-- K pass-through: J3.3 -> J4.2 (green) -->
   <line class="k" x1="1075" y1="278" x2="1115" y2="278"/><line class="k" x1="1115" y1="278" x2="1115" y2="219"/><line class="k" x1="1115" y1="219" x2="1150" y2="219"/>
   <!-- L pass-through: J3.4 -> J4.1 (purple) -->
   <line class="l" x1="1075" y1="343" x2="1095" y2="343"/><line class="l" x1="1095" y1="343" x2="1095" y2="184"/><line class="l" x1="1095" y1="184" x2="1150" y2="184"/>
-  <!-- IGN: SW2 -> J4.4 -->
-  <line class="p12" x1="1010" y1="330" x2="1150" y2="330"/>
+  <!-- IGN: SW2 runs above J3, drops the gap to J4.4 — does NOT touch J3 -->
+  <line class="p12" x1="1130" y1="170" x2="1130" y2="330"/><line class="p12" x1="1130" y1="330" x2="1150" y2="330"/>
   <!-- J4.5..8 GND bus -> rail -->
   <line class="g" x1="1150" y1="384" x2="1135" y2="384"/><line class="g" x1="1150" y1="409" x2="1135" y2="409"/><line class="g" x1="1150" y1="434" x2="1135" y2="434"/><line class="g" x1="1150" y1="459" x2="1135" y2="459"/>
   <line class="g" x1="1135" y1="384" x2="1135" y2="545"/><circle cx="1135" cy="545" r="3.4"/>
