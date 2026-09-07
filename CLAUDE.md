@@ -330,9 +330,14 @@ as static lookalikes for now.
   list, netlists, placement/routing plan, DRC, order workflow, part-sourcing
   checklist) + `pcb1-main-bom.csv` / `pcb2-power-bom.csv` (JLC assembly BOMs, SMD
   only). Assembly model: JLC does SMD top-side, user hand-solders connectors/
-  switches/Pico. Final Gerbers still come from routing in KiCad/EasyEDA. L9637D
-  confirmed in stock as `E-L9637D013TR`; LCSC C-numbers marked VERIFY (stock is
-  volatile — do not order without confirming).
+  switches/Pico. Final Gerbers still come from routing in KiCad/EasyEDA. L9637D =
+  `E-L9637D013TR` (LCSC **C153038**); all SMD LCSC C-numbers filled in from live
+  JLC/LCSC pages (R1 C17734, C1 C49678, C2 C29925, D2 C22452, R2 C17520) — reconfirm
+  at order time. 4-/8-pin connectors are any cheap type + 22 AWG (not Molex-specific).
+  `kicad/` holds hand-authored **netlist starters** (`gems-pcb1-main.net` /
+  `gems-pcb2-power.net`) for netlist-import into Pcbnew + a `README.md` how-to —
+  an UNVALIDATED scaffold (not opened in KiCad here); check footprints (esp. the
+  Pico) before trusting.
 - `memory/` — Project-local memory (this project's canonical memory; never mix
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
