@@ -119,7 +119,7 @@ prefer, order PCB2 as a **bare board** and hand-solder D2 too — your call.)*
 | Ref | Part | Footprint |
 |---|---|---|
 | J2 | DC barrel jack 2.1 mm (or 2-pos terminal) | THT |
-| F2 | Fuse holder + 3–5 A blade fuse | THT (or use an SMD PPTC — see 3.4) |
+| F2 | Fuse holder + 2 A blade fuse | THT (or use an SMD PPTC — see 3.4) |
 | SW1 | Toggle SPST, 12 V ≥5 A (general PWR) | panel |
 | SW2 | Toggle SPST, 12 V ≥3 A (IGN) | panel |
 | J3 | **4-pin connector** (mates J1's harness) — any cheap type | 2.54 mm THT |

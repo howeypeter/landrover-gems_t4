@@ -123,7 +123,7 @@ joined by a 4-pin Molex. Pin-exact against the confirmed P38 GEMS bench pinout
   <text class="lbl" x="632" y="150" fill="#7a4d16">SW1 general PWR</text>
   <text class="lbl" x="632" y="168" fill="#7a4d16">SW2 IGN → pin 8</text>
   <text class="lbl" x="632" y="186">D2 rev-polarity</text>
-  <text class="lbl" x="632" y="204">F2 fuse 3–5A</text>
+  <text class="lbl" x="632" y="204">F2 fuse 2A</text>
   <text class="mut" x="632" y="230">DC in ▼ · GND bus</text>
   <text class="lbl" x="632" y="360">J4 · 8-pin Molex ▶</text>
 
@@ -206,7 +206,7 @@ manufacturer channel. Pop JP1 for a K-only run.</p>
 <tr><th class="mono">Ref</th><th>From</th><th>To</th><th>Note</th></tr>
 <tr><td class="mono">J2</td><td>DC adapter +</td><td class="mono">D2 → F2 → SW1</td><td>12 V in</td></tr>
 <tr><td class="mono">D2</td><td>+12 V in</td><td>rail</td><td>reverse-polarity</td></tr>
-<tr><td class="mono">F2</td><td>rail</td><td class="mono">SW1</td><td>3–5 A main fuse</td></tr>
+<tr><td class="mono">F2</td><td>rail</td><td class="mono">SW1</td><td>2 A main fuse</td></tr>
 <tr><td class="mono">SW1</td><td>fused +12</td><td>V12S rail</td><td>general PWR</td></tr>
 <tr><td class="mono">V12S</td><td>rail</td><td class="mono">J3-A</td><td>→ PCB1 Vs</td></tr>
 <tr><td class="mono">V12S</td><td>rail</td><td class="mono">J4-3 (ECU p7)</td><td>main power</td></tr>
@@ -239,7 +239,7 @@ manufacturer channel. Pop JP1 for a K-only run.</p>
 <tr><th class="mono">Ref</th><th>Part</th><th>Value / rating</th><th>Footprint</th><th>Req?</th></tr>
 <tr><td class="mono">J2</td><td>DC input</td><td>barrel 2.1 mm or 2-pos terminal</td><td>barrel / 5.08 mm term</td><td>req</td></tr>
 <tr><td class="mono">D2</td><td>Reverse-polarity</td><td>P-FET (low drop) e.g. DMP3098 <i>or</i> Schottky SS34 (3 A)</td><td>SOT-23 / SMB</td><td>rec</td></tr>
-<tr><td class="mono">F2</td><td>Main fuse + holder</td><td>3–5 A (size to ECU load)</td><td>blade holder / PTC</td><td>req</td></tr>
+<tr><td class="mono">F2</td><td>Main fuse + holder</td><td>2 A (bench ECU+adapter ≈1–2A)</td><td>blade holder / PTC</td><td>req</td></tr>
 <tr><td class="mono">SW1</td><td>Toggle (general PWR)</td><td>SPST, 12 V ≥5 A</td><td>panel toggle</td><td>req</td></tr>
 <tr><td class="mono">SW2</td><td>Toggle (IGN)</td><td>SPST, 12 V ≥3 A</td><td>panel toggle</td><td>req</td></tr>
 <tr><td class="mono">J3</td><td>4-pin connector (mates J1)</td><td>any type + 22 AWG</td><td>2.54 mm THT</td><td>req</td></tr>

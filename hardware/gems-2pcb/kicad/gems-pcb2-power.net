@@ -6,7 +6,7 @@
   (components
     (comp (ref "J2") (value "12V_DC_in") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"))
     (comp (ref "D2") (value "SS54") (footprint "Diode_SMD:D_SMC"))
-    (comp (ref "F2") (value "Fuse_3-5A") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"))
+    (comp (ref "F2") (value "Fuse_2A") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"))
     (comp (ref "SW1") (value "PWR_toggle") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"))
     (comp (ref "SW2") (value "IGN_toggle") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"))
     (comp (ref "LED1") (value "PWR_LED_DNP") (footprint "LED_SMD:LED_0805_2012Metric"))
