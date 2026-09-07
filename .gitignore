@@ -40,3 +40,6 @@ $RECYCLE.BIN/
 firmware/**/build/
 *.elf
 *.uf2
+
+# WiFi credentials for the Pico WiFi firmware (never commit real secrets)
+firmware/pico_kline_wifi/wifi_secrets.h

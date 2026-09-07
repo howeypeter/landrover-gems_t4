@@ -429,7 +429,7 @@ were dropped. See `memory/tech-stack-decision.md`.)
   - **Quick start: genuine FTDI KKL 409.1 cable** (`pyserial`) — cheap, good for
     first reads and capturing traffic; marginal for writes.
   - **Pico 2 W wireless (WiFi) mode: laptop side BUILT 2026-07-11; Pico WiFi
-    firmware still NOT built.** Decided 2026-07-07, landed as planned:
+    firmware BUILT 2026-09-07 (`firmware/pico_kline_wifi/`).** Decided 2026-07-07, landed as planned:
     `TcpTransport` reuses the host-protocol framing over WiFi/TCP (not BLE —
     small MTU, ruled out); the write-refusal lives in the Python `KwpClient`
     (checks `Transport.is_wireless`; coding/actuator/Security-Learn = SIDs
@@ -437,9 +437,9 @@ were dropped. See `memory/tech-stack-decision.md`.)
     with an explicit `allow_writes`/`--allow-writes` opt-in for trusted links.
     Firmware stays a dumb timed pipe. `gems_t4 serve` provides the network
     endpoint today (virtual ECU, or `--port COMx` to bridge a USB Pico, e.g.
-    from a Raspberry Pi at the car). A future WiFi Pico just answers the same
-    frames `serve` answers now — do not build that firmware until explicitly
-    picked up.
+    from a Raspberry Pi at the car). The WiFi Pico firmware (`firmware/pico_kline_wifi/`, built 2026-09-07) now
+    answers those same host-protocol frames directly over TCP — connect with
+    `gems_t4 kline ... --connect <pico-ip>` (or the GUI Network mode).
 - **Build the virtual ECU first**; **every ECU write gated.** As built: the
   coding-write path enforces **backup + verify-after-write + operator
   confirmation** (and refuses read-only fields), and the immobiliser
@@ -464,11 +464,11 @@ were dropped. See `memory/tech-stack-decision.md`.)
    ◑ PARTIAL: host protocol + Pico firmware + PicoAdapter built & unit-tested vs a
    fake serial; runs on Pico or Pico 2 (same firmware, build target only differs;
    2026-07-07); FTDI transport is a documented stub; on-car validation pending HW.
-3b. **Laptop side DONE (2026-07-11); Pico WiFi firmware not started.** TCP
+3b. **Laptop side DONE (2026-07-11); Pico WiFi firmware BUILT 2026-09-07.** TCP
    transport + serve endpoint + GUI connection screen — see "TCP/network
    transport" under Build status below and the wireless note under Tech stack →
-   Hardware. Only the Pico W/2 W WiFi *firmware* remains; do not begin it until
-   explicitly picked up.
+   Hardware. The Pico W/2 W WiFi *firmware* is now BUILT (`firmware/pico_kline_wifi/`,
+   2026-09-07) — serves the host protocol over TCP; the laptop side is unchanged.
 4. **PySide6 GUI shell** over the same `gems_core` — Win98 kiosk, live gauges.
    ✅ DONE (2026-07-07): `gems_t4/app/gui/` — a Qt-free `Backend` facade
    (`app/backend.py`) + `KioskWindow`/`Screen` shell + 7 screens (boot, vehicle

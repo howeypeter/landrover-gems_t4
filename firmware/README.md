@@ -67,6 +67,45 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2 -p COM5 firmware/pico_kline
 (Or open `pico_kline/pico_kline.ino` in the Arduino IDE and pick "Raspberry Pi
 Pico" or "Raspberry Pi Pico 2" from the board menu — same package either way.)
 
+## Wireless (Pico 2 W) — no USB needed
+
+`pico_kline_wifi/pico_kline_wifi.ino` is the **same K-line adapter served over
+WiFi/TCP** instead of USB. Same wiring to the L9637D/ECU; same host protocol; the
+only change is the transport. **Requires a WiFi board** (Pico 2 W or Pico W) — a
+plain Pico has no radio.
+
+1. **Credentials** (kept out of git): in `firmware/pico_kline_wifi/`, copy
+   `wifi_secrets.h.example` → `wifi_secrets.h` and set your **2.4 GHz** SSID +
+   password (the CYW43 is 2.4 GHz only). `wifi_secrets.h` is `.gitignore`d.
+2. **Flash** (Pico 2 W shown; Pico W = `rpipicow`):
+   ```
+   arduino-cli compile --fqbn rp2040:rp2040:rpipico2w firmware/pico_kline_wifi
+   arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline_wifi
+   ```
+   (Or Arduino IDE → board "Raspberry Pi Pico 2 W".)
+3. **Find it:** on first boot it prints its IP to USB serial (115200) — note it
+   once. It also advertises **`gems-pico.local`** (mDNS) and registers the DHCP
+   hostname `gems-pico`. The onboard LED is solid when WiFi is up. For a fixed
+   address, uncomment the `STATIC_IP` block at the top of the sketch.
+4. **Connect the laptop** (no USB to the Pico after this):
+   ```
+   gems_t4 kline live --connect gems-pico.local        # or --connect 192.168.x.y
+   gems_t4 kline dtc  --connect 192.168.x.y
+   gems_t4 gui        --connect 192.168.x.y             # GUI Network mode
+   ```
+   Default TCP port is **9141** (append `:PORT` to override). One tester at a
+   time (one K-line). Writes are **read-only by default** over the network — add
+   `--allow-writes` to permit `$30/$31/$3B` (see the security note).
+
+> **Security:** the firmware is a dumb timed K-line pipe; the read-only write
+> policy is enforced on the **laptop** (`KwpClient` + `TcpTransport.is_wireless`),
+> **not** on the Pico. Anything that can reach TCP `:9141` can drive the K-line —
+> so keep it on a trusted LAN (or an SSH tunnel), not exposed to the internet.
+
+> Doing long 5-baud inits (~2–3 s of `delay()`) while the CYW43 services WiFi in
+> the background is the one thing to watch on first bring-up; if a session drops
+> mid-init, retry — the arduino-pico core services WiFi during `delay()`.
+
 ## Use from Python
 
 ```python

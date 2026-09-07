@@ -7,11 +7,10 @@
  * (Pico 2). Only the --fqbn build target differs between them — see
  * ../README.md "Build & flash".
  *
- * Do NOT use a Pico W / Pico 2 W with this sketch yet. The wireless (WiFi,
- * read-only) mode's LAPTOP side already exists (gems_t4 TcpTransport + serve
- * speak this same host protocol over TCP), but the Pico WiFi firmware is not
- * yet implemented — see "Pico 2 W wireless (WiFi) mode" under Tech stack →
- * Hardware in the project's CLAUDE.md.
+ * This is the USB-CDC build. For WIRELESS (no USB), use the sibling sketch
+ * ../pico_kline_wifi/pico_kline_wifi.ino on a Pico 2 W / Pico W — identical
+ * K-line logic, served over TCP/WiFi (same host protocol). This USB sketch
+ * runs on any Pico/Pico 2 (a WiFi board also works here over USB).
  *
  * The Pico owns all ISO 9141 / KWP2000 K-line timing; the PC drives it with the
  * simple USB-CDC host protocol in ../HOST_PROTOCOL.md. This sketch is a timed
