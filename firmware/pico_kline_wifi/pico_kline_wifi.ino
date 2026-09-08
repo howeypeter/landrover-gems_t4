@@ -31,6 +31,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiMulti.h>        // try several known networks, join the strongest
 #include <LEAmDNS.h>          // arduino-pico bundled mDNS (advertise gems-pico.local)
 #include "wifi_secrets.h"    // <-- create this from wifi_secrets.h.example
 
@@ -45,6 +46,7 @@ static const char     MDNS_NAME[] = "gems-pico"; // -> gems-pico.local
 
 WiFiServer server(TCP_PORT);
 WiFiClient client;                              // the one active tester connection
+WiFiMulti  multi;                               // holds the known-network list
 
 // ---- pins / config (identical to the USB firmware) -------------------------
 static const uint32_t KLINE_BAUD = 10400;
@@ -258,30 +260,44 @@ static void serviceHostFrame() {
 }
 
 // ---- WiFi bring-up ---------------------------------------------------------
+// Register every known network (call once). WiFiMulti then joins whichever is
+// in range with the strongest signal. Two source formats are supported in
+// wifi_secrets.h:
+//   * WIFI_NETWORKS  — an X-macro list of one or more SSID/password pairs, OR
+//   * WIFI_SSID / WIFI_PASS — the original single-network pair (fallback).
+static void addKnownNetworks() {
+#ifdef WIFI_NETWORKS
+  #define X(ssid, pass) multi.addAP(ssid, pass);
+  WIFI_NETWORKS
+  #undef X
+#else
+  multi.addAP(WIFI_SSID, WIFI_PASS);
+#endif
+}
+
 static void connectWiFi() {
-  Serial.print("WiFi: connecting to \"");
-  Serial.print(WIFI_SSID);
-  Serial.println("\" ...");
+  Serial.println("WiFi: connecting to the strongest known network ...");
 #ifdef STATIC_IP
   WiFi.config(STATIC_IP, STATIC_DNS, STATIC_GW, STATIC_MASK);
 #endif
   WiFi.setHostname(MDNS_NAME);        // router shows/serves "gems-pico"
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
   uint32_t start = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - start < 20000) {
+  while (multi.run() != WL_CONNECTED && millis() - start < 20000) {
     delay(300);
     Serial.print(".");
   }
   Serial.println();
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.print("WiFi OK. Connect the laptop with:  gems_t4 kline live --connect ");
+    Serial.print("WiFi OK on \"");
+    Serial.print(WiFi.SSID());        // which known network it actually joined
+    Serial.print("\".  Connect the laptop with:  gems_t4 kline live --connect ");
     Serial.println(WiFi.localIP());
     Serial.print("   (or --connect ");
     Serial.print(MDNS_NAME);
     Serial.println(".local  if mDNS resolves on your PC)");
     if (MDNS.begin(MDNS_NAME)) MDNS.addService("gems", "tcp", TCP_PORT);
   } else {
-    Serial.println("WiFi FAILED — check wifi_secrets.h (SSID/password) and signal.");
+    Serial.println("WiFi FAILED - check wifi_secrets.h (SSID/password), 2.4GHz band, and signal.");
   }
 }
 
@@ -292,6 +308,7 @@ void setup() {
   Serial1.setTX(KLINE_TX_PIN);
   Serial1.setRX(KLINE_RX_PIN);
   Serial1.begin(KLINE_BAUD);
+  addKnownNetworks();                 // register all SSIDs once, before connecting
   connectWiFi();
   server.begin();
 }

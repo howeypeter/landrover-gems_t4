@@ -67,6 +67,51 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2 -p COM5 firmware/pico_kline
 (Or open `pico_kline/pico_kline.ino` in the Arduino IDE and pick "Raspberry Pi
 Pico" or "Raspberry Pi Pico 2" from the board menu — same package either way.)
 
+## Wireless firmware — pick one to flash
+
+Three wireless sketches, all on the Pico 2 W / Pico W. They serve the *same*
+host protocol; they differ only in which radio(s) carry it:
+
+| Sketch | Radios | Use it when |
+|---|---|---|
+| **`pico_kline_wireless`** (recommended) | **WiFi + Bluetooth at once** | You want both available without re-flashing — TCP when both ends share a network, Bluetooth (COM port) when they don't |
+| `pico_kline_wifi` | WiFi/TCP only | You only use WiFi and want the leanest build |
+| `pico_kline_bt`   | Bluetooth SPP only | You only use Bluetooth, or WiFi+BT coexistence ever proves flaky on your rig |
+
+All three need the Bluetooth-enabled build option **only if they use BT** — the
+combined and BT sketches do (`ipbtstack=ipv4btcble`); the WiFi-only sketch does
+not. The combined sketch is a **superset** and includes the pentest
+`CMD_RAW_INIT`, so `gems_t4` and the pentest/debug scripts work over either
+radio. Sections below cover each; start with the combined one.
+
+## Combined WiFi + Bluetooth (Pico 2 W) — recommended
+
+`pico_kline_wireless/pico_kline_wireless.ino` brings up **both radios at once**
+and accepts whichever tester connects first (one at a time — there's one
+K-line). So you can reach it by TCP *or* by a paired Bluetooth COM port from the
+same flashed board.
+
+1. **Credentials:** copy `pico_kline_wireless/wifi_secrets.h.example` →
+   `wifi_secrets.h` and fill in your 2.4 GHz network(s) — same format as the
+   WiFi sketch (multi-network `WIFI_NETWORKS` block supported). Bluetooth needs
+   no credentials, so even with no WiFi in range the BT link still works.
+2. **Flash with Bluetooth enabled** (this also keeps WiFi on):
+   ```
+   arduino-cli compile --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble firmware/pico_kline_wireless
+   arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble -p COM5 firmware/pico_kline_wireless
+   ```
+   (IDE: board "Raspberry Pi Pico 2 W", Tools > IP/Bluetooth Stack > "IPv4 +
+   Bluetooth".)
+3. **Use either transport** (see the two sections below for the details):
+   - **WiFi:** `gems_t4 kline dtc --connect gems-pico.local` (or its IP).
+   - **Bluetooth:** pair `gems-pico`, then `gems_t4 kline dtc --port COMx`.
+   The onboard LED is solid whenever a tester is connected on *either* radio.
+
+> **Coexistence caveat.** The 5-baud slow init spends ~2–3 s in `delay()` while
+> the CYW43 services WiFi *and* BT; running both radios raises contention there.
+> It should be fine, but if you ever see flaky inits, flash the single-radio
+> `pico_kline_wifi` or `pico_kline_bt` instead — they're otherwise identical.
+
 ## Wireless (Pico 2 W) — no USB needed
 
 `pico_kline_wifi/pico_kline_wifi.ino` is the **same K-line adapter served over
@@ -77,6 +122,12 @@ plain Pico has no radio.
 1. **Credentials** (kept out of git): in `firmware/pico_kline_wifi/`, copy
    `wifi_secrets.h.example` → `wifi_secrets.h` and set your **2.4 GHz** SSID +
    password (the CYW43 is 2.4 GHz only). `wifi_secrets.h` is `.gitignore`d.
+   You can list **multiple** networks via the `WIFI_NETWORKS` X-macro block (one
+   `X("ssid","pass")` line each) — on boot it joins whichever known 2.4 GHz
+   network is in range with the strongest signal (handy for a home-WiFi + phone-
+   hotspot fallback). A single `WIFI_SSID`/`WIFI_PASS` pair still works too.
+   Editing credentials means **recompile + re-upload** — they're baked into the
+   firmware binary, not stored as a file on the Pico.
 2. **Flash** (Pico 2 W shown; Pico W = `rpipicow`):
    ```
    arduino-cli compile --fqbn rp2040:rp2040:rpipico2w firmware/pico_kline_wifi
@@ -105,6 +156,81 @@ plain Pico has no radio.
 > Doing long 5-baud inits (~2–3 s of `delay()`) while the CYW43 services WiFi in
 > the background is the one thing to watch on first bring-up; if a session drops
 > mid-init, retry — the arduino-pico core services WiFi during `delay()`.
+
+## Bluetooth (Pico 2 W) — no USB, and no shared WiFi needed
+
+`pico_kline_bt/pico_kline_bt.ino` serves the **same K-line adapter over
+Bluetooth Classic SPP** (Serial Port Profile). Use this when the WiFi/hotspot
+route is awkward because it forces your **laptop** off its normal network — a
+paired Bluetooth link is **point-to-point**, so the laptop keeps its WiFi and
+just talks to the Pico directly. **Requires a WiFi/BT board** (Pico 2 W or
+Pico W — the CYW43 does both); a plain Pico has no radio.
+
+The neat part: a paired SPP device shows up on Windows as a **virtual COM
+port**, so there is **nothing new on the Python side** — it's just another
+`--port COMx`. Because it's an ordinary serial port, **any** tool that opens a
+COM port works over it: `gems_t4`, the pentest sweep, and your ad-hoc debug/
+probe scripts alike. This sketch is a **superset** — it answers every
+production host command **plus** the pentest `CMD_RAW_INIT` primitive — so you
+do **not** re-flash to switch between diagnostics and pentest/debug work over
+Bluetooth. (`PING` reports `gems_t4-pico-bt-pentest 2.1.0`; the `pentest`
+substring is intentional — `pentest_scan.py` refuses any firmware whose ping
+doesn't contain it, so keep it in the version string.)
+
+1. **Enable the Bluetooth stack** (this sketch won't link without it):
+   - Arduino IDE: **Tools > IP/Bluetooth Stack > "IPv4 + Bluetooth"**.
+   - arduino-cli: append the menu option to the fqbn (see step 2).
+2. **Flash** (Pico 2 W shown; Pico W = `rpipicow`):
+   ```
+   arduino-cli compile --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble firmware/pico_kline_bt
+   arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble -p COM5 firmware/pico_kline_bt
+   ```
+   (`ipbtstack=ipv4btcble` = the "IPv4 + Bluetooth" menu choice; without it
+   `SerialBT.h` won't compile/link.)
+3. **Pair it:** Windows **Settings > Bluetooth & devices > Add device >
+   Bluetooth**, pick **`gems-pico`**. The firmware pairs headless ("Just
+   Works": it advertises `NO_INPUT_NO_OUTPUT` + auto-accept), so Windows should
+   pair with **no PIN / no passkey prompt**. Windows then creates an **outgoing
+   COM port** — find the number under *Bluetooth settings > More Bluetooth
+   settings > COM Ports* (use the **"Outgoing"** one). The Pico's onboard LED
+   is solid when a tester actually opens the port.
+   > **Re-flashing wipes the pairing bond.** arduino-pico keeps the bond across
+   > power-cycles but **not** across a firmware re-upload. So after every flash,
+   > **Remove** any existing `gems-pico` in Windows Bluetooth first, then Add it
+   > again — a stale bond causes "that PIN didn't work" / pairing failures.
+   > (The stock SerialBT advertises `DISPLAY_YES_NO` and never confirms the
+   > code, which is why an unpatched build can't pair headless — this firmware
+   > overrides that in `setup()`.)
+4. **Connect the laptop** over that COM port (your WiFi is untouched). Anything
+   that speaks the host protocol on a serial port works — same COM number for
+   all of it:
+   ```
+   gems_t4 kline live --port COM7        # the "Outgoing" gems-pico COM port
+   gems_t4 kline dtc  --port COM7
+   gems_t4 gui        --port COM7         # USB COM-port mode
+   ```
+   For the throwaway pentest/debug scripts in `C:\Users\howey\`
+   (`pentest_scan.py`, `da*_probe.py`, …), point their serial port at the same
+   "Outgoing" `gems-pico` COM port — they take the port from a `PORT = "COMx"`
+   constant near the top of each file, so edit that to your Bluetooth COM number,
+   then run as usual. They rely on `CMD_RAW_INIT`, which this superset firmware
+   includes.
+
+   > **SPP baud is a no-op.** These scripts open the port at 115200, but a
+   > Bluetooth SPP COM port ignores the baud setting (the air link runs at BT
+   > speed) — so no baud change is needed; it "just works" like a USB port,
+   > only with a little more latency.
+
+> **Security — different from WiFi mode.** A paired BT SPP link reaches the
+> laptop as a *wired-looking* COM port, so the Python side treats it as a
+> trusted (non-wireless) transport and **allows writes by default** (coding /
+> immobiliser / actuators), exactly like plugging in USB — the read-only
+> "wireless" gate does **not** apply. Only pair laptops you trust; start
+> read-only until you mean to write.
+
+> Enabling Bluetooth costs ~80 KB flash + ~20 KB RAM (fine on RP2350/RP2040).
+> It's a separate sketch from the WiFi one — pick the transport you want and
+> flash that; you don't run both at once.
 
 ## Use from Python
 
