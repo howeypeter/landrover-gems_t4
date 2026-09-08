@@ -12,7 +12,8 @@ dependencies = [
 gui = ["PySide6>=6.6"]
 build = ["pyinstaller>=6.0"]
 ble = ["bleak>=0.22"]
-dev = ["pytest>=8.0", "PySide6>=6.6", "pytest-qt>=4.2"]
+all = ["PySide6>=6.6", "bleak>=0.22"]   # full workstation: GUI + Bluetooth LE
+dev = ["pytest>=8.0", "PySide6>=6.6", "pytest-qt>=4.2", "bleak>=0.22"]
 
 [project.scripts]
 gems_t4 = "gems_t4.app.cli:main"

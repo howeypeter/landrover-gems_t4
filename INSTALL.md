@@ -12,15 +12,22 @@
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1          # Windows; on macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt     # CLI only
-# ...or, for the GUI too:
-pip install -e ".[gui]"
+pip install -r requirements.txt     # CLI only, USB + WiFi (no GUI, no BLE)
+# ...or pick the extras you want:
+pip install -e ".[gui]"             # + kiosk GUI (PySide6)
+pip install -e ".[ble]"             # + Bluetooth LE transport (bleak)
+pip install -e ".[all]"             # + BOTH (full workstation — recommended here)
 ```
 
 Use the venv's Python for everything below (activate once, or prefix commands
-with `.venv\Scripts\`). PySide6 (the GUI) is intentionally kept out of
-`requirements.txt` — it's a large optional dependency — so install it via the
-`[gui]` extra if you want the kiosk GUI, not just the CLI.
+with `.venv\Scripts\`). Large/platform-specific dependencies are intentionally
+kept out of `requirements.txt` and behind extras, so the base CLI stays light:
+- **`[gui]`** — PySide6, the Win98 kiosk GUI.
+- **`[ble]`** — `bleak`, required for the `--ble` Bluetooth-LE adapter (BLE has
+  no COM port, so `pyserial` can't reach it; USB/WiFi/Classic-BT don't need this).
+- **`[all]`** — GUI + BLE together; the usual choice for the bench laptop.
+
+USB (`--port`) and WiFi/TCP (`--connect`) work with just `requirements.txt`.
 
 ## 2. Verify it works
 
