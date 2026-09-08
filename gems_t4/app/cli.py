@@ -295,20 +295,29 @@ def _cmd_immo(args: argparse.Namespace) -> int:
 
 def _kline_transport(args: argparse.Namespace):
     """Build a real-ECU transport for the K-line (ISO 9141-2) profile."""
-    if getattr(args, "port", None) and getattr(args, "connect", None):
-        raise SystemExit("choose --port (USB) or --connect (network), not both")
-    if getattr(args, "port", None):
-        return PicoAdapterTransport(args.port), f"USB {args.port}"
-    if getattr(args, "connect", None):
-        host, tcp_port = parse_endpoint(args.connect)
+    port = getattr(args, "port", None)
+    connect = getattr(args, "connect", None)
+    ble = getattr(args, "ble", None)
+    if sum(bool(x) for x in (port, connect, ble)) > 1:
+        raise SystemExit(
+            "choose ONE of --port (USB), --connect (network), or --ble (Bluetooth LE)"
+        )
+    if port:
+        return PicoAdapterTransport(port), f"USB {port}"
+    if connect:
+        host, tcp_port = parse_endpoint(connect)
         return (
             TcpTransport(host, tcp_port,
                          allow_writes=getattr(args, "allow_writes", False)),
-            args.connect,
+            connect,
         )
+    if ble:
+        from gems_t4.transport.ble import BleTransport
+        return BleTransport(ble), f"BLE {ble}"
     raise SystemExit(
-        "kline talks to a REAL ECU: pass --port COMx (bench or on-car adapter) "
-        "or --connect HOST[:PORT]. It does not use the virtual ECU."
+        "kline talks to a REAL ECU: pass --port COMx (bench/on-car adapter), "
+        "--connect HOST[:PORT] (WiFi), or --ble [NAME] (Bluetooth LE). "
+        "It does not use the virtual ECU."
     )
 
 
@@ -518,6 +527,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")
     sp.add_argument("--connect", metavar="HOST[:PORT]",
                     help="TCP endpoint (serve bridge or WiFi Pico); default port 9141")
+    sp.add_argument("--ble", nargs="?", const="gems-pico", metavar="NAME|ADDR",
+                    help="Bluetooth LE adapter (NUS); optional device name or "
+                         "address (default: gems-pico). No pairing / no COM port.")
     sp.add_argument("--allow-writes", action="store_true",
                     help="permit writes over --connect (default: read-only)")
     sp.set_defaults(func=_cmd_kline)
