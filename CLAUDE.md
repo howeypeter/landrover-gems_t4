@@ -59,24 +59,34 @@ The active working list for the next couple of days. Detailed backlog entries
 (EKA/10AS, 0xDA, route-A power, QA-unmet) live further down; this is the ordering.
 
 ### P1 — do first
-1. **⭐ Security auth — crack the `securityAccessDenied` lock (open `$27`).**
-   HIGHEST LEVERAGE on the board. The one proprietary channel found (**0xDA**,
-   reachable with the L-line tied to the K node) is **security-locked**: its `$22`
-   read returns `securityAccessDenied` (NRC 0x33), and `$27` requestSeed was silent
-   (we sent the OBD envelope; the reply is ISO-14230 no-address framing — retry via
-   `~/da3_probe.py` with `<len><data><cksum>`). **Opening `$27` is the prerequisite
-   to reading ANY real GEMS proprietary data** — so it unblocks a whole tier at
-   once: **real coding** (VIN last-6, dealer id, 4.0/4.6 select…), the
-   **immobiliser** state, the **EKA / 10AS** work, and the **maps-read** path
-   (P1.4a). Scope: (i) the **capability map** — decide what the tool will do
-   (immobiliser flag emulate + real; EKA read/find; VIN; the 10AS "learned" auth
-   code — reconcile the user's *5-digit-learned* belief vs the *4-digit EKA*); and
-   (ii) the **actual unlock** (bench research: L-line + correct `$27` framing;
-   review `da3_probe.py`). Confirmed 2026-09-08: OBD Service 09 is entirely
-   unsupported, so there is NO non-proprietary path to identity. Ties to
-   memory/real-gems-protocol.md + the [immobiliser-from-bench], [EKA read], and
-   [EPROM] backlog items. Bench research — may need >1 session; some parts depend
-   on P4 (10AS on the bench).
+1. **⭐ Security auth — crack `$27` on 0xDA (find the seed→key algorithm `f`).**
+   HIGHEST LEVERAGE on the board, and now sharply narrowed to ONE unknown. State
+   as of 2026-09-08 (full detail: `memory/real-gems-protocol.md`):
+   - The **0xDA** proprietary channel (L-line tied C1017 pin 20 → K node,
+     ISO-14230 **no-address framing** `[len][data][sum]`) is open and speaks real
+     KWP2000. **`$27 01` requestSeed WORKS** — returns real, per-request randomized
+     16-bit seeds (e.g. `02 27 01 2a → 04 67 01 <seed> aa`; keybytes `aa55`). The
+     earlier "seed silent" was the wrong framing (we'd used the OBD `68 6A F1`
+     envelope). `~/da3_probe.py` / `~/harvest_seeds.py`.
+   - **Everything proprietary sits behind this one `$27` door**, confirmed
+     `securityAccessDenied`-locked on 0xDA: coding (`$21`/`$22`), and — new
+     2026-09-08 (`~/da5_mode3c.py`) — the **`0x3C` memory-read** service
+     (`0x1800` = config EEPROM: VIN/immo/security code; `0x2000` = the 27C1001
+     code image incl. the `$27` handler). `$23` is serviceNotSupported, so `0x3C`
+     is the read service (matches shickenchit, ecuconnections t=59049). On plain
+     OBD `0x33` both `0x3C` and `22 04 E2` are SILENT — 0xDA only.
+   - **So `$27` unlocks EVERYTHING over the wire**, including a `0x3C` dump of the
+     EEPROM + EPROM (coding, VIN last-6, immobiliser, maps, clone data) with no
+     chip pull. The ONLY remaining gate is the **seed→key transform `f`**.
+   - **DO NOT brute-force** (16-bit key, ~3-try lockout, and `$27 02` gives a
+     canned `03 67 02 CC 38` with no right/wrong oracle — MEMS3 & Td5 algos did
+     NOT open it). Get `f` from: **(1)** disassemble the `$27` handler out of the
+     **27C1001** (chip-pull or community dump — ties to P1.4a), or **(2)** capture
+     a real tool's (Nanocom/Faultmate/T4) seed→key→grant with a K+L logic
+     analyser (a captured key then dumps everything via `0x3C`, no chip pull).
+   Seed requests are unlimited/safe (don't touch the counter). Ties to the
+   [immobiliser-from-bench], [EKA read], and [EPROM] backlog items. Bench research;
+   some parts depend on P4 (10AS on the bench).
 2. **✓ DONE 2026-09-08 — Full CLI unification (option B).** The CLI commands
    `live`/`dtc`/`actuator`/`coding`/`immo` now route through `Backend` (one shared
    `_backend_from_args` seam; `_build_client`/direct `KwpClient` removed). Every
@@ -98,13 +108,16 @@ The active working list for the next couple of days. Detailed backlog entries
    as a minimal fallback, or fold everything into the one build?
 4. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
    linked goals (feasibility-gated — see the reality check):
-   - **(a) Pull the maps off an existing ECU.** ⚠️ GEMS maps live on socketed
-     **UV-EPROMs** (27C512 fuel / 27C1001 ignition) with **no known K-line read/
-     reflash path**, so "pulling" means either **(i)** physically read the EPROM
-     on a chip reader/programmer (bench hardware — pull the chip) or **(ii)**
-     discover a **proprietary memory-read service** over the K-line (unproven;
-     ties to the 0xDA channel + P1.1 security auth). **Determine which is feasible
-     first** before building tooling.
+   - **(a) Pull the maps off an existing ECU.** GEMS maps live on socketed
+     **UV-EPROMs** (27C512 fuel / 27C1001 ignition), so "pulling" means either
+     **(i)** physically read the EPROM on a chip reader/programmer (bench hardware
+     — pull the chip), or **(ii)** the **proprietary K-line memory-read** — now
+     **PROVEN to exist** (2026-09-08): the **`0x3C`** service on the 0xDA channel
+     reads the Intel memory (`0x2000` = the 27C1001 image), BUT it is **`$27`
+     security-locked**, so route (ii) is blocked until P1.1 cracks the seed→key.
+     Once `$27` opens, `0x3C` dumps the maps over the wire, no chip pull. Until
+     then, route (i) is the available path (and also the *source* of the `$27`
+     algorithm — see P1.1).
    - **(b) Switch between 4.0 and 4.6.** Find the real mechanism — does one ECU
      hold both maps, and what flips it? The `engine` coding byte (0x83) is stubbed.
      See the **[4.0/4.6 engine-variant toggle]** backlog item.
@@ -742,13 +755,26 @@ channel** (`~/da_probe.py` + `~/da2_probe.py`, 2026-09-04): it answers KWP `$22`
 with a checksum-valid, echo-checked, reproducible `03 7F 22 33 D7` =
 **securityAccessDenied**, which plain OBD `0x33` never returns. **The L-line
 unlocks a proprietary door that OBD does not** — the first one found; superseding
-"OBD is the ceiling." Not yet OPENED: `$27` requestSeed was silent, but the reply
-is ISO 14230 no-address framing (we were sending the OBD envelope) — retrying with
-`<len><data><cksum>` framing via `~/da3_probe.py`. Ties to the immobiliser /
-security-access ($27) backlog. Also fixed en route: the
+"OBD is the ceiling." Also fixed en route: the
 **multi-frame Mode 03 DTC decode bug** in `protocol/kline.py` (>3 stored codes
 span multiple `48 6B E8 43` frames; `_split_frames`/`decode_responses`, regression
 test from a real 2nd-ECU capture). Full detail: `memory/real-gems-protocol.md`.
+
+**0xDA `$27` seed OPENED + `0x3C` memory-read confirmed (2026-09-08).** The
+earlier "`$27` silent" was the wrong framing: with the L-line tied and **ISO-14230
+no-address framing** `[len][data][sum]`, **`$27 01` returns real randomized 16-bit
+seeds** (`02 27 01 2a → 04 67 01 <seed> aa`; keybytes `aa55`; `~/da3_probe.py`,
+`~/harvest_seeds.py`). And the T4 **memory-read service `0x3C`** (shickenchit,
+ecuconnections t=59049 — `0x1800`=config EEPROM, `0x2000`=27C1001 code image) is
+**confirmed present on 0xDA but `$27`-locked** (`securityAccessDenied` on `0x3C`
+and `22 04 E2`; `$23`=serviceNotSupported → `0x3C` is the read service;
+`~/da5_mode3c.py`). On plain OBD `0x33` both are silent — 0xDA only. **Net: coding,
+VIN last-6, immobiliser, maps, and the whole EEPROM+EPROM all sit behind one `$27`
+door, dumpable over the wire via `0x3C` once unlocked** — so `$27` seed→key `f` is
+now the single highest-value target. MEMS3/Td5 algos did NOT open it (`$27 02` →
+canned `03 67 02 CC 38`, no oracle); get `f` from a 27C1001 disassembly or a
+real-tool seed→key capture. All probes read-only. Detail:
+`memory/real-gems-protocol.md`.
 
 **Where the project stands (latest release: v0.0.10, 2026-09-08 — hardware-verified
 BLE + Backend transport unification; `main` is AHEAD of the tag):** Phases

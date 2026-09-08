@@ -314,6 +314,41 @@ diagnostic cipher. Lockout note: the channel returned `67 02` (never `0x35`) to
 wrong keys, so it may not even enforce the `$27` attempt counter — but do NOT
 assume; keep power-cycling between batches.
 
+## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
+**A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
+cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
+from ecuconnections t=59049 (user *shickenchit*, 2021): "mode 0x3C over the obd2
+port queries the intel memory; `3C LSB MSB LEN`; **0x1800 = start of the EEPROM,
+0x2000 = start of the 1001**; not linear after a while; truncates at FFFF; `22 04
+E2` returns it in correct order." Two probes settled where it lives:
+- **On plain OBD (0x33), `mode3c_probe.py`: TOTAL SILENCE.** `0x3C` and `22 04 E2`
+  got no reply at all (liveness fine — `01 00 -> 41 00 bf 9f f9 91`). The 0x33
+  address processes ONLY OBD-II modes. shickenchit's bin was a '95 RR; our Disco 1
+  doesn't expose 0x3C on OBD. Dead end on that channel.
+- **On 0xDA (L-line tied, ISO-14230 no-addr framing), `da5_mode3c.py`: `0x3C` and
+  `22 04 E2` both return checksum-valid `securityAccessDenied` (0x33)** — NOT
+  silence, NOT serviceNotSupported. Seed flowed first (`04 67 01 b787 aa`, seed
+  0xB787) confirming a live channel. Reply to every `0x3C` read (both byte orders,
+  0x2000/0x1800/0x0000) was `03 7f 3c 33 f1`. **So 0x3C EXISTS on 0xDA and is
+  `$27`-locked.** Byte order was irrelevant — the ECU denies on security before
+  parsing the address, so 0x3C's real addr/length format is a post-unlock unknown.
+- **Standard KWP `$23 ReadMemoryByAddress` = `serviceNotSupported` (0x11)** on
+  0xDA — so this ECU's memory-read is the proprietary **0x3C**, not `$23`.
+  shickenchit's 0x3C is confirmed as the right service, just on 0xDA not OBD.
+
+**Why this matters / strategy shift:** every proprietary target — coding, VIN
+last-6, the immobiliser/security code, AND the 27C1001 code image (the `$27`
+handler + ignition maps at 0x2000) plus the config EEPROM at 0x1800 — sits behind
+this one `$27` door, all reachable via `0x3C` reads once unlocked. So `$27`
+seed→key is unambiguously the **single highest-value target**; it unlocks
+*everything* on this ECU over the wire. **Honest caveat (no free bootstrap):**
+reading 0x2000 over 0x3C needs the key, and deriving the key algorithm needs the
+27C1001 — chicken-and-egg, so the EPROM still comes from a chip-pull/community
+dump for the seed→key disassembly. BUT this makes a **real-tool seed→key capture
+pay off double**: a captured key unlocks 0x3C → dump the EEPROM (immo/VIN/config/
+clone data) and the whole EPROM with NO chip pull, ever. Probes: `~/mode3c_probe.py`
+(OBD, silent) and `~/da5_mode3c.py` (0xDA, `$27`-gated). Both strictly read-only.
+
 ## Actuator / output-test channel — NOT on OBD (2026-09-08)
 Confirmed the output/actuator tests (fuel-pump relay, O2 heater, MIL, A/C,
 fans) are **not reachable on the OBD channel**. On the live 0x33 session, with
@@ -332,21 +367,26 @@ no state byte can be assumed harmless).
 **$27 lockout strategy (for the upcoming 0xDA unlock — `~/da4_actuator_plan.md`).**
 KWP `$27` locks (`0x36 exceedNumberOfAttempts`, ~3 tries) on wrong **KEY**
 submissions, NOT on seed requests — and `0x37 requiredTimeDelayNotExpired`
-enforces a wait between attempts. We are stuck at *seed discovery* (`$27 01` is
-silent — a framing issue, see da3), which is the SAFE zone: seed requests don't
-increment the counter. Rules baked into the plan: seed-only first; NEVER
+enforces a wait between attempts. Seed discovery is SOLVED (`$27 01` now returns
+real seeds in ISO-14230 no-addr framing — see the SEED-flowing section) and is
+the SAFE zone: seed requests don't increment the counter. Rules baked into the plan: seed-only first; NEVER
 brute-force keys (only submit a key computed from a known algorithm); hard
 per-session attempt budget; abort on `0x36`/`0x37`; power-cycle + wait between
 sessions; log every attempt. Diagnostic `$27` lockout is recoverable (power
 cycle + delay); it is not the immobiliser PIN.
 
 ## NOT yet mapped (the frontier)
-The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
-actuator drives, coding, immobiliser — ride the **same `68 6A F1` envelope**
-but use manufacturer service bytes still to be discovered. `KlineClient.raw_service`
-is the hook to probe/add them at the bench. What's proven is only the **OBD-II
-emissions subset**; the proprietary stuff (esp. the immobiliser) is still
-experimental.
+What's proven over the wire is only the **OBD-II emissions subset** (on 0x33). The
+fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures, actuator
+drives, coding, VIN last-6, immobiliser — now have a KNOWN HOME and a KNOWN GATE:
+they live on the **0xDA channel** (L-line tied, ISO-14230 no-addr framing) behind
+**`$27` security**. Confirmed reachable-but-locked there: coding/data reads (`$21`/
+`$22`), memory reads (`0x3C` at 0x1800 EEPROM / 0x2000 27C1001), and — by the same
+`securityAccessDenied` pattern — the rest. The single remaining gate is the **`$27`
+seed→key algorithm `f`** (seed flows; key is unknown; get it from a 27C1001
+disassembly or a real-tool capture). Crack `$27` and effectively everything opens,
+including an over-the-wire dump of the EEPROM + EPROM via `0x3C`. `KlineClient.raw_service`
+(OBD envelope) and the `da*`/`mode3c` probes (0xDA no-addr framing) are the hooks.
 
 ## Two bring-up bugs found & fixed (both committed)
 1. **Host serial timeout too short** (`transport/pico.py`): default was 2.0 s but
