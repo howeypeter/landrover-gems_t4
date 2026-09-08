@@ -79,7 +79,7 @@ def test_apply_network_connection_reroutes_backend(qtbot, served_ecu, temp_confi
     screen._radio_network.setChecked(True)
     screen._host.setText(host)
     screen._tcp_port.setText(str(port))
-    screen.on_tick()  # instant mode (conftest) -> runs inline
+    screen._on_save()  # Save applies + persists; instant mode -> runs inline
 
     assert backend.is_remote and backend.is_wireless
     assert backend.connected
@@ -103,68 +103,84 @@ def test_apply_virtual_restores_local_ecu(qtbot, served_ecu):
     screen.on_enter()
 
     screen._radio_virtual.setChecked(True)
-    screen.on_tick()
+    screen._on_apply()
     assert not backend.is_remote
     assert backend.read_dtcs() == []  # local healthy fake again
     backend.disconnect()
 
 
 # --------------------------------------------------------------------------- #
-# "Test" action (cross button) — tests the ACTIVE connection, changes nothing
+# Cancel / Apply / Save — this screen uses its own buttons, not the shell bar
 # --------------------------------------------------------------------------- #
 
-def test_cross_is_labeled_test_and_present_in_nav():
+def test_screen_uses_own_buttons_not_shell_nav():
     screen = _make_screen(Backend())
-    assert "cross" in screen.nav_buttons()
-    assert screen.cross_label() == "Test"
+    assert screen.nav_buttons() == set()  # shell tick/cross/back hidden here
+    assert screen._btn_cancel.text() == "Cancel"
+    assert screen._btn_apply.text() == "Apply"
+    assert screen._btn_save.text() == "Save"
 
 
-def test_on_cross_tests_the_active_virtual_connection(qtbot):
-    backend = Backend()
-    screen = _make_screen(backend)
-    qtbot.addWidget(screen)
-    screen.on_enter()
-
-    screen.on_cross()  # instant mode -> runs inline
-
-    assert "OK" in screen._test_result.text()
-    assert "Virtual ECU" in screen._test_result.text()
-    assert backend.connected  # test_connection() opened the session
-
-
-def test_on_cross_tests_active_network_connection_and_measures_latency(
-    qtbot, served_ecu
-):
+def test_apply_tests_selected_and_stays(qtbot, served_ecu, temp_config):
+    """Apply switches to + tests the SELECTED connection, stays on the screen,
+    and does NOT persist (only Save persists)."""
     host, port = served_ecu
     backend = Backend()
-    backend.set_connection("network", host=host, tcp_port=port)
     screen = _make_screen(backend)
     qtbot.addWidget(screen)
-    screen.on_enter()
-
-    screen.on_cross()
-
-    text = screen._test_result.text()
-    assert "OK" in text
-    assert "replies" in text  # TcpTransport.ping() -> measured round trip
-    backend.disconnect()
-
-
-def test_on_cross_does_not_persist_or_change_the_form(qtbot, served_ecu, temp_config):
-    """Test is read-only: no config write, no reroute of an unrelated backend."""
-    host, port = served_ecu
-    backend = Backend()  # stays virtual; screen fields never touch it
-    screen = _make_screen(backend)
-    qtbot.addWidget(screen)
+    routes: list[str] = []
+    screen.navigate.connect(routes.append)
     screen.on_enter()
 
     screen._radio_network.setChecked(True)
     screen._host.setText(host)
     screen._tcp_port.setText(str(port))
-    screen.on_cross()  # tests the ACTIVE (virtual) connection, ignores the form
+    screen._on_apply()  # instant mode -> inline
 
-    assert not backend.is_remote
-    assert not temp_config.exists()
+    assert backend.is_remote and backend.connected  # applied + tested (connected)
+    assert "OK" in screen._test_result.text()
+    assert routes == []                # Apply stays on the screen
+    assert not temp_config.exists()    # Apply doesn't persist
+    backend.disconnect()
+
+
+def test_save_persists_and_returns_to_menu(qtbot, served_ecu, temp_config):
+    host, port = served_ecu
+    backend = Backend()
+    screen = _make_screen(backend)
+    qtbot.addWidget(screen)
+    routes: list[str] = []
+    screen.navigate.connect(routes.append)
+    screen.on_enter()
+
+    screen._radio_network.setChecked(True)
+    screen._host.setText(host)
+    screen._tcp_port.setText(str(port))
+    screen._on_save()
+
+    assert backend.is_remote and backend.connected
+    saved = json.loads(temp_config.read_text(encoding="utf-8"))
+    assert saved["kind"] == "network"
+    assert routes == ["system_menu"]   # Save returns to the main menu
+    backend.disconnect()
+
+
+def test_cancel_returns_without_applying(qtbot, served_ecu, temp_config):
+    host, port = served_ecu
+    backend = Backend()
+    screen = _make_screen(backend)
+    qtbot.addWidget(screen)
+    routes: list[str] = []
+    screen.navigate.connect(routes.append)
+    screen.on_enter()
+
+    screen._radio_network.setChecked(True)
+    screen._host.setText(host)
+    screen._on_cancel()
+
+    assert not backend.is_remote        # nothing applied
+    assert not temp_config.exists()     # nothing saved
+    assert routes == ["system_menu"]    # returned to the main menu
     backend.disconnect()
 
 
@@ -182,7 +198,7 @@ def test_bad_endpoint_rolls_back_to_previous_connection(qtbot):
     screen._radio_network.setChecked(True)
     screen._host.setText("127.0.0.1")
     screen._tcp_port.setText("1")  # nothing listens there
-    screen.on_tick()
+    screen._on_apply()
     assert any("Connection failed" in s for s in statuses)
     # Rolled back: still the virtual ECU, and it still works.
     assert not backend.is_remote
@@ -201,7 +217,7 @@ def test_missing_fields_prompt_instead_of_apply(qtbot):
 
     screen._radio_usb.setChecked(True)
     screen._com_port.setText("")
-    screen.on_tick()
+    screen._on_apply()
     assert any("COM port" in s for s in statuses)
     assert not backend.is_remote
 

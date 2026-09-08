@@ -14,19 +14,24 @@ functions (wired-only write policy).
 
 This screen is also reachable from every other screen via the persistent "VCI:
 ..." button in the title bar (:meth:`KioskWindow.update_connection_indicator`)
-— you don't have to hunt through the System menu to change or test the link.
-The tick (✓) applies a new selection; the cross (✗) is repurposed as "Test" —
-it proves the *currently active* connection works and, where the transport
-supports it (USB/Network), measures round-trip latency to the adapter/server,
-without changing or persisting anything.
+— you don't have to hunt through the System menu to change the link.
+
+It uses its own **Cancel / Apply / Save** buttons (not the shell's tick/cross/
+back bar): **Apply** switches to and tests the selected connection, staying on
+this screen; **Save** does the same and also remembers it for next time, then
+returns to the main menu; **Cancel** returns to the main menu without saving.
+Applying proves the link before committing — on failure the backend rolls back
+to the previous (working) connection.
 """
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
     QCheckBox,
     QFormLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QRadioButton,
     QVBoxLayout,
     QWidget,
@@ -35,6 +40,9 @@ from PySide6.QtWidgets import (
 from gems_t4.app import config as _config
 from gems_t4.app.backend import Backend
 from gems_t4.app.gui.base import Screen
+
+#: The GEMS main menu screen to return to on Save / Cancel.
+_MAIN_MENU = "system_menu"
 
 
 class ConnectionScreen(Screen):
@@ -111,22 +119,35 @@ class ConnectionScreen(Screen):
         self._current.setWordWrap(True)
         lay.addWidget(self._current)
 
-        #: Result of the on-demand "Test" action (✗) — separate from
-        #: ``_current``, which just names the active connection.
+        #: Result of the last Apply/Save attempt (tests the selected link) —
+        #: separate from ``_current``, which just names the active connection.
         self._test_result = QLabel("")
         self._test_result.setObjectName("Lcd")
         self._test_result.setWordWrap(True)
         lay.addWidget(self._test_result)
 
         note = QLabel(
-            "Press ✓ to apply and test a new connection (remembered for next "
-            "time), or ✗ to test the connection that's active right now."
+            "Apply — switch to and test the selected connection, staying here. "
+            "Save — apply, remember it for next time, and return to the menu. "
+            "Cancel — return to the menu without saving."
         )
         note.setWordWrap(True)
         note.setStyleSheet("color: #404040;")
         lay.addWidget(note)
 
         lay.addStretch(1)
+
+        buttons = QHBoxLayout()
+        self._btn_cancel = QPushButton("Cancel")
+        self._btn_apply = QPushButton("Apply")
+        self._btn_save = QPushButton("Save")
+        self._btn_cancel.clicked.connect(self._on_cancel)
+        self._btn_apply.clicked.connect(self._on_apply)
+        self._btn_save.clicked.connect(self._on_save)
+        buttons.addStretch(1)
+        for b in (self._btn_cancel, self._btn_apply, self._btn_save):
+            buttons.addWidget(b)
+        lay.addLayout(buttons)
 
         for radio in (self._radio_virtual, self._radio_usb, self._radio_network,
                       self._radio_ble):
@@ -179,89 +200,96 @@ class ConnectionScreen(Screen):
         self._update_enabled()
         self._show_current()
         self._test_result.setText("")
-        self.status.emit("Choose a connection and press ✓ to apply, or ✗ to test.")
+        self.status.emit("Choose a connection — Apply to test it, Save to keep it.")
 
     # -- navigation ------------------------------------------------------------#
     def nav_buttons(self) -> set[str]:
-        return {"back", "cross", "tick"}
+        # This screen uses its own Cancel / Apply / Save buttons (below the
+        # form), not the shell's tick/cross/back bar.
+        return set()
 
-    def cross_label(self) -> str:
-        return "Test"
-
-    def on_tick(self) -> None:
-        """Apply the selection: reconfigure the backend, connect, persist."""
+    def _read_form(self) -> dict | None:
+        """Validate the form and return apply_connection kwargs, or None (with a
+        status message) if a required field is missing / malformed."""
         kind = self._selected_kind()
         com_port = self._com_port.text().strip()
         host = self._host.text().strip()
+        device = self._ble_device.text().strip()
         try:
             tcp_port = int(self._tcp_port.text().strip() or "9141")
         except ValueError:
             self.status.emit("TCP port must be a number.")
-            return
-        allow_writes = self._allow_writes.isChecked()
-        device = self._ble_device.text().strip()
+            return None
         if kind == "usb" and not com_port:
             self.status.emit("Enter the COM port of the USB adapter.")
-            return
+            return None
         if kind == "network" and not host:
             self.status.emit("Enter the host/IP of the network endpoint.")
-            return
+            return None
         if kind == "ble" and not device:
             self.status.emit("Enter the BLE device name (default gems-pico).")
+            return None
+        return {
+            "kind": kind,
+            "com_port": com_port or None,
+            "host": host or None,
+            "tcp_port": tcp_port,
+            "allow_writes": self._allow_writes.isChecked(),
+            "device": device or None,
+        }
+
+    def _apply(self, *, persist: bool, then_leave: bool) -> None:
+        """Apply (and thereby test) the selected connection. Optionally persist
+        it and/or return to the main menu on success."""
+        form = self._read_form()
+        if form is None:
             return
+        kind = form["kind"]
+        self._test_result.setText("")
 
         def work() -> str:
-            # Prove the link before declaring success; on failure the backend
-            # rolls back to the previous (working) connection.
-            return self.backend.apply_connection(
-                kind,
-                com_port=com_port or None,
-                host=host or None,
-                tcp_port=tcp_port,
-                allow_writes=allow_writes,
-                device=device or None,
-            )
+            # apply_connection proves the link (connect); on failure the backend
+            # rolls back to the previous (working) connection and re-raises.
+            return self.backend.apply_connection(**form)
 
         def done(label: str) -> None:
-            _config.save_config(
-                _config.ConnectionConfig(
-                    kind=kind,
-                    com_port=com_port or _config.ConnectionConfig().com_port,
-                    host=host or _config.ConnectionConfig().host,
-                    tcp_port=tcp_port,
-                    allow_writes=allow_writes,
-                    device=device or _config.ConnectionConfig().device,
+            if persist:
+                _config.save_config(
+                    _config.ConnectionConfig(
+                        kind=kind,
+                        com_port=form["com_port"] or _config.ConnectionConfig().com_port,
+                        host=form["host"] or _config.ConnectionConfig().host,
+                        tcp_port=form["tcp_port"],
+                        allow_writes=form["allow_writes"],
+                        device=form["device"] or _config.ConnectionConfig().device,
+                    )
                 )
-            )
             self._show_current()
             self._refresh_window_indicator()
-            self.status.emit(f"VCI configured — {label}")
+            self._test_result.setText(f"OK: {label}")
+            if then_leave:
+                self.status.emit(f"VCI saved — {label}")
+                self.navigate.emit(_MAIN_MENU)
+            else:
+                self.status.emit(f"Applied — {label}")
 
         def failed(exc: Exception) -> None:
             self._show_current()
             self._refresh_window_indicator()
+            self._test_result.setText(f"FAILED: {exc}")
             self.status.emit(f"Connection failed: {exc}")
 
         self.run_with_wait("Testing VCI connection", work, done, failed)
 
-    def on_cross(self) -> None:
-        """Test the connection that's ACTIVE right now — no form fields
-        involved, nothing persisted. Opens a session if one isn't already
-        open, then measures round-trip latency where the transport supports
-        it (see Backend.test_connection)."""
-        self._test_result.setText("")
+    # -- buttons ---------------------------------------------------------------#
+    def _on_apply(self) -> None:
+        """Apply + test the selected connection; stay on this screen."""
+        self._apply(persist=False, then_leave=False)
 
-        def done(result) -> None:  # ConnectionTestResult
-            self._show_current()
-            self._refresh_window_indicator()
-            prefix = "OK" if result.ok else "FAILED"
-            self._test_result.setText(f"{prefix}: {result.message}")
-            self.status.emit(f"Connection test: {result.message}")
+    def _on_save(self) -> None:
+        """Apply + test, persist for next time, then return to the main menu."""
+        self._apply(persist=True, then_leave=True)
 
-        def failed(exc: Exception) -> None:
-            self._test_result.setText(f"FAILED: {exc}")
-            self.status.emit(f"Connection test error: {exc}")
-
-        self.run_with_wait(
-            "Testing VCI connection", self.backend.test_connection, done, failed
-        )
+    def _on_cancel(self) -> None:
+        """Return to the main menu without saving."""
+        self.navigate.emit(_MAIN_MENU)
