@@ -43,7 +43,24 @@ class _StaleSessionBackend:
         self._fresh = True  # a fresh init revives the session
 
 
-def test_fault_codes_reread_reinits_and_keeps_codes_on_real_ecu(qtbot):
+class _AliveBackend:
+    """Real-ECU-like backend whose session stays alive (codes on every read)."""
+
+    on_real_ecu = True
+
+    def __init__(self) -> None:
+        self.disconnects = 0
+
+    def read_dtcs(self) -> list[Dtc]:
+        return [Dtc(code="P0303", description="cyl 3 misfire", state=DtcState.STORED)]
+
+    def disconnect(self) -> None:
+        self.disconnects += 1
+
+
+def test_fault_codes_reread_reinits_and_keeps_codes_when_session_stale(qtbot):
+    """Stale session: the first (existing-session) read is empty, so re-init once
+    and re-read — codes survive, and it did re-initialise."""
     backend = _StaleSessionBackend()
     screen = FaultCodesScreen(backend)
     qtbot.addWidget(screen)
@@ -51,6 +68,20 @@ def test_fault_codes_reread_reinits_and_keeps_codes_on_real_ecu(qtbot):
     screen.on_enter()  # first read -> code shown
     assert screen._table.rowCount() == 1
 
-    screen.on_tick()  # RE-READ: must re-init, not read the stale session
+    screen.on_tick()  # RE-READ on a now-stale session
     assert screen._table.rowCount() == 1, "codes must not vanish on re-read"
-    assert backend.disconnects >= 1, "the real-ECU re-read must re-initialise"
+    assert backend.disconnects >= 1, "an empty real-ECU read must re-initialise"
+
+
+def test_fault_codes_reread_stays_fast_on_live_session(qtbot):
+    """Live session: a re-read that already returns codes must NOT re-init (the
+    slow 5-baud init) — that's the performance fix."""
+    backend = _AliveBackend()
+    screen = FaultCodesScreen(backend)
+    qtbot.addWidget(screen)
+
+    screen.on_enter()
+    screen.on_tick()  # re-read on a LIVE session
+
+    assert screen._table.rowCount() == 1
+    assert backend.disconnects == 0, "a live re-read must not re-init (stays fast)"
