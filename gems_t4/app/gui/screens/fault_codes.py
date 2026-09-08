@@ -62,8 +62,19 @@ class FaultCodesScreen(Screen):
         self._read()
 
     def _read(self) -> None:
-        """Read the stored codes behind the ECU-communication wait."""
+        """Read the stored codes behind the ECU-communication wait.
+
+        On a REAL ECU, re-initialise the session (a fresh 5-baud init) for every
+        read: the GEMS K-line session is NOT held across user think-time (there's
+        no tester-present keep-alive), so re-reading a stale session returns
+        silence and the codes would appear to *vanish* on the second Read. Dropping
+        the session first makes ``read_dtcs`` re-init, so every Read is as reliable
+        as the first. The virtual ECU has no session decay, so it keeps its session
+        (no needless re-init cost there).
+        """
         self._pending_clear = False
+        if self.backend.on_real_ecu:
+            self.backend.disconnect()
         self.run_with_wait("Reading fault codes", self.backend.read_dtcs, self._show)
 
     def _show(self, dtcs: list[Dtc]) -> None:
