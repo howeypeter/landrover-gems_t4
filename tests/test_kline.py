@@ -24,6 +24,7 @@ class FakeKlineEcu(Transport):
         self.responses = responses
         self._pending: bytes | None = None
         self._open = False
+        self.init_count = 0  # how many times the ECU was (re-)initialised
 
     def open(self) -> None:
         self._open = True
@@ -36,6 +37,7 @@ class FakeKlineEcu(Transport):
 
     def init(self, address: int, mode: str = "slow") -> InitResult:
         assert address == kline.KLINE_INIT_ADDRESS
+        self.init_count += 1
         return InitResult()
 
     def send(self, frame: bytes) -> None:
@@ -266,3 +268,78 @@ def test_read_vin_silent_returns_none() -> None:
     client = kline.KlineClient(FakeKlineEcu({}))  # ECU stays silent
     client.connect()
     assert client.read_vin() is None
+
+
+# -- session resilience (stale K-line session recovery) ---------------------- #
+
+class _StaleAfterOneRead(FakeKlineEcu):
+    """Mode 03 answers only on the FIRST read after each init; a second read on
+    the same session is silent, simulating the GEMS session going stale (no
+    tester-present keep-alive). A re-init revives it."""
+
+    def __init__(self, responses: dict[str, bytes]) -> None:
+        super().__init__(responses)
+        self._reads_since_init = 0
+
+    def init(self, address: int, mode: str = "slow") -> InitResult:
+        self._reads_since_init = 0
+        return super().init(address, mode)
+
+    def send(self, frame: bytes) -> None:
+        payload = frame[3:-1]
+        if payload.hex() == "03":
+            if self._reads_since_init == 0:
+                self._reads_since_init += 1
+                self._pending = self.responses["03"]
+                return
+            raise TransportTimeout("stale session")  # silent on the 2nd read
+        super().send(frame)
+
+
+def test_read_dtcs_recovers_a_stale_session() -> None:
+    resp = bytes.fromhex("486be84311930158131604486be84301250000000004")
+    ecu = _StaleAfterOneRead({"03": resp})
+    client = kline.KlineClient(ecu)
+    client.connect()
+    first = client.read_dtcs()
+    assert first == ["P1193", "P0158", "P1316", "P0125"]
+    assert ecu.init_count == 1
+    # The session is now stale -> the second read is silent -> the client must
+    # re-init once and retry, so the codes DON'T vanish on re-read.
+    second = client.read_dtcs()
+    assert second == first, "codes must survive a stale-session re-read"
+    assert ecu.init_count == 2, "a silent read must re-init exactly once"
+
+
+def test_read_dtcs_no_codes_does_not_reinit() -> None:
+    """A VALID empty response (43 00) is 'no codes', not a dead session — it must
+    NOT trigger a (slow) re-init."""
+    body = bytes([0x48, 0x6B, 0xE8, 0x43, 0x00, 0x00])
+    resp = body + bytes([kline.obd_checksum(body)])
+    ecu = FakeKlineEcu({"03": resp})  # always alive, always empty
+    client = kline.KlineClient(ecu)
+    client.connect()
+    assert client.read_dtcs() == []
+    assert client.read_dtcs() == []
+    assert ecu.init_count == 1, "a valid empty read must not re-init"
+
+
+def test_read_dtcs_persistently_silent_returns_empty() -> None:
+    """If the ECU stays silent even after a re-init (truly gone), return [] —
+    one recovery attempt, then give up gracefully."""
+    ecu = FakeKlineEcu({})  # never answers Mode 03
+    client = kline.KlineClient(ecu)
+    client.connect()
+    assert client.read_dtcs() == []
+    assert ecu.init_count == 2  # initial connect + one recovery re-init
+
+
+def test_read_dtcs_silent_but_session_alive_does_not_reinit() -> None:
+    """A live ECU that's silent on Mode 03 (no codes) but answers the PID-00
+    liveness probe is 'no codes', not a dead session -> no (slow) re-init."""
+    ecu = FakeKlineEcu(dict(RESPONSES))  # answers 0100/0105 but not 03
+    client = kline.KlineClient(ecu)
+    client.connect()
+    assert client.read_dtcs() == []
+    assert client.read_dtcs() == []
+    assert ecu.init_count == 1, "session alive (PID 00 answers) -> no re-init"

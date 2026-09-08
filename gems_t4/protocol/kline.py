@@ -289,9 +289,18 @@ class KlineClient:
     Pico on the bench or on-car.
     """
 
+    #: Retries for a mid-session re-init (session recovery) — snappier than the
+    #: initial connect, since the ECU is usually already awake.
+    _REINIT_RETRIES = 2
+
     def __init__(self, transport: Transport) -> None:
         self.transport = transport
         self._supported: set[int] | None = None
+        #: The init mode last used, so a mid-session re-init repeats it; and
+        #: whether we've successfully inited at least once (so session recovery
+        #: never fires before the first connect).
+        self._mode = "slow"
+        self._inited = False
 
     # -- lifecycle -------------------------------------------------------- #
     def connect(
@@ -307,18 +316,33 @@ class KlineClient:
         returns immediately.
         """
         self.transport.open()
+        return self._init(mode, retries=retries, retry_delay=retry_delay)
+
+    def _init(self, mode: str, *, retries: int, retry_delay: float) -> InitResult:
+        """Run the init handshake with transient-failure retries (transport must
+        already be open). Sets/clears the session-alive flag."""
         last: Exception | None = None
         for attempt in range(max(1, retries)):
             try:
-                return self.transport.init(KLINE_INIT_ADDRESS, mode)
+                result = self.transport.init(KLINE_INIT_ADDRESS, mode)
+                self._mode = mode
+                self._inited = True
+                return result
             except (InitError, TransportTimeout) as exc:
                 last = exc
                 if attempt + 1 < retries:
                     time.sleep(retry_delay)
+        self._inited = False
         assert last is not None  # loop ran at least once
         raise last
 
+    def _reinit(self) -> None:
+        """Re-run the init handshake to recover a stale K-line session (the
+        transport is already open). Raises on failure."""
+        self._init(self._mode, retries=self._REINIT_RETRIES, retry_delay=0.6)
+
     def close(self) -> None:
+        self._inited = False
         self.transport.close()
 
     def __enter__(self) -> "KlineClient":
@@ -353,12 +377,48 @@ class KlineClient:
             return None
         return decode_responses(self.transport.receive())
 
+    def _service_all(self, payload: bytes) -> list[bytes] | None:
+        """:meth:`raw_service_all` with one-shot session recovery.
+
+        The GEMS K-line session goes stale after inactivity (there is no
+        tester-present keep-alive), after which exchanges return **silence**
+        (``None``) — which is exactly what makes codes "vanish" on a stale
+        re-read. But silence alone can't be distinguished from a service that
+        legitimately has nothing to say (e.g. some ISO 9141-2 ECUs stay silent
+        on Mode 03 when there are no codes). So on silence we **probe liveness**
+        with Mode 01 PID 00, which a live ECU always answers: if that is *also*
+        silent the session is dead → re-init once and retry; if PID 00 answers,
+        the session is alive and the silence was genuine → return it untouched
+        (no needless re-init). This keeps quick repeat reads fast, recovers a
+        stale session, and never re-inits a healthy-but-silent read — generically
+        for every real-ECU read (DTCs, live data), CLI and GUI alike.
+        ``raw_service``/``raw_service_all`` stay pure single exchanges (the
+        pentest path relies on seeing real silence).
+        """
+        frames = self.raw_service_all(payload)
+        if frames is not None or not self._inited:
+            return frames
+        # Silent: is the session dead, or is this service just quiet?
+        alive_probe = bytes([0x01, 0x00])
+        if payload != alive_probe and self.raw_service(alive_probe) is not None:
+            return None  # session alive; the silence was genuine (no codes)
+        try:
+            self._reinit()
+        except (InitError, TransportTimeout):
+            self._inited = False
+            return None
+        return self.raw_service_all(payload)
+
+    def _service(self, payload: bytes) -> bytes | None:
+        frames = self._service_all(payload)
+        return frames[0] if frames else None
+
     # -- OBD-II services -------------------------------------------------- #
     def supported_pids(self, refresh: bool = False) -> set[int]:
         """Mode 01 PID 00 -> the set of supported PIDs 0x01..0x20 (cached)."""
         if self._supported is not None and not refresh:
             return self._supported
-        data = self.raw_service(bytes([0x01, 0x00]))
+        data = self._service(bytes([0x01, 0x00]))
         if not data or len(data) < 6 or data[0] != 0x41:
             self._supported = set()
         else:
@@ -368,7 +428,7 @@ class KlineClient:
 
     def read_pid(self, pid: int) -> bytes | None:
         """Mode 01 <pid> -> the raw value bytes (after the echoed pid), or None."""
-        data = self.raw_service(bytes([0x01, pid]))
+        data = self._service(bytes([0x01, pid]))
         if not data or len(data) < 2 or data[0] != 0x41 or data[1] != pid:
             return None
         return data[2:]
@@ -403,12 +463,17 @@ class KlineClient:
 
         Handles a multi-frame reply: >3 stored codes arrive as several
         ``48 6B E8 43 ...`` frames, which are split, validated and merged.
+        Session-resilient: a stale (silent) session is re-inited once and retried
+        (see :meth:`_service_all`), so a re-read never loses codes to a dead
+        session, while a genuine "no codes" (a valid ``43 00`` frame) is not
+        re-inited.
         """
-        return _dtcs_from_frames(self.raw_service_all(bytes([0x03])), 0x43)
+        return _dtcs_from_frames(self._service_all(bytes([0x03])), 0x43)
 
     def read_pending_dtcs(self) -> list[str]:
-        """Mode 07 -> pending DTC strings (empty when none). Multi-frame aware."""
-        return _dtcs_from_frames(self.raw_service_all(bytes([0x07])), 0x47)
+        """Mode 07 -> pending DTC strings (empty when none). Multi-frame aware,
+        session-resilient (see :meth:`read_dtcs` / :meth:`_service_all`)."""
+        return _dtcs_from_frames(self._service_all(bytes([0x07])), 0x47)
 
     def clear_dtcs(self) -> bool:
         """Mode 04 -> clear stored DTCs & freeze frames. True on a 0x44 reply.

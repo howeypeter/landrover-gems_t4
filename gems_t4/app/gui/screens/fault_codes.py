@@ -62,27 +62,14 @@ class FaultCodesScreen(Screen):
         self._read()
 
     def _read(self) -> None:
-        """Read the stored codes behind the ECU-communication wait."""
-        self._pending_clear = False
-        self.run_with_wait("Reading fault codes", self._read_resilient, self._show)
+        """Read the stored codes behind the ECU-communication wait.
 
-    def _read_resilient(self) -> list[Dtc]:
-        """Read stored codes, re-initing ONLY when needed (real ECU).
-
-        The GEMS K-line session isn't held across user think-time (no
-        tester-present), so a re-read of a *stale* session returns silence -> an
-        empty list, and the codes would appear to vanish. But re-initing on EVERY
-        read is needlessly slow (the 5-baud init is ~2-3 s). So: read first on the
-        existing session — if that comes back empty on a real ECU, drop the session
-        and read once more (a fresh init). A quick re-read while the session is
-        still alive stays fast; only a stale/empty read pays the re-init. (The
-        virtual ECU never goes stale, so it never re-inits.)
+        Session recovery (a stale K-line session vanishing the codes on re-read)
+        is handled generically in ``KlineClient`` — a silent read re-inits once
+        and retries — so the screen just calls ``read_dtcs``.
         """
-        dtcs = self.backend.read_dtcs()
-        if not dtcs and self.backend.on_real_ecu:
-            self.backend.disconnect()  # force a fresh 5-baud init
-            dtcs = self.backend.read_dtcs()
-        return dtcs
+        self._pending_clear = False
+        self.run_with_wait("Reading fault codes", self.backend.read_dtcs, self._show)
 
     def _show(self, dtcs: list[Dtc]) -> None:
         """Fill the table from a freshly read DTC list (GUI thread)."""
