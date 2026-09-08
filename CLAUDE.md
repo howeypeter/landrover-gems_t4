@@ -41,7 +41,11 @@ So "program the ECU like the T4 did" splits into:
    BeCM↔ECM (the "ENGINE IMMOBILISED" recovery). Exact GEMS bytes not public.
 3. **Config/coding** (VIN last-6, dealer ID, 4.0/4.6 select, transmission) →
    small read/edit/write Settings fields. Full VIN/EKA/market coding lives in
-   the **BeCM**, not the engine ECU.
+   the **body/security module, not the engine ECU** — that's the **BeCM on the
+   P38**, but the **Discovery 1 (GEMS-era) has NO BeCM**: it uses the **Lucas
+   10AS** alarm/immobiliser unit instead (a separate module on the K-line with
+   its own address). The EKA (Emergency Key Access) 4-digit code lives in the
+   10AS EEPROM. See the EKA-read backlog item.
 
 Full GEMS *diagnostics* (init, live data, DTCs, actuators, adaptations, config
 writes, immobiliser sync) are all implementable/emulatable — only "reflash the
@@ -605,9 +609,13 @@ obd.py`** and run via **`gems_t4 kline live|dtc|monitor|clear|vin --port COMx`**
 (real ECU only). **VIN read (2026-09-07):** `kline vin` = OBD-II Service 09 PID 02
 (`KlineClient.read_vin`, multi-frame; decode filters to VIN-ASCII so it tolerates
 the NODI/seq/padding layout). ⚠️ **May be UNSUPPORTED on GEMS** — Service 09 is
-often absent on early ISO 9141-2 ECUs, and the full VIN lives in the **BeCM**, not
-the engine ECU (the engine ECU only codes the VIN *last 6*); `read_vin` returns
-`None` cleanly in that case. Wired through `Backend.read_vin` (CLI + GUI share it);
+often absent on early ISO 9141-2 ECUs, and the full VIN lives in the **body/
+security module** (P38 **BeCM** / Discovery 1 **Lucas 10AS** — the Disco 1 has no
+BeCM), not the engine ECU (which only codes the VIN *last 6*); `read_vin` returns
+`None` cleanly in that case. **Confirmed on the user's ECU 2026-09-07: `kline vin
+--ble` returned no VIN** (this ECU doesn't answer Service 09 — consistent with an
+early Disco 1). The 10AS reference points to the user's vehicle being a
+**Discovery 1**. Wired through `Backend.read_vin` (CLI + GUI share it);
 unit-tested (multi/single-frame, unsupported, silent) but **not yet tried on real
 hardware** — run `gems_t4 kline vin --ble` / `--port` to find out if this ECU
 answers. The fuller **proprietary GEMS diagnostics** (~108 T4
@@ -709,6 +717,23 @@ up):**
   "ECU-to-engine matching" procedure. Ties into
   [EPROM programmability] and [4.0/4.6 toggle] above.
 
+- **Read the EKA code from the Lucas 10AS (Discovery 1 alarm/immobiliser).**
+  Requested 2026-09-07. The **EKA (Emergency Key Access)** is the 4-digit code
+  that lets you disarm the alarm / mobilise via the key when the fob fails. On
+  the **Discovery 1 (GEMS-era) it lives in the Lucas 10AS** alarm ECU's EEPROM
+  (the P38 equivalent is the BeCM — the Disco 1 has **no BeCM**). A Land Rover
+  diagnostic tool (Nanocom Evolution, Hawkeye, TestBook) plugs into OBD-II, talks
+  to the **10AS alarm menu over the K-line**, and reads the EKA straight out of
+  EEPROM in seconds. Goal: do the same from `gems_t4`. KEY POINT: the 10AS is a
+  **separate module on the K-line with its OWN address** — NOT the GEMS engine
+  ECU and NOT OBD-II Mode 09; this is a proprietary Lucas 10AS protocol, so it
+  ties into the same manufacturer-channel / addressing work as the immobiliser
+  and the 0xDA/L-line exploration (the 10AS may be one of the addresses to probe
+  — see memory/real-gems-protocol.md). **Default-code trick to try first:** many
+  **NAS** trucks / certain build years shipped the 10AS with a generic default
+  EKA of **1-5-1-5** — worth trying before/without reading. Not started; needs
+  the 10AS address + protocol (research, likely bench probing). Ties to the
+  immobiliser Security-Learn and "unlock the immobiliser from the bench" items.
 - **Unlock / handle the immobiliser from the bench (no BeCM present).** The
   immobiliser Security-Learn is a BeCM↔ECM re-sync — normally a car job,
   because the **BeCM only exists in the vehicle**, not on the bench. Research

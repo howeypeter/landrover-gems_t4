@@ -161,7 +161,7 @@ def test_save_persists_and_returns_to_menu(qtbot, served_ecu, temp_config):
     assert backend.is_remote and backend.connected
     saved = json.loads(temp_config.read_text(encoding="utf-8"))
     assert saved["kind"] == "network"
-    assert routes == ["system_menu"]   # Save returns to the main menu
+    assert routes == ["boot"]   # Save returns to the start page (boot)
     backend.disconnect()
 
 
@@ -180,7 +180,7 @@ def test_cancel_returns_without_applying(qtbot, served_ecu, temp_config):
 
     assert not backend.is_remote        # nothing applied
     assert not temp_config.exists()     # nothing saved
-    assert routes == ["system_menu"]    # returned to the main menu
+    assert routes == ["boot"]    # returned to the start page (boot)
     backend.disconnect()
 
 

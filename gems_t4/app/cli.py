@@ -391,8 +391,9 @@ def _cmd_kline(args: argparse.Namespace) -> int:
             else:
                 render.console.print(
                     f"No VIN from {source}. The GEMS engine ECU may not support "
-                    "OBD-II Service 09 (early ISO 9141-2) — the full VIN lives in "
-                    "the BeCM, not the engine ECU."
+                    "OBD-II Service 09 (early ISO 9141-2). The full VIN, if held "
+                    "electronically at all, lives in the body/security module "
+                    "(P38 BeCM / Discovery 1 Lucas 10AS), not the engine ECU."
                 )
             return 0
 

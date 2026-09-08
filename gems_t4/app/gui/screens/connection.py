@@ -19,9 +19,10 @@ This screen is also reachable from every other screen via the persistent "VCI:
 It uses its own **Cancel / Apply / Save** buttons (not the shell's tick/cross/
 back bar): **Apply** switches to and tests the selected connection, staying on
 this screen; **Save** does the same and also remembers it for next time, then
-returns to the main menu; **Cancel** returns to the main menu without saving.
-Applying proves the link before committing — on failure the backend rolls back
-to the previous (working) connection.
+returns to the start page; **Cancel** returns to the start page without saving.
+("Start page" = the boot / self-test screen, per the user's request.) Applying
+proves the link before committing — on failure the backend rolls back to the
+previous (working) connection.
 """
 from __future__ import annotations
 
@@ -41,8 +42,9 @@ from gems_t4.app import config as _config
 from gems_t4.app.backend import Backend
 from gems_t4.app.gui.base import Screen
 
-#: The GEMS main menu screen to return to on Save / Cancel.
-_MAIN_MENU = "system_menu"
+#: Screen to return to on Save / Cancel — the initial boot / self-test page
+#: (the "start" of the kiosk flow), per the user's request.
+_MAIN_MENU = "boot"
 
 
 class ConnectionScreen(Screen):
@@ -128,8 +130,8 @@ class ConnectionScreen(Screen):
 
         note = QLabel(
             "Apply — switch to and test the selected connection, staying here. "
-            "Save — apply, remember it for next time, and return to the menu. "
-            "Cancel — return to the menu without saving."
+            "Save — apply, remember it for next time, and return to the start. "
+            "Cancel — return to the start without saving."
         )
         note.setWordWrap(True)
         note.setStyleSheet("color: #404040;")
@@ -287,9 +289,9 @@ class ConnectionScreen(Screen):
         self._apply(persist=False, then_leave=False)
 
     def _on_save(self) -> None:
-        """Apply + test, persist for next time, then return to the main menu."""
+        """Apply + test, persist for next time, then return to the start page."""
         self._apply(persist=True, then_leave=True)
 
     def _on_cancel(self) -> None:
-        """Return to the main menu without saving."""
+        """Return to the start page (boot / self-test) without saving."""
         self.navigate.emit(_MAIN_MENU)
