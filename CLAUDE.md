@@ -85,6 +85,27 @@ The active working list for the next couple of days. Detailed backlog entries
    — the "learned" code (user believes a 5-digit learned code — reconcile vs the
    4-digit EKA; clarify which is which). Output: a capabilities doc + concrete
    next steps. Depends on 10AS access (see P4 / the EKA backlog item).
+5. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
+   linked goals (feasibility-gated — see the reality check):
+   - **(a) Pull the maps off an existing ECU.** ⚠️ GEMS maps live on socketed
+     **UV-EPROMs** (27C512 fuel / 27C1001 ignition) with **no known K-line read/
+     reflash path**, so "pulling" means either **(i)** physically read the EPROM
+     on a chip reader/programmer (bench hardware — pull the chip) or **(ii)**
+     discover a **proprietary memory-read service** over the K-line (unproven;
+     ties to the 0xDA channel + P1.4 pentest). **Determine which is feasible
+     first** before building tooling.
+   - **(b) Switch between 4.0 and 4.6.** Find the real mechanism — does one ECU
+     hold both maps, and what flips it? The `engine` coding byte (0x83) is stubbed.
+     See the **[4.0/4.6 engine-variant toggle]** backlog item.
+   - **(c) Find + archive a 4.6 reference map** for comparison/future use. Source
+     from a 4.6 ECU's EPROM or a community/public dump. ⚠️ **Copyright caution:**
+     an ECU calibration binary may be Land Rover IP — do **NOT** commit a
+     proprietary map dump to the PUBLIC repo; keep reference dumps **local /
+     gitignored** (or a private store), and only commit our own derived
+     analysis/tables.
+   Ties into **[EPROM programmability by model year]**, **[4.0/4.6 toggle]**, and
+   **[cross-fitted ECU / parts-car]** backlog items, and the **P4** hardware
+   decision (an EPROM reader on the bench).
 
 ### P2 — get the GUI working
 5. **Fix the GUI "clear codes" bug** on the fault-codes screen (reproduce + fix).
