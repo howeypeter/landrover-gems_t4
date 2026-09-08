@@ -203,6 +203,143 @@ whole 34-min run (all 1024 unresolved). Heartbeat = 0x33 raw; it never locks a
 session. Pentest firmware is a SEPARATE sketch (`firmware/pico_kline_pentest/`),
 production `firmware/pico_kline/` untouched. [[install-editable-from-repo]].
 
+## ⭐⭐ 0xDA SEED IS FLOWING — `$27` half-open (2026-09-08, `da3_probe.py`, K+L)
+**BREAKTHROUGH. With the L-line tied (C1017 pin 20 → K node), the 0xDA channel
+now returns real SecurityAccess seeds.** `$27 01 requestSeed`, sent in **ISO-14230
+no-address framing** `[len][data][sum]` (e.g. `02 27 01 2A`), gets a checksum-valid
+positive: `04 67 01 <seed_hi> <seed_lo> <cksum>` → **`67 01 <2-byte seed>`**. The
+seed is **randomized every request** (observed `8AE8`, `AE62`, `6FC7`, `2C5E`) —
+a genuine algorithm, not an echo/artifact. This supersedes ALL earlier "`$27 01`
+silent" notes: the fix was (a) the L-line tied AND (b) no-address framing (the OBD
+`68 6A F1` envelope still gets silence/denied). Details:
+- Seeds flow in the **default session** — no `$10 StartDiagSession` needed (`$10 <s>`
+  returns a non-standard NRC **`0x0C`**, meaning TBD).
+- keybytes on 0xDA slow-init = **`aa55`**.
+- **Behind the lock:** `$21 01/02` (ReadLocalId) and `$22` (ReadDataByCID) both
+  return `securityAccessDenied` (0x33) — so **a valid key unlocks the proprietary
+  reads: coding, VIN last-6, and (hypothesis) the `$30`/`$31` actuator/output
+  services.** `$3E`/`$81`/`$1A` → serviceNotSupported (focused security+data channel).
+
+**Seed characterized (500-sample harvest, `harvest_seeds.py`/`lcg_test.py`, 2026-09-08):**
+16-bit, **500/500 unique** (no tiny-space or fixed-seed shortcut), advances by a
+**near-constant ~`0xBF1F` per request** (92% within ±0x400) but is NOT a clean
+LCG/counter (exact affine recurrence fits only 5%) and NOT a function of wall-clock
+time (timer fit loose) → consistent with a **free-running timer/counter sampled
+per request**: an old, simple scheme with fine timing entropy. **Operational
+takeaway: seed generation is IRRELEVANT to the key** — the ECU checks `key==f(S)`
+for the seed `S` it hands you, so harvesting can't reveal `f`. The harvest's value
+was ruling out the lucky cases; the transform `f` is the wall. The simple-seed
+prior *does* raise the odds `f` is a classic Lucas/Rover transform (rotate /
+XOR-const / add-const / byte-swap), i.e. testable with very few offline-computed
+on-ECU attempts.
+
+**NEXT = the seed→key algorithm `f`. DO NOT brute-force.** `$27` locks after ~3 wrong
+KEY submissions (`0x36`); the key is 16-bit (65536) so on-ECU brute force is
+impossible within budget. The key MUST be computed offline from the algorithm.
+Paths: (1) **capture seed→key pairs from a real tool** (Nanocom/Faultmate/T4) with
+a K+L logic analyser and reverse the transform — reliable; (2) try **known
+Lucas/GEMS `$27` algorithms** offline against a captured seed. Seed requests are
+UNLIMITED and safe (they don't touch the attempt counter) — so we can harvest as
+many seed samples as we want for offline analysis without risk. Guardrails when we
+DO try keys: seed-only until we have an algorithm; ≤3 keys/power-cycle; abort on
+`0x36`/`0x37`; power-cycle + wait between sessions; log everything. `da3_probe.py`
+now has `SUBMIT_DUMMY_KEY=False` (seed-only) to enforce this.
+
+## Seed→key research synthesis (4-agent web sweep, 2026-09-08)
+**No public GEMS-specific `$27` seed→key algorithm exists** (all 4 agents; ~10-15%
+one exists). The GEMS aftermarket unlocks the immobiliser by **bench EEPROM edits**
+(code stored in the serial EEPROM ~bytes 152-155 & 552-555, two copies), never by a
+`$27` key — so there was never community pressure to crack it. No public GEMS
+seed→key example pairs anywhere. BUT two **published Lucas-family 16-bit `$27`
+transforms** are the lead testable candidates:
+- **MEMS3 (Revill)** — LFSR, seed-derived iteration count (1-16), feedback tap on
+  bits {9,8,2,1}, AND-cond on {13,3}. Rover K-series, Sagem-built, 16→16-bit KWP
+  `$27`. https://andrewrevill.co.uk/MEMS3SeedToKeyAlgorithm.htm (derived from ECU
+  ASM; HIGH credibility; 3 of 4 agents converged on it).
+- **Td5 (Lucas)** — `byteswap(seed) ^ 0x2E71 + 0xCF -> rotate` (exact rotate step
+  unverified). Fully open in SimonRafferty/Land-Rover-Td5-Arduino-Diagnostics &
+  EA2EGA/Ekaitza_Itzali. Another Lucas 16-bit analog.
+Both implemented (+trivials, +a pairs solver) in **`~/seedkey_candidates.py`**
+(offline, no ECU). **Key strategic fact: one captured (seed,key) pair collapses the
+trivial families instantly; the LFSR family solves with 2-3 pairs (GF(2) linear
+algebra)** — a real-tool logic-analyser capture is the highest-value artifact.
+**Definitive fallback = disassemble the `$27` handler out of the GEMS 27C1001 code
+EPROM** (Intel AN87C196KC / MCS-96; the 27C512 is fuel-only). Community bin dumps
+circulate behind login (TunerPro forum t=4294 reportedly has both EPROMs);
+disassembly is the guaranteed-correct path — same way Revill got MEMS3, ties to the
+P1.4 chip-read. **L-line/0xDA is explained:** standard dual-line ISO 9141 asserts
+the 5-baud address on K AND L; the "unlocked" free state is a real GEMS
+"development mode" Faultmate can set. **Caveat to rule out (agent 1):** our 16-bit
+`$27` seed vs the 16-bit immobiliser mobilise code (0000-FFFF) are suggestively
+similar — verify the 0xDA `$27` is a pure diagnostic cipher, not entangled with the
+mobilise path, before trusting a seed→key. **EKA correction (agent 2):** the EKA is
+a STORED EEPROM value, NOT derived from VIN — reading it from the Lucas 10AS is a
+memory-read task, not a crypto/formula task (update the EKA backlog item). Login-
+gated leads for the user: mg-rover.org "Testbook from hell", mhhauto "GEMS 8 IMMO
+OFF", TunerPro t=4294 (EPROM dumps), ecuconnections t=59049.
+
+**Attempt plan (on-ECU, budget-limited, needs approval each time):** request a fresh
+seed → `python ~/seedkey_candidates.py 0x<seed>` → submit the priority-1 (MEMS3) key
+via `$27 02`, ONE per power-cycle, ≤3/cycle, abort on `0x36`/`0x37`. If MEMS3 &
+Td5 both miss, the answer is a capture or the EPROM disassembly, not more guessing.
+
+## ⚠️ Unlock ATTEMPT result (2026-09-08) — MEMS3/Td5 did NOT open it; sendKey is opaque
+Ran budget-limited on-ECU `$27` attempts (`~/unlock_attempt.py`, `~/unlock_verify.py`,
+`~/disambiguate.py`). **Outcome: the 0xDA `$27` did NOT unlock.** Key facts:
+- `$27 02 <any 2-byte key>` returns a **CONSTANT `03 67 02 CC 38`** — identical for
+  MEMS3 keys AND a deliberately-wrong key (`0x8579`). So `67 02 CC` is a **canned
+  reply, NOT "key accepted"** (a real handler returns `7F 27 35` invalidKey for a
+  wrong key; this channel never does). The trailing **`0xCC`** is constant across
+  all seeds/keys — possibly a "denied" status byte in a `67 02 <status>` format, or
+  a stub.
+- **The true oracle = do the locked reads open?** After every accepted-looking
+  sendKey, `$21 01/02/03` and `$22 00 00` / `$22 F1 90` STILL return
+  `securityAccessDenied (0x33)`. Access was never granted. **MEMS3 is therefore
+  NOT confirmed** (and can't be, via this reply — the reply doesn't discriminate).
+- The channel is otherwise a genuine KWP responder: `$27 01` gives real varying
+  seeds, and other services give real per-service negatives (`$10`->0x0C,
+  `$3E/$81/$1A`->0x11, `$21/$22`->0x33), so it's not blindly echoing positives —
+  only `$27 02` is opaque.
+**Implication:** the two published Lucas quick-wins (MEMS3, Td5) did not open it,
+and the sendKey path gives no right/wrong signal beyond the reads (which stay
+locked). Blind 16-bit key guessing is NOT viable (no clean oracle + unknown
+lockout). **Reliable paths now: (1) disassemble the 27C1001 code EPROM to read the
+actual `$27` handler — expected key LENGTH/LEVEL and what `0xCC` means; (2) a real-
+tool (Nanocom/Faultmate/T4) logic-analyser capture of a full seed→key→grant.**
+Cheap un-run bench diagnostics worth trying first: vary the **key length** (1/3/4
+bytes — maybe the ECU wants ≠2 bytes and mishandles ours into the canned reply);
+try higher security **levels** (`$27 03/05/07`); and RULE OUT agent-1's caveat that
+this `$27` is entangled with the 16-bit immobiliser **mobilise** code, not a
+diagnostic cipher. Lockout note: the channel returned `67 02` (never `0x35`) to
+wrong keys, so it may not even enforce the `$27` attempt counter — but do NOT
+assume; keep power-cycling between batches.
+
+## Actuator / output-test channel — NOT on OBD (2026-09-08)
+Confirmed the output/actuator tests (fuel-pump relay, O2 heater, MIL, A/C,
+fans) are **not reachable on the OBD channel**. On the live 0x33 session, with
+liveness proven that same run (`01 00 -> 41 00 bf 9f f9 91`), the KWP2000
+output-control services were **silent**: `$30` (InputOutputControlByLocalId) and
+`$31` (StartRoutine), sent non-actuating (subfunction/state 0x00) in the
+`68 6A F1` envelope, both got no reply — not even `7F 30 11`. The 0x33 address
+processes ONLY OBD-II modes; it ignores the `$30`/`$31` envelope entirely. So
+actuators sit behind the proprietary **0xDA channel (L-line + `$27` security)**,
+same locked door as coding/immobiliser — there is no OBD shortcut. Probe:
+`~/actuator_probe.py` (uses `KlineClient.raw_service`; NON-ACTUATING by default —
+state byte 0x00 only; a real drive is gated behind `ACTUATE=True` + a single
+`DRIVE_FRAME`, off by default, because the real GEMS `$30` layout is unknown so
+no state byte can be assumed harmless).
+
+**$27 lockout strategy (for the upcoming 0xDA unlock — `~/da4_actuator_plan.md`).**
+KWP `$27` locks (`0x36 exceedNumberOfAttempts`, ~3 tries) on wrong **KEY**
+submissions, NOT on seed requests — and `0x37 requiredTimeDelayNotExpired`
+enforces a wait between attempts. We are stuck at *seed discovery* (`$27 01` is
+silent — a framing issue, see da3), which is the SAFE zone: seed requests don't
+increment the counter. Rules baked into the plan: seed-only first; NEVER
+brute-force keys (only submit a key computed from a known algorithm); hard
+per-session attempt budget; abort on `0x36`/`0x37`; power-cycle + wait between
+sessions; log every attempt. Diagnostic `$27` lockout is recoverable (power
+cycle + delay); it is not the immobiliser PIN.
+
 ## NOT yet mapped (the frontier)
 The fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures,
 actuator drives, coding, immobiliser — ride the **same `68 6A F1` envelope**
