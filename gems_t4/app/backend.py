@@ -33,6 +33,7 @@ from gems_t4.protocol.client import KwpClient
 from gems_t4.protocol.kline import KlineClient
 from gems_t4.protocol.security import compute_key
 from gems_t4.transport.base import Transport
+from gems_t4.transport.ble import BleTransport
 from gems_t4.transport.pico import PicoAdapterTransport
 from gems_t4.transport.tcp import DEFAULT_PORT, TcpTransport
 from gems_t4.transport.virtual import VirtualTransport
@@ -164,14 +165,20 @@ class Backend:
         host: str | None = None,
         tcp_port: int = DEFAULT_PORT,
         allow_writes: bool = False,
+        device: str | None = None,
+        real_ecu: bool | None = None,
     ) -> None:
         """Select how the tool reaches the ECU, then disconnect (lazy reconnect).
 
         ``kind`` is ``"virtual"`` (built-in simulated ECU), ``"usb"`` (Pico
-        adapter on ``com_port``) or ``"network"`` (TCP endpoint ``host``:
-        ``tcp_port`` — a ``gems_t4 serve`` bridge or a WiFi Pico). Network
-        connections are read-only unless ``allow_writes`` is set (CLAUDE.md
-        write policy). The next operation reconnects through the new transport.
+        adapter on ``com_port``), ``"network"`` (TCP endpoint ``host``:
+        ``tcp_port`` — a ``gems_t4 serve`` bridge or a WiFi Pico), or ``"ble"``
+        (a Bluetooth-LE Pico advertising ``device``, default ``gems-pico`` — no
+        pairing, no COM port). ``"usb"`` and ``"ble"`` reach a REAL GEMS ECU
+        (K-line profile); network connections are read-only unless
+        ``allow_writes`` is set (CLAUDE.md write policy). This is the single
+        place the whole tool builds a transport — the CLI and GUI both route
+        here. The next operation reconnects through the new transport.
         """
         if kind == "virtual":
             factory = None
@@ -185,6 +192,13 @@ class Backend:
                 return PicoAdapterTransport(port)
 
             label = f"USB connector — {port}"
+        elif kind == "ble":
+            name = device or "gems-pico"
+
+            def factory() -> Transport:
+                return BleTransport(name)
+
+            label = f"Bluetooth LE — {name}"
         elif kind == "network":
             if not host:
                 raise ValueError("network connection needs a host/IP")
@@ -203,10 +217,16 @@ class Backend:
         self.disconnect()
         self._transport_factory = factory
         self._connection_label = label
-        # USB = a Pico adapter wired to a REAL GEMS ECU -> the ISO 9141-2 K-line
-        # profile. Virtual and network (a serve/virtual endpoint) use the
-        # KWP-stylized stack. (Real ECU over the network can be added later.)
-        self._use_kline = (kind == "usb")
+        # Protocol profile: the real ISO 9141-2 K-line (a real GEMS ECU) vs the
+        # KWP-stylized stack (virtual ECU / serve bridge). By default it's derived
+        # from the transport — USB and BLE reach a real Pico+ECU, virtual/network
+        # use the stylized stack. ``real_ecu`` overrides this: the CLI ``kline``
+        # command forces the real profile over ANY transport (incl. --connect to
+        # a WiFi Pico running the real firmware).
+        if real_ecu is None:
+            self._use_kline = kind in ("usb", "ble")
+        else:
+            self._use_kline = real_ecu
 
     def apply_connection(
         self,
@@ -216,6 +236,8 @@ class Backend:
         host: str | None = None,
         tcp_port: int = DEFAULT_PORT,
         allow_writes: bool = False,
+        device: str | None = None,
+        real_ecu: bool | None = None,
     ) -> str:
         """:meth:`set_connection` + :meth:`connect`, atomically.
 
@@ -231,6 +253,8 @@ class Backend:
             host=host,
             tcp_port=tcp_port,
             allow_writes=allow_writes,
+            device=device,
+            real_ecu=real_ecu,
         )
         try:
             self.connect()
@@ -394,9 +418,11 @@ class Backend:
             return stored + pending
         return _dtc.read_dtcs(self._require())
 
-    def clear_dtcs(self) -> None:
+    def clear_dtcs(self) -> bool:
         """Clear fault codes (OBD-II Mode 04 on a real ECU).
 
+        Returns whether the ECU positively acknowledged the clear (a real ECU
+        may accept it without a positive echo — the virtual ECU always acks).
         The GEMS ECU resets after a Mode 04 clear — it drops the K-line session
         and won't answer a new init until the ignition is cycled. Callers should
         :meth:`disconnect` afterwards (so the next read re-inits) and tell the
@@ -404,9 +430,9 @@ class Backend:
         """
         self._ensure_connected()
         if self._kline is not None:
-            self._kline.clear_dtcs()
-            return
+            return bool(self._kline.clear_dtcs())
         _dtc.clear_dtcs(self._require())
+        return True
 
     def run_actuator(self, actuator_id: int, state: int) -> ActuatorOutcome:
         """Command an actuator test; returns the outcome (incl. refusals)."""

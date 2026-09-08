@@ -133,8 +133,10 @@ def _cmd_gui(args: argparse.Namespace) -> int:
         # Disable "the waiting" (the ECU-communication overlay's minimum
         # display time) for impatient users - see gems_t4/app/gui/wait.py.
         os.environ["GEMS_T4_INSTANT"] = "1"
-    if args.port and args.connect:
-        render.console.print("[red]choose --port (USB) or --connect, not both[/]")
+    if sum(bool(getattr(args, x, None)) for x in ("port", "connect", "ble")) > 1:
+        render.console.print(
+            "[red]choose ONE of --port (USB), --connect (network), or --ble[/]"
+        )
         return 2
     try:
         from gems_t4.app.gui.app import run
@@ -148,6 +150,7 @@ def _cmd_gui(args: argparse.Namespace) -> int:
         scenario=args.scenario,
         port=args.port,
         connect=args.connect,
+        ble=getattr(args, "ble", None),
         allow_writes=args.allow_writes,
     )
 
@@ -293,8 +296,13 @@ def _cmd_immo(args: argparse.Namespace) -> int:
         client.close()
 
 
-def _kline_transport(args: argparse.Namespace):
-    """Build a real-ECU transport for the K-line (ISO 9141-2) profile."""
+def _kline_connection_spec(args: argparse.Namespace) -> tuple[str, dict]:
+    """Map --port/--connect/--ble to a ``Backend.apply_connection`` (kind, kwargs).
+
+    Single source of truth for how the real-ECU CLI reaches the adapter — the
+    ``Backend`` then builds the transport, and the GUI uses that same seam. No
+    transport is constructed here (that lives only in ``Backend``).
+    """
     port = getattr(args, "port", None)
     connect = getattr(args, "connect", None)
     ble = getattr(args, "ble", None)
@@ -303,17 +311,13 @@ def _kline_transport(args: argparse.Namespace):
             "choose ONE of --port (USB), --connect (network), or --ble (Bluetooth LE)"
         )
     if port:
-        return PicoAdapterTransport(port), f"USB {port}"
+        return "usb", {"com_port": port}
     if connect:
         host, tcp_port = parse_endpoint(connect)
-        return (
-            TcpTransport(host, tcp_port,
-                         allow_writes=getattr(args, "allow_writes", False)),
-            connect,
-        )
+        return "network", {"host": host, "tcp_port": tcp_port,
+                           "allow_writes": getattr(args, "allow_writes", False)}
     if ble:
-        from gems_t4.transport.ble import BleTransport
-        return BleTransport(ble), f"BLE {ble}"
+        return "ble", {"device": ble}
     raise SystemExit(
         "kline talks to a REAL ECU: pass --port COMx (bench/on-car adapter), "
         "--connect HOST[:PORT] (WiFi), or --ble [NAME] (Bluetooth LE). "
@@ -321,7 +325,7 @@ def _kline_transport(args: argparse.Namespace):
     )
 
 
-def _kline_live_table(client, source: str):
+def _kline_live_table(rows, source: str):
     from rich.table import Table
 
     table = Table(title=f"K-line live data - {source}")
@@ -329,8 +333,9 @@ def _kline_live_table(client, source: str):
     table.add_column("Parameter")
     table.add_column("Value", justify="right")
     table.add_column("Unit", style="dim")
-    for row in client.read_live():
-        table.add_row(f"0x{row.pid:02X}", row.name, str(row.value), row.unit)
+    for row in rows:
+        pid = row.raw if isinstance(row.raw, int) else 0
+        table.add_row(f"0x{pid:02X}", row.name, str(row.value), row.unit)
     return table
 
 
@@ -340,32 +345,37 @@ def _cmd_kline(args: argparse.Namespace) -> int:
     This is the confirmed, hardware-tested protocol (5-baud init at 0x33), as
     opposed to the KWP-stylized virtual ECU used by the other commands.
     """
-    from gems_t4.protocol.kline import KlineClient, connect_help
+    from gems_t4.app.backend import Backend
+    from gems_t4.gems.types import DtcState
+    from gems_t4.protocol.kline import connect_help
     from gems_t4.transport.base import TransportError
 
-    transport, source = _kline_transport(args)
-    client = KlineClient(transport)
+    kind, kwargs = _kline_connection_spec(args)
+    backend = Backend()
     render.communicating()
     try:
-        init = client.connect()
+        # kline is the REAL-ECU command: force the K-line profile over any
+        # transport (USB, a WiFi Pico via --connect, or BLE).
+        source = backend.apply_connection(kind, real_ecu=True, **kwargs)
     except (TransportError, OSError) as exc:
         render.console.print("[bold red]Could not connect to the ECU.[/]")
         render.console.print(connect_help(exc))
         return 1
     try:
         if args.kline_action == "dtc":
-            stored = client.read_dtcs()
-            pending = client.read_pending_dtcs()
+            dtcs = backend.read_dtcs()
+            stored = [d for d in dtcs if d.state == DtcState.STORED]
+            pending = [d for d in dtcs if d.state == DtcState.PENDING]
             if stored:
                 render.console.print(f"[bold]Stored (confirmed) codes - {source}:[/]")
-                for code in stored:
-                    render.console.print(f"  [red]{code}[/]")
+                for d in stored:
+                    render.console.print(f"  [red]{d.code}[/]")
             else:
                 render.console.print(f"No stored (confirmed) codes - {source}.")
             if pending:
                 render.console.print(f"[bold]Pending codes - {source}:[/]")
-                for code in pending:
-                    render.console.print(f"  [yellow]{code}[/]")
+                for d in pending:
+                    render.console.print(f"  [yellow]{d.code}[/]")
             else:
                 render.console.print("No pending codes.")
             return 0
@@ -376,15 +386,16 @@ def _cmd_kline(args: argparse.Namespace) -> int:
             ):
                 render.console.print("Clear cancelled.")
                 return 1
-            before = client.read_dtcs() + client.read_pending_dtcs()
-            ok = client.clear_dtcs()
+            before = [d.code for d in backend.read_dtcs()]
+            ok = backend.clear_dtcs()
             state = "accepted" if ok else "sent (no positive echo)"
             render.console.print(f"[green]Clear command {state} - {source}.[/]")
             render.console.print(f"Codes before clear: {', '.join(before) or 'none'}.")
             # The GEMS ECU reboots after a Mode 04 clear: it drops the session
             # and goes unresponsive for a minute or two, then recovers on its
-            # own (cycling the ignition can force it). So don't re-read here (it
-            # would fail) — tell the operator what to do next.
+            # own (cycling the ignition can force it). Drop the session so the
+            # next read re-inits, and tell the operator what to do next.
+            backend.disconnect()
             render.console.print(
                 "[yellow]The GEMS ECU goes quiet for a minute or two after a "
                 "clear (it reboots its diagnostics) — wait for it to come back "
@@ -398,27 +409,26 @@ def _cmd_kline(args: argparse.Namespace) -> int:
             from rich.live import Live
 
             render.console.print(
-                f"[dim]K-line live monitor - {source} "
-                f"(keybytes {init.keybytes.hex()}). Ctrl+C to stop.[/]"
+                f"[dim]K-line live monitor - {source}. Ctrl+C to stop.[/]"
             )
             try:
-                with Live(_kline_live_table(client, source),
+                with Live(_kline_live_table(backend.read_live(), source),
                           console=render.console, refresh_per_second=4) as live:
                     while True:
-                        live.update(_kline_live_table(client, source))
+                        live.update(_kline_live_table(backend.read_live(), source))
                         time.sleep(0.2)
             except KeyboardInterrupt:
                 render.console.print("stopped.")
             return 0
 
         # live (one-shot)
-        table = _kline_live_table(client, source)
+        table = _kline_live_table(backend.read_live(), source)
         render.console.print(table)
         if table.row_count == 0:
             render.console.print("[yellow]No live PIDs returned by the ECU.[/]")
         return 0
     finally:
-        client.close()
+        backend.disconnect()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -492,6 +502,9 @@ def build_parser() -> argparse.ArgumentParser:
                                    "(e.g. COM3)")
     sp.add_argument("--connect", metavar="HOST[:PORT]",
                     help="start connected to a TCP endpoint (default port 9141)")
+    sp.add_argument("--ble", nargs="?", const="gems-pico", metavar="NAME|ADDR",
+                    help="start connected to a Bluetooth LE adapter (NUS); optional "
+                         "device name/address (default: gems-pico)")
     sp.add_argument("--allow-writes", action="store_true",
                     help="permit write functions over --connect")
     sp.set_defaults(func=_cmd_gui)

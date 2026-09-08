@@ -743,22 +743,29 @@ up):**
   `diagrams/gems-2pcb-solution.html`, `hardware/gems-2pcb/pcb1-main-bom.csv`, and
   `hardware/gems-2pcb/kicad/gems-pcb1-main.net` all need the buck+Schottky+VSYS
   added at that point. Detail: `hardware/gems-2pcb/README.md`.
-- **Route the CLI `kline` command through the `Backend` facade (single-wire new
-  real-ECU features).** Today the CLI `kline` command talks to `KlineClient`
-  *directly* (in `app/cli.py` `_cmd_kline`), while the GUI goes through the
-  `Backend` facade (`app/backend.py`) — so a new real-ECU capability (e.g.
-  pending DTCs, a new PID group) has to be wired into *two* presentation layers:
-  the CLI's Rich formatting and the Backend's mapping to `Measure`/`Dtc` domain
-  objects. The underlying protocol logic is already single (in
-  `protocol/kline.py`), so this is only presentation duplication — but it means
-  every real-ECU feature is a double-touch. Refactor: have the CLI `kline`
-  command consume the same `Backend` methods the GUI uses (read live / DTCs
-  incl. pending / clear), so the next feature wires in one place and CLI+GUI stay
-  in lockstep by construction. Modest, self-contained; worth it now that we're
-  actively adding real-ECU features. (Note: the CLI's *other* commands
-  — `live`/`dtc`/`actuator` etc. — also bypass the Backend and hit `KwpClient`
-  directly, so a fuller version would unify those too, but the `kline` path is
-  the one under active development.)
+- **✓ DONE 2026-09-07 — CLI `kline` routed through the `Backend` facade.** The CLI
+  `kline` command now builds a `Backend` and calls `apply_connection` +
+  `read_live`/`read_dtcs`/`clear_dtcs` (no more private `_kline_transport` or
+  direct `KlineClient` in `_cmd_kline`). **All transport construction lives in ONE
+  place — `Backend.set_connection`** (virtual/USB/network/**BLE**), used by both
+  the CLI and the GUI, so a new transport is added once and both front-ends get
+  it (this is how BLE reached the GUI). `Backend.set_connection` gained a
+  `real_ecu` override so the CLI `kline` command forces the K-line profile over
+  any transport (incl. `--connect` to a WiFi Pico); `clear_dtcs` now returns the
+  ack flag for CLI parity. **Still bypassing Backend (the "full unification"
+  option, deferred):** the CLI `live`/`dtc`/`actuator`/`coding`/`immo` commands
+  still build via `_build_client` → `KwpClient` directly. Fold those through
+  Backend too when the pain justifies it, so every CLI command is a thin Backend
+  wrapper.
+- **Pre-existing regression failure (found 2026-09-07):
+  `test_no_sleep_or_serial_in_pure_layers[protocol]`.** `protocol/kline.py:317`
+  uses `time.sleep(retry_delay)` in the real-ECU init-retry loop; the purity test
+  forbids `time.sleep(` anywhere in `protocol/`. The test predates `kline.py`
+  (the real-ECU client, which legitimately paces retries), so its "protocol/ is
+  pure KWP logic" assumption no longer holds. Fix options: exempt `kline.py` from
+  the check (it's the real-ECU client, not pure protocol), move `kline.py`, or
+  drop the sleep. NOT introduced by the BLE work — flag only. tests/ = 208 passed;
+  regression = 234 passed + this 1.
 
 ### Backlog / QA-found unmet requirements (found 2026-07-11 by a full QA sweep)
 

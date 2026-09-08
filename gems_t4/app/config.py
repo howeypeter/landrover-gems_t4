@@ -15,8 +15,8 @@ from pathlib import Path
 
 from gems_t4.transport.tcp import DEFAULT_PORT
 
-#: The three connection kinds the GUI offers.
-KINDS = ("virtual", "usb", "network")
+#: The connection kinds the GUI offers.
+KINDS = ("virtual", "usb", "network", "ble")
 
 
 @dataclass
@@ -28,6 +28,7 @@ class ConnectionConfig:
     host: str = "192.168.1.100"
     tcp_port: int = DEFAULT_PORT
     allow_writes: bool = False
+    device: str = "gems-pico"
 
 
 def config_path() -> Path:
@@ -68,8 +69,10 @@ def load_config() -> ConnectionConfig:
         and not isinstance(cfg.tcp_port, bool)
         and 0 < cfg.tcp_port < 65536
         and isinstance(cfg.allow_writes, bool)
+        and isinstance(cfg.device, str)
         and not (cfg.kind == "usb" and not cfg.com_port)
         and not (cfg.kind == "network" and not cfg.host)
+        and not (cfg.kind == "ble" and not cfg.device)
     )
     return cfg if valid else ConnectionConfig()
 

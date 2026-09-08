@@ -63,6 +63,11 @@ def test_field_enablement_follows_kind(qtbot):
     assert screen._tcp_port.isEnabled()
     assert screen._allow_writes.isEnabled()
 
+    screen._radio_ble.setChecked(True)
+    assert screen._ble_device.isEnabled()
+    assert not screen._com_port.isEnabled()
+    assert not screen._host.isEnabled()
+
 
 def test_apply_network_connection_reroutes_backend(qtbot, served_ecu, temp_config):
     host, port = served_ecu
@@ -232,6 +237,20 @@ def test_usb_kind_builds_pico_transport():
     assert isinstance(transport, PicoAdapterTransport)
 
 
+def test_ble_kind_builds_ble_transport():
+    """The BLE branch builds a BleTransport factory — a real-ECU K-line profile
+    over Bluetooth LE, treated as a trusted link (no network write gate)."""
+    from gems_t4.transport.ble import BleTransport
+
+    backend = Backend()
+    backend.set_connection("ble", device="gems-pico")
+    assert backend.is_remote
+    assert not backend.is_wireless  # BLE is trusted point-to-point, writes allowed
+    assert "gems-pico" in backend.connection_label
+    transport = backend._transport_factory()
+    assert isinstance(transport, BleTransport)
+
+
 # -- apply_startup_connection: the flags > saved config > virtual precedence --#
 
 def _startup(backend, **kwargs):
@@ -258,6 +277,23 @@ def test_startup_port_flag_selects_usb(temp_config):
     _startup(backend, port="COM5")
     assert backend.is_remote and not backend.is_wireless
     assert "COM5" in backend.connection_label
+
+
+def test_startup_ble_flag_selects_ble(temp_config):
+    backend = Backend()
+    _startup(backend, ble="gems-pico")
+    assert backend.is_remote and not backend.is_wireless
+    assert "gems-pico" in backend.connection_label
+
+
+def test_startup_saved_ble_config_applies(temp_config):
+    from gems_t4.app import config as _config
+
+    _config.save_config(_config.ConnectionConfig(kind="ble", device="gems-pico"))
+    backend = Backend()
+    _startup(backend)  # no flags -> saved config
+    assert backend.is_remote and not backend.is_wireless
+    assert "gems-pico" in backend.connection_label
 
 
 def test_startup_saved_network_config_applies_with_allow_writes(

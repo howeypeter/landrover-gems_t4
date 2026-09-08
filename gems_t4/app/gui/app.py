@@ -60,11 +60,12 @@ def apply_startup_connection(
     *,
     port: str | None = None,
     connect: str | None = None,
+    ble: str | None = None,
     allow_writes: bool = False,
 ) -> None:
     """Configure the backend's connection for launch.
 
-    Precedence: explicit ``--port``/``--connect`` flags, then the saved
+    Precedence: explicit ``--port``/``--connect``/``--ble`` flags, then the saved
     configuration (written by the connection screen), then the built-in
     virtual ECU. Explicit flags raise on bad values (the user just typed
     them); a bad *saved* config must never stop the GUI from starting — it
@@ -80,6 +81,9 @@ def apply_startup_connection(
             "network", host=host, tcp_port=tcp_port, allow_writes=allow_writes
         )
         return
+    if ble:
+        backend.set_connection("ble", device=ble)
+        return
     cfg = _config.load_config()
     try:
         if cfg.kind == "usb":
@@ -91,6 +95,8 @@ def apply_startup_connection(
                 tcp_port=cfg.tcp_port,
                 allow_writes=cfg.allow_writes,
             )
+        elif cfg.kind == "ble":
+            backend.set_connection("ble", device=cfg.device)
     except (ValueError, TypeError):
         backend.set_connection("virtual")
 
@@ -100,6 +106,7 @@ def run(
     *,
     port: str | None = None,
     connect: str | None = None,
+    ble: str | None = None,
     allow_writes: bool = False,
 ) -> int:
     """Launch the GUI. Returns the Qt exit code."""
@@ -108,7 +115,7 @@ def run(
     app = QApplication.instance() or QApplication(sys.argv)
     backend = Backend(scenario)
     apply_startup_connection(
-        backend, port=port, connect=connect, allow_writes=allow_writes
+        backend, port=port, connect=connect, ble=ble, allow_writes=allow_writes
     )
     window = build_window(backend)
     window.show()

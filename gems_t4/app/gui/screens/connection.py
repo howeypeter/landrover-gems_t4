@@ -60,9 +60,13 @@ class ConnectionScreen(Screen):
         self._radio_network = QRadioButton(
             "Network — TCP endpoint (bridge or WiFi Pico)"
         )
+        self._radio_ble = QRadioButton(
+            "Bluetooth LE — Pico adapter (no pairing, no COM port)"
+        )
         lay.addWidget(self._radio_virtual)
         lay.addWidget(self._radio_usb)
         lay.addWidget(self._radio_network)
+        lay.addWidget(self._radio_ble)
 
         form = QFormLayout()
         form.setHorizontalSpacing(16)
@@ -82,6 +86,13 @@ class ConnectionScreen(Screen):
         self._tcp_port.setToolTip("TCP port (default 9141)")
         self._tcp_port.setMaximumWidth(100)
         form.addRow("TCP port:", self._tcp_port)
+
+        self._ble_device = QLineEdit()
+        self._ble_device.setToolTip(
+            "BLE device name or address the Pico advertises (default gems-pico)"
+        )
+        self._ble_device.setMaximumWidth(260)
+        form.addRow("BLE device:", self._ble_device)
 
         lay.addLayout(form)
 
@@ -117,7 +128,8 @@ class ConnectionScreen(Screen):
 
         lay.addStretch(1)
 
-        for radio in (self._radio_virtual, self._radio_usb, self._radio_network):
+        for radio in (self._radio_virtual, self._radio_usb, self._radio_network,
+                      self._radio_ble):
             radio.toggled.connect(self._update_enabled)
 
     # -- helpers -------------------------------------------------------------#
@@ -126,6 +138,8 @@ class ConnectionScreen(Screen):
             return "usb"
         if self._radio_network.isChecked():
             return "network"
+        if self._radio_ble.isChecked():
+            return "ble"
         return "virtual"
 
     def _update_enabled(self) -> None:
@@ -135,6 +149,7 @@ class ConnectionScreen(Screen):
         self._host.setEnabled(kind == "network")
         self._tcp_port.setEnabled(kind == "network")
         self._allow_writes.setEnabled(kind == "network")
+        self._ble_device.setEnabled(kind == "ble")
 
     def _show_current(self) -> None:
         self._current.setText(f"Current: {self.backend.connection_label}")
@@ -154,11 +169,13 @@ class ConnectionScreen(Screen):
         {
             "usb": self._radio_usb,
             "network": self._radio_network,
+            "ble": self._radio_ble,
         }.get(cfg.kind, self._radio_virtual).setChecked(True)
         self._com_port.setText(cfg.com_port)
         self._host.setText(cfg.host)
         self._tcp_port.setText(str(cfg.tcp_port))
         self._allow_writes.setChecked(cfg.allow_writes)
+        self._ble_device.setText(cfg.device)
         self._update_enabled()
         self._show_current()
         self._test_result.setText("")
@@ -182,11 +199,15 @@ class ConnectionScreen(Screen):
             self.status.emit("TCP port must be a number.")
             return
         allow_writes = self._allow_writes.isChecked()
+        device = self._ble_device.text().strip()
         if kind == "usb" and not com_port:
             self.status.emit("Enter the COM port of the USB adapter.")
             return
         if kind == "network" and not host:
             self.status.emit("Enter the host/IP of the network endpoint.")
+            return
+        if kind == "ble" and not device:
+            self.status.emit("Enter the BLE device name (default gems-pico).")
             return
 
         def work() -> str:
@@ -198,6 +219,7 @@ class ConnectionScreen(Screen):
                 host=host or None,
                 tcp_port=tcp_port,
                 allow_writes=allow_writes,
+                device=device or None,
             )
 
         def done(label: str) -> None:
@@ -208,6 +230,7 @@ class ConnectionScreen(Screen):
                     host=host or _config.ConnectionConfig().host,
                     tcp_port=tcp_port,
                     allow_writes=allow_writes,
+                    device=device or _config.ConnectionConfig().device,
                 )
             )
             self._show_current()
