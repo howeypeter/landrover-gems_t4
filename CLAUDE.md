@@ -750,16 +750,35 @@ security-access ($27) backlog. Also fixed en route: the
 span multiple `48 6B E8 43` frames; `_split_frames`/`decode_responses`, regression
 test from a real 2nd-ECU capture). Full detail: `memory/real-gems-protocol.md`.
 
-**Where the project stands (latest release: v0.0.8, 2026-09-01 — the
-first-hardware-comms milestone; v0.0.7 was the docs-only wiring reference):** Phases
+**Where the project stands (latest release: v0.0.10, 2026-09-08 — hardware-verified
+BLE + Backend transport unification; `main` is AHEAD of the tag):** Phases
 **1, 2, 4, 5, 6 complete**; Phase 3 (Pico adapter) built + unit-tested, now with
 a full **hardware wiring reference** for on-car validation (parts: bare
 **L9637D** transceiver + breadboard — the MikroE ISO 9141 Click is
-retired/unavailable in the US). **169 passing tests** in `tests/` + **235 in
-`tests_regression/`** (GUI files skip without the PySide6 `[gui]` extra via
-`importorskip`). Runs via `python -m gems_t4 <cmd>` or `gems_t4` after
+retired/unavailable in the US). **221 passing tests** in `tests/` + **235 in
+`tests_regression/`** (456 total; GUI files skip without the PySide6 `[gui]`
+extra via `importorskip`). Verified 2026-09-08. Runs via `python -m gems_t4 <cmd>` or `gems_t4` after
 `pip install -e .`; GUI via `gems_t4 gui` (needs `[gui]`; `--instant` skips the
 waits). Python 3.14 venv at `.venv/`. 12 GUI screens, 40 live-data params.
+
+**Since v0.0.10 (on `main`, unreleased) — transport-aware connect help + a
+rollback fix.** A failed real-ECU connect now gives advice that matches HOW
+you're connected: `connect_help`/`connect_help_short` take the transport `kind`,
+so a **BLE** failure says "powered and advertising as 'gems-pico'" and a
+**network** failure says "check the host:port" — neither talks about USB cables,
+COM ports, or VID 2E8A any more (the old text assumed USB because the exception
+merely mentions "Pico"). Backend exposes `connection_kind`; CLI and GUI both pass
+it. **Bug found + fixed while regression-testing this (2026-09-08):**
+`Backend.apply_connection` rolled back `_transport_factory`/`_connection_label`
+on a failed attempt but NOT `_kind` or `_use_kline` — so after a failed USB/BLE
+attempt the restored virtual ECU was left flagged for the **real-ECU K-line
+profile** (wrong protocol on a working transport), and `connect_help` described
+the failed transport instead of the live one. The existing rollback test missed
+it because it only exercised a `network` attempt, which happens to share
+virtual's `_use_kline=False`; the new tests use USB/BLE, which is what exposes
+it. Also `git rm`'d `tests/test_gui_fault_codes.py` — obsolete since 3e4517b
+moved session recovery out of the screen into `KlineClient`, where four better
+tests now cover it.
 
 **v0.0.7 (2026-08-29) — hardware wiring reference (docs only, no code change)**
 (notes in the v0.0.7 GitHub Release): pin-exact adapter wiring, verified against

@@ -110,7 +110,8 @@ class Screen(QWidget):
                     # actionable checklist (ignition/power/grounds/K-line/wires),
                     # not a raw "init failed (status 1)".
                     from gems_t4.protocol.kline import connect_help_short
-                    self.status.emit(connect_help_short(exc))
+                    kind = getattr(self.backend, "connection_kind", None)
+                    self.status.emit(connect_help_short(exc, kind=kind))
                 else:
                     self.status.emit(f"ECU communication error: {exc}")
         win = self.window()

@@ -101,3 +101,51 @@ def test_reuses_already_open_session_no_second_connection():
     result = b.test_connection(pings=2)
     assert result.ok
     assert calls["n"] == 1  # no second transport was built
+
+
+# -- apply_connection() rollback restores the FULL connection state ---------- #
+# A failed attempt used to leave _kind and _use_kline pointing at the failed
+# connection while the transport/label rolled back. The _use_kline leak was the
+# damaging one: the restored virtual ECU was then driven with the real-ECU
+# K-line profile. Rolling back from "usb"/"ble" is what exposes it — a
+# "network" attempt happens to share virtual's _use_kline=False.
+def test_failed_usb_attempt_rolls_back_kind_and_profile():
+    b = Backend()  # virtual ECU, stylized KWP profile
+    b.connect()
+    assert b.connection_kind == "virtual"
+
+    try:
+        b.apply_connection("usb", com_port="COM_NO_SUCH_PORT_99")
+    except Exception:
+        pass
+    else:  # pragma: no cover - the bogus port must not open
+        raise AssertionError("expected the bogus COM port to fail")
+
+    assert b.connection_kind == "virtual", "kind must roll back (drives connect_help)"
+    assert b.connection_label == "Virtual ECU"
+    assert b._use_kline is False, "must not keep the failed attempt's K-line profile"
+    # The restored virtual ECU still works on the right protocol profile.
+    assert b.read_dtcs() == []
+    b.disconnect()
+
+
+def test_failed_ble_attempt_rolls_back_kind_and_profile(monkeypatch):
+    """Same rollback for BLE. The transport is stubbed out so the test neither
+    scans for real Bluetooth devices (~12 s) nor needs a BLE radio present."""
+    monkeypatch.setattr(
+        "gems_t4.app.backend.BleTransport", lambda *a, **kw: _FailingTransport()
+    )
+    b = Backend()
+    b.connect()
+
+    try:
+        b.apply_connection("ble", device="no-such-pico-xyz")
+    except Exception:
+        pass
+    else:  # pragma: no cover - the stub always fails
+        raise AssertionError("expected the stubbed BLE transport to fail")
+
+    assert b.connection_kind == "virtual"
+    assert b._use_kline is False
+    assert b.read_dtcs() == []
+    b.disconnect()

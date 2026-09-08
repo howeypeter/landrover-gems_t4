@@ -53,13 +53,38 @@ __all__ = [
 ]
 
 
-def connect_help(exc: BaseException | None = None) -> str:
+def connect_help(exc: BaseException | None = None, kind: str | None = None) -> str:
     """A friendly, actionable checklist for a failed real-ECU connect/init.
 
-    Distinguishes the adapter (Pico/USB) side from the ECU/K-line side by the
-    exception text, so the operator is pointed at the right thing.
+    Distinguishes the adapter (Pico) side from the ECU/K-line side by the
+    exception text, so the operator is pointed at the right thing. ``kind`` is
+    the transport ("usb", "network", "ble") so adapter-side advice matches how
+    we're actually connected - a BLE failure must not talk about USB cables or
+    COM ports.
     """
     text = str(exc or "")
+    # -- BLE (Bluetooth LE): no cable, no COM port, no VID ------------------- #
+    if kind == "ble":
+        return (
+            "The Pico adapter isn't answering over Bluetooth LE - this is the "
+            "laptop<->adapter link, not the ECU:\n"
+            "  - Power the Pico (wall charger or power bank) and check its LED - "
+            "it must be advertising as 'gems-pico'.\n"
+            "  - Move closer / clear obstructions; only one laptop can hold the "
+            "BLE link at a time (close any GUI or other kline command).\n"
+            "  - Re-flash the pico_kline_ble firmware if it still won't answer.\n"
+            "  - Bluetooth support needs 'bleak' installed (pip install "
+            "gems_t4[ble])."
+        )
+    # -- Network (WiFi Pico / serve bridge): host/port, not a cable --------- #
+    if kind == "network":
+        return (
+            "Couldn't reach the adapter over the network - this is the "
+            "laptop<->adapter link, not the ECU:\n"
+            "  - Confirm the host:port in --connect and that the Pico/bridge is "
+            "powered and on the same network.\n"
+            "  - Check nothing else holds the link - one tester per K-line."
+        )
     if any(k in text for k in (
         "could not open port", "PermissionError", "FileNotFoundError",
         "Access is denied", "No such file", "The system cannot find",
@@ -94,9 +119,13 @@ def connect_help(exc: BaseException | None = None) -> str:
     )
 
 
-def connect_help_short(exc: BaseException | None = None) -> str:
+def connect_help_short(exc: BaseException | None = None, kind: str | None = None) -> str:
     """A one-line version of :func:`connect_help` for a GUI status bar."""
     text = str(exc or "")
+    if kind == "ble":
+        return "Pico not answering over Bluetooth - check it's powered and advertising as 'gems-pico'."
+    if kind == "network":
+        return "Can't reach the adapter - check the host:port and that the Pico/bridge is on the network."
     if any(k in text for k in (
         "could not open port", "PermissionError", "Access is denied",
         "FileNotFoundError", "No such file",

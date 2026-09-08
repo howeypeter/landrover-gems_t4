@@ -214,6 +214,26 @@ def test_connect_help_short_is_one_line() -> None:
     assert "\n" not in kline.connect_help_short(InitError("init failed (status 1)"))
 
 
+def test_connect_help_ble_does_not_mention_usb() -> None:
+    """A BLE failure carries "Pico" in its text but must NOT give USB advice."""
+    msg = kline.connect_help(TransportTimeout("no response from Pico"), kind="ble")
+    assert "Bluetooth" in msg and "gems-pico" in msg
+    assert "USB" not in msg
+    assert "COM port" not in msg and "2E8A" not in msg
+
+
+def test_connect_help_network_side() -> None:
+    msg = kline.connect_help(TransportTimeout("no response from Pico"), kind="network")
+    assert "network" in msg.lower()
+    assert "USB" not in msg and "2E8A" not in msg
+
+
+def test_connect_help_short_ble() -> None:
+    msg = kline.connect_help_short(TransportTimeout("no response from Pico"), kind="ble")
+    assert "\n" not in msg
+    assert "Bluetooth" in msg and "USB" not in msg
+
+
 def test_bank2_pids_present_and_decode() -> None:
     by_pid = {p.pid: p for p in kline.PIDS}
     assert {0x08, 0x09, 0x18, 0x19} <= set(by_pid)  # V8 bank-2 coverage

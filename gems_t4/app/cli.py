@@ -357,7 +357,7 @@ def _cmd_kline(args: argparse.Namespace) -> int:
         source = backend.apply_connection(kind, real_ecu=True, **kwargs)
     except (TransportError, OSError) as exc:
         render.console.print("[bold red]Could not connect to the ECU.[/]")
-        render.console.print(connect_help(exc))
+        render.console.print(connect_help(exc, kind=kind))
         return 1
     try:
         if args.kline_action == "dtc":

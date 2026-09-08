@@ -101,6 +101,7 @@ class Backend:
         self._connection_label = (
             "Custom transport" if transport_factory is not None else "Virtual ECU"
         )
+        self._kind = "custom" if transport_factory is not None else "virtual"
 
     # -- introspection ------------------------------------------------------ #
     @property
@@ -133,6 +134,15 @@ class Backend:
     def connection_label(self) -> str:
         """Human-readable description of the selected connection."""
         return self._connection_label
+
+    @property
+    def connection_kind(self) -> str:
+        """The selected transport kind ("virtual"/"usb"/"ble"/"network"/"custom").
+
+        Used to tailor a connect-failure message to how we're actually
+        connected (a BLE failure shouldn't mention USB cables or COM ports).
+        """
+        return self._kind
 
     @property
     def is_wireless(self) -> bool:
@@ -221,6 +231,7 @@ class Backend:
         self.disconnect()
         self._transport_factory = factory
         self._connection_label = label
+        self._kind = kind
         # Protocol profile: the real ISO 9141-2 K-line (a real GEMS ECU) vs the
         # KWP-stylized stack (virtual ECU / serve bridge). By default it's derived
         # from the transport — USB and BLE reach a real Pico+ECU, virtual/network
@@ -251,6 +262,8 @@ class Backend:
         """
         prev_factory = self._transport_factory
         prev_label = self._connection_label
+        prev_kind = self._kind
+        prev_use_kline = self._use_kline
         self.set_connection(
             kind,
             com_port=com_port,
@@ -264,8 +277,14 @@ class Backend:
             self.connect()
         except Exception:
             self.disconnect()
+            # Restore EVERY field set_connection touched. Missing _use_kline
+            # left the previous (e.g. virtual) transport being driven with the
+            # failed attempt's real-ECU K-line profile; missing _kind made
+            # connect_help describe the wrong transport.
             self._transport_factory = prev_factory
             self._connection_label = prev_label
+            self._kind = prev_kind
+            self._use_kline = prev_use_kline
             raise
         return self._connection_label
 
