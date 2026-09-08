@@ -444,37 +444,18 @@ were dropped. See `memory/tech-stack-decision.md`.)
     from a Raspberry Pi at the car). The WiFi Pico firmware (`firmware/pico_kline_wifi/`, built 2026-09-07) now
     answers those same host-protocol frames directly over TCP — connect with
     `gems_t4 kline ... --connect <pico-ip>` (or the GUI Network mode).
-  - **Pico 2 W Bluetooth mode: firmware BUILT 2026-09-07 (`firmware/pico_kline_bt/`).**
-    Added because the WiFi/hotspot route forces the *laptop* onto the same
-    network (it drops off home WiFi). Bluetooth Classic **SPP** is point-to-point:
-    the laptop stays on its own WiFi and pairs the Pico as a **virtual COM port**,
-    so it reuses the EXISTING serial transport with zero Python changes —
-    `gems_t4 kline ... --port COMx`. It's a **superset** firmware (production host
-    commands PLUS the pentest `CMD_RAW_INIT`), so `gems_t4` AND the throwaway
-    pentest/debug scripts all run over the one BT COM port. Build needs the BT
-    stack enabled: fqbn `...:rpipico2w:ipbtstack=ipv4btcble` (IDE: Tools >
-    IP/Bluetooth Stack > "IPv4 + Bluetooth"); `SerialBT` (arduino-pico) is a
-    Serial-compatible SPP stream, slave role. PING reports
-    `gems_t4-pico-bt-pentest 2.1.0` — the "pentest" substring is REQUIRED because
-    `~/pentest_scan.py` gates on `"pentest" in ping()` (startup + mid-sweep
-    recovery); keep it. **Security caveat (differs from
-    WiFi):** a paired SPP link reaches the laptop as a *wired-looking* COM port,
-    so the Python side treats it as non-wireless and **allows writes by default**
-    (the read-only wireless gate does NOT apply) — pair only trusted laptops.
-    NOT yet flashed/verified on hardware (written, not compiled here). Detail:
-    `firmware/README.md` "Bluetooth (Pico 2 W)".
-  - **Pico 2 W combined WiFi+Bluetooth mode: firmware BUILT 2026-09-07
-    (`firmware/pico_kline_wireless/`) — RECOMMENDED wireless build.** Runs BOTH
-    radios at once (the CYW43 + `ipbtstack=ipv4btcble` do WiFi and BT Classic
-    concurrently); host I/O is routed through a `Stream*` that points at whichever
-    tester connected first (one at a time — one K-line). So one flashed board is
-    reachable by TCP (`--connect`) OR a paired BT COM port (`--port`). Superset
-    (incl. pentest `CMD_RAW_INIT`); PING = `gems_t4-pico-wireless-pentest 2.1.0`.
-    Headless BT pairing (Just Works) + WiFiMulti multi-SSID both included. The
-    single-radio sketches (`pico_kline_wifi`, `pico_kline_bt`) remain as fallbacks
-    if WiFi+BT coexistence proves flaky during the delay()-heavy 5-baud init.
-    NOT yet flashed/verified on hardware. Detail: `firmware/README.md` "Combined
-    WiFi + Bluetooth".
+  - **Bluetooth Classic SPP + the combined WiFi+Classic sketch were REMOVED
+    2026-09-08** (was `firmware/pico_kline_bt/` and `firmware/pico_kline_wireless/`;
+    `git rm`'d). Windows' Classic-SPP outgoing-COM-port lifecycle proved
+    unreliable in practice (bonds drop on re-flash, the outgoing COM port must be
+    manually re-created, it never auto-reconnects). **BLE is now the ONLY Bluetooth
+    path** (next bullet) — it needs no pairing and no COM port, and is
+    hardware-verified. **WiFi stays** via `pico_kline_wifi`. Also removed the
+    Classic-only `transport/discovery.py` (BT COM-port auto-detect — pointless
+    with BLE, which scans by name). If a concurrent WiFi+BLE build is ever wanted,
+    that's a new sketch (not a priority). Firmware sketches now: `pico_kline`
+    (USB), `pico_kline_pentest` (USB+RAW_INIT), `pico_kline_wifi` (WiFi),
+    `pico_kline_ble` (BLE).
   - **Pico 2 W Bluetooth LE mode: firmware `firmware/pico_kline_ble/` + host
     `transport/ble.py` + CLI `--ble` (2026-09-07).** Added because Windows
     Bluetooth **Classic** SPP proved unreliable in practice (bonds drop on
@@ -507,17 +488,6 @@ were dropped. See `memory/tech-stack-decision.md`.)
     set) from a real GEMS ECU — full stack proven (BLE + 5-baud init + multi-frame
     Mode 03 decode + chunked-notify reassembly). Detail: `firmware/README.md`
     "Bluetooth LE (Pico 2 W)".
-  - **Bluetooth COM-port auto-detect: `transport/discovery.py` (2026-09-07).** The
-    BT SPP COM number is not fixed (re-pairing/re-flash can change it), so this
-    helper finds it by the device *name*: resolves `gems-pico` -> BT MAC via
-    `Get-PnpDevice` (Windows, no admin), then matches the **outgoing** SPP COM
-    port carrying that MAC (`list_bt_spp_ports()`, `find_gems_pico_port()`,
-    `autodetect_port()` — falls back to a USB Pico by VID 2E8A). Live-verified:
-    resolves `gems-pico` -> COM5, correctly rejecting COM6 (the all-zeros incoming
-    server). The throwaway probe scripts (`~/pentest_scan.py`, `~/da*_probe.py`)
-    honour a `GEMS_PORT` env override then this autodetect, else fall back to
-    COM4. NOT yet wired into the `gems_t4` CLI (`--port auto` is a natural next
-    step).
 - **Build the virtual ECU first**; **every ECU write gated.** As built: the
   coding-write path enforces **backup + verify-after-write + operator
   confirmation** (and refuses read-only fields), and the immobiliser

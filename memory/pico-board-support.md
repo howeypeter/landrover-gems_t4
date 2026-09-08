@@ -47,42 +47,6 @@ The WiFi mode's design landed exactly as scoped, but **only on the host side**:
   stay allowed. (Slightly different from the original scoping note above — the
   shipped gate is the source of truth. See [[implementation-status]].)
 
-## Bluetooth (SPP) transport — firmware BUILT 2026-09-07
-`firmware/pico_kline_bt/pico_kline_bt.ino` serves the host protocol over
-**Bluetooth Classic SPP** (arduino-pico `SerialBT`, slave role). Reason: the
-WiFi/hotspot route forces the LAPTOP onto the same network (it loses home WiFi);
-BT is point-to-point, so the laptop keeps its WiFi and pairs the Pico as a
-**virtual COM port** → reuses the existing serial transport, `gems_t4 kline
-... --port COMx`, **no Python change**. It's a **superset** firmware (all
-production host cmds + pentest `CMD_RAW_INIT` 0x05), so gems_t4 AND the throwaway
-pentest/debug scripts (`~/pentest_scan.py`, `~/da*_probe.py` — they hardcode
-`PORT="COMx"`, edit it to the BT port) all run over one BT link. Build: enable
-the BT stack — fqbn `rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble` (IDE: Tools >
-IP/Bluetooth Stack > "IPv4 + Bluetooth"); PING reports
-`gems_t4-pico-bt-pentest 2.1.0` — the "pentest" substring is REQUIRED because
-pentest_scan.py gates on `"pentest" in ping()` (startup + mid-sweep recovery).
-**Security caveat (differs from WiFi):** the paired SPP link looks *wired* to the
-laptop (`PicoAdapterTransport`, is_wireless=False) so the read-only wireless gate
-does NOT apply — **writes allowed by default**; pair only trusted laptops. BT SPP
-COM ports ignore the pyserial baud setting. Confirmed feasible: Pico 2 W + C/C++
-Pico SDK support BT Classic SPP (NOT MicroPython). **NOT yet flashed/verified on
-hardware** (written, not compiled here). Detail: `firmware/README.md`.
-
-## Combined WiFi+Bluetooth firmware — BUILT 2026-09-07 (RECOMMENDED wireless build)
-`firmware/pico_kline_wireless/pico_kline_wireless.ino` runs **both radios at
-once** (CYW43 + `ipbtstack=ipv4btcble` do WiFi + BT Classic concurrently). Host
-frame I/O goes through a `Stream*` that points at whichever tester connected
-first (BT `SerialBT` or a TCP `WiFiClient`) — one at a time (one K-line). One
-flashed board is reachable by TCP (`--connect gems-pico.local`) OR a paired BT
-COM port (`--port COMx`). Superset (incl. pentest `CMD_RAW_INIT`); PING =
-`gems_t4-pico-wireless-pentest 2.1.0`. Includes headless BT Just-Works pairing +
-WiFiMulti multi-SSID. Needs its OWN `wifi_secrets.h` in that folder (gitignored).
-Single-radio sketches (`pico_kline_wifi`, `pico_kline_bt`) kept as fallbacks if
-WiFi+BT coexistence is flaky during the delay()-heavy 5-baud init. NOT yet
-flashed/verified. There are now 5 firmware sketches: pico_kline (USB),
-pico_kline_pentest (USB+RAW_INIT), pico_kline_wifi, pico_kline_bt,
-pico_kline_wireless. Detail: `firmware/README.md`.
-
 ## Bluetooth LE (BLE) transport — BUILT 2026-09-07 (Classic SPP proved flaky)
 Windows Bluetooth **Classic** SPP turned out unreliable in real use: the bond is
 wiped by every firmware re-flash, the **outgoing** COM port must be manually
@@ -110,9 +74,14 @@ tune `BLE_TX_CHUNK` if replies garble. **Real-ECU read CONFIRMED over BLE
 2026-09-07:** `gems_t4 kline dtc --ble` returned P1193/P0158/P1316/P0125 from a
 real GEMS ECU — full stack proven (BLE + 5-baud init + multi-frame Mode 03).
 Upstream PR for the BLEUUID bug is in the CLAUDE.md backlog.
-Now **6 firmware sketches**: pico_kline (USB), pico_kline_pentest (USB+RAW_INIT),
-pico_kline_wifi, pico_kline_bt (Classic SPP), pico_kline_wireless (WiFi+Classic),
-pico_kline_ble (BLE). Classic SPP kept but BLE is preferred for wireless-only.
+**Bluetooth Classic REMOVED 2026-09-08:** `pico_kline_bt` (Classic SPP) and
+`pico_kline_wireless` (WiFi+Classic combined) were `git rm`'d, along with the
+Classic-only `transport/discovery.py` (COM-port autodetect — pointless with BLE).
+**BLE is the only Bluetooth now.** Firmware sketches (4): `pico_kline` (USB),
+`pico_kline_pentest` (USB+RAW_INIT), `pico_kline_wifi` (WiFi), `pico_kline_ble`
+(BLE). Also **all probe scripts migrated to BLE** (`~/pentest_scan.py`,
+`~/da*_probe.py`, `~/lline_probe.py`): default to `BleTransport("gems-pico")`, with
+`GEMS_PORT=COMx` env to force USB serial and `GEMS_BLE` to override the name.
 
 ## Powering the Pico untethered (decided 2026-09-07)
 The WiFi firmware removes the laptop USB *data* tether, but the Pico still needs
