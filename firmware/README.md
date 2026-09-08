@@ -273,13 +273,25 @@ pentest `CMD_RAW_INIT`); PING = `gems_t4-pico-ble-pentest 2.1.0`.
    ```
    The onboard LED is solid while a BLE client is connected.
 
-> **⚠️ Unverified on hardware — needs one on-device tuning pass.** BLE
-> notifications don't fragment; they truncate to the negotiated ATT MTU. The
-> firmware sends replies in ≤16 B chunks with a short inter-chunk delay (which
-> also pumps the CYW43 stack), and the Python side reassembles the byte stream.
-> Real GEMS frames are small, so this is comfortable — but if replies look
-> truncated/garbled on real hardware, tune `BLE_TX_CHUNK` / the delay in the
-> sketch, or raise the ATT MTU.
+> **✅ Verified on hardware 2026-09-07** (Pico 2 W): NUS UUIDs correct, PING
+> round-tripped `gems_t4-pico-ble-pentest 2.1.0` (write + chunked-notify
+> reassembly both good). BLE notifications don't fragment — they truncate to the
+> ATT MTU — so the firmware sends replies in ≤16 B chunks with a short
+> inter-chunk delay (which also pumps the CYW43 stack) and the Python side
+> reassembles the byte stream. If replies ever garble, tune `BLE_TX_CHUNK` /
+> the delay, or raise the MTU.
+>
+> **⚠️ Requires a one-line patch to the arduino-pico core** (`libraries/BLE/src/
+> BLEUUID.h`). The stock `BLEUUID(String)` parses 128-bit UUIDs with
+> `sscanf(..., "%llx", ...)`; **newlib-nano's `sscanf` has no `long long`
+> support**, so the parse fails silently and **every 128-bit UUID comes out
+> all-zero** — which breaks the library's own `BLEServiceUART` (bleak can't find
+> `6e400003`). Fix: replace the `%llx` read with a `long-long`-free split, e.g.
+> `sscanf(str, "%x-%x-%x-%x-%4x%x", &a,&b,&c,&d,&e_hi,&e_lo)` and pack
+> `e_hi`(16-bit)+`e_lo`(32-bit) into the last 6 bytes. This patch lives in the
+> toolchain, so **re-apply it after any arduino-pico core update** (and it is
+> worth reporting upstream). Symptom if missing: `ble_scan.py` shows the service
+> with `00000000-…` UUIDs.
 
 > **Security:** no bonding and no link encryption by default — anything in BLE
 > range that speaks NUS can drive the K-line, and the Python side treats BLE as a

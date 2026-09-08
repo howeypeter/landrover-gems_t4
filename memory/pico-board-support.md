@@ -95,9 +95,18 @@ Nordic UART Service) + host `gems_t4/transport/ble.py` (`BleTransport`, uses
 NUS UUIDs: service 6E400001, RX 6E400002 (write), TX 6E400003 (notify). Superset
 (incl. pentest CMD_RAW_INIT); PING `gems_t4-pico-ble-pentest 2.1.0`. Build:
 `ipbtstack=ipv4btcble` (same as Classic). `is_wireless=False` (writes allowed).
-Needs `pip install bleak` (`[ble]` extra). **⚠️ UNVERIFIED on hardware:** BLE
-notifies truncate to the ATT MTU (don't fragment) — sketch sends ≤16 B chunks
-with a small delay; tune `BLE_TX_CHUNK`/delay or raise MTU if replies garble.
+Needs `pip install bleak` (`[ble]` extra). **✅ VERIFIED on hardware 2026-09-07**
+(Pico 2 W): scan shows real NUS UUIDs, PING round-tripped `gems_t4-pico-ble-pentest
+2.1.0`, chunked-notify reassembly good, no pairing/no COM port. TWO fixes were
+required: (1) **arduino-pico core bug** — `BLEUUID(String)` parses 128-bit UUIDs
+with `%llx`, unsupported by **newlib-nano `sscanf`**, so all 128-bit UUIDs came
+out ZERO (broke the lib's own BLEServiceUART). Patched `…/6.1.0/libraries/BLE/src/
+BLEUUID.h` to parse without long-long — TOOLCHAIN-LOCAL, re-apply after a core
+update; worth an upstream PR to earlephilhower/arduino-pico. (2) **name truncated
+to "gems-pic"** because advertising the 128-bit UUID left ~8 chars — fixed with
+`BLE.startAdvertising(false)` + `BleTransport` prefix-matches a shortened name.
+BLE notifies truncate to the ATT MTU (don't fragment) → ≤16 B chunks + delay;
+tune `BLE_TX_CHUNK` if replies garble. Real-ECU `--ble dtc` still to run.
 Now **6 firmware sketches**: pico_kline (USB), pico_kline_pentest (USB+RAW_INIT),
 pico_kline_wifi, pico_kline_bt (Classic SPP), pico_kline_wireless (WiFi+Classic),
 pico_kline_ble (BLE). Classic SPP kept but BLE is preferred for wireless-only.

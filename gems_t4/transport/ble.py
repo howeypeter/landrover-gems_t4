@@ -136,9 +136,17 @@ class BleTransport(Transport):
                     target, timeout=self._scan_timeout
                 )
             else:
-                device = await BleakScanner.find_device_by_name(
-                    target, timeout=self._scan_timeout
-                )
+                # Match by name, tolerating a TRUNCATED advertised name: BLE
+                # shortens the local name to fit the 31-byte advert, so the Pico
+                # may advertise "gems-pic" for a target of "gems-pico". Accept a
+                # match when either name is a prefix of the other.
+                t = target.lower()
+                found = await BleakScanner.discover(timeout=self._scan_timeout)
+                for d in found:
+                    n = (d.name or "").lower()
+                    if n and (n == t or n.startswith(t) or t.startswith(n)):
+                        device = d
+                        break
             if device is None:
                 raise TransportError(
                     f"BLE device {target!r} not found (is the Pico powered and "

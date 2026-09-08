@@ -337,7 +337,10 @@ void setup() {
 
   BLE.begin(BLE_NAME);               // advertise as "gems-pico"
   BLE.server()->addService(&uart);
-  BLE.startAdvertising();
+  // startAdvertising(true) puts the 128-bit NUS UUID in the 31-byte advert,
+  // leaving only ~8 chars for the name -> it gets shortened to "gems-pic".
+  // Pass false so the FULL name advertises (we scan by name, not by UUID).
+  BLE.startAdvertising(false);
   uart.setAutoflush(30);             // safety-net flush for any straggler bytes
 
   Serial.print("BLE NUS up as \"");

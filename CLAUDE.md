@@ -485,10 +485,21 @@ were dropped. See `memory/tech-stack-decision.md`.)
     shared `decode_pico`; `is_wireless=False` so writes are allowed like BT SPP).
     CLI: `gems_t4 kline live|dtc|monitor --ble [NAME|ADDR]` (mutually exclusive
     with `--port`/`--connect`). Needs `pip install bleak` (the `[ble]` extra).
-    **⚠️ UNVERIFIED on hardware — needs an on-device tuning pass:** BLE notifies
-    truncate (don't fragment) to the ATT MTU, so the sketch sends replies in ≤16 B
-    chunks with a short delay; tune `BLE_TX_CHUNK`/delay or raise MTU if replies
-    garble. Detail: `firmware/README.md` "Bluetooth LE (Pico 2 W)".
+    **✅ VERIFIED on hardware 2026-09-07** (Pico 2 W): NUS UUIDs correct, PING
+    round-tripped (`gems_t4-pico-ble-pentest 2.1.0`), chunked-notify reassembly
+    good. No pairing / no COM port confirmed. Two fixes were needed to get there:
+    (1) **arduino-pico core patch** — stock `BLEUUID(String)` parses 128-bit UUIDs
+    with `%llx`, which **newlib-nano's `sscanf` doesn't support**, so every 128-bit
+    UUID came out all-zero (broke the library's own `BLEServiceUART`; bleak
+    couldn't find `6e400003`). Patched `libraries/BLE/src/BLEUUID.h` to parse
+    without long-long — **toolchain-local, re-apply after a core update; report
+    upstream** (`earlephilhower/arduino-pico`). (2) **name truncation** — advertising
+    the 128-bit UUID left only ~8 chars for the name (`gems-pic`), so the sketch
+    now calls `BLE.startAdvertising(false)` (full name) and `BleTransport` matches
+    a truncated advertised name by prefix. BLE notifies truncate (don't fragment)
+    to the ATT MTU → sketch sends ≤16 B chunks + delay; tune `BLE_TX_CHUNK` if
+    replies garble. Real-ECU `--ble dtc` not yet run (bench power/ignition). Detail:
+    `firmware/README.md` "Bluetooth LE (Pico 2 W)".
   - **Bluetooth COM-port auto-detect: `transport/discovery.py` (2026-09-07).** The
     BT SPP COM number is not fixed (re-pairing/re-flash can change it), so this
     helper finds it by the device *name*: resolves `gems-pico` -> BT MAC via
