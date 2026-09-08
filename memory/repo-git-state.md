@@ -5,8 +5,11 @@ metadata:
   type: project
 ---
 
-**LATEST RELEASE: v0.0.10 (2026-09-08)** — annotated tag `v0.0.10` cut on `main`
-and pushed (commit `6156911`). Highlights: hardware-**verified Bluetooth LE**
+**LATEST RELEASE: v0.0.10 (2026-09-08)** — annotated tag `v0.0.10` on `main`
+(moved to include the Classic-BT removal, now at commit `8134dc8`; the tag was
+re-pushed with `-f` since the GitHub Release wasn't published yet). Highlights:
+hardware-**verified Bluetooth LE** (BLE is the ONLY Bluetooth — Classic SPP +
+combined sketch removed 2026-09-08)
 adapter (no pairing/no COM port; read real DTCs over BLE) + WiFi multi-SSID /
 Classic-SPP / combined firmwares; `transport/discovery.py`; **all transport
 construction unified into `Backend.set_connection`** with the CLI `kline` command
