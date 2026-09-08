@@ -66,6 +66,14 @@ The active working list for the next couple of days. Detailed backlog entries
    VIN; on a real-ECU K-line session it reports "coding proprietary/unmapped"
    plainly. Behind the wait overlay, via `Backend.read_vin`/`read_coding_text`.
    2 headless tests.
+   **⛔ BLOCKED on P1.4 for the REAL ECU:** confirmed 2026-09-08 the real GEMS ECU
+   supports NO OBD Service 09 (all Mode 09 PIDs silent), and the VIN last-6 is a
+   **proprietary GEMS coding** field, not an OBD field. The one proprietary
+   channel found (0xDA) is **security-locked** — its `$22` read returns
+   `securityAccessDenied` — so reading real coding (incl. the VIN last-6) needs
+   `$27` security access, which isn't open yet. **So the real-ECU VIN last-6
+   cannot be pulled until the P1.4 security-auth work opens `$27`.** Works on the
+   virtual ECU today; the GUI correctly says "not available" on the real ECU.
 2. **Full CLI unification (option B).** Route the remaining CLI commands
    (`live`/`dtc`/`actuator`/`coding`/`immo`) through `Backend` (they still hit
    `KwpClient` directly via `_build_client`), so every command is a thin Backend
@@ -87,6 +95,9 @@ The active working list for the next couple of days. Detailed backlog entries
    — the "learned" code (user believes a 5-digit learned code — reconcile vs the
    4-digit EKA; clarify which is which). Output: a capabilities doc + concrete
    next steps. Depends on 10AS access (see P4 / the EKA backlog item).
+   **Unblocks P1.1's real-ECU VIN last-6:** the VIN last-6 is proprietary GEMS
+   coding behind the security-locked 0xDA channel (`$22` -> `securityAccessDenied`),
+   so opening `$27` here is the prerequisite to reading ANY real GEMS coding.
 5. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
    linked goals (feasibility-gated — see the reality check):
    - **(a) Pull the maps off an existing ECU.** ⚠️ GEMS maps live on socketed

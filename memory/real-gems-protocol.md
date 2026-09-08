@@ -55,8 +55,17 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   PID21-60 data). Supported Mode-01 PIDs include the **V8 bank-2** ones now
   decoded (0x08/0x09 STFT/LTFT B2, 0x18/0x19 O2 B2S1/B2S2); 0x03 fuel-system
   status is a string enum (CLI-only candidate, not a gauge). **Mode 09
-  (VIN/cal-id/ECU name) is NOT supported** — VIN lives in the BeCM, not GEMS →
-  **no multi-frame reassembly needed** for the OBD-II layer. **Mode 02 (freeze
+  (VIN/cal-id/ECU name) is NOT supported — CONFIRMED 2026-09-08 over BLE: PID
+  00/02/04/06/0A ALL silent.** So there is NO OBD identity data at all (no VIN,
+  Cal ID, CVN, ECU name). The full VIN lives in the body/security module (P38
+  **BeCM** / Discovery 1 **Lucas 10AS**, NOT the GEMS engine ECU); the engine ECU
+  only *codes* the VIN last-6, and even that is a **proprietary GEMS coding**
+  field — NOT readable over OBD, only via the unmapped manufacturer channel
+  (0xDA/pentest). `gems_t4 kline vin` + the GUI "Read VIN from ECU" therefore
+  return "not available" on the real ECU (correct); the VIN last-6 only resolves
+  on the virtual ECU today. Reading real GEMS coding (incl. VIN last-6) is a
+  P1.4/P1.5 research target. → **no multi-frame reassembly needed** for the
+  OBD-II layer. **Mode 02 (freeze
   frame)** supported (`M02 PID00` mask `7f980000`) but empty on the bench (DTC
   `0000` — no *confirmed* code). **Mode 06 (on-board monitor tests)** supported
   (`4600 fff8…`, TIDs 01-0D). Freeze-frame + Mode 06 populate on-car when a code
