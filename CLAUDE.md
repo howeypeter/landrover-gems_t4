@@ -732,7 +732,14 @@ up):**
   — see memory/real-gems-protocol.md). **Default-code trick to try first:** many
   **NAS** trucks / certain build years shipped the 10AS with a generic default
   EKA of **1-5-1-5** — worth trying before/without reading. Not started; needs
-  the 10AS address + protocol (research, likely bench probing). Ties to the
+  the 10AS address + protocol (research, likely bench probing). **Hardware
+  prerequisite (user, 2026-09-07): the 10AS has to be WIRED into the bench rig
+  first.** Today the bench rig only has the GEMS engine ECU; the 10AS is a
+  separate box, so before any 10AS probing we need to source a 10AS unit and wire
+  its power/ground + tie its K-line onto the bench K node (on the real vehicle
+  the 10AS already hangs off the same J1962 pin-7 K-line, but the bench has no
+  10AS present). A new bench-wiring diagram for the 10AS (like
+  `diagrams/gems-bench-rig-wiring.html`) will be part of this. Ties to the
   immobiliser Security-Learn and "unlock the immobiliser from the bench" items.
 - **Unlock / handle the immobiliser from the bench (no BeCM present).** The
   immobiliser Security-Learn is a BeCM↔ECM re-sync — normally a car job,
