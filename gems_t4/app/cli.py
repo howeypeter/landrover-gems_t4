@@ -380,6 +380,22 @@ def _cmd_kline(args: argparse.Namespace) -> int:
                 render.console.print("No pending codes.")
             return 0
 
+        if args.kline_action == "vin":
+            vin = backend.read_vin()
+            if vin:
+                render.console.print(f"[bold]VIN - {source}:[/] {vin}")
+                if len(vin) != 17:
+                    render.console.print(
+                        f"[yellow](got {len(vin)} chars, not the usual 17)[/]"
+                    )
+            else:
+                render.console.print(
+                    f"No VIN from {source}. The GEMS engine ECU may not support "
+                    "OBD-II Service 09 (early ISO 9141-2) — the full VIN lives in "
+                    "the BeCM, not the engine ECU."
+                )
+            return 0
+
         if args.kline_action == "clear":
             if not getattr(args, "yes", False) and not _prompt_yes_no(
                 "Clear fault codes and reset readiness monitors? [y/N] "
@@ -532,9 +548,11 @@ def build_parser() -> argparse.ArgumentParser:
         "kline",
         help="talk to a REAL ECU over the K-line (ISO 9141-2 / OBD-II; bench or car)",
     )
-    sp.add_argument("kline_action", choices=["live", "dtc", "monitor", "clear"],
+    sp.add_argument("kline_action",
+                    choices=["live", "dtc", "monitor", "clear", "vin"],
                     help="one-shot live data; fault codes (stored + pending); a "
-                         "continuous live monitor; or clear codes (Mode 04)")
+                         "continuous live monitor; clear codes (Mode 04); or read "
+                         "the VIN (Mode 09 - may be unsupported on GEMS)")
     sp.add_argument("--yes", "-y", action="store_true",
                     help="skip the confirmation prompt when clearing")
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")

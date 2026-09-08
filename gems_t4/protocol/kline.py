@@ -418,3 +418,32 @@ class KlineClient:
         """
         data = self.raw_service(bytes([0x04]))
         return data is None or (len(data) > 0 and data[0] == 0x44)
+
+    def read_vin(self) -> str | None:
+        """Mode 09 PID 02 -> the VIN string, or ``None`` if unsupported/silent.
+
+        Service 09 (vehicle info) is often UNSUPPORTED on early ISO 9141-2 ECUs
+        (it became mandatory later), and on GEMS the full VIN lives in the BeCM,
+        not the engine ECU — so ``None`` here is a normal, expected outcome, not
+        an error.
+
+        The reply is multi-frame like Mode 03: several ``48 6B E8 49 02 <seq>
+        <chars>`` frames (classically 5 — the first carries one char after 0x00
+        padding, the rest four each). Rather than track the exact NODI/sequence/
+        padding layout (which varies between ECUs and single- vs multi-frame
+        replies), we concatenate every frame's data after the ``49 02`` header
+        and keep only VIN-legal ASCII (0-9, A-Z) — the sequence bytes (0x01..),
+        the NODI byte and 0x00 padding are all non-printable and drop out
+        naturally. A negative reply (``7F 09 ..``) has no ``49 02`` and yields
+        ``None``.
+        """
+        frames = self.raw_service_all(bytes([0x09, 0x02]))
+        if not frames:
+            return None
+        chars = bytearray()
+        for f in frames:
+            if len(f) >= 2 and f[0] == 0x49 and f[1] == 0x02:
+                chars += bytes(
+                    b for b in f[2:] if 0x30 <= b <= 0x39 or 0x41 <= b <= 0x5A
+                )
+        return chars.decode("ascii") if chars else None

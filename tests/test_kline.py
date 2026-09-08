@@ -219,3 +219,50 @@ def test_bank2_pids_present_and_decode() -> None:
     assert by_pid[0x18].decode(b"\x80") == 0.64     # O2 B2S1: 128/200
     assert by_pid[0x19].name == "O2 B2S2 voltage"
     assert 0x03 not in by_pid  # fuel-system status is a string enum, not a gauge PID
+
+
+# -- Service 09 PID 02 (VIN) ------------------------------------------------- #
+
+def _vin_frame(seq: int, chars: bytes) -> bytes:
+    """One `48 6B E8 49 02 <seq> <chars>` Mode 09 VIN frame with checksum."""
+    body = bytes([0x48, 0x6B, 0xE8, 0x49, 0x02, seq]) + chars
+    return body + bytes([kline.obd_checksum(body)])
+
+
+def test_read_vin_multiframe() -> None:
+    vin = "SALLP0123456789AB"  # 17 chars
+    c = vin.encode("ascii")
+    # Classic ISO 9141-2 layout: frame 1 = 3x 0x00 padding + char 1, then 4x4.
+    blob = (
+        _vin_frame(0x01, b"\x00\x00\x00" + c[0:1])
+        + _vin_frame(0x02, c[1:5])
+        + _vin_frame(0x03, c[5:9])
+        + _vin_frame(0x04, c[9:13])
+        + _vin_frame(0x05, c[13:17])
+    )
+    client = kline.KlineClient(FakeKlineEcu({"0902": blob}))
+    client.connect()
+    assert client.read_vin() == vin
+
+
+def test_read_vin_single_frame() -> None:
+    """Some ECUs/adapters return the whole VIN in one buffered frame."""
+    vin = "SALLP0123456789AB"
+    blob = _vin_frame(0x01, vin.encode("ascii"))  # 49 02 01 <17 chars>
+    client = kline.KlineClient(FakeKlineEcu({"0902": blob}))
+    client.connect()
+    assert client.read_vin() == vin
+
+
+def test_read_vin_unsupported_returns_none() -> None:
+    body = bytes([0x48, 0x6B, 0xE8, 0x7F, 0x09, 0x11])  # negative: not supported
+    neg = body + bytes([kline.obd_checksum(body)])
+    client = kline.KlineClient(FakeKlineEcu({"0902": neg}))
+    client.connect()
+    assert client.read_vin() is None
+
+
+def test_read_vin_silent_returns_none() -> None:
+    client = kline.KlineClient(FakeKlineEcu({}))  # ECU stays silent
+    client.connect()
+    assert client.read_vin() is None

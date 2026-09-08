@@ -434,6 +434,19 @@ class Backend:
         _dtc.clear_dtcs(self._require())
         return True
 
+    def read_vin(self) -> str | None:
+        """Read the vehicle VIN (OBD-II Service 09 PID 02) on a real ECU.
+
+        Returns ``None`` when unavailable — which is common: Service 09 is often
+        unsupported on early ISO 9141-2 GEMS ECUs, and the full VIN lives in the
+        BeCM, not the engine ECU. Only the real-ECU (K-line) profile attempts it;
+        the virtual/KWP stack has no VIN and returns ``None``.
+        """
+        self._ensure_connected()
+        if self._kline is not None:
+            return self._kline.read_vin()
+        return None
+
     def run_actuator(self, actuator_id: int, state: int) -> ActuatorOutcome:
         """Command an actuator test; returns the outcome (incl. refusals)."""
         return _actuators.run(self._require(), actuator_id, state)

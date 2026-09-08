@@ -601,8 +601,16 @@ The *actual* wire protocol was reverse-engineered on hardware and differs from
 the stylized guess: **K-line = C1017 pin 23, 5-baud init at 0x33, keybytes 0808,
 `68 6A F1`/`48 6B E8` framing, Mode 01/03**, plus a mandatory inverted-keybyte
 handshake now in the Pico firmware. It's implemented in **`gems_t4/protocol/
-obd.py`** and run via **`gems_t4 kline live|dtc|monitor --port COMx`** (real ECU
-only; 15 unit tests). The fuller **proprietary GEMS diagnostics** (~108 T4
+obd.py`** and run via **`gems_t4 kline live|dtc|monitor|clear|vin --port COMx`**
+(real ECU only). **VIN read (2026-09-07):** `kline vin` = OBD-II Service 09 PID 02
+(`KlineClient.read_vin`, multi-frame; decode filters to VIN-ASCII so it tolerates
+the NODI/seq/padding layout). ⚠️ **May be UNSUPPORTED on GEMS** — Service 09 is
+often absent on early ISO 9141-2 ECUs, and the full VIN lives in the **BeCM**, not
+the engine ECU (the engine ECU only codes the VIN *last 6*); `read_vin` returns
+`None` cleanly in that case. Wired through `Backend.read_vin` (CLI + GUI share it);
+unit-tested (multi/single-frame, unsupported, silent) but **not yet tried on real
+hardware** — run `gems_t4 kline vin --ble` / `--port` to find out if this ECU
+answers. The fuller **proprietary GEMS diagnostics** (~108 T4
 measures, actuators, coding, immobiliser) are still **unmapped/experimental** —
 they ride the same `68 6A F1` envelope; `KlineClient.raw_service` is the probe hook.
 Two bring-up bugs fixed: pico host timeout 2→6 s (`640034f`), firmware ISO 9141
