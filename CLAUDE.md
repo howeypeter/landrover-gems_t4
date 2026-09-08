@@ -130,6 +130,41 @@ The active working list for the next couple of days. Detailed backlog entries
    answers set the PCB scope. Includes the parked **route-A power** decision
    (buck module-on-header vs discrete SMD) and the 10AS bench-wiring prerequisite.
 
+### P5 — GUI / feature backlog (build after the higher tiers clear)
+These are the still-open **QA-unmet spec requirements** (full detail in the
+"Backlog / QA-found unmet requirements" section below). Distinct from P2, which
+is about making the *current* GUI work correctly; P5 is *new* features / deferred
+behaviour fixes:
+- **Service adjustments** — ignition timing (−6°…+3°) + idle-speed nudge; no
+  screen/command today (timing/idle are read-only). [QA-A1]
+- **VCSI connection-chain status** — model laptop→VCSI→J1962→ECU as separate
+  links; "which cable is unplugged". [QA-A2]
+- **EAS air-suspension** height/calibration screens (P38 party piece). [QA-A3]
+- **Message-centre text** mirroring the active fault across screens. [QA-A4]
+- **Injector "brief pulse only"** actuator test (safety-shaped). [QA-A5]
+- **Full-screen / kiosk-on-boot** (frameless "takes over the screen"). [QA-B7]
+- **"Immobilised" coherence on live-data** — gate rpm/engine_running on the
+  `_mobilised` flag (a truly immobilised engine shouldn't idle). [QA-B9]
+- **The 4 missing ECU-write gates** — security-access ($27) on *coding* writes,
+  precondition interlocks, a dry-run mode, a coding-block checksum. [QA-B6]
+
+### P6 — hardening / optional / polish
+- **Server-side write-gate enforcement in the `serve` bridge** — before any
+  non-localhost `serve --listen 0.0.0.0` use (today the read-only policy is
+  client-side only). [QA-C]
+- **Td5/MEMS3 real-reflash profile** — the one *documented* over-the-wire reflash
+  (optional demo; never started).
+- **Windowed-exe icon/version resources**; **more guided fault trees**.
+
+> **Research items are NOT orphaned:** the deep-dive backlog items — [EPROM
+> programmability by model year], [4.0/4.6 engine-variant toggle], [cross-fitted
+> ECU / parts-car], [immobiliser from the bench], and [EKA read from the Lucas
+> 10AS] — are folded into **P1.4** (security/auth), **P1.5** (maps), and **P4**
+> (bench hardware). Their full write-ups live in the backlog sections below.
+> Items already **done** (CLI→Backend for `kline`, the purity-test exemption,
+> live-data 37→40, dtc-clear confirm, em-dash→ASCII, docs-gates-corrected) are
+> marked resolved in place and not repeated here.
+
 ---
 
 ## What the real T4 was: Hardware and software
