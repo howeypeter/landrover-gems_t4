@@ -5,6 +5,17 @@ metadata:
   type: project
 ---
 
+**LATEST RELEASE: v0.0.10 (2026-09-08)** — annotated tag `v0.0.10` cut on `main`
+and pushed (commit `6156911`). Highlights: hardware-**verified Bluetooth LE**
+adapter (no pairing/no COM port; read real DTCs over BLE) + WiFi multi-SSID /
+Classic-SPP / combined firmwares; `transport/discovery.py`; **all transport
+construction unified into `Backend.set_connection`** with the CLI `kline` command
+routed through `Backend` and BLE selectable in the GUI; **VIN read** (`kline vin`,
+Service 09); GUI connection screen Cancel/Apply/Save; `[ble]`/`[all]` extras;
+BeCM(P38)-vs-Lucas-10AS(Disco 1) doc correction. Version in lockstep
+(pyproject/`__init__`/`--version` = 0.0.10). **GitHub Release still to be
+published by the user** (no `gh`/token here). Prior: v0.0.9 (2026-09-04).
+
 **As of 2026-07-11 (v0.0.5).** The repo lives on GitHub
 (`howeypeter/landrover-gems_t4`).
 
