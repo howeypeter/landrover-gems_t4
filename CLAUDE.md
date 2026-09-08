@@ -757,15 +757,12 @@ up):**
   still build via `_build_client` → `KwpClient` directly. Fold those through
   Backend too when the pain justifies it, so every CLI command is a thin Backend
   wrapper.
-- **Pre-existing regression failure (found 2026-09-07):
-  `test_no_sleep_or_serial_in_pure_layers[protocol]`.** `protocol/kline.py:317`
-  uses `time.sleep(retry_delay)` in the real-ECU init-retry loop; the purity test
-  forbids `time.sleep(` anywhere in `protocol/`. The test predates `kline.py`
-  (the real-ECU client, which legitimately paces retries), so its "protocol/ is
-  pure KWP logic" assumption no longer holds. Fix options: exempt `kline.py` from
-  the check (it's the real-ECU client, not pure protocol), move `kline.py`, or
-  drop the sleep. NOT introduced by the BLE work — flag only. tests/ = 208 passed;
-  regression = 234 passed + this 1.
+- **✓ RESOLVED 2026-09-07 — `test_no_sleep_or_serial_in_pure_layers[protocol]`.**
+  `protocol/kline.py:317` paces its real-ECU init-retry loop with
+  `time.sleep(retry_delay)`, which tripped a purity test assuming `protocol/` is
+  pure KWP logic. Fixed by exempting `kline.py` from the `time.sleep(` check only
+  (it's the real-ECU client; the Pico owns byte timing but retry cadence is the
+  client's) — it's still barred from touching serial I/O. Regression = 235 passed.
 
 ### Backlog / QA-found unmet requirements (found 2026-07-11 by a full QA sweep)
 
