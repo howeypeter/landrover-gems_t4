@@ -106,7 +106,10 @@ update; worth an upstream PR to earlephilhower/arduino-pico. (2) **name truncate
 to "gems-pic"** because advertising the 128-bit UUID left ~8 chars — fixed with
 `BLE.startAdvertising(false)` + `BleTransport` prefix-matches a shortened name.
 BLE notifies truncate to the ATT MTU (don't fragment) → ≤16 B chunks + delay;
-tune `BLE_TX_CHUNK` if replies garble. Real-ECU `--ble dtc` still to run.
+tune `BLE_TX_CHUNK` if replies garble. **Real-ECU read CONFIRMED over BLE
+2026-09-07:** `gems_t4 kline dtc --ble` returned P1193/P0158/P1316/P0125 from a
+real GEMS ECU — full stack proven (BLE + 5-baud init + multi-frame Mode 03).
+Upstream PR for the BLEUUID bug is in the CLAUDE.md backlog.
 Now **6 firmware sketches**: pico_kline (USB), pico_kline_pentest (USB+RAW_INIT),
 pico_kline_wifi, pico_kline_bt (Classic SPP), pico_kline_wireless (WiFi+Classic),
 pico_kline_ble (BLE). Classic SPP kept but BLE is preferred for wireless-only.

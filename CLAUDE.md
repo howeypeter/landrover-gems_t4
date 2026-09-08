@@ -498,8 +498,11 @@ were dropped. See `memory/tech-stack-decision.md`.)
     now calls `BLE.startAdvertising(false)` (full name) and `BleTransport` matches
     a truncated advertised name by prefix. BLE notifies truncate (don't fragment)
     to the ATT MTU → sketch sends ≤16 B chunks + delay; tune `BLE_TX_CHUNK` if
-    replies garble. Real-ECU `--ble dtc` not yet run (bench power/ignition). Detail:
-    `firmware/README.md` "Bluetooth LE (Pico 2 W)".
+    replies garble. **Real-ECU read CONFIRMED over BLE 2026-09-07:** `gems_t4
+    kline dtc --ble` returned stored codes P1193/P0158/P1316/P0125 (the multi-frame
+    set) from a real GEMS ECU — full stack proven (BLE + 5-baud init + multi-frame
+    Mode 03 decode + chunked-notify reassembly). Detail: `firmware/README.md`
+    "Bluetooth LE (Pico 2 W)".
   - **Bluetooth COM-port auto-detect: `transport/discovery.py` (2026-09-07).** The
     BT SPP COM number is not fixed (re-pairing/re-flash can change it), so this
     helper finds it by the device *name*: resolves `gems-pico` -> BT MAC via
@@ -712,6 +715,18 @@ up):**
 
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
+- **Report the arduino-pico `BLEUUID` 128-bit bug upstream (issue + PR).**
+  `earlephilhower/arduino-pico` (found 2026-09-07, core 6.1.0). `BLEUUID(String)`
+  in `libraries/BLE/src/BLEUUID.h` parses 128-bit UUIDs with
+  `sscanf(str, "%x-%x-%x-%x-%llx", …)`; **newlib-nano's `sscanf` has no `long
+  long`**, so the parse fails and every 128-bit UUID comes out all-zero — which
+  breaks the library's own `BLEServiceUART` (a central can't find `6e400003`).
+  We patched our local core to unblock BLE (see `firmware/README.md` "Bluetooth
+  LE" → core-patch note); this backlog item is to contribute it back so future
+  core installs don't need the manual patch. Fix to submit: a dependency-free
+  byte-wise parse (no `sscanf`/no long-long) of the 36-char canonical string.
+  Check for an existing issue first. Not urgent (local patch works); do when
+  there's time. **Do this from the user's GitHub account** — no `gh`/token here.
 - **Finalize PCB1 Pico power before fab (route A: on-board 12 V→5 V buck).**
   Decided 2026-09-07: interim is **route C** — power the Pico from a USB
   wall-charger / power bank (no board change; the Pico 2 W WiFi firmware already
