@@ -83,6 +83,25 @@ flashed/verified. There are now 5 firmware sketches: pico_kline (USB),
 pico_kline_pentest (USB+RAW_INIT), pico_kline_wifi, pico_kline_bt,
 pico_kline_wireless. Detail: `firmware/README.md`.
 
+## Bluetooth LE (BLE) transport — BUILT 2026-09-07 (Classic SPP proved flaky)
+Windows Bluetooth **Classic** SPP turned out unreliable in real use: the bond is
+wiped by every firmware re-flash, the **outgoing** COM port must be manually
+re-created (COM Ports tab → Add → Outgoing) and never auto-reconnects, and it
+often sits in "Other devices / Not connected". So we added **BLE**:
+`firmware/pico_kline_ble/pico_kline_ble.ino` (arduino-pico `BLEServiceUART`, a
+Nordic UART Service) + host `gems_t4/transport/ble.py` (`BleTransport`, uses
+`bleak`) + CLI `gems_t4 kline ... --ble [NAME|ADDR]`. BLE GATT needs **no bonding
+/ no pairing / no COM port** — bleak connects to the NUS by name (`gems-pico`).
+NUS UUIDs: service 6E400001, RX 6E400002 (write), TX 6E400003 (notify). Superset
+(incl. pentest CMD_RAW_INIT); PING `gems_t4-pico-ble-pentest 2.1.0`. Build:
+`ipbtstack=ipv4btcble` (same as Classic). `is_wireless=False` (writes allowed).
+Needs `pip install bleak` (`[ble]` extra). **⚠️ UNVERIFIED on hardware:** BLE
+notifies truncate to the ATT MTU (don't fragment) — sketch sends ≤16 B chunks
+with a small delay; tune `BLE_TX_CHUNK`/delay or raise MTU if replies garble.
+Now **6 firmware sketches**: pico_kline (USB), pico_kline_pentest (USB+RAW_INIT),
+pico_kline_wifi, pico_kline_bt (Classic SPP), pico_kline_wireless (WiFi+Classic),
+pico_kline_ble (BLE). Classic SPP kept but BLE is preferred for wireless-only.
+
 ## Powering the Pico untethered (decided 2026-09-07)
 The WiFi firmware removes the laptop USB *data* tether, but the Pico still needs
 5 V. Decision:

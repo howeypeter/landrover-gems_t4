@@ -74,9 +74,19 @@ host protocol; they differ only in which radio(s) carry it:
 
 | Sketch | Radios | Use it when |
 |---|---|---|
-| **`pico_kline_wireless`** (recommended) | **WiFi + Bluetooth at once** | You want both available without re-flashing — TCP when both ends share a network, Bluetooth (COM port) when they don't |
+| **`pico_kline_wireless`** (recommended) | **WiFi + Bluetooth Classic at once** | You want both available without re-flashing — TCP when both ends share a network, Bluetooth (COM port) when they don't |
 | `pico_kline_wifi` | WiFi/TCP only | You only use WiFi and want the leanest build |
-| `pico_kline_bt`   | Bluetooth SPP only | You only use Bluetooth, or WiFi+BT coexistence ever proves flaky on your rig |
+| `pico_kline_bt`   | Bluetooth **Classic** SPP only | You only use Bluetooth Classic |
+| `pico_kline_ble`  | Bluetooth **LE** (NUS) only | Classic SPP's Windows pairing / COM-port lifecycle is unreliable for you — **BLE needs no pairing and no COM port** (see below) |
+
+> **Classic SPP vs BLE.** Bluetooth *Classic* SPP appears as a Windows virtual
+> COM port (reuses `--port COMx`), but Windows' SPP outgoing-port lifecycle is
+> flaky — bonds drop on re-flash, the outgoing port must be re-created, and it
+> never auto-reconnects. **Bluetooth LE** (`pico_kline_ble`) avoids all of that:
+> no bonding, no pairing dialog, no COM port — the Python client (`bleak`)
+> connects to the service by name. Trade-off: BLE uses a different Python
+> transport (`--ble`, needs `bleak`) and has an on-hardware tuning step (notify
+> chunk size vs MTU). If Classic SPP fights you, use BLE.
 
 All three need the Bluetooth-enabled build option **only if they use BT** — the
 combined and BT sketches do (`ipbtstack=ipv4btcble`); the WiFi-only sketch does
@@ -231,6 +241,50 @@ doesn't contain it, so keep it in the version string.)
 > Enabling Bluetooth costs ~80 KB flash + ~20 KB RAM (fine on RP2350/RP2040).
 > It's a separate sketch from the WiFi one — pick the transport you want and
 > flash that; you don't run both at once.
+
+## Bluetooth LE (Pico 2 W) — no pairing, no COM port
+
+`pico_kline_ble/pico_kline_ble.ino` serves the host protocol over a **BLE Nordic
+UART Service (NUS)**. This is the answer to flaky Windows Bluetooth *Classic*
+SPP: BLE GATT needs **no bonding**, so there's **no pairing dialog, no virtual
+COM port, and no incoming/outgoing port mess** — the Python client just connects
+to the service by name. Point-to-point, so the laptop keeps its own WiFi.
+
+NUS UUIDs (baked into both firmware and `gems_t4.transport.ble`):
+`service 6E400001-…`, `RX 6E400002-…` (host→Pico write), `TX 6E400003-…`
+(Pico→host notify). Advertises as **`gems-pico`**. Superset firmware (incl.
+pentest `CMD_RAW_INIT`); PING = `gems_t4-pico-ble-pentest 2.1.0`.
+
+1. **Install `bleak`** on the laptop (the Python BLE library):
+   ```
+   pip install bleak            # or:  pip install -e ".[ble]"
+   ```
+2. **Flash with Bluetooth enabled** (BLE uses the same stack option as Classic):
+   ```
+   arduino-cli compile --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble firmware/pico_kline_ble
+   arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble -p COM5 firmware/pico_kline_ble
+   ```
+   (IDE: Tools > IP/Bluetooth Stack > "IPv4 + Bluetooth".)
+3. **Connect — no pairing step at all:**
+   ```
+   gems_t4 kline dtc --ble               # scans for "gems-pico"
+   gems_t4 kline dtc --ble gems-pico      # or by name / BLE address
+   gems_t4 kline live --ble
+   ```
+   The onboard LED is solid while a BLE client is connected.
+
+> **⚠️ Unverified on hardware — needs one on-device tuning pass.** BLE
+> notifications don't fragment; they truncate to the negotiated ATT MTU. The
+> firmware sends replies in ≤16 B chunks with a short inter-chunk delay (which
+> also pumps the CYW43 stack), and the Python side reassembles the byte stream.
+> Real GEMS frames are small, so this is comfortable — but if replies look
+> truncated/garbled on real hardware, tune `BLE_TX_CHUNK` / the delay in the
+> sketch, or raise the ATT MTU.
+
+> **Security:** no bonding and no link encryption by default — anything in BLE
+> range that speaks NUS can drive the K-line, and the Python side treats BLE as a
+> trusted (non-wireless) transport, so **writes are allowed**. Use on a bench you
+> control.
 
 ## Use from Python
 

@@ -471,6 +471,24 @@ were dropped. See `memory/tech-stack-decision.md`.)
     if WiFi+BT coexistence proves flaky during the delay()-heavy 5-baud init.
     NOT yet flashed/verified on hardware. Detail: `firmware/README.md` "Combined
     WiFi + Bluetooth".
+  - **Pico 2 W Bluetooth LE mode: firmware `firmware/pico_kline_ble/` + host
+    `transport/ble.py` + CLI `--ble` (2026-09-07).** Added because Windows
+    Bluetooth **Classic** SPP proved unreliable in practice (bonds drop on
+    re-flash; the outgoing COM port must be re-created via the COM Ports tab and
+    never auto-reconnects; "Other devices / Not connected"). **BLE fixes this: no
+    bonding, no pairing dialog, no COM port** — the `bleak` client connects to a
+    Nordic UART Service (NUS) by name (`gems-pico`). UUIDs: service `6E400001-…`,
+    RX `6E400002-…` (write), TX `6E400003-…` (notify). Firmware uses arduino-pico's
+    `BLEServiceUART`; superset incl. pentest `CMD_RAW_INIT`; PING
+    `gems_t4-pico-ble-pentest 2.1.0`. Host: `BleTransport` (async bleak on a
+    background loop, reassembles NUS notifications into `0x5A` frames via the
+    shared `decode_pico`; `is_wireless=False` so writes are allowed like BT SPP).
+    CLI: `gems_t4 kline live|dtc|monitor --ble [NAME|ADDR]` (mutually exclusive
+    with `--port`/`--connect`). Needs `pip install bleak` (the `[ble]` extra).
+    **⚠️ UNVERIFIED on hardware — needs an on-device tuning pass:** BLE notifies
+    truncate (don't fragment) to the ATT MTU, so the sketch sends replies in ≤16 B
+    chunks with a short delay; tune `BLE_TX_CHUNK`/delay or raise MTU if replies
+    garble. Detail: `firmware/README.md` "Bluetooth LE (Pico 2 W)".
   - **Bluetooth COM-port auto-detect: `transport/discovery.py` (2026-09-07).** The
     BT SPP COM number is not fixed (re-pairing/re-flash can change it), so this
     helper finds it by the device *name*: resolves `gems-pico` -> BT MAC via
