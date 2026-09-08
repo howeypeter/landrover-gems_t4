@@ -59,11 +59,13 @@ The active working list for the next couple of days. Detailed backlog entries
 (EKA/10AS, 0xDA, route-A power, QA-unmet) live further down; this is the ordering.
 
 ### P1 — do first
-1. **VIN last-6 in the GUI.** The full VIN over OBD Service 09 is unavailable on
-   this ECU (`kline vin` returned nothing). But the engine ECU **codes the VIN
-   last-6** as a coding field (`CodingField` in `gems/programming.py`;
-   `Backend.read_coding` exists). Read it and surface it in the GUI (Vehicle-ID
-   screen and/or coding screen).
+1. **✓ DONE 2026-09-08 — VIN last-6 in the GUI.** Vehicle-ID screen has a "Read
+   VIN from ECU" button + read-only "ECU VIN" field: tries the full VIN (OBD
+   Service 09), else falls back to the coded **VIN last-6** and pads the unknown
+   first 11 chars with 0-placeholders (`00000000000<last6>`) — never a fabricated
+   VIN; on a real-ECU K-line session it reports "coding proprietary/unmapped"
+   plainly. Behind the wait overlay, via `Backend.read_vin`/`read_coding_text`.
+   2 headless tests.
 2. **Full CLI unification (option B).** Route the remaining CLI commands
    (`live`/`dtc`/`actuator`/`coding`/`immo`) through `Backend` (they still hit
    `KwpClient` directly via `_build_client`), so every command is a thin Backend
