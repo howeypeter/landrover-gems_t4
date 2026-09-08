@@ -14,6 +14,21 @@ you **hand-solder** the through-hole connectors, switches, barrel jack, jumper
 header and the Pico module. This is the cheapest/simplest split and keeps the
 PCBA BOM tiny.
 
+> ⚠️ **OPEN before fab — PCB1 Pico power (route A). Do not finalize/order PCB1
+> until this is decided.** Today PCB1 has **no on-board Pico supply**: the Pico
+> is powered over **USB** (route C — a USB wall-charger or power bank; the
+> Pico 2 W WiFi firmware makes the *data* wireless, but the Pico still needs
+> 5 V from somewhere). To make PCB1 fully USB-free from the single bench 12 V,
+> add **route A**: 12 V (from the J1 4-pin, the switched/fused +12 V) → a
+> **12 V→5 V buck** (set to 5.0–5.1 V) → **1N5817 Schottky** (band/cathode
+> toward the Pico) → Pico **VSYS (pin 39)**; buck GND → Pico **GND (pin 38)**.
+> **Feed VSYS, never VBUS (pin 40).** Buck as a cheap module-on-header
+> (recommended) or a discrete SMD buck — TBD. This changes PCB1's power
+> section, so the schematic / BOM / netlist / topology must all be updated when
+> route A is picked up. (An ATX PSU's +5 V rail could feed VSYS directly and
+> skip the buck, but the user is not using an ATX supply.) Tracked in
+> CLAUDE.md → "Backlog / tech debt".
+>
 > ✅ **LCSC C-numbers are filled in** (2026-09 lookup, taken from live JLCPCB/LCSC
 > product pages) — see the two `*-bom.csv` files. Stock and Basic/Extended status
 > still drift over time, so **reconfirm each on jlcpcb.com/parts before you order**;
