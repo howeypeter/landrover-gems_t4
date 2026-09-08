@@ -14,11 +14,12 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-from gems_t4.app.backend import Backend
+from gems_t4.app.backend import Backend, RealEcuUnsupported
 from gems_t4.app.gui.base import Screen
 
 #: A plausible P38 Range Rover VIN (SALLPAM…-style Solihull 17-char) to prefill.
@@ -58,6 +59,21 @@ class VehicleIdScreen(Screen):
         self._summary.setTextInteractionFlags(Qt.TextSelectableByMouse)
         form.addRow("Identified:", self._summary)
 
+        #: VIN read back from the ECU. The engine ECU only *codes the last 6* of
+        #: the VIN (a coding field); the full 17-char VIN isn't held here (it
+        #: lives in the body/security module, and OBD Service 09 is usually
+        #: unsupported on GEMS). So when only the last 6 are known, the first 11
+        #: are shown as 0-placeholders rather than a fabricated VIN.
+        self._ecu_vin = QLabel("(press “Read VIN from ECU”)")
+        self._ecu_vin.setObjectName("Lcd")
+        self._ecu_vin.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self._ecu_vin.setWordWrap(True)
+        form.addRow("ECU VIN:", self._ecu_vin)
+
+        self._read_vin_btn = QPushButton("Read VIN from ECU")
+        self._read_vin_btn.clicked.connect(self._read_vin)
+        form.addRow("", self._read_vin_btn)
+
         #: The vehicle-config choice: which fault scenario the ECU presents.
         self._scenario = QComboBox()
         for name in self.backend.available_scenarios():
@@ -83,6 +99,7 @@ class VehicleIdScreen(Screen):
         On a remote connection (USB/network) the scenario lives with the real
         or served ECU, not this tool — the picker is disabled.
         """
+        self._ecu_vin.setText("(press “Read VIN from ECU”)")
         remote = self.backend.is_remote
         self._scenario.setEnabled(not remote)
         if remote:
@@ -98,6 +115,51 @@ class VehicleIdScreen(Screen):
         if idx >= 0:
             self._scenario.setCurrentIndex(idx)
         self.status.emit("Confirm VIN and test scenario, then press ✓ to continue.")
+
+    # -- VIN read ----------------------------------------------------------- #
+    def _read_vin(self) -> None:
+        """Read the VIN from the ECU, behind the "please wait" overlay.
+
+        Tries the full VIN (OBD-II Service 09) first; if the ECU doesn't answer
+        (usual for GEMS), falls back to the **coded VIN last-6** and pads the
+        unknown first 11 characters with 0-placeholders. On a real-ECU K-line
+        session the coding block is proprietary/unmapped, so we say so plainly
+        rather than inventing a VIN.
+        """
+        def work() -> tuple[str | None, str]:
+            try:
+                full = self.backend.read_vin()
+            except Exception:  # noqa: BLE001 - report, don't raise into Qt
+                full = None
+            if full and len(full) == 17:
+                return full, "full VIN (OBD-II Service 09)"
+            try:
+                last6 = (self.backend.read_coding_text("vin_last6") or "").strip()
+            except RealEcuUnsupported:
+                return None, ("real ECU: full VIN unsupported (Service 09) and the "
+                              "coding block is proprietary/unmapped — the full VIN "
+                              "lives in the body/security module (BeCM / 10AS)")
+            except Exception as exc:  # noqa: BLE001
+                return None, f"error: {exc}"
+            if not last6:
+                return None, "no VIN coded in the ECU"
+            padded = last6.rjust(17, "0")  # unknown first 11 -> 0-placeholders
+            return padded, "last-6 from ECU coding (first 11 unknown)"
+
+        def done(result: tuple[str | None, str]) -> None:
+            value, source = result
+            if value:
+                self._ecu_vin.setText(f"{value}   [{source}]")
+                self.status.emit(f"Read VIN — {source}")
+            else:
+                self._ecu_vin.setText(f"(not available) — {source}")
+                self.status.emit("VIN not available from the ECU")
+
+        def failed(exc: Exception) -> None:
+            self._ecu_vin.setText(f"(read failed) — {exc}")
+            self.status.emit(f"VIN read failed: {exc}")
+
+        self.run_with_wait("Reading VIN from ECU", work, done, failed)
 
     # -- navigation --------------------------------------------------------- #
     def nav_buttons(self) -> set[str]:

@@ -35,6 +35,46 @@ def test_vehicle_id_tick_commits_scenario_and_navigates(qtbot):
     assert navigated == ["system_menu"]
 
 
+def test_vehicle_id_read_vin_pads_last6_on_virtual(qtbot):
+    """Read VIN: no full VIN on the virtual ECU, so show the coded last-6 with
+    the unknown first 11 chars as 0-placeholders (never a fabricated VIN)."""
+    backend = Backend("healthy")
+    screen = VehicleIdScreen(backend)
+    qtbot.addWidget(screen)
+    screen.on_enter()
+
+    screen._read_vin()  # instant mode (conftest) -> runs inline
+
+    text = screen._ecu_vin.text()
+    assert "00000000000123456" in text  # 11 zero placeholders + coded VIN last-6
+    assert "last-6" in text.lower()
+    backend.disconnect()
+
+
+def test_vehicle_id_read_vin_reports_unavailable_on_real_ecu_profile(qtbot, monkeypatch):
+    """On the real-ECU K-line profile, full VIN is unsupported and coding is
+    unmapped — the screen must say so, not invent a VIN."""
+    from gems_t4.app.backend import RealEcuUnsupported
+
+    backend = Backend("healthy")
+    monkeypatch.setattr(backend, "read_vin", lambda: None)
+
+    def _no_coding(_field):
+        raise RealEcuUnsupported("proprietary")
+
+    monkeypatch.setattr(backend, "read_coding_text", _no_coding)
+    screen = VehicleIdScreen(backend)
+    qtbot.addWidget(screen)
+    screen.on_enter()
+
+    screen._read_vin()
+
+    text = screen._ecu_vin.text()
+    assert "not available" in text.lower()
+    assert "00000000000" not in text  # and no fabricated placeholder VIN
+    backend.disconnect()
+
+
 def test_toolbox_lan_card_check_shows_canon_disclaimer(qtbot):
     """The LAN card check must surface the verbatim period disclaimer."""
     backend = Backend("healthy")
