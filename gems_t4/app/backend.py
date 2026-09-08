@@ -83,10 +83,14 @@ class Backend:
         scenario: str = "healthy",
         *,
         immobilised: bool = False,
+        latency: float = 0.0,
         transport_factory: Callable[[], Transport] | None = None,
     ) -> None:
         self._scenario_name = scenario
         self._immobilised = immobilised
+        #: Modeled per-exchange latency for the virtual ECU (seconds); the CLI's
+        #: --latency flag. Ignored on a real/remote transport.
+        self._latency = latency
         self._transport_factory = transport_factory
         self._client: KwpClient | None = None
         self._kline: KlineClient | None = None
@@ -276,7 +280,7 @@ class Backend:
             self._ecu = VirtualEcu(
                 get_scenario(self._scenario_name), immobilised=self._immobilised
             )
-            transport = VirtualTransport(self._ecu)
+            transport = VirtualTransport(self._ecu, latency=self._latency)
         if self._use_kline:
             # Real GEMS ECU: ISO 9141-2 K-line profile (5-baud init at 0x33,
             # OBD-II framing). No StartDiagnosticSession — OBD-II has none.

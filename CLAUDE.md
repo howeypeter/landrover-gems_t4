@@ -77,10 +77,16 @@ The active working list for the next couple of days. Detailed backlog entries
    memory/real-gems-protocol.md + the [immobiliser-from-bench], [EKA read], and
    [EPROM] backlog items. Bench research — may need >1 session; some parts depend
    on P4 (10AS on the bench).
-2. **Full CLI unification (option B).** Route the remaining CLI commands
-   (`live`/`dtc`/`actuator`/`coding`/`immo`) through `Backend` (they still hit
-   `KwpClient` directly via `_build_client`), so every command is a thin Backend
-   wrapper — matching what `kline` already does. Single source of truth.
+2. **✓ DONE 2026-09-08 — Full CLI unification (option B).** The CLI commands
+   `live`/`dtc`/`actuator`/`coding`/`immo` now route through `Backend` (one shared
+   `_backend_from_args` seam; `_build_client`/direct `KwpClient` removed). Every
+   command is a thin Backend wrapper — the GUI and CLI call the SAME Backend
+   methods (`read_live`/`read_dtcs`/`clear_dtcs`/`run_actuator`/coding/immobiliser),
+   so a fix or feature lands in ONE place for both front-ends. `Backend` gained a
+   `latency` param (CLI `--latency`); the KWP-stylized commands force
+   `real_ecu=False` so `--connect`/`--port` stay on the KWP stack (the real
+   K-line profile remains the separate `kline` command). Verified: all 5 commands
+   on the virtual ECU + a two-process `serve`/`--connect` smoke; 447 tests pass.
 3. **ONE unified firmware (USB + WiFi + BLE) + full validation.** Consolidate to a
    single sketch that serves the host protocol over **USB-CDC, WiFi/TCP, AND BLE**
    (so there is only one thing to flash), keeping the pentest `CMD_RAW_INIT`
@@ -887,11 +893,11 @@ up):**
   it (this is how BLE reached the GUI). `Backend.set_connection` gained a
   `real_ecu` override so the CLI `kline` command forces the K-line profile over
   any transport (incl. `--connect` to a WiFi Pico); `clear_dtcs` now returns the
-  ack flag for CLI parity. **Still bypassing Backend (the "full unification"
-  option, deferred):** the CLI `live`/`dtc`/`actuator`/`coding`/`immo` commands
-  still build via `_build_client` → `KwpClient` directly. Fold those through
-  Backend too when the pain justifies it, so every CLI command is a thin Backend
-  wrapper.
+  ack flag for CLI parity. **✓ FULL UNIFICATION DONE 2026-09-08:** the CLI
+  `live`/`dtc`/`actuator`/`coding`/`immo` commands now route through `Backend`
+  too (shared `_backend_from_args`; `_build_client`/direct `KwpClient` removed),
+  so EVERY CLI command is a thin Backend wrapper and the CLI+GUI share one code
+  path. `Backend` gained a `latency` param.
 - **✓ RESOLVED 2026-09-07 — `test_no_sleep_or_serial_in_pure_layers[protocol]`.**
   `protocol/kline.py:317` paces its real-ECU init-retry loop with
   `time.sleep(retry_delay)`, which tripped a purity test assuming `protocol/` is

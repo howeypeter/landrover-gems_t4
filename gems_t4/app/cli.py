@@ -22,37 +22,47 @@ import sys
 
 from gems_t4 import __version__
 from gems_t4.app import render
-from gems_t4.gems import actuators, dtc, immobiliser, livedata, programming
+from gems_t4.app.backend import Backend
+from gems_t4.gems import actuators, programming
 from gems_t4.gems.scenarios import SCENARIOS, get_scenario
 from gems_t4.gems.virtual_ecu import VirtualEcu
-from gems_t4.protocol.client import KwpClient, WirelessWriteRefused
-from gems_t4.transport.pico import PicoAdapterTransport
-from gems_t4.transport.tcp import TcpTransport, parse_endpoint
+from gems_t4.protocol.client import WirelessWriteRefused
+from gems_t4.transport.tcp import parse_endpoint
 from gems_t4.transport.virtual import VirtualTransport
 
 
-def _build_client(args: argparse.Namespace) -> tuple[KwpClient, VirtualEcu | None]:
-    """Build a client over the virtual ECU (default), the USB Pico adapter
-    (``--port``), or a TCP endpoint (``--connect``)."""
-    if getattr(args, "port", None) and getattr(args, "connect", None):
+def _backend_from_args(args: argparse.Namespace) -> Backend:
+    """Build a **connected** :class:`Backend` for the KWP-stylized commands.
+
+    Single seam shared with the GUI: the Backend owns transport construction
+    (virtual ECU by default, a USB Pico with ``--port``, or a TCP endpoint with
+    ``--connect``). These commands (live/dtc/actuator/coding/immo) speak the
+    KWP-stylized stack — the *real*-GEMS K-line profile is the separate ``kline``
+    command — so we force ``real_ecu=False`` on remote connections. Caller must
+    ``backend.disconnect()`` when done.
+    """
+    port = getattr(args, "port", None)
+    connect = getattr(args, "connect", None)
+    if port and connect:
         raise SystemExit("choose --port (USB) or --connect (network), not both")
-    if getattr(args, "port", None):
-        transport = PicoAdapterTransport(args.port)
-        return KwpClient(transport), None
-    if getattr(args, "connect", None):
-        host, tcp_port = parse_endpoint(args.connect)
-        transport = TcpTransport(
-            host, tcp_port, allow_writes=getattr(args, "allow_writes", False)
-        )
-        return KwpClient(transport), None
-    ecu = VirtualEcu(
-        get_scenario(args.scenario), immobilised=getattr(args, "immobilised", False)
+    backend = Backend(
+        getattr(args, "scenario", "healthy"),
+        immobilised=getattr(args, "immobilised", False),
+        latency=getattr(args, "latency", 0.0),
     )
-    # A few ticks so the warm-up curve / idle hunt have advanced a little.
-    for _ in range(5):
-        ecu.tick(0.1)
-    transport = VirtualTransport(ecu, latency=args.latency)
-    return KwpClient(transport), ecu
+    if port:
+        backend.apply_connection("usb", com_port=port, real_ecu=False)
+    elif connect:
+        host, tcp_port = parse_endpoint(connect)
+        backend.apply_connection(
+            "network", host=host, tcp_port=tcp_port,
+            allow_writes=getattr(args, "allow_writes", False), real_ecu=False,
+        )
+    else:
+        backend.connect()
+        for _ in range(5):  # warm the sim (warm-up curve / idle hunt) like before
+            backend.tick(0.1)
+    return backend
 
 
 def _source_label(args: argparse.Namespace) -> str:
@@ -88,17 +98,13 @@ def _cmd_scenarios(args: argparse.Namespace) -> int:
 
 
 def _cmd_live(args: argparse.Namespace) -> int:
-    client, _ = _build_client(args)
     render.communicating()
-    client.connect()
+    backend = _backend_from_args(args)
     try:
-        client.start_session()
-        ids = None
-        if args.ids:
-            ids = [int(x, 0) for x in args.ids]
-        measures = livedata.read_all(client, ids)
+        ids = [int(x, 0) for x in args.ids] if args.ids else None
+        measures = backend.read_live(ids)
     finally:
-        client.close()
+        backend.disconnect()
     render.print_live(measures, title=f"Live data - {_source_label(args)}")
     return 0
 
@@ -112,18 +118,16 @@ def _cmd_dtc(args: argparse.Namespace) -> int:
     ):
         render.console.print("Clear cancelled.")
         return 1
-    client, _ = _build_client(args)
     render.communicating()
-    client.connect()
+    backend = _backend_from_args(args)
     try:
-        client.start_session()
         if args.dtc_action == "clear":
-            dtc.clear_dtcs(client)
+            backend.clear_dtcs()
             render.console.print("[green]Fault codes cleared.[/]")
             return 0
-        dtcs = dtc.read_dtcs(client)
+        dtcs = backend.read_dtcs()
     finally:
-        client.close()
+        backend.disconnect()
     render.print_dtcs(dtcs, title=f"Fault codes - {_source_label(args)}")
     return 0
 
@@ -210,7 +214,6 @@ def _cmd_serve(args: argparse.Namespace) -> int:
 
 
 def _cmd_actuator(args: argparse.Namespace) -> int:
-    client, _ = _build_client(args)
     state = actuators.STATE_ON if args.state == "on" else actuators.STATE_OFF
     try:
         act = actuators.by_name(args.name)
@@ -218,12 +221,11 @@ def _cmd_actuator(args: argparse.Namespace) -> int:
         render.console.print(f"[red]{exc}[/]")
         return 2
     render.communicating()
-    client.connect()
+    backend = _backend_from_args(args)
     try:
-        client.start_session()
-        outcome = actuators.run(client, act.actuator_id, state)
+        outcome = backend.run_actuator(act.actuator_id, state)
     finally:
-        client.close()
+        backend.disconnect()
     render.print_actuator(outcome)
     return 0 if outcome.ok else 1
 
@@ -231,18 +233,16 @@ def _cmd_actuator(args: argparse.Namespace) -> int:
 def _cmd_coding(args: argparse.Namespace) -> int:
     from rich.table import Table
 
-    client, _ = _build_client(args)
     render.communicating()
-    client.connect()
+    backend = _backend_from_args(args)
     try:
-        client.start_session()
         if args.coding_action == "write":
             if not args.field or args.value is None:
                 render.console.print("[red]coding write needs --field and --value[/]")
                 return 2
             try:
-                value = programming.encode_field(args.field, args.value)
-                backup = programming.backup(client, args.field)
+                value = backend.encode_coding_text(args.field, args.value)
+                backup = backend.backup_coding(args.field)
 
                 def _confirm() -> bool:
                     if args.yes:
@@ -253,8 +253,8 @@ def _cmd_coding(args: argparse.Namespace) -> int:
                         f"Write {field.name}: '{old}' -> '{args.value}'? [y/N] "
                     )
 
-                result = programming.write_coding(
-                    client, args.field, value, backup=backup, confirm=_confirm
+                result = backend.write_coding(
+                    args.field, value, backup=backup, confirm=_confirm
                 )
             except (KeyError, ValueError, programming.ProgrammingRefused) as exc:
                 render.console.print(f"[red]{exc}[/]")
@@ -266,34 +266,32 @@ def _cmd_coding(args: argparse.Namespace) -> int:
         # read
         table = Table(title="GEMS coding block", header_style="bold cyan")
         table.add_column("Field"); table.add_column("Value"); table.add_column("Writable")
-        for f in programming.CODING_FIELDS.values():
-            val = programming.decode_field(f.key, programming.read_coding(client, f.key))
-            table.add_row(f.name, val, "yes" if f.writable else "no")
+        for f in backend.coding_fields():
+            table.add_row(f.name, backend.read_coding_text(f.key),
+                          "yes" if f.writable else "no")
         render.console.print(table)
         return 0
     finally:
-        client.close()
+        backend.disconnect()
 
 
 def _cmd_immo(args: argparse.Namespace) -> int:
-    client, _ = _build_client(args)
     render.communicating()
-    client.connect()
+    backend = _backend_from_args(args)
     try:
-        client.start_session()
         if args.immo_action == "learn":
-            result = immobiliser.security_learn(
-                client, on_progress=lambda s: render.console.print(f"  [dim]{s}[/]")
+            result = backend.security_learn(
+                on_progress=lambda s: render.console.print(f"  [dim]{s}[/]")
             )
             style = "green" if result.ok else "bold red"
             render.console.print(f"[{style}]{result.message}[/]")
             return 0 if result.ok else 1
-        status = immobiliser.read_status(client)
+        status = backend.immobiliser_status()
         colour = "green" if status.mobilised else "bold red"
         render.console.print(f"Immobiliser: [{colour}]{status.summary}[/]")
         return 0
     finally:
-        client.close()
+        backend.disconnect()
 
 
 def _kline_connection_spec(args: argparse.Namespace) -> tuple[str, dict]:
