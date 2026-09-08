@@ -59,21 +59,24 @@ The active working list for the next couple of days. Detailed backlog entries
 (EKA/10AS, 0xDA, route-A power, QA-unmet) live further down; this is the ordering.
 
 ### P1 — do first
-1. **✓ DONE 2026-09-08 — VIN last-6 in the GUI.** Vehicle-ID screen has a "Read
-   VIN from ECU" button + read-only "ECU VIN" field: tries the full VIN (OBD
-   Service 09), else falls back to the coded **VIN last-6** and pads the unknown
-   first 11 chars with 0-placeholders (`00000000000<last6>`) — never a fabricated
-   VIN; on a real-ECU K-line session it reports "coding proprietary/unmapped"
-   plainly. Behind the wait overlay, via `Backend.read_vin`/`read_coding_text`.
-   2 headless tests.
-   **⛔ BLOCKED on P1.4 for the REAL ECU:** confirmed 2026-09-08 the real GEMS ECU
-   supports NO OBD Service 09 (all Mode 09 PIDs silent), and the VIN last-6 is a
-   **proprietary GEMS coding** field, not an OBD field. The one proprietary
-   channel found (0xDA) is **security-locked** — its `$22` read returns
-   `securityAccessDenied` — so reading real coding (incl. the VIN last-6) needs
-   `$27` security access, which isn't open yet. **So the real-ECU VIN last-6
-   cannot be pulled until the P1.4 security-auth work opens `$27`.** Works on the
-   virtual ECU today; the GUI correctly says "not available" on the real ECU.
+1. **⭐ Security auth — crack the `securityAccessDenied` lock (open `$27`).**
+   HIGHEST LEVERAGE on the board. The one proprietary channel found (**0xDA**,
+   reachable with the L-line tied to the K node) is **security-locked**: its `$22`
+   read returns `securityAccessDenied` (NRC 0x33), and `$27` requestSeed was silent
+   (we sent the OBD envelope; the reply is ISO-14230 no-address framing — retry via
+   `~/da3_probe.py` with `<len><data><cksum>`). **Opening `$27` is the prerequisite
+   to reading ANY real GEMS proprietary data** — so it unblocks a whole tier at
+   once: **real coding** (VIN last-6, dealer id, 4.0/4.6 select…), the
+   **immobiliser** state, the **EKA / 10AS** work, and the **maps-read** path
+   (P1.4a). Scope: (i) the **capability map** — decide what the tool will do
+   (immobiliser flag emulate + real; EKA read/find; VIN; the 10AS "learned" auth
+   code — reconcile the user's *5-digit-learned* belief vs the *4-digit EKA*); and
+   (ii) the **actual unlock** (bench research: L-line + correct `$27` framing;
+   review `da3_probe.py`). Confirmed 2026-09-08: OBD Service 09 is entirely
+   unsupported, so there is NO non-proprietary path to identity. Ties to
+   memory/real-gems-protocol.md + the [immobiliser-from-bench], [EKA read], and
+   [EPROM] backlog items. Bench research — may need >1 session; some parts depend
+   on P4 (10AS on the bench).
 2. **Full CLI unification (option B).** Route the remaining CLI commands
    (`live`/`dtc`/`actuator`/`coding`/`immo`) through `Backend` (they still hit
    `KwpClient` directly via `_build_client`), so every command is a thin Backend
@@ -87,25 +90,14 @@ The active working list for the next couple of days. Detailed backlog entries
    single-firmware reality. Open Qs: does concurrent WiFi+BLE on the CYW43 stay
    stable through the delay()-heavy 5-baud init? Keep the plain USB `pico_kline`
    as a minimal fallback, or fold everything into the one build?
-4. **Security / auth capability map (pentest).** Decide + document what the tool
-   will do for the security layer, as a scoping pass that unifies the 0xDA
-   channel + `$27` auth + the Lucas 10AS: (a) **immobiliser flag** — emulation
-   (virtual ECU) AND real read/state; (b) **EKA code** — read/find it from the
-   10AS EEPROM; (c) **VIN** — find/where it lives; (d) **10AS auth-code behaviour**
-   — the "learned" code (user believes a 5-digit learned code — reconcile vs the
-   4-digit EKA; clarify which is which). Output: a capabilities doc + concrete
-   next steps. Depends on 10AS access (see P4 / the EKA backlog item).
-   **Unblocks P1.1's real-ECU VIN last-6:** the VIN last-6 is proprietary GEMS
-   coding behind the security-locked 0xDA channel (`$22` -> `securityAccessDenied`),
-   so opening `$27` here is the prerequisite to reading ANY real GEMS coding.
-5. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
+4. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
    linked goals (feasibility-gated — see the reality check):
    - **(a) Pull the maps off an existing ECU.** ⚠️ GEMS maps live on socketed
      **UV-EPROMs** (27C512 fuel / 27C1001 ignition) with **no known K-line read/
      reflash path**, so "pulling" means either **(i)** physically read the EPROM
      on a chip reader/programmer (bench hardware — pull the chip) or **(ii)**
      discover a **proprietary memory-read service** over the K-line (unproven;
-     ties to the 0xDA channel + P1.4 pentest). **Determine which is feasible
+     ties to the 0xDA channel + P1.1 security auth). **Determine which is feasible
      first** before building tooling.
    - **(b) Switch between 4.0 and 4.6.** Find the real mechanism — does one ECU
      hold both maps, and what flips it? The `engine` coding byte (0x83) is stubbed.
@@ -148,6 +140,12 @@ These are the still-open **QA-unmet spec requirements** (full detail in the
 "Backlog / QA-found unmet requirements" section below). Distinct from P2, which
 is about making the *current* GUI work correctly; P5 is *new* features / deferred
 behaviour fixes:
+- **VIN last-6 read (GUI + real ECU).** ⛔ **Blocked on P1.1** — the real GEMS ECU
+  has no OBD Service 09 (confirmed) and the VIN last-6 is proprietary coding behind
+  the security-locked 0xDA channel (`$22` → `securityAccessDenied`), so it can't be
+  pulled until `$27` is opened. Deprioritized 2026-09-08 (the earlier GUI "Read VIN"
+  feature was reverted — only virtual-ECU coding could resolve it). Revisit once
+  P1.1 lands: then wire real-coding reads (VIN last-6, dealer id, …) into the GUI.
 - **Service adjustments** — ignition timing (−6°…+3°) + idle-speed nudge; no
   screen/command today (timing/idle are read-only). [QA-A1]
 - **VCSI connection-chain status** — model laptop→VCSI→J1962→ECU as separate
