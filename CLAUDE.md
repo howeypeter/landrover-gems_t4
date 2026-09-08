@@ -53,6 +53,64 @@ maps over the wire" is off the table, because it never existed for GEMS.
 
 ---
 
+## ⭐ Near-term priority plan (P1–P4, set 2026-09-08 by the user)
+
+The active working list for the next couple of days. Detailed backlog entries
+(EKA/10AS, 0xDA, route-A power, QA-unmet) live further down; this is the ordering.
+
+### P1 — do first
+1. **VIN last-6 in the GUI.** The full VIN over OBD Service 09 is unavailable on
+   this ECU (`kline vin` returned nothing). But the engine ECU **codes the VIN
+   last-6** as a coding field (`CodingField` in `gems/programming.py`;
+   `Backend.read_coding` exists). Read it and surface it in the GUI (Vehicle-ID
+   screen and/or coding screen).
+2. **Full CLI unification (option B).** Route the remaining CLI commands
+   (`live`/`dtc`/`actuator`/`coding`/`immo`) through `Backend` (they still hit
+   `KwpClient` directly via `_build_client`), so every command is a thin Backend
+   wrapper — matching what `kline` already does. Single source of truth.
+3. **ONE unified firmware (USB + WiFi + BLE) + full validation.** Consolidate to a
+   single sketch that serves the host protocol over **USB-CDC, WiFi/TCP, AND BLE**
+   (so there is only one thing to flash), keeping the pentest `CMD_RAW_INIT`
+   superset. **Validate WiFi actually works on hardware** (currently unverified)
+   and that BLE still works alongside it. Test the firmware on hardware. Then
+   **validate ALL docs** (firmware/README, CLAUDE.md, memory) reflect the
+   single-firmware reality. Open Qs: does concurrent WiFi+BLE on the CYW43 stay
+   stable through the delay()-heavy 5-baud init? Keep the plain USB `pico_kline`
+   as a minimal fallback, or fold everything into the one build?
+4. **Security / auth capability map (pentest).** Decide + document what the tool
+   will do for the security layer, as a scoping pass that unifies the 0xDA
+   channel + `$27` auth + the Lucas 10AS: (a) **immobiliser flag** — emulation
+   (virtual ECU) AND real read/state; (b) **EKA code** — read/find it from the
+   10AS EEPROM; (c) **VIN** — find/where it lives; (d) **10AS auth-code behaviour**
+   — the "learned" code (user believes a 5-digit learned code — reconcile vs the
+   4-digit EKA; clarify which is which). Output: a capabilities doc + concrete
+   next steps. Depends on 10AS access (see P4 / the EKA backlog item).
+
+### P2 — get the GUI working
+5. **Fix the GUI "clear codes" bug** on the fault-codes screen (reproduce + fix).
+6. **About screen: clean up + RENAME to avoid copyright/trademark exposure.**
+   "TestBook T4 / RDS 5.06 / T4 Lite" are Land Rover/Omitec marks — give the
+   product an original identity (keep the era-faithful *styling*, drop the
+   trademarked names), and review all user-facing branding.
+7. **Wire up the not-yet-functional GUI items.** Audit every screen; make stubbed
+   actions actually work, or clearly mark them unsupported on a real ECU (the
+   real-ECU K-line profile is OBD-subset only — coding/immobiliser/actuators are
+   proprietary/unmapped). Enumerate exactly which screens need what.
+
+### P3
+8. **Upstream the arduino-pico `BLEUUID` bug** (issue + byte-wise PR from the
+   user's GitHub; check for an existing issue first). Details in the tech-debt
+   backlog.
+
+### P4
+9. **Finalize hardware for PCB design.** Decide **whether to consolidate the two
+   PCBs into one**, and **what lives on the bench** — integrate the **10AS** (and/
+   or other modules) for the security/EKA work, or stay **OBD-II-only**. These
+   answers set the PCB scope. Includes the parked **route-A power** decision
+   (buck module-on-header vs discrete SMD) and the 10AS bench-wiring prerequisite.
+
+---
+
 ## What the real T4 was: Hardware and software
 
 - **System**: Dealer diagnostic tool for Rover Group / MG Rover / Land Rover,
