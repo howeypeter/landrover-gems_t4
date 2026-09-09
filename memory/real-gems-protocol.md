@@ -402,6 +402,24 @@ single reads → **dump in ≤16-byte chunks** (`GemsSecureSession.read_memory` 
 sends big-endian; `decode_secure` now handles both length forms). So the over-the-wire EEPROM +
 27C1001 dump (coding, immobiliser, and the `$27` handler itself) is now reachable, chunk by chunk.
 
+**⚠️ CORRECTION / OPEN (2026-09-08 later) — the flat-address model is NOT confirmed, and
+multi-chunk dumps DRIFT.** Follow-up dumps exposed two problems: (1) a `--dump 1800:800` (128
+back-to-back BLE reads) came back **corrupted** — the ~256-byte config block repeated ~8× with
+progressive byte-shift, not a clean linear image; even the earlier `1800:80` (8 chunks) is now
+suspect. (2) The addressing diagnostic **refutes flat linear addressing**: `--dump 180C:08` read
+`80 60 80 00 60 60 00 00` **repeatably** (twice identical — so 0x180C is STABLE, killing the
+earlier "volatile counter at 0x180C" guess, which was just dump drift), yet those bytes do NOT
+match offset 0x0C of a `1800`-based read (`7D/E4 55 DD 00…`), and 0x180E–0F differs too
+(`80 00` vs `DD 00`). So reading the same physical location via a different base address returns
+different bytes ⇒ the two `0x3C` arg bytes are **not** a simple flat byte pointer (or reads
+desync badly over BLE). **Only SINGLE reads are trustworthy right now** (they're self-consistent
+and repeatable). Hardened `read_memory` to reject a short/overlong frame (→ None) and
+`dump_memory` to retry per-chunk so a short read can't silently desync a dump — but that doesn't
+resolve the addressing question. **Next: an overlap test with single reads** (`1800:10` vs
+`1801:10` — if flat, the second is the first shifted by one byte) to pin the address semantics
+before trusting any dump / locating the immobiliser code. The `EE 01 E4 …`/`21 00 33 …` samples
+above are from single reads (reliable) but their cross-address linearity is unproven.
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead

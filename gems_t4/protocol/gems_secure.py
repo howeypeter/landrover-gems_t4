@@ -308,22 +308,37 @@ class GemsSecureSession:
         data = self._exchange(payload)
         if not data or self._is_negative(data):
             return None
-        return data[1:] if data[0] == 0x7C else data
+        block = data[1:] if data[0] == 0x7C else data
+        # Reject a short/overlong read: over BLE a partial notification yields a
+        # valid-checksum frame with the wrong byte count, which would silently
+        # DESYNC a multi-chunk dump (every later chunk shifts). Force the caller
+        # to retry instead of concatenating garbage.
+        if len(block) != length:
+            return None
+        return block
 
-    def dump_memory(self, start: int, length: int, *, chunk: int = 0x10) -> bytes:
+    def dump_memory(self, start: int, length: int, *, chunk: int = 0x10,
+                    retries: int = 3) -> bytes:
         """Read a memory range in ``chunk``-sized ``0x3C`` reads and concatenate.
 
-        Stops early (returning what it has) if a read comes back empty/negative.
-        Use for the config EEPROM (~``0x1800``) and the 27C1001 image (``0x2000``)
-        once ``read_memory`` is bench-verified. See the PROVISIONAL note above.
+        Each chunk must come back exactly ``chunk`` bytes; a short/failed read is
+        retried up to ``retries`` times (no sleep — a fresh exchange), and the
+        dump stops cleanly if a chunk still can't be read (returning what it has)
+        rather than drifting. Keep ``chunk`` <= 63 (single-frame). Use for the
+        config EEPROM (~``0x1800``) and the 27C1001 image (``0x2000``).
         """
         out = bytearray()
         addr, remaining = start, length
         while remaining > 0:
             n = min(chunk, remaining)
-            block = self.read_memory(addr, n)
-            if not block:
-                break
+            block = None
+            for _ in range(max(1, retries)):
+                b = self.read_memory(addr, n)
+                if b is not None and len(b) == n:
+                    block = b
+                    break
+            if block is None:
+                break                      # couldn't get a clean chunk; stop here
             out += block
             addr += n
             remaining -= n
