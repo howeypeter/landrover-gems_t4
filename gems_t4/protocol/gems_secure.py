@@ -53,6 +53,8 @@ __all__ = [
     "CID_CONFIG",
     "WRITE_RESET_ADAPTIVE",
     "WRITE_IMMOBILISER_SYNCH",
+    "SECURE_PAGE_CONFIG",
+    "IMMO_BLOCK_RECORDS",
     "GemsConfig",
     "GemsSecureSession",
 ]
@@ -71,6 +73,18 @@ CID_CONFIG = b"\x04\xBF"    # combined displacement / transmission / drivetrain
 # The two proprietary write actions (service 0xA3), verbatim from the app.
 WRITE_RESET_ADAPTIVE = bytes.fromhex("A3234800")
 WRITE_IMMOBILISER_SYNCH = bytes.fromhex("A300622588")
+
+# 0x3C memory is (page, record)-indexed, NOT a flat byte address (confirmed on
+# hardware: 3C 18 00 and 3C 18 01 return unrelated 16-byte records). Page 0x18
+# holds the config/EEPROM; da9 cataloged it, da10 confirmed the block below.
+SECURE_PAGE_CONFIG = 0x18
+#: Records A4-A8 on page 0x18 are the immobiliser/security block — a GEMS-signature
+#: "two copies" structure: A4 and A7 are byte-identical (the static security
+#: core), A5/A8 are a paired field differing in one byte, A6 a small header.
+#: Confirmed stable on a real Disco-1 ECU 2026-09-08 (da10). ⚠️ The byte SEMANTICS
+#: (which bytes are the mobilise code vs a checksum/adaptive value) are NOT yet
+#: decoded — reading them is proven; interpreting them needs a reference ECU.
+IMMO_BLOCK_RECORDS = (0xA4, 0xA5, 0xA6, 0xA7, 0xA8)
 
 
 class GemsSecureError(TransportError):
@@ -268,6 +282,25 @@ class GemsSecureSession:
         (the common case on an early Disco 1 — it lives in the Lucas 10AS)."""
         v = self.read_cid(CID_VIN)
         return v.decode("ascii", "replace") if v else None
+
+    def read_immobiliser_block(self) -> dict[int, bytes]:
+        """Read the immobiliser/security block (page 0x18, records A4-A8).
+
+        Returns ``{record: 16 bytes}`` for :data:`IMMO_BLOCK_RECORDS` (a record
+        missing from the dict means that read failed). The block is the GEMS
+        "two copies" structure — A4 == A7, A5/A8 differ by one byte — so a caller
+        can sanity-check the copies agree. ⚠️ Byte semantics are NOT decoded yet
+        (see :data:`IMMO_BLOCK_RECORDS`); this reads the raw block, it does not
+        interpret it. Requires a successful :meth:`unlock`.
+        """
+        if not self.unlocked:
+            raise GemsSecureLocked("read_immobiliser_block requires unlock() first")
+        out: dict[int, bytes] = {}
+        for record in IMMO_BLOCK_RECORDS:
+            data = self.read_memory(SECURE_PAGE_CONFIG, record, 0x10)
+            if data is not None:
+                out[record] = data
+        return out
 
     # -- writes (service A3) — gated behind unlock ------------------------ #
     def reset_adaptive_values(self) -> bytes:

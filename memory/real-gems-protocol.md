@@ -430,6 +430,25 @@ NOT currently possible, and we don't need the 27C1001 dump for `$27` anyway (alg
 cracked). Chasing `0x3C` indexing is optional/low-priority; chip-pull remains the route for a
 full image if ever needed.
 
+**✅ 0x3C addressing IS `(page, record)` + immobiliser block FOUND (2026-09-08, `~/da9_sweep.py`
++ `~/da10_immo.py`).** Reframed the model: `3C <page> <record> <len>` — `page` `0x18` is the
+config/EEPROM, `record` `0x00..0xFF` selects a 16-byte record (each record is self-consistent
+and repeatable; consecutive records are unrelated, which is why linear dumps failed). A sweep of
+page 0x18 returned **152 records with content** — a full readable catalog: axis/curve tables
+(A2, A9, AA, 80, 90…), and, crucially, the **immobiliser/security block at records A4–A8** with
+the GEMS **"two copies" signature**, confirmed stable across 3 passes (da10):
+- `18 A4` == `18 A7` (byte-identical): `5A 5A 38 3D 43 49 4E 53 5A 5A 5A 5A 5A 5A 5A 5A`
+  (6-byte core `38 3D 43 49 4E 53` in `5A` "Z" padding) — the static security core.
+- `18 A5` / `18 A8` differ in ONE byte (offset 11: `50` vs `4B`) — a paired field.
+- `18 A6` = `01 10 00…` header/flags.
+⚠️ Byte SEMANTICS undecoded (which bytes are the mobilise code vs a checksum/adaptive) — reading
+is proven, interpreting needs a reference ECU or correlating with immobiliser state. **Folded
+into the tool:** `SECURE_PAGE_CONFIG`/`IMMO_BLOCK_RECORDS` constants +
+`GemsSecureSession.read_immobiliser_block()` + CLI `gems_t4 kline secure --immo` (+ `--dump
+PAGE?RR:LEN` reads one record). Also found extra readable CIDs beyond the app's:
+`22 04 BC/BD/E3`, `22 23 3C–47`; `22 04 C4` (VIN) confirmed NOT readable on this ECU (in the
+10AS). So the immobiliser/clone data is NOT a dead end — it's located and read; decoding is next.
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead

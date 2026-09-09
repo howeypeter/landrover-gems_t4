@@ -73,6 +73,17 @@ def test_config_byte_decode():
 
 
 # --- a scripted fake ECU on the 0xDA channel -------------------------------- #
+# Real immobiliser/security block captured from the Disco-1 ECU (da10), keyed by
+# (page, record). A4==A7 identical; A5/A8 differ at offset 11 (0x50 vs 0x4B).
+_IMMO_BLOCK = {
+    (0x18, 0xA4): bytes.fromhex("5A5A383D43494E535A5A5A5A5A5A5A5A"),
+    (0x18, 0xA5): bytes.fromhex("46468C8C8C8C8C73645A505046464646"),
+    (0x18, 0xA6): bytes.fromhex("01100000000000000000000000000000"),
+    (0x18, 0xA7): bytes.fromhex("5A5A383D43494E535A5A5A5A5A5A5A5A"),
+    (0x18, 0xA8): bytes.fromhex("46468C8C8C8C8C73645A504B46464646"),
+}
+
+
 class FakeSecureEcu(Transport):
     """Emulates the real ECU's 0xDA responses (from the da6/da7 captures)."""
 
@@ -122,7 +133,10 @@ class FakeSecureEcu(Transport):
             return b"\x7F\x22\x80"           # unavailable on this ECU
         if p == gs.WRITE_RESET_ADAPTIVE or p == gs.WRITE_IMMOBILISER_SYNCH:
             return b"\xE3\x00"               # positive-ish ack
-        if p[:1] == b"\x3C" and len(p) == 4:  # memory read: 3C lsb msb len
+        if p[:1] == b"\x3C" and len(p) == 4:  # memory read: 3C <page> <record> <len>
+            rec = _IMMO_BLOCK.get((p[1], p[2]))   # real captured immo records
+            if rec is not None:
+                return b"\x7C" + rec[: p[3]]
             return b"\x7C" + bytes([0xAA]) * p[3]
         if p[:1] == b"\x2E":                  # coding write: 2E cid value
             return b"\x6E" + p[1:3]
@@ -218,6 +232,20 @@ class _FlakySecureEcu(FakeSecureEcu):
             if self._read_n % 2 == 0:      # drop the last data byte
                 return r[:-1]
         return r
+
+
+def test_read_immobiliser_block_two_copies():
+    s = gs.GemsSecureSession(FakeSecureEcu())
+    s.connect()
+    with pytest.raises(gs.GemsSecureLocked):
+        s.read_immobiliser_block()
+    assert s.unlock()
+    block = s.read_immobiliser_block()
+    assert set(block) == set(gs.IMMO_BLOCK_RECORDS)
+    assert all(len(v) == 16 for v in block.values())
+    # the GEMS two-copy signature: A4 == A7 identical; A5/A8 differ by one byte
+    assert block[0xA4] == block[0xA7]
+    assert sum(a != b for a, b in zip(block[0xA5], block[0xA8])) == 1
 
 
 def test_read_memory_rejects_short_read():

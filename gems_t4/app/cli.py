@@ -422,6 +422,20 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
                     "[yellow]No data (0x3C returned negative/silent/short).[/]"
                 )
 
+        if getattr(args, "immo", False):
+            did_action = True
+            block = session.read_immobiliser_block()
+            render.console.print("[bold]Immobiliser/security block (page 0x18, A4-A8):[/]")
+            for rec in sorted(block):
+                render.console.print(f"  {rec:02X}  {block[rec].hex().upper()}")
+            a4, a7 = block.get(0xA4), block.get(0xA7)
+            if a4 is not None and a7 is not None:
+                match = "identical (copies agree)" if a4 == a7 else "DIFFER (copies disagree!)"
+                render.console.print(f"  copies A4/A7: [cyan]{match}[/]")
+            render.console.print(
+                "[dim]byte meanings not yet decoded — this is the raw block.[/]"
+            )
+
         if not did_action:
             # default: read coding
             from rich.table import Table
@@ -669,6 +683,8 @@ def build_parser() -> argparse.ArgumentParser:
     # `secure`-only options:
     sp.add_argument("--dump", metavar="ADDR:LEN",
                     help="secure: one 0x3C read, hex ADDR:LEN, LEN 1..3F (e.g. 1800:10)")
+    sp.add_argument("--immo", action="store_true",
+                    help="secure: read the immobiliser/security block (page 0x18 A4-A8)")
     sp.add_argument("--reset-adaptive", action="store_true",
                     help="secure: send the reset-adaptive-values write")
     sp.add_argument("--immobiliser-synch", action="store_true",
