@@ -449,6 +449,29 @@ PAGE?RR:LEN` reads one record). Also found extra readable CIDs beyond the app's:
 `22 04 BC/BD/E3`, `22 23 3C–47`; `22 04 C4` (VIN) confirmed NOT readable on this ECU (in the
 10AS). So the immobiliser/clone data is NOT a dead end — it's located and read; decoding is next.
 
+**Offline decode analysis (2026-09-09, `~/immo_decode.py` over `da9_sweep.log`) — 3 rigorous
+results, no ECU needed:**
+1. **A4–A8 identification HOLDS.** The block uses byte-repeating fill (`0x5A`='Z' in A4/A7,
+   `0x46`='F' in A5/A8) + a header at A6 (`01 10 00…`) — structurally distinct from the monotonic
+   LE16 calibration curves immediately around it (A0/A1/A2/A9/AB/AD are all numeric tables). So it
+   is a real typed record group, not more map.
+2. **The `A3` write payloads are NOT literal EEPROM bytes.** Searched the whole 152-record page for
+   `00 62 25 88` / `62 25 88` / `25 88` (immobiliser-synch `A300622588`) and `23 48 00`
+   (reset-adaptive) — **none appear anywhere.** ⇒ `A3…` are OPAQUE sync commands, not
+   "write these bytes here"; can't find the mobilise code by matching the write value.
+3. **The mystery reduces to ONE byte.** A4==A7 exactly; A5 vs A8 differ ONLY at **offset 11:
+   `0x50` vs `0x4B`** (Δ−5). The `38 3D 43 49 4E 53` core resists every trivial decode (not the VIN,
+   not ASCII; −0x30 → monotonic `08 0D 13 19 1E 23`; XOR-0x5A → nothing legible). Byte identity
+   needs a 2nd data point.
+**DECODE PLAN chosen by the user (2026-09-09): reference-ECU diff (ZERO write risk).** Read the
+same A3–A9 block off a SECOND GEMS ECU (different VIN/immobiliser) and diff — DIFFERING bytes =
+identity/security (VIN-linked / mobilise candidates), CONSTANT bytes = shared calibration. **Tool
+ready:** `~/immo_ref.py` (`capture <label>` reads live A3–A9 via `GemsSecureSession` and saves
+`~/immo_ref_<label>.json`; `diff <a> <b>` byte-diffs two snapshots). ECU #1 already captured as
+`~/immo_ref_disco1.json`. **BLOCKED on a 2nd GEMS ECU wired to the bench** (rig has only the one
+Disco-1 today). The rejected alt — fire `A300622588` + re-read + diff — is definitive but risks
+leaving the bench ECU immobilised (no BeCM present to answer the sync), so it was NOT done.
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
