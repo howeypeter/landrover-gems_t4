@@ -279,3 +279,60 @@ class GemsSecureSession:
         if not self.unlocked:
             raise GemsSecureLocked("writes require a successful unlock() first")
         return self._exchange(payload)
+
+    # -- memory read (service 0x3C) --------------------------------------- #
+    # PROVISIONAL: 0x3C is confirmed to EXIST on 0xDA and be $27-gated (da5), but
+    # we have never seen a POSITIVE response (every probe pre-unlock got
+    # securityAccessDenied). The request arg order (LSB, MSB per shickenchit's
+    # "3C LSB MSB LEN") and the positive layout are UNVERIFIED until a bench run
+    # on an unlocked session (~/da8_secure_probe.py). Treat the parsing here as a
+    # best guess; verify before trusting a dump.
+    def read_memory(self, address: int, length: int) -> bytes | None:
+        """Read ``length`` bytes at ``address`` via service ``0x3C`` (unlock req).
+
+        Returns the data bytes (best-effort: strips a leading ``0x7C`` positive-
+        response byte if present), or None on a negative/silent reply.
+        """
+        if not self.unlocked:
+            raise GemsSecureLocked("read_memory requires a successful unlock() first")
+        if not 0 <= address <= 0xFFFF or not 1 <= length <= 0xFF:
+            raise GemsSecureError(f"bad address/length: {address:#x}/{length}")
+        payload = bytes([0x3C, address & 0xFF, (address >> 8) & 0xFF, length])
+        data = self._exchange(payload)
+        if not data or self._is_negative(data):
+            return None
+        return data[1:] if data[0] == 0x7C else data
+
+    def dump_memory(self, start: int, length: int, *, chunk: int = 0x10) -> bytes:
+        """Read a memory range in ``chunk``-sized ``0x3C`` reads and concatenate.
+
+        Stops early (returning what it has) if a read comes back empty/negative.
+        Use for the config EEPROM (~``0x1800``) and the 27C1001 image (``0x2000``)
+        once ``read_memory`` is bench-verified. See the PROVISIONAL note above.
+        """
+        out = bytearray()
+        addr, remaining = start, length
+        while remaining > 0:
+            n = min(chunk, remaining)
+            block = self.read_memory(addr, n)
+            if not block:
+                break
+            out += block
+            addr += n
+            remaining -= n
+        return bytes(out)
+
+    # -- coding write (service 0x2E) -------------------------------------- #
+    # PROVISIONAL: the app only READS VIN/displacement/etc.; it never writes them,
+    # so the coding-WRITE service is unconfirmed. 0x2E (WriteDataByCommonIdentifier)
+    # is the standard KWP counterpart to the 0x22 reads we know work — the most
+    # likely candidate — but GEMS may instead use an A3 form. Discover on the bench
+    # with read-back verification (~/da8_secure_probe.py) before relying on it.
+    def write_cid(self, cid: bytes, value: bytes) -> bytes:
+        """Attempt a coding write via ``2E <cid> <value>`` (unlock req).
+
+        Returns the raw response for inspection. Callers MUST read the field back
+        and confirm it changed (and confirm with the user first) — this is an
+        unverified write path.
+        """
+        return self._write(b"\x2E" + cid + value)

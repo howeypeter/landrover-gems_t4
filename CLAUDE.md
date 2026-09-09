@@ -67,10 +67,17 @@ The active working list for the next couple of days. Detailed backlog entries
    on this ECU — it's in the 10AS, not the ECM). Handshake `1002`→`5002`, `2701`→`6701<seed>`,
    `2702<key>`→`6702AA` (accept; `6702CC`=reject — the oracle our probes had lacked).
    **Implemented** in **`gems_t4/protocol/gems_secure.py`** (`GemsSecureSession`: 0xDA init +
-   no-address framing + `unlock()` + coding reads/writes; `tests/test_gems_secure.py`, 14
-   tests incl. the real captured frames). Remaining: wire it into `Backend`/CLI/GUI, then map
-   the coding *writes* (VIN/displacement — the app only reads those) and use the unlock to
-   drive the `0x3C` EEPROM/EPROM dump. Full detail + command map: `memory/real-gems-protocol.md`.
+   no-address framing + `unlock()` + coding reads + the two known `A3` writes + `read_memory`/
+   `dump_memory` (0x3C) + `write_cid` (2E); `tests/test_gems_secure.py`, 18 tests incl. real
+   captured frames). **Wired** into `Backend.secure_session()` and the CLI: **`gems_t4 kline
+   secure`** (unlock + read coding; `--dump ADDR:LEN` for 0x3C; `--reset-adaptive` /
+   `--immobiliser-synch` writes with confirm). **GUI intentionally deferred** — the 0xDA
+   channel is bench-only (needs the L-line jumper), so the CLI is its correct home; add a GUI
+   screen only if it becomes a supported on-car workflow. **Bench-gated remainders** (probe
+   `~/da8_secure_probe.py`): verify the `0x3C` positive format live (never seen a positive —
+   `read_memory`/`dump_memory` parsing is PROVISIONAL), and discover the coding-WRITE service
+   (`2E` vs `A3`; the app only reads VIN/displacement) via a safe no-op write. Then the `0x3C`
+   dump of the EEPROM/EPROM is unblocked. Full detail + command map: `memory/real-gems-protocol.md`.
 
    Prior state (for context — the channel work that led here), as of 2026-09-08
    (full detail: `memory/real-gems-protocol.md`):

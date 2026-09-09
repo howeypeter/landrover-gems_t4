@@ -337,6 +337,107 @@ def _kline_live_table(rows, source: str):
     return table
 
 
+def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict) -> int:
+    """`kline secure`: the proprietary 0xDA SecurityAccess channel (bench, K+L).
+
+    Unlocks with the recovered $27 key, then (by default) reads coding. Optional
+    ``--dump ADDR:LEN`` does a 0x3C memory read; ``--reset-adaptive`` /
+    ``--immobiliser-synch`` run the two known writes (with confirmation). Needs
+    the ECU's L-line tied to the K node — this is a bench capability, not on-car.
+    """
+    from gems_t4.protocol.gems_secure import GemsSecureError
+    from gems_t4.protocol.kline import connect_help
+    from gems_t4.transport.base import TransportError
+
+    try:
+        # Register the transport WITHOUT the OBD 0x33 connect; the secure session
+        # does its own 5-baud init at 0xDA.
+        backend.set_connection(kind, real_ecu=True, **kwargs)
+        session = backend.secure_session()
+    except (TransportError, OSError, ValueError) as exc:
+        render.console.print(f"[bold red]{exc}[/]")
+        return 1
+
+    render.communicating()
+    try:
+        session.connect()
+    except (TransportError, OSError) as exc:
+        render.console.print("[bold red]Could not open the 0xDA channel.[/]")
+        render.console.print(connect_help(exc, kind=kind))
+        return 1
+
+    try:
+        if not session.unlock():
+            render.console.print(
+                "[bold red]$27 unlock FAILED[/] (no 6702AA). Check the L-line is "
+                "tied to the K node and the ECU is powered; power-cycle if it may "
+                "be in $27 lockout."
+            )
+            return 1
+        seed = session.last_seed or 0
+        render.console.print(f"[green]Unlocked ($27) — seed {seed:04X}.[/]")
+
+        did_action = False
+        if getattr(args, "reset_adaptive", False):
+            did_action = True
+            if args.yes or _prompt_yes_no("Reset ECU adaptive values? [y/N] "):
+                session.reset_adaptive_values()
+                render.console.print("[green]Reset-adaptive-values sent.[/]")
+            else:
+                render.console.print("Reset cancelled.")
+        if getattr(args, "immobiliser_synch", False):
+            did_action = True
+            render.console.print(
+                "[yellow]Immobiliser synch (Security-Learn) mutates BeCM<->ECM "
+                "pairing.[/]"
+            )
+            if args.yes or _prompt_yes_no("Send immobiliser synch? [y/N] "):
+                session.immobiliser_synch()
+                render.console.print("[green]Immobiliser-synch sent.[/]")
+            else:
+                render.console.print("Immobiliser synch cancelled.")
+        if getattr(args, "dump", None):
+            did_action = True
+            try:
+                addr_s, len_s = args.dump.split(":", 1)
+                addr, length = int(addr_s, 16), int(len_s, 16)
+            except ValueError:
+                render.console.print("[red]--dump wants ADDR:LEN in hex, e.g. 1800:40[/]")
+                return 2
+            data = session.dump_memory(addr, length)
+            if data:
+                render.console.print(
+                    f"[bold]0x3C memory @0x{addr:04X} ({len(data)} B):[/] {data.hex().upper()}"
+                )
+            else:
+                render.console.print(
+                    "[yellow]No data (0x3C returned negative/silent). Its exact "
+                    "request/response format is unverified — see da8 probe.[/]"
+                )
+
+        if not did_action:
+            # default: read coding
+            from rich.table import Table
+            t = Table(title="GEMS coding (0xDA, authorized)", header_style="bold cyan")
+            t.add_column("Field"); t.add_column("Value")
+            prom = session.read_prom_id()
+            cfg = session.read_config()
+            vin = session.read_vin_last6()
+            t.add_row("PROM ID", prom or "—")
+            if cfg:
+                t.add_row("Displacement", cfg.displacement + " L")
+                t.add_row("Transmission", cfg.transmission)
+                t.add_row("Config byte", f"0x{cfg.raw:02X}")
+            t.add_row("VIN (last 6)", vin or "unavailable on this ECU")
+            render.console.print(t)
+        return 0
+    except GemsSecureError as exc:
+        render.console.print(f"[bold red]secure channel error:[/] {exc}")
+        return 1
+    finally:
+        session.close()
+
+
 def _cmd_kline(args: argparse.Namespace) -> int:
     """Talk to a REAL ECU over ISO 9141-2 / OBD-II (bench or on-car).
 
@@ -350,6 +451,8 @@ def _cmd_kline(args: argparse.Namespace) -> int:
 
     kind, kwargs = _kline_connection_spec(args)
     backend = Backend()
+    if args.kline_action == "secure":
+        return _run_kline_secure(args, backend, kind, kwargs)
     render.communicating()
     try:
         # kline is the REAL-ECU command: force the K-line profile over any
@@ -548,12 +651,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="talk to a REAL ECU over the K-line (ISO 9141-2 / OBD-II; bench or car)",
     )
     sp.add_argument("kline_action",
-                    choices=["live", "dtc", "monitor", "clear", "vin"],
+                    choices=["live", "dtc", "monitor", "clear", "vin", "secure"],
                     help="one-shot live data; fault codes (stored + pending); a "
-                         "continuous live monitor; clear codes (Mode 04); or read "
-                         "the VIN (Mode 09 - may be unsupported on GEMS)")
+                         "continuous live monitor; clear codes (Mode 04); read "
+                         "the VIN (Mode 09 - may be unsupported on GEMS); or "
+                         "'secure' = the proprietary 0xDA $27 channel (bench, "
+                         "L-line tied): unlock + read coding")
     sp.add_argument("--yes", "-y", action="store_true",
-                    help="skip the confirmation prompt when clearing")
+                    help="skip confirmation prompts (clear; secure writes)")
+    # `secure`-only options:
+    sp.add_argument("--dump", metavar="ADDR:LEN",
+                    help="secure: 0x3C memory read, hex ADDR:LEN (e.g. 1800:40)")
+    sp.add_argument("--reset-adaptive", action="store_true",
+                    help="secure: send the reset-adaptive-values write")
+    sp.add_argument("--immobiliser-synch", action="store_true",
+                    help="secure: send the immobiliser-synch (Security-Learn) write")
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")
     sp.add_argument("--connect", metavar="HOST[:PORT]",
                     help="TCP endpoint (serve bridge or WiFi Pico); default port 9141")

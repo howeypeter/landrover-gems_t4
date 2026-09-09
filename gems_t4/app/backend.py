@@ -32,7 +32,7 @@ from gems_t4.gems.virtual_ecu import VirtualEcu
 from gems_t4.protocol.client import KwpClient
 from gems_t4.protocol.kline import KlineClient
 from gems_t4.protocol.security import compute_key
-from gems_t4.transport.base import Transport
+from gems_t4.transport.base import Transport, TransportError
 from gems_t4.transport.ble import BleTransport
 from gems_t4.transport.pico import PicoAdapterTransport
 from gems_t4.transport.tcp import DEFAULT_PORT, TcpTransport
@@ -473,6 +473,26 @@ class Backend:
     def run_actuator(self, actuator_id: int, state: int) -> ActuatorOutcome:
         """Command an actuator test; returns the outcome (incl. refusals)."""
         return _actuators.run(self._require(), actuator_id, state)
+
+    # -- proprietary 0xDA secure channel (real ECU, bench L-line) ---------- #
+    def secure_session(self) -> "GemsSecureSession":
+        """Build a :class:`GemsSecureSession` over the configured real transport.
+
+        The 0xDA SecurityAccess channel does its own 5-baud init at 0xDA and uses
+        no-address framing, so it needs a *raw* transport (USB/BLE Pico), not the
+        virtual ECU and not the OBD ``KlineClient``. The caller drives it:
+        ``s.connect(); s.unlock(); s.read_config(); ...; s.close()``. Requires a
+        real adapter selected (a transport factory) and the ECU's L-line tied to
+        the K node on the bench.
+        """
+        from gems_t4.protocol.gems_secure import GemsSecureSession
+
+        if self._transport_factory is None:
+            raise TransportError(
+                "the proprietary 0xDA channel needs a real adapter (USB/BLE), "
+                "not the virtual ECU — select a --port/--ble connection"
+            )
+        return GemsSecureSession(self._transport_factory())
 
     # -- coding / programming (gated writes) ------------------------------- #
     @staticmethod

@@ -113,6 +113,10 @@ class FakeSecureEcu(Transport):
             return b"\x7F\x22\x80"           # unavailable on this ECU
         if p == gs.WRITE_RESET_ADAPTIVE or p == gs.WRITE_IMMOBILISER_SYNCH:
             return b"\xE3\x00"               # positive-ish ack
+        if p[:1] == b"\x3C" and len(p) == 4:  # memory read: 3C lsb msb len
+            return b"\x7C" + bytes([0xAA]) * p[3]
+        if p[:1] == b"\x2E":                  # coding write: 2E cid value
+            return b"\x6E" + p[1:3]
         return b"\x7F" + p[:1] + b"\x11"     # serviceNotSupported
 
 
@@ -166,3 +170,50 @@ def test_writes_gated_then_sent():
     assert s.transport.sent[-1] == gs.WRITE_RESET_ADAPTIVE
     s.immobiliser_synch()
     assert s.transport.sent[-1] == gs.WRITE_IMMOBILISER_SYNCH
+
+
+def test_read_memory_framing_and_gate():
+    s = gs.GemsSecureSession(FakeSecureEcu())
+    s.connect()
+    with pytest.raises(gs.GemsSecureLocked):
+        s.read_memory(0x2000, 4)
+    assert s.unlock()
+    assert s.read_memory(0x2000, 4) == b"\xAA\xAA\xAA\xAA"
+    # request framing: 3C lsb msb len (little-endian address per shickenchit)
+    assert s.transport.sent[-1] == bytes.fromhex("3C002004")
+    with pytest.raises(gs.GemsSecureError):
+        s.read_memory(0x10000, 1)   # address out of range
+
+
+def test_dump_memory_concatenates_chunks():
+    s = gs.GemsSecureSession(FakeSecureEcu())
+    s.connect()
+    assert s.unlock()
+    assert s.dump_memory(0x1800, 0x30, chunk=0x10) == b"\xAA" * 0x30
+
+
+def test_write_cid_framing_and_gate():
+    s = gs.GemsSecureSession(FakeSecureEcu())
+    s.connect()
+    with pytest.raises(gs.GemsSecureLocked):
+        s.write_cid(gs.CID_CONFIG, b"\x01")
+    assert s.unlock()
+    resp = s.write_cid(gs.CID_CONFIG, b"\x01")
+    assert s.transport.sent[-1] == b"\x2E\x04\xBF\x01"
+    assert resp[:1] == b"\x6E"
+
+
+def test_backend_secure_session_requires_real_transport():
+    from gems_t4.app.backend import Backend
+    from gems_t4.transport.base import TransportError
+
+    # no transport factory (virtual ECU) -> refused
+    with pytest.raises(TransportError):
+        Backend().secure_session()
+
+    # with a real transport factory -> builds a session that can unlock
+    b = Backend(transport_factory=lambda: FakeSecureEcu())
+    s = b.secure_session()
+    s.connect()
+    assert s.unlock() is True
+    s.close()
