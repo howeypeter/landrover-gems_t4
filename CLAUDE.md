@@ -59,17 +59,18 @@ The active working list for the next couple of days. Detailed backlog entries
 (EKA/10AS, 0xDA, route-A power, QA-unmet) live further down; this is the ordering.
 
 ### P1 — do first
-1. **⭐ Security auth — `$27` seed→key CRACKED (2026-09-08); bench-confirm, then implement.**
+1. **✅ Security auth — `$27` seed→key CRACKED, CONFIRMED on hardware, and IMPLEMENTED (2026-09-08).**
    **`key = (seed × 16723) mod 65536`** (16-bit, big-endian). Recovered by decompiling the
-   FlemcoDesign "GEMS ECU Utility" Android app (jadx) — its `GEMS.java` has the exact 0xDA
-   handshake: `1002`→`5002`, `2701`→`6701<seed>`, `2702<key>`→**`6702AA`** (accept; `6702CC`
-   = reject — that's the oracle our probes were missing). Full command map (VIN `2204C4`,
-   PROM ID `2204E2`, displacement `2204BF`, adaptive params `2223xx`; writes `A3234800`
-   reset-adaptive, `A300622588` immobiliser-synch) is in `memory/real-gems-protocol.md`.
-   **Next:** one controlled bench attempt (`~/da6_unlock.py`: fresh seed → key → expect
-   `6702AA`), THEN a real `security_access()` + coding read/write in `gems_t4`. Lockout
-   guardrails still apply (`0x36` after ~3 wrong keys; one attempt/power-cycle). This
-   unblocks everything below it — real coding, immobiliser, the `0x3C` EEPROM/EPROM dump.
+   FlemcoDesign "GEMS ECU Utility" Android app (jadx), then **unlocked a real Disco-1 ECU**
+   (`~/da6_unlock.py`: seed `BFC8`→key `F5D8`→`6702AA`) and read real coding
+   (`~/da7_read.py`: PROM id `4096`, config `00`=4.0/auto; VIN `2204C4`→`7F2280` unavailable
+   on this ECU — it's in the 10AS, not the ECM). Handshake `1002`→`5002`, `2701`→`6701<seed>`,
+   `2702<key>`→`6702AA` (accept; `6702CC`=reject — the oracle our probes had lacked).
+   **Implemented** in **`gems_t4/protocol/gems_secure.py`** (`GemsSecureSession`: 0xDA init +
+   no-address framing + `unlock()` + coding reads/writes; `tests/test_gems_secure.py`, 14
+   tests incl. the real captured frames). Remaining: wire it into `Backend`/CLI/GUI, then map
+   the coding *writes* (VIN/displacement — the app only reads those) and use the unlock to
+   drive the `0x3C` EEPROM/EPROM dump. Full detail + command map: `memory/real-gems-protocol.md`.
 
    Prior state (for context — the channel work that led here), as of 2026-09-08
    (full detail: `memory/real-gems-protocol.md`):

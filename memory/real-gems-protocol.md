@@ -358,12 +358,37 @@ not how to write it.** To maintain OTHER settings (VIN/displacement/etc.), futur
 `$27` is unlocked: study the `A3` payload format and/or probe WriteDataByCommonID (`2E`)
 against the known CIDs with read-back verification (writes — do carefully on the bench).
 
-**STATUS: algorithm RECOVERED, not yet bench-confirmed on our Disco-1 ECU.** Next = ONE
-controlled attempt (`~/da6_unlock.py`: request a fresh seed → compute key → send one
-`2702<key>` → expect `6702AA`), THEN implement in `gems_t4`. Guardrails still apply —
-`$27` locks after ~3 WRONG keys (`0x36`), `0x37` = wait; one attempt per power-cycle,
-abort on `0x36`/`0x37`. APK decompiled at `scratchpad/gems_apk/jadx_out/` (GEMS.java,
-rfUtilities.java, ELM327.java).
+**STATUS: ✅ UNLOCK CONFIRMED ON HARDWARE (2026-09-08, `~/da6_unlock.py`, BLE, K+L).**
+The unlock worked first try on our Disco-1 ECU:
+```
+1002 -> 02 5002 54            (StartDiagSession OK)
+2701 -> 04 6701 BFC8 F3       (seed = BFC8)
+key  = (0xBFC8 * 16723) % 65536 = F5D8
+2702F5D8 -> 03 6702 AA 16     (6702AA = ACCEPTED)
+```
+So the FlemcoDesign key is correct for our ECU, the `1002` session prelude works, and
+`6702AA`/`6702CC` is confirmed as the accept/reject oracle. Correct keys do NOT touch the
+lockout counter, so re-unlocking to read is safe. Next: authorized reads (`~/da7_read.py`
+captures real VIN/PROMID/`2204BF` bytes), then implement `security_access` + coding in
+`gems_t4`. Guardrails still apply for any WRONG-key situation (`0x36` after ~3, `0x37` =
+wait; one attempt per power-cycle). APK decompiled at `scratchpad/gems_apk/jadx_out/`
+(GEMS.java, rfUtilities.java, ELM327.java).
+
+**✅ AUTHORIZED READS CONFIRMED (2026-09-08, `~/da7_read.py`, same hot session).** After the
+unlock (seed `F6E8` → key `F538` → `6702AA`), every proprietary read answered (frame =
+`[len][62 04 xx | 62 23 xx][data][cksum]`):
+- **PROM ID `2204E2` → `4096`** (data bytes `40 96`; the app displays it byte-swapped "9640").
+- **Config `2204BF` → `00`** ⇒ **displacement 4.0 L, transmission automatic, drivetrain 00**
+  (the app derives all three from this one byte: disp 1|2⇒4.6 else 4.0; trans 2|3⇒manual else
+  auto). This ECU is a 4.0 auto — consistent with the Disco 1.
+- **Live params:** air-flow `222332`→`CD00`, fuel-flow `222333`→`3F00`, throttle `222334`→
+  `2000`, short-idle `222336`→`FF00`, long-idle `222337`→`F4`.
+- **VIN `2204C4` → `7F 22 80`** = the manufacturer "UNAVAILABLE" negative (the app's `2280`
+  sentinel). **VIN last-6 is NOT on this engine ECU** — consistent with an early Disco 1 (VIN
+  is in the Lucas 10AS, not the ECM; no OBD Service 09 either). VIN comes from 10AS work here.
+Note: `da7_read.py`'s log left the trailing frame checksum on the "data" field; the real
+value is those bytes minus the last one (the `gems_t4` decoder strips it via the `[len]…[cksum]`
+frame parse).
 
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
