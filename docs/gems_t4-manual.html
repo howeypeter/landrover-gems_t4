@@ -127,7 +127,7 @@
 
 <div class="shell">
 <nav>
-  <div class="brand">gems_t4<small>FIELD MANUAL · v0.0.7</small></div>
+  <div class="brand">gems_t4<small>FIELD MANUAL · v0.0.10</small></div>
   <ol>
     <li><a href="#intro">Overview</a></li>
     <li><a href="#safety">Safety first</a></li>
@@ -158,13 +158,14 @@
     <span class="tag">Lucas/SAGEM GEMS</span>
     <span class="tag">ISO 9141 / KWP2000 K-line</span>
     <span class="tag">Python · Pico + L9637D</span>
-    <span class="tag">v0.0.7</span>
+    <span class="tag">v0.0.10</span>
   </div>
+  <div class="callout ok" style="margin-top:20px"><div class="i">i</div><div><h4>Just want to use the tool?</h4><p>This manual is the full technical reference — hardware, wiring, protocol, honest status. If you only need to <b>install and use</b> the GUI/CLI, start with the <a href="gems_t4-user-guide.html"><b>User Guide</b></a>: a plain-English subset with no electronics or protocol detail.</p></div></div>
 
   <!-- 01 -->
   <h2 id="intro"><span class="k">01</span>Overview</h2>
   <p><b>gems_t4</b> is a software recreation of the Rover / Land Rover <b>TestBook&nbsp;T4</b> dealer diagnostic tool, aimed at the <b>Lucas/SAGEM GEMS V8</b> engine ECU (P38 Range Rover 4.0/4.6 and Discovery&nbsp;1 V8i, roughly 1995 to early 1999). It ships with a built-in <b>virtual ECU</b>, so the entire program runs on a Windows laptop with <b>no car and no adapter</b> — useful for learning the workflow and for development. When you build the hardware, the same code drives a real ECU over a USB K-line adapter (or over a network link).</p>
-  <p>Two front-ends share one engine: a <b>Rich command-line interface</b> and a <b>PySide6 "Win98 kiosk" GUI</b> styled after the period tool. As of v0.0.7 it has 12 GUI screens, 40 live-data parameters, and 169 + 235 automated tests (all passing).</p>
+  <p>Two front-ends share one engine: a <b>Rich command-line interface</b> and a <b>PySide6 "Win98 kiosk" GUI</b> styled after the period tool. As of v0.0.10 it has 12 GUI screens, 40 live-data parameters, and 242 + 235 automated tests (all passing).</p>
   <div class="callout ok"><div class="i">i</div><div><h4>What this manual assumes</h4><p>A Windows laptop, a GEMS-era vehicle (or a spare GEMS ECU), and basic comfort with a breadboard and a multimeter. No prior knowledge of the tool is assumed.</p></div></div>
   <div class="callout ok"><div class="i">i</div><div><h4>Not an electrical engineer? Two aids for the jargon</h4><p>Technical terms with a <span class="term" data-tip="Like this — hover (or tap on a phone) any dotted-underlined term to see a plain-English definition.">dotted underline</span> show a plain-English definition when you hover or tap them. And every term is defined in the full <b><a href="#glossary">Glossary</a></b> at the end (§17). So you never have to already know what "Vs" or "decoupling" means.</p></div></div>
 
@@ -192,8 +193,8 @@
     <thead><tr><th>"Programming" means…</th><th>Over the K-line?</th><th>Reality</th></tr></thead>
     <tbody>
       <tr><td><b>1. The tune</b> — fuel/ignition <b>maps</b></td><td><b>No — never</b></td><td>GEMS maps live on <b>write-once EPROM chips</b> (27C512 fuel, 27C1001 ignition). There is no flash and no bootloader in the ECU — nothing can receive a reflash over the wire, on any GEMS variant. Changing maps is a <b>bench chip-swap</b>.</td></tr>
-      <tr><td><b>2. Coding / config</b> — VIN last-6, dealer ID, 4.0/4.6 select, transmission, build code</td><td><b>Yes</b></td><td>Small settings written over the K-line ($3B). The tool does this, gated (backup → verify → confirm).</td></tr>
-      <tr><td><b>3. Immobiliser Security-Learn</b> — re-sync BeCM ↔ ECM</td><td><b>Yes</b></td><td>The one genuine over-the-wire <em>write</em>. Needs the <b>BeCM present and powered</b> (so: in the car), and — honestly — is unvalidated on real hardware (§14).</td></tr>
+      <tr><td><b>2. Coding / config</b> — dealer ID, 4.0/4.6 select, transmission, build code</td><td><b>Yes</b></td><td>Small settings on the proprietary <b>0xDA</b> channel. <b>Reads are confirmed on hardware</b> (via unlocked <code>$27</code>, §15). Coding <em>writes</em> are gated in software (backup → verify → confirm), but the real write service isn't confirmed yet. Note the VIN last-6 isn't in the Disco-1 ECM at all (§15).</td></tr>
+      <tr><td><b>3. Immobiliser Security-Learn</b> — re-sync BeCM/10AS ↔ ECM</td><td><b>Yes</b></td><td>A genuine over-the-wire <em>write</em> (candidate <span class="mono">A300622588</span>). Needs the <b>BeCM/10AS present and powered</b> (so: in the car), and is <b>unvalidated</b> — never fired on a real ECU. Do not attempt on the bench (§15).</td></tr>
     </tbody>
   </table></div>
   <div class="callout danger"><div class="i">&#9888;</div><div><h4>You cannot "remap" a GEMS over OBD — full stop</h4><p>This was verified against the ST EPROM datasheets and Land Rover / tuning sources. GEMS maps live on <b>write-once EPROM</b>; the only electrically-erasable path is an <b>aftermarket flash-EPROM retrofit (still a bench chip swap)</b>. No factory GEMS, and no tool (TestBook, Nanocom, Faultmate), reflashes the GEMS calibration through the diagnostic port. Later Td5 "NNN" diesels and the Thor V8 <em>can</em> be flashed over OBD — but those are different, newer ECUs, not GEMS.</p></div></div>
@@ -207,7 +208,7 @@
     <tr><td class="mono">pip install -e ".[gui]"</td><td>install with the GUI; or <code>pip install -r requirements.txt</code> for CLI-only</td></tr>
     <tr><td class="mono">python -m gems_t4 scenarios</td><td>smoke test — lists the four fault scenarios, no hardware needed</td></tr>
   </tbody></table></div>
-  <p><b>Run the GUI:</b> <code>python -m gems_t4 gui</code>, or double-click <code>launch_gui.bat</code>. The launcher runs the <b>live venv source</b> (not a pre-built exe), so it always reflects the current code — nothing to "update" beyond a <code>git pull</code>. Add <code>--instant</code> to skip the period-authentic "communicating with ECU" pauses during testing. The version (<code>gems_t4 v0.0.7</code>) shows on the boot splash and window title.</p>
+  <p><b>Run the GUI:</b> <code>python -m gems_t4 gui</code>, or double-click <code>launch_gui.bat</code>. The launcher runs the <b>live venv source</b> (not a pre-built exe), so it always reflects the current code — nothing to "update" beyond a <code>git pull</code>. Add <code>--instant</code> to skip the period-authentic "communicating with ECU" pauses during testing. The version (<code>gems_t4 v0.0.10</code>) shows on the boot splash and window title.</p>
   <p>PySide6 (the GUI) is intentionally kept out of <code>requirements.txt</code> — it's a large optional dependency, installed via the <code>[gui]</code> extra.</p>
 
   <!-- 06 -->
@@ -245,7 +246,8 @@
     <tbody>
       <tr><td><b>Virtual ECU</b></td><td>default</td><td>the built-in simulator — no hardware</td></tr>
       <tr><td><b>USB</b></td><td><code>--port COMx</code></td><td>the Pico K-line adapter on a serial port</td></tr>
-      <tr><td><b>Network / TCP</b></td><td><code>gems_t4 serve</code> + <code>--connect HOST[:PORT]</code></td><td>a served virtual ECU, a Pi-bridged Pico, or a future WiFi Pico — identical to the client</td></tr>
+      <tr><td><b>Bluetooth (BLE)</b></td><td><code>--ble</code> [NAME]</td><td>a Pico&nbsp;2&nbsp;W adapter — <b>no pairing, no COM port</b>; connects by name (default <code>gems-pico</code>). Needs <code>pip install bleak</code>. Hardware-verified.</td></tr>
+      <tr><td><b>Network / TCP</b></td><td><code>gems_t4 serve</code> + <code>--connect HOST[:PORT]</code></td><td>a served virtual ECU, a Pi-bridged Pico, or a WiFi Pico — identical to the client</td></tr>
     </tbody>
   </table></div>
   <div class="callout warn"><div class="i">i</div><div><h4>Network links are read-only by default</h4><p>Over a network transport, write services (coding, actuators, Security-Learn) are refused unless you explicitly pass <code>--allow-writes</code> on a link you trust. Reads and DTC-clear stay allowed. This gate is enforced on the laptop side; keep <code>serve</code> on localhost or behind an SSH tunnel for real use.</p></div></div>
@@ -602,9 +604,9 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
 
   <!-- 14 -->
   <h2 id="limits"><span class="k">14</span>Limitations &amp; honest status</h2>
-  <div class="callout ok"><div class="i">&#10003;</div><div><h4>Proven on real hardware — the OBD-II subset (2026-08)</h4><p>The Pico adapter has now <b>successfully talked to a physical P38 GEMS ECU</b>: 5-baud init, live data (Mode 01) and stored fault codes (Mode 03) all confirmed over the K-line — see the verified protocol in <a href="#reference">§15</a>, exposed as <code>gems_t4 kline live|dtc|monitor --port COMx</code>. The <b>GUI works on the real ECU too</b> — <code>gems_t4 gui --port COMx</code> (or pick USB in Configuration) drives the Win98 kiosk's live gauges and fault-code screens from the actual ECU; the proprietary screens (actuators, coding, immobiliser) decline with a clear message rather than pretending. What's proven is the <b>OBD-II subset</b> a NAS ECU answers. The <em>fuller</em> proprietary GEMS diagnostics (the full ~108 T4 measures, actuator drives, coding, and especially the immobiliser) are <b>still unmapped and remain experimental</b> — treat those as unproven until confirmed the same way.</p></div></div>
+  <div class="callout ok"><div class="i">&#10003;</div><div><h4>Proven on real hardware — the OBD-II subset (2026-08)</h4><p>The Pico adapter has now <b>successfully talked to a physical P38 GEMS ECU</b>: 5-baud init, live data (Mode 01) and stored fault codes (Mode 03) all confirmed over the K-line — see the verified protocol in <a href="#reference">§15</a>, exposed as <code>gems_t4 kline live|dtc|monitor --port COMx</code>. The <b>GUI works on the real ECU too</b> — <code>gems_t4 gui --port COMx</code> (or pick USB in Configuration) drives the Win98 kiosk's live gauges and fault-code screens from the actual ECU; the proprietary screens (actuators, coding, immobiliser) decline with a clear message rather than pretending. What's proven is the <b>OBD-II subset</b> a NAS ECU answers. The <em>fuller</em> proprietary GEMS diagnostics now have a foothold too: the <b>0xDA manufacturer channel is open</b> (SecurityAccess <code>$27</code> cracked and confirmed on hardware), so <b>real coding reads work</b> (§15). But actuator drives, coding <em>writes</em>, and the immobiliser are <b>still unmapped or unproven</b> — treat those as experiments until confirmed the same way.</p></div></div>
   <div class="callout warn"><div class="i">i</div><div><h4>The protocol is a best-effort recreation</h4><p>The exact GEMS wire bytes — especially the <b>immobiliser handshake</b> — are not publicly documented. The tool's protocol is stylized (drawn from Andrew Revill's MEMS3 reverse-engineering plus inference), so a real GEMS ECU may not respond exactly as modelled. This is the biggest uncertainty for the immobiliser write specifically.</p></div></div>
-  <div class="callout warn"><div class="i">i</div><div><h4>The proprietary channel is found, but locked (research status, 2026-09)</h4><p>Bench reverse-engineering has located where the non-OBD data lives. Over the plain OBD-II K-line, only the emissions subset answers — coding, VIN last-6, the immobiliser and the T4 extras are <em>not</em> there. They sit on a <b>proprietary manufacturer channel (init address 0xDA)</b> that only responds when the ECU's <b>L-line is tied to the K node</b> on the bench, and it speaks ISO-14230 with no-address framing. That channel is <b>security-locked behind SecurityAccess (<code>$27</code>)</b>: the seed request works (real 16-bit seeds come back), and a memory-read service (<code>0x3C</code>, which can read the config EEPROM and the code EPROM) is present — but every real read returns <code>securityAccessDenied</code> until a valid <b>seed→key</b> is supplied. That seed→key algorithm is the one remaining unknown; it isn't published, and it can't be brute-forced. So today the real ECU is <b>read-only for the OBD subset</b>; unlocking the proprietary reads/writes (real coding, immobiliser, maps-over-the-wire) is pending that key, obtained from an EPROM disassembly or a capture of a commercial tool. Full detail lives in the project's <code>memory/real-gems-protocol.md</code>.</p></div></div>
+  <div class="callout ok"><div class="i">&#10003;</div><div><h4>The proprietary channel is now OPEN (2026-09)</h4><p>Bench work has since <b>unlocked</b> the non-OBD layer. Over the plain OBD-II K-line, only the emissions subset answers — coding, the immobiliser and the T4 extras are <em>not</em> there. They sit on a <b>proprietary manufacturer channel (init address 0xDA)</b> that responds only when the ECU's <b>L-line is tied to the K node</b> on the bench, speaking ISO-14230 no-address framing. It is gated by SecurityAccess (<code>$27</code>) — and that seed→key is <b>solved</b>: <code>key = (seed × 16723) mod 65536</code> (16-bit, big-endian), <b>confirmed on a real Disco-1 ECU</b> (returns <code>6702AA</code> accept). Unlocked, <b>real coding reads</b> and the <b>0x3C memory-read</b> service both work. It's implemented as <code>gems_t4/protocol/gems_secure.py</code>, driven by <code>gems_t4 kline secure</code> (bench only — needs the L-line jumper). <b>Writes are a different matter</b> — see §15 for the honest status. Full detail: <code>memory/real-gems-protocol.md</code>.</p></div></div>
   <div class="callout warn"><div class="i">i</div><div><h4>It is not a replacement for a Nanocom / Faultmate</h4><p>This is a hobby / learning project, not a commercial tool. For reads and diagnostics it can become genuinely useful once validated. For the <b>immobiliser ECU↔BeCM sync</b> — the one operation where "it's an experiment" isn't good enough if you need the car to start — the known-reliable tools are a <b>Nanocom</b> or <b>Faultmate</b> (whose makers reverse-engineered these protocols). A sensible plan: use this tool to learn and to prove your hardware/diagnostics, and budget for a Nanocom for the immobiliser sync.</p></div></div>
   <h3>Also not built (yet)</h3>
   <p>Engine-ECU only — the other P38 modules (EAS air suspension, ABS, BeCM, airbags, climate) aren't covered yet. No service adjustments (timing/idle) yet. No guided fault-tree wizards yet.</p>
@@ -888,10 +890,23 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
       <tr><td>Mode 03 / 07 DTCs</td><td>Stored (03) and <b>pending</b> (07); <span class="mono">kline dtc</span> shows both. Clearing (Mode 04) <b>reboots the ECU</b> &mdash; it goes silent ~1&ndash;2&nbsp;min, then recovers.</td></tr>
       <tr><td>Mode 02 freeze frame</td><td>Supported (empty until a code <em>confirms</em> &mdash; populates on-car).</td></tr>
       <tr><td>Mode 06 on-board tests</td><td>Supported (monitor test results &mdash; richer on-car).</td></tr>
-      <tr><td>Mode 09 vehicle info (VIN)</td><td><b>Not supported</b> &mdash; the engine ECU has no VIN; it lives in the <b>BeCM</b>.</td></tr>
+      <tr><td>Mode 09 vehicle info (VIN)</td><td><b>Not supported</b> &mdash; the engine ECU has no VIN. On a P38 it lives in the <b>BeCM</b>; on a <b>Discovery 1</b> (no BeCM) in the <b>Lucas 10AS</b>. Confirmed absent on <b>two</b> Disco-1 ECMs (2026-09) &mdash; even over the unlocked 0xDA channel.</td></tr>
     </tbody>
   </table></div>
-  <div class="callout warn"><div class="i">i</div><div><h4>The proprietary layer is not reachable over this K-line by firmware alone</h4><p>The full T4 diagnostics (~108 measures, actuators, coding, immobiliser) use manufacturer services we probed for and could not reach: <b>blind KWP2000 service requests</b> (both OBD and KWP framing, every address) and a real <b>KWP2000 fast-init StartCommunication</b> both returned <b>total silence</b>. GEMS's actual service IDs aren't public (Andrew Revill's work is Rover K-series MEMS3, not GEMS; Nanocom/Faultmate are closed). The one <em>untried</em> door &mdash; flagged by an adversarial deep-research review &mdash; is the <b>L-line (C1017 pin 20)</b>: classic ISO&nbsp;9141 (which the T4 uses) sends the 5-baud address on K <em>and</em> L together, and our L-line is unconnected. Reaching it would need a small hardware mod (drive pin&nbsp;20 in parallel with K). Failing that, the service-ID map needs the RAVE diagnostic docs or a K-line capture of a real T4/Nanocom on a GEMS car. Full detail: <span class="mono">memory/real-gems-protocol.md</span>.</p></div></div>
+  <div class="callout ok"><div class="i">&#10003;</div><div><h4>The L-line door was opened — the proprietary layer is reachable</h4><p>The "one untried door" &mdash; the <b>L-line (C1017 pin 20)</b> &mdash; was tied to the K node on the bench, and it worked. Classic ISO&nbsp;9141 sends the 5-baud address on K <em>and</em> L; with the L-line connected, the ECU answers a <b>proprietary manufacturer channel at init address 0xDA</b> (ISO-14230, no-address framing). That channel is behind SecurityAccess <code>$27</code>, whose seed→key is now <b>cracked and hardware-confirmed</b> (§14). Unlocked, it exposes <b>coding reads</b> (service 22) and a <b>memory-read service (0x3C)</b> addressed by page/record. So the proprietary layer is no longer a dead end &mdash; it's <b>open for reads</b>; writes and actuators are the remaining frontier (below). Full detail: <span class="mono">memory/real-gems-protocol.md</span>.</p></div></div>
+
+  <h3>The proprietary 0xDA channel — unlocked (2026-09)</h3>
+  <p>With the L-line tied and <code>$27</code> cracked, the manufacturer channel is implemented in <span class="mono">gems_t4/protocol/gems_secure.py</span> and driven by <code>gems_t4 kline secure</code> (bench only — it needs the L-line jumper). It speaks ISO-14230 <b>no-address framing</b> (<span class="mono">[len][data][sum]</span>), <em>not</em> the OBD <span class="mono">68 6A F1</span> envelope.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Step / service</th><th>What it does — and how confirmed</th></tr></thead>
+    <tbody>
+      <tr><td><b>Init 0xDA + <code>$27</code> unlock</b></td><td>StartDiagSession (<span class="mono">1002&rarr;5002</span>), requestSeed (<span class="mono">2701&rarr;6701&lt;seed&gt;</span>), sendKey (<span class="mono">2702&lt;key&gt;&rarr;6702AA</span> accept / <span class="mono">6702CC</span> reject). <b>key = (seed &times; 16723) mod 65536</b>, 16-bit big-endian. <b>Confirmed on a real Disco-1 ECU.</b></td></tr>
+      <tr><td><b>Coding reads (svc 22)</b></td><td><code>kline secure</code> reads PROM id (<span class="mono">2204E2</span>) and displacement/transmission (<span class="mono">2204BF</span>). <b>Confirmed.</b> VIN last-6 (<span class="mono">2204C4</span>) returns <em>unavailable</em> on the Disco-1 ECM — it's a 10AS field, not an engine-ECU one.</td></tr>
+      <tr><td><b>Memory read <code>0x3C</code></b></td><td><code>--dump ADDR:LEN</code> and <code>--immo</code>. Addressed by <b>(page, record)</b>, not a flat address; page 0x18 = config EEPROM. <b>Confirmed on hardware.</b></td></tr>
+      <tr><td><b>Writes (svc A3)</b></td><td>reset-adaptive <span class="mono">A3234800</span>; immobiliser-synch <span class="mono">A300622588</span>. <b>App-derived and NEVER fired on a real ECU</b> — hypotheses, not confirmed.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="i">i</div><div><h4>Two honest caveats on the writes</h4><p><b>(1) Provenance.</b> The <code>$27</code> algorithm and the two <code>A3</code> writes came from decompiling a <b>free third-party Android app (FlemcoDesign)</b> — a troubleshooting lead, <b>not a source of truth</b>. The unlock is trusted because the <em>ECU</em> confirmed it (<code>6702AA</code>); the writes are only implemented and unit-tested against captured frames, and have <b>never been sent to a real ECU</b>. Treat them as unproven.</p><p><b>(2) Bench danger.</b> Do <b>not</b> fire the immobiliser-synch on the bench — it pairs the ECU to a body module that isn't present (no BeCM/10AS on the bench), so it can leave the ECU immobilised. The adaptive-reset ("relearn", <code>A3234800</code>) is the bench-safe one.</p></div></div>
 
   <h3>The four fault scenarios</h3>
   <div class="tblwrap"><table>
@@ -910,8 +925,8 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
   <h2 id="backlog"><span class="k">16</span>Backlog / roadmap</h2>
   <p>What isn't done yet, in plain terms — so you know where the project stands. None of these are features today.</p>
 
-  <h3>The big one — prove it on real hardware</h3>
-  <p>Everything works against the built-in virtual (simulated) ECU, but the tool has <b>never talked to a real GEMS ECU</b>. On-bench and on-car validation with the Pico adapter is the top item — it's what turns this from a simulator into a real tool. Until then, treat reads as unproven and every write as an experiment.</p>
+  <h3>The big one — now proven on real hardware (reads)</h3>
+  <p>The tool <b>has</b> talked to a real GEMS ECU — first light 2026-08-31, and extensively since, over USB <em>and</em> hardware-verified BLE. The OBD-II subset (live data, fault codes) is confirmed, and the <b>proprietary 0xDA channel is unlocked</b> for coding + memory reads (§14/§15). What remains is to prove the <b>writes</b> on real hardware: coding writes, the two <code>A3</code> actions, and the immobiliser sync are still unfired or unvalidated. On-car validation of the immobiliser sync (which needs the BeCM/10AS) is the headline gap — until then, treat every write as an experiment.</p>
 
   <h3>Features not built yet</h3>
   <ul>
@@ -919,7 +934,7 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
     <li><b>Service adjustments</b> — the ignition-timing and idle nudges the real T4 could do.</li>
     <li><b>An injector output test.</b></li>
     <li><b>Step-by-step guided fault-finding</b> — today you pick from menus; the plan is guided walk-throughs.</li>
-    <li><b>A wireless (WiFi) adapter option</b> — the laptop side is built; the Pico WiFi firmware is not.</li>
+    <li><s>A wireless adapter option</s> — <b>done:</b> the BLE firmware is built and <b>hardware-verified</b> (reads real DTCs over Bluetooth — no pairing, no COM port), and the WiFi Pico firmware is built too.</li>
     <li><b>Message-centre text</b> and a true <b>full-screen kiosk</b> mode — period-fidelity polish.</li>
   </ul>
 
@@ -937,7 +952,7 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
     <li><b>"Immobilised" isn't fully coherent</b> in the simulator — the engine still shows RPM when set to the immobilised state.</li>
   </ul>
 
-  <p>Recently done (v0.0.6–v0.0.7): the persistent connection indicator + link test, the "Clear ALL codes" clarity, the fuel-pump refusal reason, live-data 37→40 parameters, and this hardware wiring reference.</p>
+  <p>Recently done (v0.0.8–v0.0.10 + since): <b>first hardware light</b> — the adapter talked to a real GEMS ECU (v0.0.8); the multi-frame DTC-decode fix and the <b>confirmed 0xDA proprietary channel</b> (v0.0.9); <b>hardware-verified BLE</b> + the WiFi firmware + Backend transport unification + VIN read (v0.0.10); and, on <code>main</code> since the tag, the <b>cracked <code>$27</code> SecurityAccess</b> with the <code>gems_secure</code> layer and <code>kline secure</code> command (unlock + read real coding). See §14/§15.</p>
 
   <!-- 17 -->
   <h2 id="glossary"><span class="k">17</span>Glossary</h2>
@@ -986,7 +1001,7 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w -p COM5 firmware/pico_kline</
     <dt>Firmware</dt><dd>The small program that runs on the Pico itself.</dd>
   </dl>
 
-  <p class="foot">gems_t4 field manual · generated from CLAUDE.md, README, INSTALL.md, docs/land-rover-electronics.md, docs/adapter-hardware-improvements.md, firmware docs, and the project wiring diagrams · hardware pins verified vs ST L9637D datasheet (Doc ID 1765) + Land Rover GEMS service data · v0.0.7 · reads/diagnostics low-risk; all writes are experiments until validated on real hardware</p>
+  <p class="foot">gems_t4 field manual · generated from CLAUDE.md, README, INSTALL.md, docs/land-rover-electronics.md, docs/adapter-hardware-improvements.md, firmware docs, and the project wiring diagrams · hardware pins verified vs ST L9637D datasheet (Doc ID 1765) + Land Rover GEMS service data · v0.0.10 · reads/diagnostics low-risk; all writes are experiments until validated on real hardware</p>
 
 </main>
 </div>
