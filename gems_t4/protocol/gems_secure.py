@@ -288,61 +288,46 @@ class GemsSecureSession:
         return self._exchange(payload)
 
     # -- memory read (service 0x3C) --------------------------------------- #
-    # Confirmed on hardware 2026-09-08 (da8, unlocked session): the request is
-    # ``3C <addrHi> <addrLo> <len>`` (**big-endian address** — MSB-first returned
-    # real data at 0x1800/0x2000; shickenchit's "LSB MSB" was wrong for this ECU),
-    # and the positive reply is ``7C`` + ``len`` data bytes. Keep chunks small
-    # (<=63 B, default 16): a reply >63 B uses the ISO-14230 2-byte length form and
-    # BLE reassembly is unreliable for large single reads.
-    def read_memory(self, address: int, length: int) -> bytes | None:
-        """Read ``length`` bytes at ``address`` via service ``0x3C`` (unlock req).
+    # Request is ``3C <b1> <b2> <len>`` and the positive reply is ``7C`` + ``len``
+    # bytes; a single read is reliable and repeatable. BUT the two address bytes
+    # are NOT a flat linear byte pointer on our Disco-1 ECU (confirmed 2026-09-08):
+    # ``3C 18 00 10`` and ``3C 18 01 10`` return unrelated 16-byte blocks — not
+    # overlapping windows — so consecutive "addresses" select different records/
+    # pages, and :meth:`dump_memory`'s increment-by-``len`` model does NOT yield a
+    # linear image (that's why the 2 KB dump came out scrambled). The ``<b1><b2>``
+    # semantics are still uncharacterized. For KNOWN fields use the CID reads
+    # (:meth:`read_prom_id`/:meth:`read_config`/:meth:`read_vin_last6`, service
+    # ``22 04 xx``) — that's what the real app uses; it never used ``0x3C``.
+    def read_memory(self, b1: int, b2: int, length: int = 0x10) -> bytes | None:
+        """Raw ``0x3C`` read: send ``3C <b1> <b2> <len>``, return ``len`` bytes.
 
-        Returns the ``length`` data bytes (strips the leading ``0x7C``), or None
-        on a negative/silent reply.
+        ``b1``/``b2`` are the two raw arg bytes (NOT a validated linear address —
+        see the note above). Returns the data (leading ``0x7C`` stripped), or None
+        on a negative/silent/short reply.
         """
         if not self.unlocked:
             raise GemsSecureLocked("read_memory requires a successful unlock() first")
-        if not 0 <= address <= 0xFFFF or not 1 <= length <= 0x3F:
-            raise GemsSecureError(f"bad address/length: {address:#x}/{length} (len 1..63)")
-        payload = bytes([0x3C, (address >> 8) & 0xFF, address & 0xFF, length])
-        data = self._exchange(payload)
+        if not 0 <= b1 <= 0xFF or not 0 <= b2 <= 0xFF or not 1 <= length <= 0x3F:
+            raise GemsSecureError(f"bad args: {b1:#x},{b2:#x},len {length} (len 1..63)")
+        data = self._exchange(bytes([0x3C, b1, b2, length]))
         if not data or self._is_negative(data):
             return None
         block = data[1:] if data[0] == 0x7C else data
         # Reject a short/overlong read: over BLE a partial notification yields a
-        # valid-checksum frame with the wrong byte count, which would silently
-        # DESYNC a multi-chunk dump (every later chunk shifts). Force the caller
-        # to retry instead of concatenating garbage.
+        # valid-checksum frame with the wrong byte count. Return None so the
+        # caller retries instead of trusting garbage.
         if len(block) != length:
             return None
         return block
 
-    def dump_memory(self, start: int, length: int, *, chunk: int = 0x10,
-                    retries: int = 3) -> bytes:
-        """Read a memory range in ``chunk``-sized ``0x3C`` reads and concatenate.
+    def read_at(self, address: int, length: int = 0x10) -> bytes | None:
+        """Convenience: ``read_memory`` with a 16-bit ``address`` split big-endian.
 
-        Each chunk must come back exactly ``chunk`` bytes; a short/failed read is
-        retried up to ``retries`` times (no sleep — a fresh exchange), and the
-        dump stops cleanly if a chunk still can't be read (returning what it has)
-        rather than drifting. Keep ``chunk`` <= 63 (single-frame). Use for the
-        config EEPROM (~``0x1800``) and the 27C1001 image (``0x2000``).
+        ⚠️ Only meaningful if the ``0x3C`` arg bytes turn out to be a linear
+        address — which they are NOT on our ECU (see :meth:`read_memory`). Kept
+        for probing; do not build a linear dump on it without re-verifying.
         """
-        out = bytearray()
-        addr, remaining = start, length
-        while remaining > 0:
-            n = min(chunk, remaining)
-            block = None
-            for _ in range(max(1, retries)):
-                b = self.read_memory(addr, n)
-                if b is not None and len(b) == n:
-                    block = b
-                    break
-            if block is None:
-                break                      # couldn't get a clean chunk; stop here
-            out += block
-            addr += n
-            remaining -= n
-        return bytes(out)
+        return self.read_memory((address >> 8) & 0xFF, address & 0xFF, length)
 
     # -- coding write (service 0x2E) -------------------------------------- #
     # PROVISIONAL: the app only READS VIN/displacement/etc.; it never writes them,

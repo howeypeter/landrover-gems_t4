@@ -414,11 +414,21 @@ match offset 0x0C of a `1800`-based read (`7D/E4 55 DD 00…`), and 0x180E–0F 
 different bytes ⇒ the two `0x3C` arg bytes are **not** a simple flat byte pointer (or reads
 desync badly over BLE). **Only SINGLE reads are trustworthy right now** (they're self-consistent
 and repeatable). Hardened `read_memory` to reject a short/overlong frame (→ None) and
-`dump_memory` to retry per-chunk so a short read can't silently desync a dump — but that doesn't
-resolve the addressing question. **Next: an overlap test with single reads** (`1800:10` vs
-`1801:10` — if flat, the second is the first shifted by one byte) to pin the address semantics
-before trusting any dump / locating the immobiliser code. The `EE 01 E4 …`/`21 00 33 …` samples
-above are from single reads (reliable) but their cross-address linearity is unproven.
+and made short reads return None so they can't silently desync — but that doesn't
+resolve the addressing question. **Overlap test RESULT (2026-09-08): flat addressing REFUTED.**
+`1800:10` = `EE 01 E4 01 01 F8 0A 10 21 00 3B 0D F0 9E DD 00`; `1801:10` = `00 20 00 80 00 00 00
+00 00 00 00 40 02 00 00 00` — NOT a one-byte shift, totally unrelated. So the two `0x3C` arg
+bytes select a record/page, not a byte offset; consecutive "addresses" don't give overlapping
+windows, and a linear `dump_memory` cannot build an image (which is why the 2 KB dump was
+scrambled). **API changed to match reality:** `dump_memory` REMOVED; `read_memory(b1, b2, len)`
+now takes the two raw arg bytes; `read_at(address, len)` is a big-endian-split convenience kept
+only for probing (NOT a validated linear address). **What actually works reliably = the app's
+CID reads** (`22 04 C4` VIN / `22 04 E2` PROM id / `22 04 BF` config / `22 23 xx` params →
+`read_prom_id`/`read_config`/`read_vin_last6`); the real app never used `0x3C` at all. The
+`0x3C` `<b1><b2>` indexing is still uncharacterized — a raw EEPROM/EPROM dump over the wire is
+NOT currently possible, and we don't need the 27C1001 dump for `$27` anyway (algorithm already
+cracked). Chasing `0x3C` indexing is optional/low-priority; chip-pull remains the route for a
+full image if ever needed.
 
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a

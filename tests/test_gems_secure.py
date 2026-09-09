@@ -185,26 +185,27 @@ def test_read_memory_framing_and_gate():
     s = gs.GemsSecureSession(FakeSecureEcu())
     s.connect()
     with pytest.raises(gs.GemsSecureLocked):
-        s.read_memory(0x2000, 4)
+        s.read_memory(0x20, 0x00, 4)
     assert s.unlock()
-    assert s.read_memory(0x2000, 4) == b"\xAA\xAA\xAA\xAA"
-    # request framing: 3C addrHi addrLo len (BIG-endian, confirmed on hardware da8)
+    assert s.read_memory(0x20, 0x00, 4) == b"\xAA\xAA\xAA\xAA"
+    # request framing: 3C <b1> <b2> <len>
     assert s.transport.sent[-1] == bytes.fromhex("3C200004")
     with pytest.raises(gs.GemsSecureError):
-        s.read_memory(0x10000, 1)   # address out of range
+        s.read_memory(0x100, 0x00, 1)   # arg byte out of range
     with pytest.raises(gs.GemsSecureError):
-        s.read_memory(0x2000, 0x40)  # length must be 1..63 (single-frame)
+        s.read_memory(0x20, 0x00, 0x40)  # length must be 1..63 (single-frame)
 
 
-def test_dump_memory_concatenates_chunks():
+def test_read_at_splits_address_big_endian():
     s = gs.GemsSecureSession(FakeSecureEcu())
     s.connect()
     assert s.unlock()
-    assert s.dump_memory(0x1800, 0x30, chunk=0x10) == b"\xAA" * 0x30
+    assert s.read_at(0x2000, 4) == b"\xAA\xAA\xAA\xAA"
+    assert s.transport.sent[-1] == bytes.fromhex("3C200004")  # 0x2000 -> 20 00
 
 
 class _FlakySecureEcu(FakeSecureEcu):
-    """Truncates every 3rd 0x3C reply by one byte (models BLE drift)."""
+    """Truncates every other 0x3C reply by one byte (models BLE drift)."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -214,29 +215,21 @@ class _FlakySecureEcu(FakeSecureEcu):
         r = super()._respond(p)
         if p[:1] == b"\x3C":
             self._read_n += 1
-            if self._read_n % 3 == 0:      # drop the last data byte
+            if self._read_n % 2 == 0:      # drop the last data byte
                 return r[:-1]
         return r
 
 
 def test_read_memory_rejects_short_read():
-    # a truncated frame is a valid frame with the wrong byte count -> None,
-    # so a dump never silently concatenates a short (desyncing) chunk.
+    # a truncated frame is a valid frame with the wrong byte count -> None (so a
+    # caller retries rather than trusting garbage), never a silently short block.
     s = gs.GemsSecureSession(_FlakySecureEcu())
     s.connect()
     assert s.unlock()
-    results = [s.read_memory(0x1800, 0x10) for _ in range(3)]
-    assert results[2] is None                        # the 3rd read is short
-    assert all(r == b"\xAA" * 0x10 for r in results[:2])
-
-
-def test_dump_memory_retries_short_chunks_and_stays_aligned():
-    s = gs.GemsSecureSession(_FlakySecureEcu())
-    s.connect()
-    assert s.unlock()
-    # despite every 3rd read truncating, retries keep the dump exact-length
-    data = s.dump_memory(0x1800, 0x40, chunk=0x10, retries=3)
-    assert data == b"\xAA" * 0x40
+    first = s.read_memory(0x18, 0x00, 0x10)      # full
+    second = s.read_memory(0x18, 0x00, 0x10)     # truncated -> rejected
+    assert first == b"\xAA" * 0x10
+    assert second is None
 
 
 def test_write_cid_framing_and_gate():

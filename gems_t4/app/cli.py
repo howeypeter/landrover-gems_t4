@@ -341,7 +341,8 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
     """`kline secure`: the proprietary 0xDA SecurityAccess channel (bench, K+L).
 
     Unlocks with the recovered $27 key, then (by default) reads coding. Optional
-    ``--dump ADDR:LEN`` does a 0x3C memory read; ``--reset-adaptive`` /
+    ``--dump ADDR:LEN`` does a single 0x3C read (LEN 1..3F; 0x3C addressing is not
+    linear on this ECU, so it's one record, not a range); ``--reset-adaptive`` /
     ``--immobiliser-synch`` run the two known writes (with confirmation). Needs
     the ECU's L-line tied to the K node — this is a bench capability, not on-car.
     """
@@ -402,17 +403,23 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
                 addr_s, len_s = args.dump.split(":", 1)
                 addr, length = int(addr_s, 16), int(len_s, 16)
             except ValueError:
-                render.console.print("[red]--dump wants ADDR:LEN in hex, e.g. 1800:40[/]")
+                render.console.print("[red]--dump wants ADDR:LEN in hex, e.g. 1800:10[/]")
                 return 2
-            data = session.dump_memory(addr, length)
+            if not 1 <= length <= 0x3F:
+                render.console.print(
+                    "[red]LEN must be 1..3F (a single 0x3C read). 0x3C addressing "
+                    "is NOT linear on this ECU, so a multi-read 'dump' is meaningless "
+                    "— read one record at a time.[/]"
+                )
+                return 2
+            data = session.read_at(addr, length)
             if data:
                 render.console.print(
-                    f"[bold]0x3C memory @0x{addr:04X} ({len(data)} B):[/] {data.hex().upper()}"
+                    f"[bold]0x3C read @0x{addr:04X} ({len(data)} B):[/] {data.hex().upper()}"
                 )
             else:
                 render.console.print(
-                    "[yellow]No data (0x3C returned negative/silent). Its exact "
-                    "request/response format is unverified — see da8 probe.[/]"
+                    "[yellow]No data (0x3C returned negative/silent/short).[/]"
                 )
 
         if not did_action:
@@ -661,7 +668,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="skip confirmation prompts (clear; secure writes)")
     # `secure`-only options:
     sp.add_argument("--dump", metavar="ADDR:LEN",
-                    help="secure: 0x3C memory read, hex ADDR:LEN (e.g. 1800:40)")
+                    help="secure: one 0x3C read, hex ADDR:LEN, LEN 1..3F (e.g. 1800:10)")
     sp.add_argument("--reset-adaptive", action="store_true",
                     help="secure: send the reset-adaptive-values write")
     sp.add_argument("--immobiliser-synch", action="store_true",
