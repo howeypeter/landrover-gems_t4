@@ -109,19 +109,26 @@ def encode_secure(payload: bytes) -> bytes:
 def decode_secure(buf: bytes) -> bytes:
     """Validate a no-address response frame and return its data bytes.
 
-    A frame is ``[len][data...][checksum]``; returns ``data`` (which for a read
-    still carries the ``62 <cid>`` echo, or ``7F <sid> <nrc>`` for a negative).
-    Raises :class:`GemsSecureError` on a short frame or checksum mismatch.
+    ISO-14230 no-address framing: the format byte's low 6 bits are the data
+    length; **if that field is 0, a separate length byte follows** (used when the
+    payload exceeds 63 bytes — e.g. a 64-byte ``0x3C`` memory read comes back as
+    ``00 41 7C …``, length 0x41 = 65 = the ``7C`` service byte + 64 data bytes).
+    Returns ``data`` (which for a read still carries the ``62 <cid>``/``7C`` echo,
+    or ``7F <sid> <nrc>`` for a negative). Raises on a short frame or bad checksum.
     """
     if len(buf) < 3:
         raise GemsSecureError(f"response too short: {buf.hex()}")
-    length = buf[0]
-    end = 1 + length
+    length = buf[0] & 0x3F
+    data_start = 1
+    if length == 0:                       # length carried in a second byte
+        length = buf[1]
+        data_start = 2
+    end = data_start + length
     if end >= len(buf):
-        raise GemsSecureError(f"length byte {length} overruns frame: {buf.hex()}")
+        raise GemsSecureError(f"length {length} overruns frame: {buf.hex()}")
     if secure_checksum(buf[:end]) != buf[end]:
         raise GemsSecureError(f"checksum mismatch: {buf.hex()}")
-    return buf[1:end]
+    return buf[data_start:end]
 
 
 @dataclass(frozen=True, slots=True)
@@ -281,23 +288,23 @@ class GemsSecureSession:
         return self._exchange(payload)
 
     # -- memory read (service 0x3C) --------------------------------------- #
-    # PROVISIONAL: 0x3C is confirmed to EXIST on 0xDA and be $27-gated (da5), but
-    # we have never seen a POSITIVE response (every probe pre-unlock got
-    # securityAccessDenied). The request arg order (LSB, MSB per shickenchit's
-    # "3C LSB MSB LEN") and the positive layout are UNVERIFIED until a bench run
-    # on an unlocked session (~/da8_secure_probe.py). Treat the parsing here as a
-    # best guess; verify before trusting a dump.
+    # Confirmed on hardware 2026-09-08 (da8, unlocked session): the request is
+    # ``3C <addrHi> <addrLo> <len>`` (**big-endian address** — MSB-first returned
+    # real data at 0x1800/0x2000; shickenchit's "LSB MSB" was wrong for this ECU),
+    # and the positive reply is ``7C`` + ``len`` data bytes. Keep chunks small
+    # (<=63 B, default 16): a reply >63 B uses the ISO-14230 2-byte length form and
+    # BLE reassembly is unreliable for large single reads.
     def read_memory(self, address: int, length: int) -> bytes | None:
         """Read ``length`` bytes at ``address`` via service ``0x3C`` (unlock req).
 
-        Returns the data bytes (best-effort: strips a leading ``0x7C`` positive-
-        response byte if present), or None on a negative/silent reply.
+        Returns the ``length`` data bytes (strips the leading ``0x7C``), or None
+        on a negative/silent reply.
         """
         if not self.unlocked:
             raise GemsSecureLocked("read_memory requires a successful unlock() first")
-        if not 0 <= address <= 0xFFFF or not 1 <= length <= 0xFF:
-            raise GemsSecureError(f"bad address/length: {address:#x}/{length}")
-        payload = bytes([0x3C, address & 0xFF, (address >> 8) & 0xFF, length])
+        if not 0 <= address <= 0xFFFF or not 1 <= length <= 0x3F:
+            raise GemsSecureError(f"bad address/length: {address:#x}/{length} (len 1..63)")
+        payload = bytes([0x3C, (address >> 8) & 0xFF, address & 0xFF, length])
         data = self._exchange(payload)
         if not data or self._is_negative(data):
             return None

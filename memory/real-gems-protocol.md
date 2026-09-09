@@ -390,6 +390,18 @@ Note: `da7_read.py`'s log left the trailing frame checksum on the "data" field; 
 value is those bytes minus the last one (the `gems_t4` decoder strips it via the `[len]…[cksum]`
 frame parse).
 
+**✅ 0x3C MEMORY-READ FORMAT CONFIRMED (2026-09-08, `~/da8_secure_probe.py`, unlocked).** On an
+unlocked session `0x3C` reads succeed (positive `7C`). **Request = `3C <addrHi> <addrLo> <len>`
+— BIG-ENDIAN address** (MSB-first returned real data at both 0x1800 and 0x2000; the LSB-first
+order shickenchit quoted read the byte-swapped address and returned FF). Reply = `7C` + `len`
+data bytes. Captured **config EEPROM @0x1800 = `EE 01 E4 01 01 F8 0A 10 21 00 3B 0D 7D A2 DD 00`**
+(this is the VIN/immo/security region — the clone/immobiliser payload) and **27C1001 @0x2000 =
+`21 00 33 0D BC 20 DD 00 …`**. Gotcha: a reply >63 bytes uses ISO-14230's **2-byte length form**
+(`00 41 7C …` = length 0x41 = the 7C + 64 data bytes), and BLE reassembly is unreliable for big
+single reads → **dump in ≤16-byte chunks** (`GemsSecureSession.read_memory` caps len at 63 and
+sends big-endian; `decode_secure` now handles both length forms). So the over-the-wire EEPROM +
+27C1001 dump (coding, immobiliser, and the `$27` handler itself) is now reachable, chunk by chunk.
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead

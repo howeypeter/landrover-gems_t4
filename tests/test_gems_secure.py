@@ -56,6 +56,15 @@ def test_decode_secure_real_captured_frames(frame_hex, expected_data):
     assert gs.decode_secure(bytes.fromhex(frame_hex)) == bytes.fromhex(expected_data)
 
 
+def test_decode_secure_two_byte_length_form():
+    # >63-byte payload uses ISO-14230's 2-byte length: format 0x00 then len byte
+    # (captured on hardware as `00 41 7C …` for a 64-byte 0x3C read).
+    payload = b"\x7C" + b"\xAA" * 64            # 65 bytes
+    frame = b"\x00" + bytes([len(payload)]) + payload
+    frame += bytes([gs.secure_checksum(frame)])
+    assert gs.decode_secure(frame) == payload
+
+
 def test_config_byte_decode():
     assert gs.GemsConfig.from_byte(0x00) == gs.GemsConfig(0x00, "4.0", "auto")
     assert gs.GemsConfig.from_byte(0x01).displacement == "4.6"
@@ -179,10 +188,12 @@ def test_read_memory_framing_and_gate():
         s.read_memory(0x2000, 4)
     assert s.unlock()
     assert s.read_memory(0x2000, 4) == b"\xAA\xAA\xAA\xAA"
-    # request framing: 3C lsb msb len (little-endian address per shickenchit)
-    assert s.transport.sent[-1] == bytes.fromhex("3C002004")
+    # request framing: 3C addrHi addrLo len (BIG-endian, confirmed on hardware da8)
+    assert s.transport.sent[-1] == bytes.fromhex("3C200004")
     with pytest.raises(gs.GemsSecureError):
         s.read_memory(0x10000, 1)   # address out of range
+    with pytest.raises(gs.GemsSecureError):
+        s.read_memory(0x2000, 0x40)  # length must be 1..63 (single-frame)
 
 
 def test_dump_memory_concatenates_chunks():
