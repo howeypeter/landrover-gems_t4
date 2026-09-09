@@ -1,0 +1,258 @@
+<title>gems_t4 User Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#eaeeeb; --surface:#f7f9f7; --surface-2:#e5ebe6; --sunken:#dde4df;
+    --ink:#16201b; --ink-soft:#47554e; --ink-faint:#71807a; --line:#ccd6ce;
+    --accent:#2f6b46; --accent-soft:#e2ece5;
+    --warn:#a9700f; --danger:#b3392b; --ok:#2f6b46;
+    --warn-bg:#f6ecd7; --danger-bg:#f5e0dc;
+    --shadow:0 1px 2px rgba(20,30,25,.06), 0 8px 24px rgba(20,30,25,.06);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0f1512; --surface:#161e19; --surface-2:#1c2620; --sunken:#121a15;
+    --ink:#e7ede8; --ink-soft:#a7b3ac; --ink-faint:#7a8880; --line:#2a362f;
+    --accent:#67b78a; --accent-soft:#18271f;
+    --warn:#dda63c; --danger:#e0685a; --ok:#67b78a;
+    --warn-bg:#2a2213; --danger-bg:#2c1a17;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0f1512; --surface:#161e19; --surface-2:#1c2620; --sunken:#121a15;
+    --ink:#e7ede8; --ink-soft:#a7b3ac; --ink-faint:#7a8880; --line:#2a362f;
+    --accent:#67b78a; --accent-soft:#18271f;
+    --warn:#dda63c; --danger:#e0685a; --ok:#67b78a;
+    --warn-bg:#2a2213; --danger-bg:#2c1a17;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent)}
+  .shell{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:0;}
+  @media(min-width:940px){.shell{grid-template-columns:236px 1fr;}}
+
+  nav{padding:24px 16px; border-bottom:1px solid var(--line);}
+  @media(min-width:940px){nav{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto; border-bottom:none; border-right:1px solid var(--line);}}
+  .brand{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:20px; letter-spacing:-.01em;}
+  .brand small{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500; color:var(--accent); letter-spacing:.1em; margin-top:3px;}
+  nav ol{list-style:none; margin:16px 0 0; padding:0; counter-reset:s; font-size:13.5px;}
+  nav ol li{counter-increment:s; margin:1px 0;}
+  nav ol li a{display:flex; gap:9px; padding:5px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none;}
+  nav ol li a:hover{background:var(--surface-2); color:var(--ink);}
+  nav ol li a::before{content:counter(s,decimal-leading-zero); font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-faint); padding-top:1px;}
+
+  main{padding:clamp(24px,4vw,56px) clamp(18px,4vw,56px) 96px; min-width:0;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 10px;}
+  h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:clamp(32px,6vw,50px); line-height:1.0; letter-spacing:-.015em; text-wrap:balance; margin:0 0 14px;}
+  .lede{font-size:clamp(16px,2.4vw,19px); color:var(--ink-soft); max-width:64ch; margin:0;}
+  .lede b{color:var(--ink)}
+  h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:26px; letter-spacing:-.01em; margin:64px 0 6px; padding-top:14px; border-top:2px solid var(--line); scroll-margin-top:16px;}
+  h2 .k{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--accent); margin-right:10px;}
+  h3{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:18px; margin:30px 0 8px;}
+  p{max-width:70ch}
+  ul,ol.body{max-width:70ch}
+  li{margin:4px 0}
+  code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--sunken); padding:1.5px 5px; border-radius:4px;}
+  .tag{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:12px; padding:4px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft); margin:3px 4px 3px 0;}
+
+  table{width:100%; border-collapse:collapse; margin:10px 0; font-size:14px; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow);}
+  th{text-align:left; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint); padding:11px 14px; background:var(--surface-2); border-bottom:1px solid var(--line);}
+  td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:"IBM Plex Mono",monospace; font-size:13px;}
+  .tblwrap{overflow-x:auto}
+
+  .callout{border-radius:12px; padding:15px 18px; margin:16px 0; border:1px solid; display:flex; gap:13px; align-items:flex-start; max-width:74ch;}
+  .callout .i{font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:14px; flex:none; width:24px; height:24px; border-radius:6px; display:grid; place-items:center;}
+  .callout h4{margin:0 0 3px; font-size:15px; font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700;}
+  .callout p{margin:0; font-size:13.5px; color:var(--ink-soft); max-width:none;}
+  .callout p+p{margin-top:6px}
+  .danger{background:var(--danger-bg); border-color:color-mix(in srgb,var(--danger) 40%,transparent);}
+  .danger .i{background:var(--danger); color:#fff} .danger h4{color:var(--danger)}
+  .warn{background:var(--warn-bg); border-color:color-mix(in srgb,var(--warn) 40%,transparent);}
+  .warn .i{background:var(--warn); color:#fff} .warn h4{color:var(--warn)}
+  .ok{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+  .ok .i{background:var(--accent); color:#fff} .ok h4{color:var(--accent)}
+
+  .foot{margin-top:60px; padding-top:18px; border-top:2px solid var(--line); font-size:12.5px; color:var(--ink-faint); font-family:"IBM Plex Mono",monospace; max-width:none;}
+  .steps{max-width:72ch; counter-reset:st; list-style:none; padding-left:0;}
+  .steps>li{counter-increment:st; position:relative; padding:2px 0 2px 40px; margin:10px 0;}
+  .steps>li::before{content:counter(st); position:absolute; left:0; top:0; width:26px; height:26px; border-radius:7px; background:var(--accent-soft); color:var(--accent); border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; display:grid; place-items:center;}
+</style>
+
+<div class="shell">
+<nav>
+  <div class="brand">gems_t4<small>USER GUIDE · v0.0.10</small></div>
+  <ol>
+    <li><a href="#welcome">Welcome</a></li>
+    <li><a href="#install">Install &amp; first run</a></li>
+    <li><a href="#gui">The GUI, screen by screen</a></li>
+    <li><a href="#features">Features at a glance</a></li>
+    <li><a href="#cli">The CLI</a></li>
+    <li><a href="#realecu">Connecting to a real ECU</a></li>
+    <li><a href="#safety">Safety &amp; limits</a></li>
+    <li><a href="#trouble">Troubleshooting &amp; FAQ</a></li>
+    <li><a href="#deeper">Going deeper</a></li>
+  </ol>
+</nav>
+
+<main>
+  <p class="eyebrow">Land Rover GEMS V8 · diagnostic tool · for users</p>
+  <h1>gems_t4 User Guide</h1>
+  <p class="lede">How to install and use <b>gems_t4</b> — the GUI and the command line. What each feature does (read fault codes, live data, actuator tests, coding, immobiliser), and how to point it at your vehicle. <b>No soldering or electronics knowledge needed</b> — for that side, and for how any of it works under the hood, see the <a href="gems_t4-manual.html">Field Manual</a>.</p>
+  <div style="margin-top:20px">
+    <span class="tag">P38 4.0/4.6 · Disco 1 V8i</span>
+    <span class="tag">Windows · Python</span>
+    <span class="tag">GUI + CLI</span>
+    <span class="tag">practice emulator built in</span>
+    <span class="tag">v0.0.10</span>
+  </div>
+
+  <!-- 01 -->
+  <h2 id="welcome"><span class="k">01</span>Welcome</h2>
+  <p><b>gems_t4</b> is a software recreation of the Land Rover dealer diagnostic tool (the TestBook T4), for the <b>GEMS</b> V8 engine ECU fitted to the P38 Range Rover 4.0/4.6 and the Discovery 1 V8i (1995&ndash;early 1999). It talks to the engine ECU the way the dealer tool did: read fault codes, watch live engine data on period-style gauges, run actuator tests, and read/write the small coding settings.</p>
+  <p>Two ways to run it:</p>
+  <ul>
+    <li><b>GUI</b> &mdash; a full-screen, touch-friendly kiosk styled after the original dealer tool. Best for guided, click-through use.</li>
+    <li><b>CLI</b> &mdash; the same features from the command line. Best for quick reads, scripting, and the bench.</li>
+  </ul>
+  <div class="callout ok"><div class="i">&#10003;</div><div><h4>Practise on the built-in emulator before you touch the car</h4><p>gems_t4's job is to diagnose a <b>real</b> GEMS ECU &mdash; fault codes, live data, actuator tests, coding &mdash; over a small USB or Bluetooth adapter (§06). It also ships with a built-in <b>emulator</b> (a virtual ECU that behaves like a real engine, with four fault scenarios), so you can install it and learn the whole workflow first with <b>nothing plugged in</b>. Practise on the emulator, then point the same screens at your vehicle.</p></div></div>
+
+  <!-- 02 -->
+  <h2 id="install"><span class="k">02</span>Install &amp; first run</h2>
+  <p>You need a <b>Windows</b> laptop with <b>Python 3.11 or newer</b> (developed on 3.14). Open PowerShell in the project folder and run:</p>
+  <div class="tblwrap"><table><tbody>
+    <tr><td class="mono">python -m venv .venv</td><td>create an isolated environment</td></tr>
+    <tr><td class="mono">.venv\Scripts\Activate.ps1</td><td>activate it (PowerShell)</td></tr>
+    <tr><td class="mono">pip install -e ".[gui]"</td><td>install <b>with the GUI</b></td></tr>
+  </tbody></table></div>
+  <p>Want the command line only, without the large GUI dependency? Use <code>pip install -r requirements.txt</code> instead &mdash; then everything except <code>gems_t4 gui</code> works.</p>
+  <p><b>Quick smoke test</b> (no hardware): <code>python -m gems_t4 scenarios</code> should list four fault scenarios. If it does, you're installed.</p>
+
+  <h3>Launching the GUI</h3>
+  <ul>
+    <li>Double-click <b><code>launch_gui.bat</code></b> (Windows), or run <code>python -m gems_t4 gui</code>.</li>
+    <li><code>create_shortcut.ps1</code> puts a desktop shortcut in place if you'd like one.</li>
+    <li>Add <code>--instant</code> (<code>gems_t4 gui --instant</code>) to skip the period-authentic &ldquo;communicating with ECU&hellip; please wait&rdquo; pauses while you're testing.</li>
+  </ul>
+  <div class="callout warn"><div class="i">i</div><div><h4>The launcher runs the live code, not a frozen copy</h4><p><code>launch_gui.bat</code> runs straight from your installed source, so it always reflects the current version &mdash; there's nothing to &ldquo;rebuild.&rdquo; After a <code>git pull</code> you're up to date. The version (e.g. <code>gems_t4 v0.0.10</code>) is shown on the boot splash and in the window title.</p></div></div>
+
+  <!-- 03 -->
+  <h2 id="gui"><span class="k">03</span>The GUI, screen by screen</h2>
+  <p>The GUI is <b>guided</b>, like the real dealer tool: you identify the vehicle, then pick a function from a menu. Big buttons, a tick / cross / back bar, and a persistent <b>&ldquo;VCI:&rdquo;</b> connection indicator in the title bar that you can click to jump to connection settings.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Screen</th><th>What you do there</th></tr></thead>
+    <tbody>
+      <tr><td><b>Boot splash</b></td><td>Period-style start-up; shows the version and &ldquo;RDS 5.06 / T4 Lite.&rdquo;</td></tr>
+      <tr><td><b>Vehicle ID</b></td><td>Identify the vehicle (the classic &ldquo;GEMS or Thor?&rdquo; fork). On the emulator, this is also where you pick which <b>fault scenario</b> to practise with.</td></tr>
+      <tr><td><b>System menu</b></td><td>The hub &mdash; choose Fault codes, Live data, Actuator tests, Programming, Toolbox, or Configuration.</td></tr>
+      <tr><td><b>Fault codes</b></td><td>Read stored trouble codes, and clear them (with a confirmation prompt). Clearing wipes <b>all</b> codes &mdash; GEMS has no per-code clear.</td></tr>
+      <tr><td><b>Live data</b></td><td>A grid of analog gauges showing live engine values. Selecting more gauges visibly <b>slows the refresh</b> &mdash; that's the real K-line speed, modelled honestly.</td></tr>
+      <tr><td><b>Actuator tests</b></td><td>Command an output (MIL lamp, O2 heater, fuel-pump relay, A/C, condenser fan) and watch the tool's <b>safety refusals</b> when a test isn't allowed.</td></tr>
+      <tr><td><b>Programming</b></td><td>A sub-menu: <b>Coding</b> (read/edit/write settings), <b>Immobiliser</b> (Security-Learn), and <b>Maps</b> (a read-only fuel/ignition viewer).</td></tr>
+      <tr><td><b>Toolbox</b></td><td>Self-tests (LAN-card check with the original dealer disclaimer, VCI check, touchscreen calibration) and an About screen.</td></tr>
+      <tr><td><b>Configuration</b></td><td>Choose the connection: Virtual ECU, USB COM port, or Network &mdash; test it, and save it for next time.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- 04 -->
+  <h2 id="features"><span class="k">04</span>Features at a glance</h2>
+  <p>The same functions are available in the GUI and the CLI. Here's what each one actually does:</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Feature</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><b>Read fault codes</b></td><td>Reads stored (and pending) diagnostic trouble codes &mdash; e.g. P0118, P0303, P1185 &mdash; with plain descriptions.</td></tr>
+      <tr><td><b>Clear codes</b></td><td>Erases all stored codes after you confirm. This is a normal, safe service action.</td></tr>
+      <tr><td><b>Live data</b></td><td><b>40</b> live measures: coolant/oil/intake temps, RPM, air-flow, throttle, battery, O2 sensors, fuel trims, injector pulse width, coil charge, per-cylinder misfire counts, and more. Watch a few for a fast refresh, or many for the full picture at a slower rate.</td></tr>
+      <tr><td><b>Actuator tests</b></td><td>Briefly drives an output to check it: MIL lamp, O2 sensor heater, fuel-pump relay, A/C clutch, condenser fan. Tests that would be unsafe are <b>refused</b> &mdash; e.g. the fuel pump won't run with the engine running.</td></tr>
+      <tr><td><b>Coding</b></td><td>Read, edit, and write the ECU's small settings: VIN last-6, dealer ID, 4.0/4.6 select, transmission, build code. Writes are <b>gated</b>: back up &rarr; write &rarr; read back to verify &rarr; you confirm. Some fields are read-only.</td></tr>
+      <tr><td><b>Immobiliser</b></td><td>Check immobiliser status and run the <b>Security-Learn</b> re-sync &mdash; the procedure that recovers an &ldquo;ENGINE IMMOBILISED&rdquo; no-start. This one needs the vehicle (see §06 / §07).</td></tr>
+      <tr><td><b>Maps</b></td><td>A <b>read-only</b> 16&times;16 fuel/ignition table viewer plus the EPROM chip facts. There's deliberately no write path &mdash; GEMS tunes live on physical chips, not something you change over the cable.</td></tr>
+      <tr><td><b>Toolbox / About</b></td><td>The dealer-tool self-tests and version info, reproduced for authenticity.</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Four fault scenarios</b> ship with the emulator &mdash; <code>healthy</code>, <code>coolant_sensor</code>, <code>misfire_cyl3</code>, and <code>lambda_heater</code>. Each one shows up <b>consistently</b> across every screen: the same fault appears in the codes, in the live data, and in the actuator refusals. They're the best way to learn the read &rarr; diagnose &rarr; clear workflow.</p>
+
+  <!-- 05 -->
+  <h2 id="cli"><span class="k">05</span>The CLI</h2>
+  <p>Run any command as <code>python -m gems_t4 &lt;command&gt;</code>, or just <code>gems_t4 &lt;command&gt;</code> once installed. Add <code>-h</code> to any command for its options. By default everything runs against the emulator; add <code>--scenario NAME</code> to pick a fault.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">gems_t4 scenarios</td><td>list the four fault scenarios</td></tr>
+      <tr><td class="mono">gems_t4 live</td><td>read live data (add <code>--scenario coolant_sensor</code>)</td></tr>
+      <tr><td class="mono">gems_t4 dtc read</td><td>read fault codes</td></tr>
+      <tr><td class="mono">gems_t4 dtc clear</td><td>clear codes (prompts to confirm; <code>--yes</code> to skip)</td></tr>
+      <tr><td class="mono">gems_t4 actuator fuel_pump</td><td>run an actuator test (shows the engine-running refusal)</td></tr>
+      <tr><td class="mono">gems_t4 coding read</td><td>show the coding block (<code>coding write</code> to edit, gated)</td></tr>
+      <tr><td class="mono">gems_t4 immo status</td><td>immobiliser status (<code>immo learn</code> for Security-Learn)</td></tr>
+      <tr><td class="mono">gems_t4 gui</td><td>launch the GUI (<code>--instant</code> skips the waits)</td></tr>
+      <tr><td class="mono">gems_t4 serve</td><td>share an ECU over the network (see §06)</td></tr>
+      <tr><td class="mono">gems_t4 kline dtc --port COM5</td><td>talk to a <b>real</b> ECU (see §06)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout ok"><div class="i">&#10003;</div><div><h4>Try this first</h4><p><code>gems_t4 dtc read --scenario misfire_cyl3</code> then <code>gems_t4 live --scenario misfire_cyl3</code> &mdash; you'll see the same cylinder-3 misfire reflected in both the codes and the live data. That consistency is the whole point of the emulator.</p></div></div>
+
+  <!-- 06 -->
+  <h2 id="realecu"><span class="k">06</span>Connecting to a real ECU</h2>
+  <p>To talk to a real GEMS ECU you need the small <b>K-line adapter</b> (a Raspberry Pi Pico + one transceiver chip &mdash; building it is covered in the <a href="gems_t4-manual.html">Field Manual</a>). Once you have one, gems_t4 reaches the ECU three ways:</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Connection</th><th>How</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>Virtual</b></td><td>default</td><td>the built-in emulator &mdash; no hardware</td></tr>
+      <tr><td><b>USB</b></td><td><code>--port COMx</code></td><td>the Pico adapter on a USB serial port</td></tr>
+      <tr><td><b>Bluetooth (BLE)</b></td><td><code>--ble</code></td><td>a wireless Pico &mdash; no pairing, no COM port; needs <code>pip install bleak</code></td></tr>
+      <tr><td><b>Network</b></td><td><code>--connect HOST[:PORT]</code></td><td>a shared ECU over your network (via <code>gems_t4 serve</code>)</td></tr>
+    </tbody>
+  </table></div>
+  <p>The real-ECU commands live under <code>gems_t4 kline</code>:</p>
+  <div class="tblwrap"><table><tbody>
+    <tr><td class="mono">gems_t4 kline dtc --port COM5</td><td>read fault codes from a real ECU on USB</td></tr>
+    <tr><td class="mono">gems_t4 kline live --ble</td><td>live data over Bluetooth</td></tr>
+    <tr><td class="mono">gems_t4 kline monitor --ble</td><td>a continuous live monitor</td></tr>
+    <tr><td class="mono">gems_t4 kline clear --port COM5</td><td>clear stored codes</td></tr>
+  </tbody></table></div>
+  <p>In the GUI, choose the connection on <b>System menu &rarr; Configuration</b>, test it, and save it &mdash; the &ldquo;VCI:&rdquo; indicator then shows the live link on every screen.</p>
+  <div class="callout warn"><div class="i">i</div><div><h4>Network links are read-only by default</h4><p>Over a network connection, write actions (coding, actuator tests, Security-Learn) are refused unless you deliberately add <code>--allow-writes</code> on a link you trust. Reading and clearing codes stay allowed. Keep <code>serve</code> on your own machine or an SSH tunnel.</p></div></div>
+  <div class="callout danger"><div class="i">&#9888;</div><div><h4>Immobiliser Security-Learn needs the car</h4><p>The Security-Learn re-sync pairs the engine ECU with the vehicle's body computer (the BeCM). It only works with that module present and powered &mdash; i.e. <b>in the vehicle</b>, not on a bench. On a real ECU this is still being validated; treat it as advanced. The everyday reads (codes, live data) are safe and well-proven.</p></div></div>
+
+  <!-- 07 -->
+  <h2 id="safety"><span class="k">07</span>Safety &amp; limits</h2>
+  <p>A quick, honest picture of what's safe and what to expect:</p>
+  <ul>
+    <li><b>Reading is safe.</b> Fault codes, live data, and coding <em>reads</em> don't change anything on the ECU.</li>
+    <li><b>Clearing codes is safe</b> and normal &mdash; it just resets stored faults.</li>
+    <li><b>Writes are gated.</b> Coding writes back up the block, write, then read back to verify, and ask you to confirm. On a <b>real</b> ECU, write features (coding, Security-Learn) are newer and less proven than reads &mdash; go carefully.</li>
+    <li><b>You cannot re-tune a GEMS over the cable.</b> The fuel/ignition maps live on physical chips; no dealer tool ever reflashed them over the diagnostic port, and neither does this one. The Maps screen is a viewer.</li>
+    <li><b>The emulator is always safe</b> &mdash; experiment freely; nothing you do there touches a vehicle.</li>
+  </ul>
+
+  <!-- 08 -->
+  <h2 id="trouble"><span class="k">08</span>Troubleshooting &amp; FAQ</h2>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td><code>gems_t4 gui</code> won't start / &ldquo;No module named PySide6&rdquo;</td><td>Install the GUI extra: <code>pip install -e ".[gui]"</code>. The plain <code>requirements.txt</code> install is CLI-only by design.</td></tr>
+      <tr><td>The <code>gems_t4</code> command isn't found</td><td>Activate the venv (<code>.venv\Scripts\Activate.ps1</code>), or use <code>python -m gems_t4 &hellip;</code>. Make sure you installed from this project folder, not a downloaded ZIP.</td></tr>
+      <tr><td>Real ECU: nothing responds on USB</td><td>Check the COM port number (Device Manager), that the adapter is powered, and that the ignition is on. Confirm with the emulator first to rule out the software.</td></tr>
+      <tr><td>Real ECU: Bluetooth not found</td><td>Run <code>pip install bleak</code>, make sure the wireless Pico is powered and advertising as <code>gems-pico</code>, then retry <code>--ble</code>.</td></tr>
+      <tr><td>The GUI feels slow</td><td>That's intentional &mdash; the &ldquo;communicating with ECU&rdquo; pauses are period-authentic. Use <code>gems_t4 gui --instant</code> to remove them.</td></tr>
+      <tr><td>&ldquo;Read VIN&rdquo; returns nothing on my ECU</td><td>Normal on a Discovery 1 &mdash; the full VIN lives in the alarm module (10AS), not the engine ECU. The engine ECU doesn't hold it.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- 09 -->
+  <h2 id="deeper"><span class="k">09</span>Going deeper</h2>
+  <p>This guide covers <b>using</b> gems_t4. For everything else, see the <a href="gems_t4-manual.html"><b>Field Manual</b></a> &mdash; the complete technical reference:</p>
+  <ul>
+    <li>Building and wiring the K-line adapter (parts list, pinouts, diagrams)</li>
+    <li>On-car and bench-rig wiring</li>
+    <li>How the vehicle's electronics work (GEMS, the K-line, the BeCM/10AS)</li>
+    <li>The wire protocol, the ECU-swap job, and the honest project status</li>
+  </ul>
+  <p class="foot">gems_t4 user guide &middot; v0.0.10 &middot; a plain-English subset of the Field Manual &middot; the built-in emulator needs no vehicle or adapter &middot; reads &amp; diagnostics are low-risk; writes are gated and, on real hardware, still being proven</p>
+</main>
+</div>
