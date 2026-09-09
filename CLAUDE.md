@@ -59,9 +59,20 @@ The active working list for the next couple of days. Detailed backlog entries
 (EKA/10AS, 0xDA, route-A power, QA-unmet) live further down; this is the ordering.
 
 ### P1 — do first
-1. **⭐ Security auth — crack `$27` on 0xDA (find the seed→key algorithm `f`).**
-   HIGHEST LEVERAGE on the board, and now sharply narrowed to ONE unknown. State
-   as of 2026-09-08 (full detail: `memory/real-gems-protocol.md`):
+1. **⭐ Security auth — `$27` seed→key CRACKED (2026-09-08); bench-confirm, then implement.**
+   **`key = (seed × 16723) mod 65536`** (16-bit, big-endian). Recovered by decompiling the
+   FlemcoDesign "GEMS ECU Utility" Android app (jadx) — its `GEMS.java` has the exact 0xDA
+   handshake: `1002`→`5002`, `2701`→`6701<seed>`, `2702<key>`→**`6702AA`** (accept; `6702CC`
+   = reject — that's the oracle our probes were missing). Full command map (VIN `2204C4`,
+   PROM ID `2204E2`, displacement `2204BF`, adaptive params `2223xx`; writes `A3234800`
+   reset-adaptive, `A300622588` immobiliser-synch) is in `memory/real-gems-protocol.md`.
+   **Next:** one controlled bench attempt (`~/da6_unlock.py`: fresh seed → key → expect
+   `6702AA`), THEN a real `security_access()` + coding read/write in `gems_t4`. Lockout
+   guardrails still apply (`0x36` after ~3 wrong keys; one attempt/power-cycle). This
+   unblocks everything below it — real coding, immobiliser, the `0x3C` EEPROM/EPROM dump.
+
+   Prior state (for context — the channel work that led here), as of 2026-09-08
+   (full detail: `memory/real-gems-protocol.md`):
    - The **0xDA** proprietary channel (L-line tied C1017 pin 20 → K node,
      ISO-14230 **no-address framing** `[len][data][sum]`) is open and speaks real
      KWP2000. **`$27 01` requestSeed WORKS** — returns real, per-request randomized
@@ -775,6 +786,18 @@ now the single highest-value target. MEMS3/Td5 algos did NOT open it (`$27 02` �
 canned `03 67 02 CC 38`, no oracle); get `f` from a 27C1001 disassembly or a
 real-tool seed→key capture. All probes read-only. Detail:
 `memory/real-gems-protocol.md`.
+
+**`$27` seed→key CRACKED (2026-09-08) — `key = (seed × 16723) mod 65536`.** Recovered
+not by capture/disassembly but by **decompiling the FlemcoDesign "GEMS ECU Utility"
+Android app** (jadx; the user owns vehicle+app, right-to-repair). Its `GEMS.java` has the
+whole 0xDA handshake and command map: `1002`→`5002`, `2701`→`6701<seed>`,
+`2702<key>`→**`6702AA`** (accept; **`6702CC`** = reject — the oracle our probes lacked, so
+the earlier "canned CC" was just the wrong-key reply). Reads (svc 22): VIN `2204C4`, PROM
+ID `2204E2`, displacement `2204BF`, adaptive `2223xx`. Writes (svc A3): `A3234800`
+reset-adaptive, `A300622588` immobiliser-synch. **Not yet bench-confirmed on our Disco-1
+ECU** — one controlled attempt pending (`~/da6_unlock.py`), then implement `security_access`
++ coding in `gems_t4`. This effectively unblocks the whole proprietary tier. Full detail +
+byte map: `memory/real-gems-protocol.md`.
 
 **Where the project stands (latest release: v0.0.10, 2026-09-08 — hardware-verified
 BLE + Backend transport unification; `main` is AHEAD of the tag):** Phases

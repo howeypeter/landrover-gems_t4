@@ -314,6 +314,57 @@ diagnostic cipher. Lockout note: the channel returned `67 02` (never `0x35`) to
 wrong keys, so it may not even enforce the `$27` attempt counter — but do NOT
 assume; keep power-cycling between batches.
 
+## ⭐⭐⭐ `$27` SEED→KEY CRACKED — key = (seed × 16723) mod 65536 (2026-09-08, from the FlemcoDesign APK)
+**The one unknown gating the entire proprietary layer is solved.** Decompiled the
+closed-source Android app **"GEMS ECU Utility for Land Rover"** (FlemcoDesign v1.5,
+`com.flemcodesign.gems.gemsutility`; apkcombo APK sha256
+`a51a9e9df37ce35af9db81a2524a96d3ac3e88e07a6753d67a71edc99a93f5c2`; jadx 1.5.6). The
+user owns the vehicle and the app — right-to-repair interop. Its `GEMS.java` implements
+the exact 0xDA SecurityAccess we were stuck on:
+
+- **Seed→key: `key = (seed * 16723) % 65536`** (16723 = 0x4153; odd ⇒ clean bijection).
+  Seed and key are 16-bit, **big-endian, 4 hex chars** (verified in `rfUtilities`:
+  `hexIntToInt` = `parseInt(s,16)`; `intToHex` = big-endian 2-byte). Inverse (if ever
+  needed): `seed = key * 0xAADB mod 65536`.
+- **Handshake (`authorizeScanTool`):** `1002` → `5002` (StartDiagnosticSession) →
+  `2701` → `6701<seed>` (requestSeed) → send `2702<key>` → **`6702AA` = ACCEPTED**.
+- **ORACLE RESOLVED:** `6702AA` = accept, **`6702CC` = reject**. Our earlier "`$27 02`
+  returns a canned `6702CC`, no oracle" was simply the WRONG-KEY reply — a *correct* key
+  returns `AA`. MEMS3/Td5 failed only because the real `f` is this trivial multiply.
+- **Channel setup (matches our findings):** ELM327 `ATSP4` (KWP 5-baud), **`ATIIA DA`**
+  (init addr 0xDA), **`ATSH C133F1`** (header), `ATSI`. On our Pico stack the seed
+  already flows with the no-address `[len][data][sum]` framing (da3) — submit the key the
+  same way.
+
+**Full proprietary command map (all behind `$27`), from `GEMS.readSetting`/`writeOptionChanges`:**
+- **Reads (service `22`):** VIN `2204C4`; PROM ID `2204E2` (shickenchit's `22 04 E2`);
+  displacement/transmission/drivetrain `2204BF`; air-flow `222332`; fuel-flow `222333`;
+  throttle `222334`; short-term idle `222336`; long-term idle `222337`. Responses echo
+  `62…`. Busy/retry sentinel the app watches for: `2280`.
+- **Writes (service `A3`):** reset adaptive values `A3234800`; set immobiliser synch
+  (the "pair alarm" Security-Learn) `A300622588`. Close: `A4` then `ATPC`.
+
+**App behaviour notes (from `MainActivity.java`) — what it does NOT do:** the app only
+ever WRITES those two `A3` commands (gated behind two switches shown only after a
+successful authorized read cycle). VIN, displacement (4.0/4.6), transmission (auto/manual),
+and drivetrain are **read-only displays** — it never writes them, so the APK does NOT reveal
+coding-WRITE commands for those; it gives their READ identifiers and the write *service*
+(`A3`) with two worked examples. Extra facts: **keep-alive = a `2204E2` (PROM ID) read every
+~2.5 s** (the tester-present equivalent on this channel). **`2204BF` is a combined config
+record** — the app reads it once and byte-decodes displacement (first byte 1|2 ⇒ 4.6 else
+4.0), transmission (2|3 ⇒ manual else auto) and drivetrain from the same `6204BF` response.
+So the **[4.0/4.6 toggle] backlog item now knows where that field is READ (`2204BF`), just
+not how to write it.** To maintain OTHER settings (VIN/displacement/etc.), future work once
+`$27` is unlocked: study the `A3` payload format and/or probe WriteDataByCommonID (`2E`)
+against the known CIDs with read-back verification (writes — do carefully on the bench).
+
+**STATUS: algorithm RECOVERED, not yet bench-confirmed on our Disco-1 ECU.** Next = ONE
+controlled attempt (`~/da6_unlock.py`: request a fresh seed → compute key → send one
+`2702<key>` → expect `6702AA`), THEN implement in `gems_t4`. Guardrails still apply —
+`$27` locks after ~3 WRONG keys (`0x36`), `0x37` = wait; one attempt per power-cycle,
+abort on `0x36`/`0x37`. APK decompiled at `scratchpad/gems_apk/jadx_out/` (GEMS.java,
+rfUtilities.java, ELM327.java).
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
