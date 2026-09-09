@@ -315,6 +315,18 @@ wrong keys, so it may not even enforce the `$27` attempt counter — but do NOT
 assume; keep power-cycling between batches.
 
 ## ⭐⭐⭐ `$27` SEED→KEY CRACKED — key = (seed × 16723) mod 65536 (2026-09-08, from the FlemcoDesign APK)
+> ⚠️ **SOURCE CAVEAT (user, 2026-09-09):** the FlemcoDesign app is a **free,
+> third-party app — a troubleshooting aid/lead, NOT a source of truth.** Treat
+> everything derived from it (command bytes, field meanings, display formats) as a
+> HYPOTHESIS to verify on hardware or against Land Rover/RAVE data. It counts only
+> once hardware-confirmed (the `$27` transform below IS confirmed — it returned
+> `6702AA` on the real ECU, independent of the app). Its display conventions are
+> NOT canonical — e.g. it byte-swaps the PROM id (`GEMS.java` case 9:
+> `substring(2,4)+substring(0,2)`), so raw `40 96`→"9640" is the app's choice, not
+> "the" PROM id. **Raw ECU bytes are ground truth** (ECU#1 `22 04 E2`→`40 96`,
+> ECU#2→`52 96`); `read_prom_id()` mirrors the app's swap for cross-reference only.
+> When app behaviour and hardware/service data disagree, hardware + LR data win.
+
 **The one unknown gating the entire proprietary layer is solved.** Decompiled the
 closed-source Android app **"GEMS ECU Utility for Land Rover"** (FlemcoDesign v1.5,
 `com.flemcodesign.gems.gemsutility`; apkcombo APK sha256
@@ -471,6 +483,27 @@ ready:** `~/immo_ref.py` (`capture <label>` reads live A3–A9 via `GemsSecureSe
 `~/immo_ref_disco1.json`. **BLOCKED on a 2nd GEMS ECU wired to the bench** (rig has only the one
 Disco-1 today). The rejected alt — fire `A300622588` + re-read + diff — is definitive but risks
 leaving the bench ECU immobilised (no BeCM present to answer the sync), so it was NOT done.
+
+**REFERENCE-ECU DIFF RUN (2026-09-09, ECU#2 attached) — 2 results, 1 method limit.**
+Attached a SECOND Disco-1 GEMS ECU (**PROM `9652`** vs #1's `4096`; both 4.0 auto, config 0x00).
+Both reads stable (re-read byte-identical). Full page-0x18 sweep of #2 (`~/ecu2_sweep.py` →
+`~/ecu2_sweep.log`, 166 records) + alignment (`~/immo_align.py`, `~/immo_xref.py`):
+- **VIN: firmly NOT in the ECM.** `2204C4` = unavailable on BOTH ECUs → the Disco-1 GEMS ECM
+  does not serve a VIN last-6 (it's a 10AS thing). Not a blank-on-one-unit fluke.
+- **`ZZ8=CINS` (`5A5A383D43494E535A…`) is a shared CONSTANT** — byte-identical on both ECUs
+  (at #1 A4/A7, #2 A5). Cannot be VIN/immobiliser identity; it's a calibration/template marker.
+  RULED OUT as the security core (it was the leading candidate). The A3–A9 block is also
+  REARRANGED between the two ECUs (the `ZZ8=CINS`/`46468C…` templates sit at different records),
+  i.e. a per-vehicle structured region, not fixed calibration.
+- **METHOD LIMIT:** at the best global record-shift (+0) 16 records are byte-identical but **131
+  of 147 differ** — because the two ECUs have DIFFERENT PROMs, calibration differences SWAMP any
+  identity differences. A clean reference diff needs **two ECUs with the SAME PROM ID** (differ
+  only by vehicle) — then the few differing bytes = identity. With different tunes it can't
+  isolate the immobiliser code. Cleanest few-byte-delta candidates that DO share a template
+  (watch these if a same-PROM ECU turns up): record **0D** (`0000…0100` vs `3512…0009`),
+  **AB** (off12 `71`→`74`), **74/75** (a `52`→`AC` value in two records), record **00**
+  (config-EEPROM region, several byte diffs + known-volatile bytes). Throwaway tools:
+  `~/ecu2_sweep.py`, `~/immo_align.py`, `~/immo_xref.py`, `~/immo_ref.py` + `~/immo_ref_ecu2.json`.
 
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
