@@ -505,6 +505,33 @@ Both reads stable (re-read byte-identical). Full page-0x18 sweep of #2 (`~/ecu2_
   (config-EEPROM region, several byte diffs + known-volatile bytes). Throwaway tools:
   `~/ecu2_sweep.py`, `~/immo_align.py`, `~/immo_xref.py`, `~/immo_ref.py` + `~/immo_ref_ecu2.json`.
 
+**⚙️ ACTUATOR Stage-1 — output control = service `$31` (routineControl), 2026-09-09.**
+On the unlocked 0xDA channel (`~/act1_probe.py`, read-classify only, no actuation):
+`$30` IOControlByLocalId and `$2F` IOControlByCommonId → **serviceNotSupported (0x11)**;
+`$31`/`$32`/`$33` routineControl → **conditionsNotCorrect (0x22)** (service EXISTS, gated by
+preconditions); `$21` read → positive. **So GEMS actuator/output tests live on `$31`
+StartRoutine `<routineId>`.** NOT YET DONE: find the fuel-pump routine id (Stage 2 — an
+`$31 <id>` sweep ACTUATES, so it needs a multimeter on the relay pin + explicit go-ahead).
+OPEN Q: `conditionsNotCorrect` may be a real precondition — possibly the **immobiliser state**
+(bench ECU has no BeCM/10AS → likely immobilised) or a required diagnostic session; check
+before sweeping. `$27` unlock is REQUIRED to reach `$31` (separate from immobiliser
+mobilisation). Self-serve interactive tool for the user: `~/fuel_pump_test.py`.
+
+**⚙️ ACTUATOR Stage-2 — full `$31` routine map enumerated (2026-09-13, `~/actuator_test.py`).**
+Swept `$31 <id>` for ALL ids `00..FF` on the unlocked 0xDA channel (BLE, ECU#2 spare).
+**The complete routine set is `0x01..0x0B`** — every id `0x0C..0xFF` returned a genuine
+`subFunctionNotSupported (0x12)` (a real "no routine here", NOT silence → trustworthy).
+- **Fireable (positive `71<id>`):** `0x01, 0x04, 0x05, 0x07, 0x09, 0x0A, 0x0B` (7).
+- **Gated (`conditionsNotCorrect 0x22`):** `0x02, 0x03` — real routines, precondition unmet
+  (likely immobiliser: bench ECU has no BeCM/10AS to mobilise it).
+NOT YET DONE: map each fireable id → which output pin (on the **BLACK 36-pin plug = C505
+outputs**) via multimeter (continuity pin→gnd for low-side, DC-volts pin→gnd for high-side;
+`actuator_test.py` option 2 holds a routine ~20s to probe). "ACCEPTED" = ECU started the
+routine; a pin may still not move (internal routine, or immobilised won't energise). LESSONS
+baked into the tool: the 0xDA session drops on idle gaps → every request goes silent; fix =
+`revive()` (re-init+unlock, retries) + enumerate-only scan (no mid-scan pauses). `~/actuator_map.csv`
+logs results (append-only, clear between runs for a clean map).
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
