@@ -36,6 +36,8 @@ CMD_PING = 0x01
 CMD_INIT = 0x02
 CMD_SEND_RECV = 0x03
 CMD_SET_TIMING = 0x04
+CMD_SET_WIFI = 0x06
+CMD_WIFI_STATUS = 0x07
 
 STATUS_OK = 0x00
 STATUS_TIMEOUT = 0x01
@@ -168,3 +170,46 @@ class PicoAdapterTransport(Transport):
         frame = self._pending
         self._pending = None
         return frame
+
+    # -- WiFi credential admin (unified firmware; USB only) ---------------- #
+    def set_wifi(self, ssid: str, password: str) -> None:
+        """Store WiFi credentials on the Pico (LittleFS) so it can join on the
+        next boot - no firmware reflash. Payload: [ssid_len][ssid][password]."""
+        sb = ssid.encode("utf-8")
+        pb = password.encode("utf-8")
+        if not sb or len(sb) > 32:
+            raise ValueError("SSID must be 1..32 bytes")
+        if len(pb) > 63:
+            raise ValueError("password must be <= 63 bytes")
+        payload = bytes([len(sb)]) + sb + pb
+        status, _ = self._transceive(CMD_SET_WIFI, payload)
+        if status != STATUS_OK:
+            raise TransportError(
+                f"set-wifi failed (status {status}) - is this the unified "
+                f"firmware with WiFi enabled?"
+            )
+
+    def wifi_status(self) -> str:
+        """Ask the Pico for its WiFi state ('connected <ip>' / 'offline …' /
+        'no-creds'). Returns the firmware's status string."""
+        status, payload = self._transceive(CMD_WIFI_STATUS)
+        if status != STATUS_OK:
+            raise TransportError(f"wifi-status failed (status {status})")
+        return payload.decode("ascii", "replace")
+
+
+def find_pico_port() -> "str | None":
+    """COM port of a connected Raspberry Pi Pico (USB VID 0x2E8A), or None.
+
+    Used for CLI auto-detect when no --port is given: matches by USB vendor id
+    so it finds the Pico whatever COMx Windows assigned. Returns the first match.
+    """
+    try:
+        from serial.tools import list_ports
+    except Exception:  # pyserial missing
+        return None
+    for p in list_ports.comports():
+        hwid = (getattr(p, "hwid", "") or "").upper()
+        if getattr(p, "vid", None) == 0x2E8A or "2E8A" in hwid:
+            return p.device
+    return None

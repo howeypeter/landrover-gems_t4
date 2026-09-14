@@ -316,10 +316,19 @@ def _kline_connection_spec(args: argparse.Namespace) -> tuple[str, dict]:
                            "allow_writes": getattr(args, "allow_writes", False)}
     if ble:
         return "ble", {"device": ble}
+    # No explicit transport: honor GEMS_PORT, else auto-detect a USB Pico.
+    env_port = os.environ.get("GEMS_PORT")
+    if env_port:
+        return "usb", {"com_port": env_port}
+    from gems_t4.transport.pico import find_pico_port
+    auto = find_pico_port()
+    if auto:
+        render.console.print(f"[dim]auto-detected Pico on {auto} (USB)[/]")
+        return "usb", {"com_port": auto}
     raise SystemExit(
-        "kline talks to a REAL ECU: pass --port COMx (bench/on-car adapter), "
-        "--connect HOST[:PORT] (WiFi), or --ble [NAME] (Bluetooth LE). "
-        "It does not use the virtual ECU."
+        "kline talks to a REAL ECU and none was found. Plug in the USB Pico "
+        "(auto-detected), or pass --port COMx (USB), --connect HOST[:PORT] (WiFi), "
+        "or --ble [NAME] (Bluetooth LE). It does not use the virtual ECU."
     )
 
 
@@ -459,6 +468,47 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
         session.close()
 
 
+def _run_kline_wifi_admin(args: argparse.Namespace) -> int:
+    """`kline set-wifi` / `kline wifi-status` — manage the Pico's WiFi creds over
+    USB (WiFi isn't up yet, so this is USB-only; needs the unified firmware)."""
+    from gems_t4.transport.pico import PicoAdapterTransport, find_pico_port
+    from gems_t4.transport.base import TransportError
+
+    port = getattr(args, "port", None) or os.environ.get("GEMS_PORT") or find_pico_port()
+    if not port:
+        render.console.print(
+            "[bold red]No USB Pico found.[/] set-wifi/wifi-status run over USB - "
+            "plug in the Pico or pass --port COMx."
+        )
+        return 1
+    t = PicoAdapterTransport(port)
+    try:
+        t.open()
+        if args.kline_action == "wifi-status":
+            render.console.print(f"WiFi: {t.wifi_status()}")
+            return 0
+        ssid = getattr(args, "ssid", None)
+        pw = getattr(args, "password", None)
+        if not ssid or pw is None:
+            render.console.print("[bold red]set-wifi needs --ssid and --password.[/]")
+            return 1
+        t.set_wifi(ssid, pw)
+        render.console.print(
+            f"[green]Saved WiFi credentials to the Pico[/] (SSID '{ssid}'). "
+            "It will join on the next boot / reconnect - no reflash needed."
+        )
+        try:
+            render.console.print(f"WiFi: {t.wifi_status()}")
+        except TransportError:
+            pass
+        return 0
+    except (TransportError, OSError) as exc:
+        render.console.print(f"[bold red]WiFi admin failed:[/] {exc}")
+        return 1
+    finally:
+        t.close()
+
+
 def _cmd_kline(args: argparse.Namespace) -> int:
     """Talk to a REAL ECU over ISO 9141-2 / OBD-II (bench or on-car).
 
@@ -469,6 +519,9 @@ def _cmd_kline(args: argparse.Namespace) -> int:
     from gems_t4.gems.types import DtcState
     from gems_t4.protocol.kline import connect_help
     from gems_t4.transport.base import TransportError
+
+    if args.kline_action in ("set-wifi", "wifi-status"):
+        return _run_kline_wifi_admin(args)
 
     kind, kwargs = _kline_connection_spec(args)
     backend = Backend()
@@ -672,12 +725,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="talk to a REAL ECU over the K-line (ISO 9141-2 / OBD-II; bench or car)",
     )
     sp.add_argument("kline_action",
-                    choices=["live", "dtc", "monitor", "clear", "vin", "secure"],
+                    choices=["live", "dtc", "monitor", "clear", "vin", "secure",
+                             "set-wifi", "wifi-status"],
                     help="one-shot live data; fault codes (stored + pending); a "
                          "continuous live monitor; clear codes (Mode 04); read "
-                         "the VIN (Mode 09 - may be unsupported on GEMS); or "
+                         "the VIN (Mode 09 - may be unsupported on GEMS); "
                          "'secure' = the proprietary 0xDA $27 channel (bench, "
-                         "L-line tied): unlock + read coding")
+                         "L-line tied): unlock + read coding; 'set-wifi' "
+                         "(--ssid/--password) stores WiFi creds on the Pico over "
+                         "USB (no reflash); 'wifi-status' reports its WiFi state")
     sp.add_argument("--yes", "-y", action="store_true",
                     help="skip confirmation prompts (clear; secure writes)")
     # `secure`-only options:
@@ -697,6 +753,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "address (default: gems-pico). No pairing / no COM port.")
     sp.add_argument("--allow-writes", action="store_true",
                     help="permit writes over --connect (default: read-only)")
+    sp.add_argument("--ssid", help="set-wifi: the WiFi network name")
+    sp.add_argument("--password", help="set-wifi: the WiFi password")
     sp.set_defaults(func=_cmd_kline)
 
     return parser
