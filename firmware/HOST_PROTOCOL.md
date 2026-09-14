@@ -25,6 +25,9 @@ Pico -> Host:  0x5A  <status>  <len>  <payload[len]>  <crc8>
 | 0x02 | INIT        | `[address][mode]` mode 0=slow,1=fast | keybytes (e.g. `08 08`) |
 | 0x03 | SEND_RECV   | one complete KWP frame               | the KWP response frame |
 | 0x04 | SET_TIMING  | `P1 P2 P3 P4` as 4× uint16 ms        | — |
+| 0x05 | RAW_INIT    | `[mode][baudHi][baudLo][addr][frame…]` (pentest superset builds) | raw K-line bytes, unfiltered |
+| 0x06 | SET_WIFI    | `[ssidLen][ssid…][password…]` (unified firmware) | — (creds saved to LittleFS + reconnect; no reflash) |
+| 0x07 | WIFI_STATUS | —                                    | ASCII: `connected <ip>` / `offline (creds set: <ssid>)` / `no-creds` |
 
 ## Status (pico → host)
 
