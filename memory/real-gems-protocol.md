@@ -531,6 +531,30 @@ routine; a pin may still not move (internal routine, or immobilised won't energi
 baked into the tool: the 0xDA session drops on idle gaps → every request goes silent; fix =
 `revive()` (re-init+unlock, retries) + enumerate-only scan (no mid-scan pauses). `~/actuator_map.csv`
 logs results (append-only, clear between runs for a clean map).
+- **KNOWN PIN (user, 2026-09-13): C505 (BLACK 36-pin) pin 14 is ALWAYS grounded,
+  even ignition OFF** — a permanent ground/reference, NOT an actuator output. So during
+  continuity-to-ground probing pin 14 will always beep; ignore it as a candidate (and it's
+  a handy ground tie-point for the meter's reference clip).
+- **KNOWN PIN (user, 2026-09-13): C505 pins 21 and 22 read +12 V at rest** — but the
+  C1032 pinout (below) reinterprets these: pin 21 = O2-sensor heaters, pin 22 = MIL lamp,
+  both LOW-SIDE driven (fed +12 V, ECU switches ground), so "idle +12 V" is the un-fired
+  state, NOT a power rail. Same likely for pin 3 (condenser-fan relay).
+
+**⚙️ ACTUATOR C1032 output pinout + first confirmed actuator (2026-09-14).**
+User found the GEMS output-connector pinout (Disco-1 **C1032** = the black 36-pin, sibling of
+C1033 power/ground; P38 equivalent C505). **Corroborated on hardware:** routine **`0x05` drove
+pins 10/11**, and C1032 pin 11 = **Fuel Injectors** → **routine `05` = injector test (CONFIRMED)**.
+Treat the rest as a strong lead (found reference, not authoritative — verify the important pins
+on hardware, esp. pin 24). Output pins (C1032):
+- **1** A/C compressor-clutch relay · **3** condenser-fan relay · **6** EVAP canister vent valve
+- **11/13/17/18/30/32/33/36** fuel injectors · **15/16/34/35** idle-air-control valve
+- **19** EVAP purge valve · **21** O2 heaters · **22** MIL lamp · **24** FUEL PUMP RELAY (coil)
+- **28** post-cat O2 heaters
+**FUEL PUMP = pin 24.** Find its routine by holding each fireable id (`01,04,07,09,0A,0B`) and
+watching pin 24 with a TEST BULB pin24→+12 V (relay coil is low-side → bulb lights when the ECU
+grounds it). Bare-meter readings on unloaded outputs are noisy (floating) — trust the pinout +
+bulb over raw continuity/volts. Map so far: `05`=injectors; fuel pump/fan/AC/MIL/purge/IAC/O2
+routines still to be matched to ids. Tool: `~/actuator_test.py` (guided; logs `~/actuator_map.csv`).
 
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
