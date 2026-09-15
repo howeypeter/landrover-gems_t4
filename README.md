@@ -26,6 +26,8 @@ K-line adapter over USB.
 > **🔧 [Hardware wiring — bench PSU rig direct to the GEMS ECU (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-bench-rig-wiring.html)** · hardening notes in [`docs/adapter-hardware-improvements.md`](docs/adapter-hardware-improvements.md)
 > 
 > **📐 [Adapter schematic — EE-grade circuit diagram (rendered)](https://htmlpreview.github.io/?https://github.com/howeypeter/landrover-gems_t4/blob/main/diagrams/gems-adapter-schematic.html)** · L9637D + Pico, with designators, pin table &amp; datasheet parameters
+> 
+> **📎 [GEMS ECU connector pinout — AUTHORITATIVE](docs/gems-ecu-pinout.md)** — full C1017/C507 (red, sensors) · C1032/C505 (black, outputs) · C1033/C509 (black, ignition/ground) pin tables, wire colours, male/female pinout, and the actuator output pins (fuel-pump relay = C1032 pin 24).
 >
 > *Note: This Markdown file is the short landing page. The HTML pages above have complete detail and styled formatting.*
 

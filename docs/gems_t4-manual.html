@@ -788,6 +788,7 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble -p COM5 
 
   <h3>Connector &amp; chip pinouts</h3>
   <p>The transceiver's own pinout, and the two GEMS ECM connectors you land on for a bench rig. <b>Pin functions are from Land Rover GEMS service data; physical position is not fabricated here — locate each pin by the number moulded on the connector and confirm it with a multimeter before applying 12 V.</b></p>
+  <div class="callout ok"><div class="i">&#9432;</div><div><h4>Full authoritative pinout: <code>docs/gems-ecu-pinout.md</code></h4><p>The complete GEMS ECU pinout — all three connectors (C1017/C507 red sensors, C1032/C505 black outputs, C1033/C509 black ignition/ground), wire colours, the male/female pin map, and the actuator output pins (<b>fuel-pump relay = C1032 pin 24</b>, MIL = pin 22, etc.) — is transcribed from the BlackBox SM001 GEMS help file in <code>docs/gems-ecu-pinout.md</code>. Use it for actuator ($31) testing and sensor probing.</p></div></div>
   <figure class="diagram">
   <svg viewBox="0 0 1140 620" role="img" aria-label="Pinouts. L9637D 8-pin, notch at left: bottom row left to right pins 1 RX, 2 LO, 3 VCC, 4 TX; top row left to right 8 LI, 7 VS, 6 K, 5 GND. GEMS ECM connector C1033, 18-way black, power and ground: pin 7 main plus 12 volts, pin 8 ignition plus 12 volts, pins 5, 9, 10 and 16 ground. GEMS ECM connector C1017, 36-way red, data: pin 20 K-line on non-NAS cars, pin 23 K-line on NAS US-spec cars.">
     <!-- ===== L9637D 8-pin, notch left ===== -->

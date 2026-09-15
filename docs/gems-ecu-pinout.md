@@ -132,3 +132,63 @@ The GEMS outputs the T4 could drive, per the SM001 help file, all land on
 
 Note: the SM001 "big black connector, PIN 1" reference for the A/C grant matches
 C1032 pin 1 here — corroborating that **C1032 is the black outputs plug**.
+
+## Wire colours (Lucas code)
+
+British/Lucas wiring uses a base colour plus an optional tracer stripe. A
+**one-letter** code is a solid colour; a **two-letter** code is **base + tracer**
+— the **first letter is the main colour, the second is the tracer**. So `YU` =
+*yellow with a blue tracer*, `NG` = *brown with a green tracer*.
+
+| Code | Colour | | Code | Colour |
+|------|--------|-|------|--------|
+| B | Black | | P | Purple |
+| U | Blue | | R | Red |
+| N | Brown | | S | Slate (grey) |
+| G | Green | | W | White |
+| K | Pink | | Y | Yellow |
+| O | Orange | | LG | Light green |
+
+## Wire colours — C1017 / C507 (Red 36-way)
+
+Transcribed from the user's **C507 photo** (Range Rover 4.0/4.6, 36-way red).
+The photo is low-resolution, and Lucas colours can differ **NAS vs non-NAS and by
+year** — so **meter-verify before trusting**, especially the pin the throttle
+signal is on.
+
+| Pin | Code | Colour (described) | Function |
+|----:|------|--------------------|----------|
+| 15 | `YU` | yellow with blue tracer | **Throttle Position Sensor** |
+
+> The remaining C507 colour codes are legible only in part on the supplied photo;
+> rather than risk mis-transcribing an authoritative table, fill each row in as
+> the wire is meter-confirmed. Every code expands via the legend above (first
+> letter = main colour, second = tracer).
+
+## Physical pinout — C1017 / C507 (Red 36-way)
+
+36-way connector. The **male** view looks into the **ECU header pins**; the
+**female** (plug / loom side) view is the **left–right mirror** of it, because the
+two halves mate face-to-face. Blank cells are the connector's keying gaps, not
+pins.
+
+**MALE — looking into the ECU header:**
+
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+|--|--|--|--|--|--|--|--|--|--|--|--|--|
+|    | 12 | 11 | 10 | 9  | 8  | 7  | 6  | 5  | 4  | 3  | 2  | 1  |
+| 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 |    |
+|    | 36 | 35 | 34 | 33 | 32 | 31 | 30 | 29 | 28 | 27 | 26 | 25 |
+
+**FEMALE — looking into the plug (loom side), mirror of the above:**
+
+|  |  |  |  |  |  |  |  |  |  |  |  |  |
+|--|--|--|--|--|--|--|--|--|--|--|--|--|
+| 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 |    |
+|    | 24 | 23 | 22 | 21 | 20 | 19 | 18 | 17 | 16 | 15 | 14 | 13 |
+| 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 |    |
+
+**NULL — positions with no wire fitted**, per the SM001 function table above:
+pins **2, 3, 4, 5, 6, 9, 19, 22, 24, 25, 31**. (A specific C507 loom — e.g. a NAS
+Range Rover — may populate some of these, such as a cam-position or park/neutral
+input; confirm against your own C507 photo / meter.)
