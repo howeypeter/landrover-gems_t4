@@ -141,36 +141,51 @@ def watch_id(s, rid):
     import csv
     from datetime import datetime
     from pathlib import Path
+    try:
+        import msvcrt          # Windows: non-blocking key reads for annotation
+    except ImportError:
+        msvcrt = None
     logp = Path(__file__).with_name(f"watch_{rid:02X}.csv")
     print(f"\n  watching 0x{rid:02X} live - vary the voltage on the pin now.")
     print("  (a real sensor tracks the pot smoothly; a flag just snaps.)  Ctrl-C to stop.")
+    if msvcrt:
+        print("  ANNOTATE the trace as you change the input - press a key:")
+        print("    v = now at +5V     g = now at GND     f = now FLOATING     . = other mark")
     print(f"  logging every read to {logp.name}\n")
+    marks = {"v": "5V", "g": "GND", "f": "FLOAT", ".": "mark"}
+    state = ""                 # current annotation, carried on every row until changed
     lo = hi = None
     t0 = time.time()
     n = 0
     logf = open(logp, "w", newline="", encoding="utf-8")
     lw = csv.writer(logf)
-    lw.writerow(["t_s", "iso_time", "id", "raw_hex", "value_dec"])
+    lw.writerow(["t_s", "iso_time", "id", "raw_hex", "value_dec", "state", "event"])
     try:
         while True:
+            event = ""
+            if msvcrt and msvcrt.kbhit():          # a key was pressed -> annotate
+                k = msvcrt.getwch().lower()
+                if k in marks:
+                    state = event = marks[k]
             v = value_of(robust(s, bytes([0x21, rid])))
             n += 1
             el = time.time() - t0
+            tag = f" <{state}>" if state else ""
             if v is None:
                 lw.writerow([f"{el:.2f}", datetime.now().isoformat(timespec="seconds"),
-                             f"0x{rid:02X}", "", ""])
-                print(f"\r  0x{rid:02X}: (silent)            ", end="", flush=True)
+                             f"0x{rid:02X}", "", "", state, event])
+                print(f"\r  0x{rid:02X}: (silent){tag}            ", end="", flush=True)
             else:
                 iv = int(v[:4], 16) if len(v) >= 4 else int(v, 16)  # first word as a number
                 lw.writerow([f"{el:.2f}", datetime.now().isoformat(timespec="seconds"),
-                             f"0x{rid:02X}", v, iv])
+                             f"0x{rid:02X}", v, iv, state, event])
                 lo = iv if lo is None else min(lo, iv)
                 hi = iv if hi is None else max(hi, iv)
                 bar_lo, bar_hi = (lo, hi) if hi != lo else (iv, iv + 1)
                 pos = int((iv - bar_lo) / (bar_hi - bar_lo) * 30)
                 bar = "#" * pos + "-" * (30 - pos)
                 print(f"\r  0x{rid:02X}: {v:<8} = {iv:5d}  [{bar}]  "
-                      f"min {lo} max {hi}   ", end="", flush=True)
+                      f"min {lo} max {hi}{tag}   ", end="", flush=True)
             logf.flush()
             time.sleep(0.05)
     except KeyboardInterrupt:
