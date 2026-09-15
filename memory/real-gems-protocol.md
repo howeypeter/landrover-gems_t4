@@ -588,6 +588,30 @@ engine/actuator outputs need the ECU MOBILISED → **wire in the Lucas 10AS** (o
 test on a running vehicle. New protocol fact: **`$27` is session-`02`-specific.** Bench actuator
 investigation is complete for what it can show; next step is the 10AS. Tools: `~/param_probe.py`,
 `~/session_probe.py`.
+
+**📄 SM001 GEMS help file (Blackbox Solutions), via RangeRovers.net forum (2026-09-14) —
+authoritative-ish, corroborates us.** Credible vendor doc; matches hardware where checked
+(C1032 pinout; `05`=injectors). Key facts:
+- **⭐ `C1017` pin 26 = "Theft Alarm Unit" = the MOBILISE line.** For the 10AS bench build,
+  wire **10AS mobilise output → GEMS `C1017` pin 26** (this is "the dedicated coded wire").
+- **`C1017` pins 20 & 23 = "Data Link Connector (OBDII)"** — confirms K-line (23) / L-line (20).
+- Three connectors: **`C1017`** = sensors + DLC + theft-alarm(26) + ABS(1) + speed(27);
+  **`C1032`** = the OUTPUTS (as recorded); **`C1033`** = ignition coils, crank sensor, MFI load
+  relay, satellite fuse, grounds.
+- **Immobiliser mechanism CONFIRMED at source:** the BECM (P38) / **10AS (Disco)** sends a coded
+  mobilise signal; GEMS compares it to a stored code and **only allows engine start if they
+  match**. "Security learn mode" re-learns the stored code (= our `A300622588`). "Reset all
+  adaptive values" = our `A3234800`. → validates the fuel-pump/injector mobilisation gate.
+- **Output/actuator tests are exactly 5:** MIL, O2-sensor heater, fuel-pump relay, A/C grant,
+  condenser-fan relay (NOT injectors). A/C-grant test = a fluctuating 0–5 V on `C1032` pin 1.
+- **⚠️ CHALLENGES "actuators = `$31`":** SM001 says MIL/A/C/fan outputs are testable and they're
+  NOT engine-run (so shouldn't be mobilisation-gated) — yet NONE of our `$31` routines fired any
+  of the 5 pins. So either `$31 <id>` is NOT the output-test command (the routines are internal;
+  real output control unmapped), OR the ECU blanket-disables ALL outputs while immobilised. The
+  **10AS test discriminates**: mobilise + re-run `$31` — if MIL/fan fire it was the gate; if still
+  nothing, `$31` is the wrong service. So "actuators = `$31`, mobilisation-gated" is NOT proven.
+- **VIN last-6 refinement:** SM001 lists it as a real GEMS coding field ("certain markets"), so
+  ours are **unpopulated/market**, not a protocol gap (soften "ECM doesn't hold VIN last-6").
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
