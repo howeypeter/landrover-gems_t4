@@ -470,18 +470,25 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
 
 def _run_kline_wifi_admin(args: argparse.Namespace) -> int:
     """`kline set-wifi` / `kline wifi-status` — manage the Pico's WiFi creds over
-    USB (WiFi isn't up yet, so this is USB-only; needs the unified firmware)."""
-    from gems_t4.transport.pico import PicoAdapterTransport, find_pico_port
+    USB or BLE (needs the unified firmware; both carry the 0x06/0x07 commands)."""
     from gems_t4.transport.base import TransportError
 
-    port = getattr(args, "port", None) or os.environ.get("GEMS_PORT") or find_pico_port()
-    if not port:
-        render.console.print(
-            "[bold red]No USB Pico found.[/] set-wifi/wifi-status run over USB - "
-            "plug in the Pico or pass --port COMx."
-        )
-        return 1
-    t = PicoAdapterTransport(port)
+    ble = getattr(args, "ble", None)
+    if ble:
+        from gems_t4.transport.ble import BleTransport
+        t = BleTransport(ble)
+        render.console.print(f"[dim]via BLE '{ble}'[/]")
+    else:
+        from gems_t4.transport.pico import PicoAdapterTransport, find_pico_port
+        port = getattr(args, "port", None) or os.environ.get("GEMS_PORT") or find_pico_port()
+        if not port:
+            render.console.print(
+                "[bold red]No Pico found.[/] set-wifi/wifi-status need the Pico over "
+                "USB (plug it in, or --port COMx) or Bluetooth (--ble [NAME])."
+            )
+            return 1
+        t = PicoAdapterTransport(port)
+        render.console.print(f"[dim]via USB {port}[/]")
     try:
         t.open()
         if args.kline_action == "wifi-status":

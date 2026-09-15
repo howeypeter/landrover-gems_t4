@@ -44,6 +44,8 @@ from gems_t4.transport.pico import (
     CMD_INIT,
     CMD_PING,
     CMD_SEND_RECV,
+    CMD_SET_WIFI,
+    CMD_WIFI_STATUS,
     PICO_START,
     STATUS_OK,
     STATUS_TIMEOUT,
@@ -259,3 +261,29 @@ class BleTransport(Transport):
             raise TransportTimeout("no buffered response")
         self._pending = None
         return pending
+
+    # -- WiFi credential admin (unified firmware) -------------------------- #
+    def set_wifi(self, ssid: str, password: str) -> None:
+        """Store WiFi credentials on the Pico (LittleFS) over BLE - no reflash.
+        Payload: [ssid_len][ssid][password]."""
+        sb = ssid.encode("utf-8")
+        pb = password.encode("utf-8")
+        if not sb or len(sb) > 32:
+            raise ValueError("SSID must be 1..32 bytes")
+        if len(pb) > 63:
+            raise ValueError("password must be <= 63 bytes")
+        payload = bytes([len(sb)]) + sb + pb
+        status, _ = self._transceive(CMD_SET_WIFI, payload)
+        if status != STATUS_OK:
+            raise TransportError(
+                f"set-wifi failed (status {status}) - is this the unified "
+                f"firmware with WiFi enabled?"
+            )
+
+    def wifi_status(self) -> str:
+        """Ask the Pico for its WiFi state ('connected <ip>' / 'offline …' /
+        'no-creds')."""
+        status, payload = self._transceive(CMD_WIFI_STATUS)
+        if status != STATUS_OK:
+            raise TransportError(f"wifi-status failed (status {status})")
+        return payload.decode("ascii", "replace")

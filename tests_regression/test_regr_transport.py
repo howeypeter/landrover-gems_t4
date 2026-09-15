@@ -6,7 +6,7 @@ NOT from the existing tests/ suite.
 Covers: VirtualTransport (init result, request/response via an EcuHandler,
 latency hook structure, closed-transport errors), PicoAdapterTransport against
 an in-memory fake serial (host-protocol framing per HOST_PROTOCOL.md, INIT
-encoding, status/error mapping), and the FtdiKlineTransport documented stub.
+encoding, status/error mapping).
 """
 from __future__ import annotations
 
@@ -22,7 +22,6 @@ from gems_t4.transport.base import (
     TransportError,
     TransportTimeout,
 )
-from gems_t4.transport.ftdi import FtdiKlineTransport
 from gems_t4.transport.pico import PicoAdapterTransport
 from gems_t4.transport.virtual import VirtualTransport
 
@@ -295,21 +294,3 @@ class TestPicoAdapterTransport:
             t.ping()
         t.close()  # idempotent
 
-
-# --------------------------------------------------------------------------- #
-# FTDI stub
-# --------------------------------------------------------------------------- #
-class TestFtdiStub:
-    def test_documented_stub_raises_notimplemented(self):
-        t = FtdiKlineTransport("COM3")
-        assert not t.is_open()
-        with pytest.raises(NotImplementedError):
-            t.open()
-        with pytest.raises(NotImplementedError):
-            t.init(0x33)
-        with pytest.raises(NotImplementedError):
-            t.send(KWP_TESTER_PRESENT)
-        with pytest.raises(NotImplementedError):
-            t.receive()
-        t.close()  # close must remain safe on the stub
-        assert not t.is_open()

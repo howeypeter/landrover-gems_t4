@@ -7,7 +7,7 @@ Layering (each layer depends only downward):
     app/        presentation — Rich CLI now, PySide6 Win98 GUI later
     gems/       GEMS meaning — DTCs, $61 live data, actuators, virtual ECU, scenarios
     protocol/   KWP2000/ISO-14230 framing, init, services, security, the KwpClient
-    transport/  the only I/O layer — virtual ECU link, Pico adapter (USB), FTDI cable
+    transport/  the only I/O layer — virtual ECU link, Pico adapter (USB/BLE), TCP
 
 The load-bearing seam is ``KwpClient(transport)``: it takes a real serial
 transport OR a VirtualTransport, so the whole stack runs and is tested off-car.
