@@ -316,7 +316,7 @@ def _kline_connection_spec(args: argparse.Namespace) -> tuple[str, dict]:
                            "allow_writes": getattr(args, "allow_writes", False)}
     if ble:
         return "ble", {"device": ble}
-    # No explicit transport: honor GEMS_PORT, else auto-detect a USB Pico.
+    # No explicit transport: auto-select, precedence USB > WiFi > BLE.
     env_port = os.environ.get("GEMS_PORT")
     if env_port:
         return "usb", {"com_port": env_port}
@@ -325,11 +325,16 @@ def _kline_connection_spec(args: argparse.Namespace) -> tuple[str, dict]:
     if auto:
         render.console.print(f"[dim]auto-detected Pico on {auto} (USB)[/]")
         return "usb", {"com_port": auto}
-    raise SystemExit(
-        "kline talks to a REAL ECU and none was found. Plug in the USB Pico "
-        "(auto-detected), or pass --port COMx (USB), --connect HOST[:PORT] (WiFi), "
-        "or --ble [NAME] (Bluetooth LE). It does not use the virtual ECU."
-    )
+    # No USB. Use WiFi if GEMS_CONNECT is set, else fall back to Bluetooth LE.
+    env_conn = os.environ.get("GEMS_CONNECT")
+    if env_conn:
+        host, tcp_port = parse_endpoint(env_conn)
+        render.console.print(f"[dim]no USB Pico; WiFi {host}:{tcp_port} (GEMS_CONNECT)[/]")
+        return "network", {"host": host, "tcp_port": tcp_port,
+                           "allow_writes": getattr(args, "allow_writes", False)}
+    ble_name = os.environ.get("GEMS_BLE", "gems-pico")
+    render.console.print(f"[dim]no USB/WiFi Pico; falling back to Bluetooth LE '{ble_name}'[/]")
+    return "ble", {"device": ble_name}
 
 
 def _kline_live_table(rows, source: str):
