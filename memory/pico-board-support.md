@@ -83,9 +83,14 @@ WiFi creds via `kline set-wifi`/`wifi-status` over USB or BLE; BLE-verified `gem
 pico-all-pentest 3.0.0`).** The single-transport sketches (`pico_kline`,
 `pico_kline_pentest`, `pico_kline_wifi`, `pico_kline_ble`) and `transport/ftdi.py`
 (unused stub) were all `git rm`'d. Build `pico_kline_all` with
-`--fqbn rpipico2w:ipbtstack=ipv4btcble` (or `ENABLE_BLE 0` + `rpipico` for USB-only). Also **all probe scripts migrated to BLE** (`~/pentest_scan.py`,
-`~/da*_probe.py`, `~/lline_probe.py`): default to `BleTransport("gems-pico")`, with
+`--fqbn rpipico2w:ipbtstack=ipv4btcble` (or `ENABLE_BLE 0` + `rpipico` for USB-only). The probe scripts default to `BleTransport("gems-pico")`, with
 `GEMS_PORT=COMx` env to force USB serial and `GEMS_BLE` to override the name.
+
+**Bench probe scripts now live IN the repo at `bench/` (2026-09-15)** — the
+earlier "throwaway probes stay in `~/`, not the repo" rule is reversed: the
+useful diagnostic scripts are tracked in `bench/` (curated to 13; superseded
+one-shots deleted) so they're referenceable and reusable across sessions. Their
+`.log`/`.csv` capture output is gitignored (regenerable). See `bench/README.md`.
 
 ## Powering the Pico untethered (decided 2026-09-07)
 The WiFi firmware removes the laptop USB *data* tether, but the Pico still needs
