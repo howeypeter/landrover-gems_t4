@@ -522,7 +522,8 @@ Swept `$31 <id>` for ALL ids `00..FF` on the unlocked 0xDA channel (BLE, ECU#2 s
 **The complete routine set is `0x01..0x0B`** — every id `0x0C..0xFF` returned a genuine
 `subFunctionNotSupported (0x12)` (a real "no routine here", NOT silence → trustworthy).
 - **Fireable (positive `71<id>`):** `0x01, 0x04, 0x05, 0x07, 0x09, 0x0A, 0x0B` (7).
-- **Gated (`conditionsNotCorrect 0x22`):** `0x02, 0x03` — real routines, precondition unmet
+- **Gated (`conditionsNotCorrect 0x22`):** `0x02, 0x03, 0x06, 0x08` (FOUR, not two — 06/08
+  were under-listed earlier) — real routines, precondition unmet
   (likely immobiliser: bench ECU has no BeCM/10AS to mobilise it).
 NOT YET DONE: map each fireable id → which output pin (on the **BLACK 36-pin plug = C505
 outputs**) via multimeter (continuity pin→gnd for low-side, DC-volts pin→gnd for high-side;
@@ -562,7 +563,7 @@ ign-on/idle; logs `~/pin_test.csv`): every routine `01,04,05,07,09,0A,0B` acks p
 (`71xx`, 0 drops) — the ECU ACCEPTS them — but **pin 24 (fuel-pump relay) never energizes**
 (OFF in BOTH ground- and +12 V-search, all routines + baselines), and **injectors (routine
 `05`, pins 10/11) show no output either**. Meanwhile the NON-gated outputs DID fire: pins
-**21/22 (O2 heaters / MIL) blinked** when routines ran. Plus gated routines `02`/`03` return
+**21/22 (O2 heaters / MIL) blinked** when routines ran. Plus gated routines `02`/`03`/`06`/`08` return
 `conditionsNotCorrect`. Three-way agreement = classic **immobilised ECM**: a GEMS ECM with no
 mobilise signal inhibits the engine-run outputs (fuel pump + injectors) as its anti-theft
 mechanism, while non-engine outputs (MIL/O2 heaters/fans) still work. **So to prime the fuel
@@ -574,6 +575,19 @@ C1032 pinout; but all evidence lines up. Baselines of note: pin 3 = permanent +1
 pins 21/22/8 blink at idle on their own. Pin-probe tool: `~/pin_test.py` (per-pin G/V +
 baselines; re-fires $31 so momentary outputs stay visible).
 
+**⚙️ PARAM + SESSION probes RULE OUT everything but a STATE gate (2026-09-14) → confirms
+the immobiliser/mobilisation conclusion on firm ground.** `~/param_probe.py`: `$31 <id>` with
+trailing param bytes just ECHOES them in the positive response (`31 01 FF`→`71 01 FF`) — params
+are accepted but don't change behaviour; `02`/`03` stay `7F22` regardless of param. `~/session_probe.py`:
+only sessions `10 01/02/03` are accepted (`04+`→`7F0C`); **`$27` unlock ONLY works in session `02`**
+(`01`/`03` accept the session but deny `$27`→`7F33` on everything); and in session `02` (the only
+unlocked one) the gated routines STILL return `7F22`. NET: neither a PARAMETER nor a SESSION opens
+the gated actuator routines — so the gate is a **STATE precondition = mobilisation (immobiliser) /
+engine-running**, not something settable over the wire. This re-affirms (now rigorously) that the
+engine/actuator outputs need the ECU MOBILISED → **wire in the Lucas 10AS** (or spoof mobilise), or
+test on a running vehicle. New protocol fact: **`$27` is session-`02`-specific.** Bench actuator
+investigation is complete for what it can show; next step is the 10AS. Tools: `~/param_probe.py`,
+`~/session_probe.py`.
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
