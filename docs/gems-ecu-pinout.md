@@ -23,11 +23,17 @@ pin 8 = Satellite Fuse Box 1 — **reconcile by meter before powering.**
 The source labels connectors `C1017 / C1032 / C1033`. Mapping to the physical
 plugs (colours from the ECU + prior project docs; **inferred**, meter-verify):
 
-| Plug (physical) | Source code | Role |
-|---|---|---|
-| **Red 36-way** | `C1017` | Sensors / inputs / comms (OBD-II data link) |
-| **Black 36-way** | `C1032` | **Outputs / actuators** (injectors, relays, IACV, MIL) |
-| **Black 18-way** | `C1033` | Ignition coils, grounds, crank sensor, load relay |
+The same three plugs carry **two different connector-code schemes**: the SM001
+source (Discovery/Morgan-derived) uses `C1017/C1032/C1033`; the **P38 Range Rover
+wiring uses `C5xx`**. Both name the same physical plug:
+
+| Plug (physical) | SM001 code | P38 code | Role |
+|---|---|---|---|
+| **Red 36-way** | `C1017` | `C507` | Sensors / inputs / comms (OBD-II data link) |
+| **Black 36-way** | `C1032` | `C505` | **Outputs / actuators** (injectors, relays, IACV, MIL) |
+| **Black 18-way** | `C1033` | `C509` | Ignition coils, grounds, crank sensor, load relay |
+
+So the **red plug = C1017 = C507**; the pin tables below use the SM001 codes.
 
 > Only pins the source assigns are listed; unlisted pin numbers are unpopulated
 > in the source table. A few low pins on C1017 (2–6) fell at a page break in the
