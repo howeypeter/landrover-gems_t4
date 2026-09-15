@@ -96,7 +96,7 @@ Network under **Configuration — VCI connection** (remembered between sessions)
 
 ```
 gems_t4/
-  transport/   the only I/O layer — virtual ECU, Pico adapter (USB), TCP, FTDI stub
+  transport/   the only I/O layer — virtual ECU, Pico adapter (USB/BLE), TCP
   protocol/    KWP2000 framing, init, services, security, the KwpClient
   gems/        GEMS meaning — DTCs, live data, actuators, immobiliser, maps, virtual ECU
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)

@@ -77,9 +77,13 @@ Upstream PR for the BLEUUID bug is in the CLAUDE.md backlog.
 **Bluetooth Classic REMOVED 2026-09-08:** `pico_kline_bt` (Classic SPP) and
 `pico_kline_wireless` (WiFi+Classic combined) were `git rm`'d, along with the
 Classic-only `transport/discovery.py` (COM-port autodetect — pointless with BLE).
-**BLE is the only Bluetooth now.** Firmware sketches (4): `pico_kline` (USB),
-`pico_kline_pentest` (USB+RAW_INIT), `pico_kline_wifi` (WiFi), `pico_kline_ble`
-(BLE). Also **all probe scripts migrated to BLE** (`~/pentest_scan.py`,
+**BLE is the only Bluetooth now.** **CONSOLIDATED 2026-09-14: ONE firmware sketch —
+`pico_kline_all` (USB + BLE + WiFi in one; precedence USB>WiFi>BLE; runtime LittleFS
+WiFi creds via `kline set-wifi`/`wifi-status` over USB or BLE; BLE-verified `gems_t4-
+pico-all-pentest 3.0.0`).** The single-transport sketches (`pico_kline`,
+`pico_kline_pentest`, `pico_kline_wifi`, `pico_kline_ble`) and `transport/ftdi.py`
+(unused stub) were all `git rm`'d. Build `pico_kline_all` with
+`--fqbn rpipico2w:ipbtstack=ipv4btcble` (or `ENABLE_BLE 0` + `rpipico` for USB-only). Also **all probe scripts migrated to BLE** (`~/pentest_scan.py`,
 `~/da*_probe.py`, `~/lline_probe.py`): default to `BleTransport("gems-pico")`, with
 `GEMS_PORT=COMx` env to force USB serial and `GEMS_BLE` to override the name.
 

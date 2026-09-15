@@ -246,7 +246,7 @@ python -m gems_t4 actuator o2_heater --scenario lambda_heater # -&gt; <span clas
 USB. The Pico owns the K-line timing; the PC speaks a simple USB protocol to it.</p>
 <ol>
   <li>Build the parts list and wire it up per <code>firmware/README.md</code>.</li>
-  <li>Flash <code>firmware/pico_kline/pico_kline.ino</code> to the Pico.</li>
+  <li>Flash <code>firmware/pico_kline_all/pico_kline_all.ino</code> to the Pico.</li>
   <li>Point the CLI at it:</li>
 </ol>
 <pre><code>python -m gems_t4 live --port COM5           # Windows
@@ -259,7 +259,7 @@ python -m gems_t4 live --port /dev/ttyACM0    # Linux</code></pre>
 
 <h2 id="layout">Project layout</h2>
 <pre><code>gems_t4/
-  transport/   the only I/O layer — virtual ECU link, Pico adapter (USB), TCP (network), FTDI stub
+  transport/   the only I/O layer — virtual ECU link, Pico adapter (USB/BLE), TCP (network)
   protocol/    KWP2000 framing, init, services, security, the KwpClient
   gems/        GEMS meaning — DTCs, $61 live data, actuators, immobiliser, maps, virtual ECU
   app/         Backend facade + Rich CLI + gui/ (PySide6 Win98 kiosk)

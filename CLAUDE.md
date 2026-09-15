@@ -116,15 +116,22 @@ The active working list for the next couple of days. Detailed backlog entries
    `real_ecu=False` so `--connect`/`--port` stay on the KWP stack (the real
    K-line profile remains the separate `kline` command). Verified: all 5 commands
    on the virtual ECU + a two-process `serve`/`--connect` smoke; 447 tests pass.
-3. **ONE unified firmware (USB + WiFi + BLE) + full validation.** Consolidate to a
-   single sketch that serves the host protocol over **USB-CDC, WiFi/TCP, AND BLE**
-   (so there is only one thing to flash), keeping the pentest `CMD_RAW_INIT`
-   superset. **Validate WiFi actually works on hardware** (currently unverified)
-   and that BLE still works alongside it. Test the firmware on hardware. Then
-   **validate ALL docs** (firmware/README, CLAUDE.md, memory) reflect the
-   single-firmware reality. Open Qs: does concurrent WiFi+BLE on the CYW43 stay
-   stable through the delay()-heavy 5-baud init? Keep the plain USB `pico_kline`
-   as a minimal fallback, or fold everything into the one build?
+3. **✅ DONE (2026-09-14) — ONE unified firmware `firmware/pico_kline_all/`
+   (USB + BLE + WiFi).** A single sketch serves the host protocol over **USB-CDC,
+   BLE, and (optional) WiFi at once** (precedence USB > WiFi > BLE), keeping the
+   pentest `CMD_RAW_INIT` superset. USB always on; BLE a compile toggle; WiFi
+   auto-off unless `wifi_secrets.h`… — actually WiFi creds moved to **runtime**:
+   stored in **LittleFS** via new host commands `CMD_SET_WIFI (0x06)` /
+   `CMD_WIFI_STATUS (0x07)`, driven by **`gems_t4 kline set-wifi` / `wifi-status`**
+   (over **USB or `--ble`**) — **no `wifi_secrets.h`, no reflash to change the
+   password**. `enum ActiveT` lives in `kline_transport.h` (Arduino auto-prototype
+   gotcha). Builds with `--fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble`
+   (12% flash, 17% RAM). **Hardware-verified over BLE** — reports
+   `gems_t4-pico-all-pentest 3.0.0`. Still to exercise on hardware: the USB and
+   WiFi paths of this build, and concurrent BLE+WiFi stability through the
+   delay()-heavy 5-baud init. The single-transport sketches remain as fallbacks.
+   Also new: **`gems_t4 kline` auto-detects a plugged USB Pico** (VID 0x2E8A) when
+   no `--port/--ble/--connect` is given (`find_pico_port`).
 4. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
    linked goals (feasibility-gated — see the reality check):
    - **(a) Pull the maps off an existing ECU.** GEMS maps live on socketed
@@ -616,9 +623,14 @@ were dropped. See `memory/tech-stack-decision.md`.)
     hardware-verified. **WiFi stays** via `pico_kline_wifi`. Also removed the
     Classic-only `transport/discovery.py` (BT COM-port auto-detect — pointless
     with BLE, which scans by name). If a concurrent WiFi+BLE build is ever wanted,
-    that's a new sketch (not a priority). Firmware sketches now: `pico_kline`
-    (USB), `pico_kline_pentest` (USB+RAW_INIT), `pico_kline_wifi` (WiFi),
-    `pico_kline_ble` (BLE).
+    that's a new sketch. **UPDATE 2026-09-14: that unified sketch now exists —
+    `pico_kline_all` (USB+BLE+WiFi, runtime LittleFS WiFi creds; BLE-verified
+    `3.0.0`); see P1.3.** **CONSOLIDATED 2026-09-14: `pico_kline_all` is now the
+    ONLY firmware sketch** — the single-transport sketches (`pico_kline`,
+    `pico_kline_pentest`, `pico_kline_wifi`, `pico_kline_ble`) were `git rm`'d, and
+    `transport/ftdi.py` (the never-implemented FTDI stub) + its regression test were
+    removed too. For a non-radio board, build `pico_kline_all` with `ENABLE_BLE 0`
+    (USB-only).
   - **Pico 2 W Bluetooth LE mode: firmware `firmware/pico_kline_ble/` + host
     `transport/ble.py` + CLI `--ble` (2026-09-07).** Added because Windows
     Bluetooth **Classic** SPP proved unreliable in practice (bonds drop on
@@ -674,7 +686,7 @@ were dropped. See `memory/tech-stack-decision.md`.)
    as fixtures; contract-test virtual and Pico transports against one suite.
    ◑ PARTIAL: host protocol + Pico firmware + PicoAdapter built & unit-tested vs a
    fake serial; runs on Pico or Pico 2 (same firmware, build target only differs;
-   2026-07-07); FTDI transport is a documented stub; on-car validation pending HW.
+   2026-07-07); (FTDI transport stub removed 2026-09-14); on-car validation pending HW.
 3b. **Laptop side DONE (2026-07-11); Pico WiFi firmware BUILT 2026-09-07.** TCP
    transport + serve endpoint + GUI connection screen — see "TCP/network
    transport" under Build status below and the wireless note under Tech stack →
@@ -1155,8 +1167,8 @@ strips the BOM PowerShell pipes prepend); HOST_PROTOCOL.md worked-example KWP
 checksums were stale placeholders (now `C0`/`00` with arithmetic); stale
 "~24-parameter" comment in live_data.py. `git rm`'d the user-reported-bad
 `diagrams/p38-gems-network.svg`. Audited-but-kept: `protocol/init.py`
-(INTERFACES-pinned constants, not yet imported) and `transport/ftdi.py`
-(deliberate stub). Deferred hardware-path observations (Pico set_timing gap,
+(INTERFACES-pinned constants, not yet imported). (`transport/ftdi.py` was later
+removed on 2026-09-14.) Deferred hardware-path observations (Pico set_timing gap,
 receive-after-close, case-sensitive mode strings, ECU-side $3B write
 acceptance) are recorded in git history / commit messages (the standalone
 RELEASE_NOTES files were removed 2026-07-11 — see below).

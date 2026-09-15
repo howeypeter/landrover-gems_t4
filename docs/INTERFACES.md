@@ -33,9 +33,9 @@ these signatures exactly.
 | 1 Protocol | `gems_t4/protocol/framing.py`, `timing.py`, `init.py`, `security.py`, `client.py`; `tests/test_framing.py`, `tests/test_client.py` |
 | 2 GEMS data | `gems_t4/gems/dtc.py`, `livedata.py`, `actuators.py`, `ecu_profile.py`, `programming.py`; `tests/test_dtc.py`, `tests/test_livedata.py`, `tests/test_actuators.py` |
 | 3 Virtual ECU | `gems_t4/gems/virtual_ecu.py`, `scenarios.py`; `tests/test_virtual_ecu.py`, `tests/test_scenarios.py` |
-| 4 Transport | `gems_t4/transport/virtual.py`, `pico.py`, `ftdi.py`; `tests/test_virtual_transport.py`, `tests/test_pico_framing.py` |
+| 4 Transport | `gems_t4/transport/virtual.py`, `pico.py`, `ble.py`, `tcp.py`; `tests/test_virtual_transport.py`, `tests/test_pico_framing.py` |
 | 5 App + integration | `gems_t4/app/cli.py`, `render.py`; `tests/test_integration.py` |
-| 6 Firmware | `firmware/HOST_PROTOCOL.md`, `firmware/pico_kline/pico_kline.ino`, `firmware/README.md` |
+| 6 Firmware | `firmware/HOST_PROTOCOL.md`, `firmware/pico_kline_all/pico_kline_all.ino`, `firmware/README.md` |
 
 ## Wire format (stylized KWP2000 / ISO-14230)
 
@@ -226,9 +226,12 @@ class VirtualTransport(Transport):
 ```
 May import `protocol.framing` and `gems.ecu_base` only. `pico.py`:
 `PicoAdapterTransport(Transport)` — pyserial USB-CDC client speaking the host
-protocol in `firmware/HOST_PROTOCOL.md` (see below). `ftdi.py`: `FtdiKlineTransport`
-stub with the intended approach documented (pyserial + latency-timer note); may
-raise NotImplementedError for now but must define the class + docstring.
+protocol in `firmware/HOST_PROTOCOL.md` (see below). `ble.py`:
+`BleTransport(Transport)` — the same host protocol over a BLE Nordic UART Service
+(`bleak`). `tcp.py`: `TcpTransport(Transport)` — the host protocol over TCP
+(network / WiFi Pico), read-only unless `allow_writes`.
+(The bare-FTDI-cable transport stub was removed 2026-09-14 — the Pico adapter is
+the sole real transport.)
 
 ## Host protocol (Agents 4 & 6 share this) — FIXED
 
