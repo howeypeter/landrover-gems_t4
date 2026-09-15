@@ -556,6 +556,24 @@ grounds it). Bare-meter readings on unloaded outputs are noisy (floating) — tr
 bulb over raw continuity/volts. Map so far: `05`=injectors; fuel pump/fan/AC/MIL/purge/IAC/O2
 routines still to be matched to ids. Tool: `~/actuator_test.py` (guided; logs `~/actuator_map.csv`).
 
+**⚙️ CONCLUSION — fuel pump + injectors are IMMOBILISER-GATED on the bench (2026-09-14).**
+Systematic pin probe (`~/pin_test.py`, USB, per-pin G/V modes + baselines pwr-on/ign-off and
+ign-on/idle; logs `~/pin_test.csv`): every routine `01,04,05,07,09,0A,0B` acks positive
+(`71xx`, 0 drops) — the ECU ACCEPTS them — but **pin 24 (fuel-pump relay) never energizes**
+(OFF in BOTH ground- and +12 V-search, all routines + baselines), and **injectors (routine
+`05`, pins 10/11) show no output either**. Meanwhile the NON-gated outputs DID fire: pins
+**21/22 (O2 heaters / MIL) blinked** when routines ran. Plus gated routines `02`/`03` return
+`conditionsNotCorrect`. Three-way agreement = classic **immobilised ECM**: a GEMS ECM with no
+mobilise signal inhibits the engine-run outputs (fuel pump + injectors) as its anti-theft
+mechanism, while non-engine outputs (MIL/O2 heaters/fans) still work. **So to prime the fuel
+pump on the bench you must mobilise the ECU — wire in the Lucas 10AS (Disco-1 immobiliser) and
+let it mobilise, or spoof the mobilise signal.** Directly ties to the [10AS bench] +
+[immobiliser-from-bench] backlog items. Caveat: consistent with immobilisation, not absolute
+proof — the specific fuel-pump routine id isn't positively confirmed and pin 24 rests on the
+C1032 pinout; but all evidence lines up. Baselines of note: pin 3 = permanent +12 V feed;
+pins 21/22/8 blink at idle on their own. Pin-probe tool: `~/pin_test.py` (per-pin G/V +
+baselines; re-fires $31 so momentary outputs stay visible).
+
 ## ⭐⭐ 0x3C MEMORY-READ CONFIRMED on 0xDA, `$27`-gated (2026-09-08, `da5_mode3c.py`, K+L)
 **A memory-read service exists on the 0xDA channel and is gated by `$27` — so a
 cracked key gives an OVER-THE-WIRE dump of the EEPROM and the 27C1001.** Lead
