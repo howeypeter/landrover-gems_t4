@@ -150,9 +150,9 @@ def watch_id(s, rid):
     print("  (a real sensor tracks the pot smoothly; a flag just snaps.)  Ctrl-C to stop.")
     if msvcrt:
         print("  ANNOTATE the trace as you change the input - press a key:")
-        print("    v = now at +5V     g = now at GND     f = now FLOATING     . = other mark")
+        print("    v = +5V    4 = 4.5V    g = GND    f = FLOATING    . = other mark")
     print(f"  logging every read to {logp.name}\n")
-    marks = {"v": "5V", "g": "GND", "f": "FLOAT", ".": "mark"}
+    marks = {"v": "5V", "4": "4.5V", "g": "GND", "f": "FLOAT", ".": "mark"}
     state = ""                 # current annotation, carried on every row until changed
     lo = hi = None
     t0 = time.time()
