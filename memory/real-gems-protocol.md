@@ -505,6 +505,15 @@ Both reads stable (re-read byte-identical). Full page-0x18 sweep of #2 (`~/ecu2_
   (config-EEPROM region, several byte diffs + known-volatile bytes). Throwaway tools:
   `~/ecu2_sweep.py`, `~/immo_align.py`, `~/immo_xref.py`, `~/immo_ref.py` + `~/immo_ref_ecu2.json`.
 
+**📌 AUTHORITATIVE PINOUT (2026-09-15): `docs/gems-ecu-pinout.md`.** Full GEMS ECU
+connector pinout transcribed from the user's PDF (BlackBox `SM001` GEMS help file
+v1.27, via rangerovers.net). Use it, not guesses/the app. Key facts: **Red 36-way
+= C1017 (sensors)** — pin 15 = Throttle Position Sensor, pin 16 = MAF, pin 14 =
+coolant temp, K-line pin 23 NAS / 20 non-NAS. **Black 36-way = C1032 (OUTPUTS)** —
+**Fuel Pump Relay = pin 24**, MIL = pin 22, condenser fan = pin 3, A/C clutch =
+pin 1, injectors = 11/13/18/30/32/33/36, IACV = 15/16/34/35. **Black 18-way =
+C1033** (ignition coils, grounds, crank sensor). Meter-verify power pins before 12 V.
+
 **⚙️ ACTUATOR Stage-1 — output control = service `$31` (routineControl), 2026-09-09.**
 On the unlocked 0xDA channel (`~/act1_probe.py`, read-classify only, no actuation):
 `$30` IOControlByLocalId and `$2F` IOControlByCommonId → **serviceNotSupported (0x11)**;
