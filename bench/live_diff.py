@@ -138,19 +138,32 @@ def watch_id(s, rid):
     pot / vary the voltage on a pin and watch the field track. Ctrl-C to stop.
     A real analog sensor (e.g. TPS) rises and falls smoothly with the voltage;
     a derived flag just snaps between two values on 'clamped vs floating'."""
+    import csv
+    from datetime import datetime
+    from pathlib import Path
+    logp = Path(__file__).with_name(f"watch_{rid:02X}.csv")
     print(f"\n  watching 0x{rid:02X} live - vary the voltage on the pin now.")
-    print("  (a real sensor tracks the pot smoothly; a flag just snaps.)  Ctrl-C to stop.\n")
+    print("  (a real sensor tracks the pot smoothly; a flag just snaps.)  Ctrl-C to stop.")
+    print(f"  logging every read to {logp.name}\n")
     lo = hi = None
     t0 = time.time()
     n = 0
+    logf = open(logp, "w", newline="", encoding="utf-8")
+    lw = csv.writer(logf)
+    lw.writerow(["t_s", "iso_time", "id", "raw_hex", "value_dec"])
     try:
         while True:
             v = value_of(robust(s, bytes([0x21, rid])))
             n += 1
+            el = time.time() - t0
             if v is None:
+                lw.writerow([f"{el:.2f}", datetime.now().isoformat(timespec="seconds"),
+                             f"0x{rid:02X}", "", ""])
                 print(f"\r  0x{rid:02X}: (silent)            ", end="", flush=True)
             else:
                 iv = int(v[:4], 16) if len(v) >= 4 else int(v, 16)  # first word as a number
+                lw.writerow([f"{el:.2f}", datetime.now().isoformat(timespec="seconds"),
+                             f"0x{rid:02X}", v, iv])
                 lo = iv if lo is None else min(lo, iv)
                 hi = iv if hi is None else max(hi, iv)
                 bar_lo, bar_hi = (lo, hi) if hi != lo else (iv, iv + 1)
@@ -158,11 +171,14 @@ def watch_id(s, rid):
                 bar = "#" * pos + "-" * (30 - pos)
                 print(f"\r  0x{rid:02X}: {v:<8} = {iv:5d}  [{bar}]  "
                       f"min {lo} max {hi}   ", end="", flush=True)
+            logf.flush()
             time.sleep(0.05)
     except KeyboardInterrupt:
+        logf.close()
         span = (hi - lo) if (hi is not None and lo is not None) else 0
         el = time.time() - t0
         print(f"\n  stopped. {n} reads in {el:.0f}s. range seen: {lo}..{hi} (span {span}).")
+        print(f"  full trace saved to {logp.name}")
         if span > 8:
             print("  -> it MOVED across a range: looks like a real analog channel.")
         elif span > 0:
