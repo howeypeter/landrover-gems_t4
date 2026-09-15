@@ -4,13 +4,13 @@ Use it to identify which $21 id is which sensor: snapshot, change one input
 (e.g. jumper C1017 pin 15 / TPS to ground or to Pico VBUS 5V), snapshot again,
 and it prints exactly which ids moved. The id that swings = that sensor.
 
-  python live_diff.py
-Commands:  snap [label] | q
-Workflow for TPS (C1017 pin 15):
-  snap rest      (pin untouched)
-  ...jumper pin 15 -> Pico VBUS (5V)...     snap 5v
-  ...jumper pin 15 -> ground...             snap gnd
-  -> the id listed as changed is Throttle Position.
+  python live_diff.py map          # guided rest / +5V / ground snapshot diff
+  python live_diff.py watch 2B     # poll ONE id live while you turn a pot
+  python live_diff.py              # interactive menu (map | watch <id> | q)
+
+'watch' is the definitive test: a real analog sensor (e.g. TPS on C1017 pin 15)
+tracks a pot smoothly across a range; a derived flag just snaps between two
+values on 'clamped vs floating'. 'map' finds candidate ids; 'watch' confirms.
 """
 from __future__ import annotations
 import os
@@ -133,21 +133,49 @@ def log_map(label, ids, base, hi, lo):
     return path.name
 
 
-def main():
-    s = GemsSecureSession(make_transport())
+def watch_id(s, rid):
+    """Poll ONE $21 id continuously and print its value live, so you can turn a
+    pot / vary the voltage on a pin and watch the field track. Ctrl-C to stop.
+    A real analog sensor (e.g. TPS) rises and falls smoothly with the voltage;
+    a derived flag just snaps between two values on 'clamped vs floating'."""
+    print(f"\n  watching 0x{rid:02X} live - vary the voltage on the pin now.")
+    print("  (a real sensor tracks the pot smoothly; a flag just snaps.)  Ctrl-C to stop.\n")
+    lo = hi = None
+    t0 = time.time()
+    n = 0
     try:
-        s.connect()
-    except (InitError, TransportError, OSError) as e:
-        print(f"connect FAILED: {e}"); return
-    if not s.unlock():
-        print("unlock FAILED"); s.close(); return
-    print("UNLOCKED.\n")
+        while True:
+            v = value_of(robust(s, bytes([0x21, rid])))
+            n += 1
+            if v is None:
+                print(f"\r  0x{rid:02X}: (silent)            ", end="", flush=True)
+            else:
+                iv = int(v[:4], 16) if len(v) >= 4 else int(v, 16)  # first word as a number
+                lo = iv if lo is None else min(lo, iv)
+                hi = iv if hi is None else max(hi, iv)
+                bar_lo, bar_hi = (lo, hi) if hi != lo else (iv, iv + 1)
+                pos = int((iv - bar_lo) / (bar_hi - bar_lo) * 30)
+                bar = "#" * pos + "-" * (30 - pos)
+                print(f"\r  0x{rid:02X}: {v:<8} = {iv:5d}  [{bar}]  "
+                      f"min {lo} max {hi}   ", end="", flush=True)
+            time.sleep(0.05)
+    except KeyboardInterrupt:
+        span = (hi - lo) if (hi is not None and lo is not None) else 0
+        el = time.time() - t0
+        print(f"\n  stopped. {n} reads in {el:.0f}s. range seen: {lo}..{hi} (span {span}).")
+        if span > 8:
+            print("  -> it MOVED across a range: looks like a real analog channel.")
+        elif span > 0:
+            print("  -> only tiny movement: probably not the sensor (or didn't vary enough).")
+        else:
+            print("  -> no movement: not this id, or the voltage didn't change.")
+
+
+def guided_map(s):
     print("Guided sensor mapping. For each pin I'll snapshot $21 three ways -")
     print("untouched, at +5V (Pico VBUS pin 40), at ground - and tell you which id")
     print("moved. Change ONLY the one pin you're testing. Each snap takes ~30s.\n")
-
-    try:
-        while True:
+    while True:
             label = ask("What are you testing? (e.g. 'C1017 p15 TPS'), Enter to quit: ").strip()
             if not label:
                 break
@@ -185,6 +213,74 @@ def main():
                 ids = []
             fn = log_map(label, ids, base, hi, lo)
             print(f"  logged to {fn}\n")
+
+
+def parse_args(argv):
+    import argparse
+    p = argparse.ArgumentParser(
+        description="GEMS $21 sensor-ID tools (guided map, or watch one id live).")
+    sub = p.add_subparsers(dest="mode")
+    sub.add_parser("map", help="guided sensor mapping (snapshot at rest / +5V / ground)")
+    w = sub.add_parser("watch", help="poll ONE id live while you vary the voltage")
+    w.add_argument("id", help="hex $21 id to watch, 00..FF (e.g. 2B)")
+    return p.parse_args(argv)
+
+
+def interactive(s):
+    print("Commands:")
+    print("  map          - guided sensor mapping (snapshot at rest / +5V / ground)")
+    print("  watch <id>   - poll ONE id live while you vary the voltage (e.g. watch 2B)")
+    print("  q            - quit\n")
+    while True:
+        try:
+            line = input("live> ").strip()
+        except EOFError:
+            break
+        if not line or line in ("q", "quit", "exit"):
+            break
+        if line == "map":
+            guided_map(s)
+        elif line.startswith("watch"):
+            rid = parse_id(line[5:].strip())
+            if rid is None:
+                print("  usage: watch <hex id 00..FF>, e.g. watch 2B"); continue
+            watch_id(s, rid)
+        else:
+            print("  usage: map | watch <id> | q")
+
+
+def parse_id(arg):
+    try:
+        rid = int(arg, 16)
+    except (ValueError, TypeError):
+        return None
+    return rid if 0 <= rid <= 0xFF else None
+
+
+def main(argv=None):
+    import sys
+    args = parse_args(sys.argv[1:] if argv is None else argv)
+    rid = None
+    if args.mode == "watch":
+        rid = parse_id(args.id)
+        if rid is None:
+            print(f"bad id '{args.id}' - want a hex value 00..FF, e.g. 2B"); return
+
+    s = GemsSecureSession(make_transport())
+    try:
+        s.connect()
+    except (InitError, TransportError, OSError) as e:
+        print(f"connect FAILED: {e}"); return
+    if not s.unlock():
+        print("unlock FAILED"); s.close(); return
+    print("UNLOCKED.\n")
+    try:
+        if args.mode == "watch":
+            watch_id(s, rid)
+        elif args.mode == "map":
+            guided_map(s)
+        else:
+            interactive(s)          # no subcommand -> menu
     finally:
         s.close()
     print("done.")
