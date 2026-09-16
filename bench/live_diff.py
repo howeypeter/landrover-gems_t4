@@ -120,17 +120,19 @@ def ask(prompt):
 def log_map(label, ids, level_names, snaps):
     """Append one row per moved id, with its value at every level tested."""
     import csv
+    from datetime import datetime
     from pathlib import Path
+    ts = datetime.now().isoformat(timespec="seconds")
     path = Path(__file__).with_name("live_map.csv")
     new = not path.exists()
     with open(path, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         if new:
-            w.writerow(["label", "id"] + level_names)
+            w.writerow(["time", "label", "id"] + level_names)
         if not ids:
-            w.writerow([label, "(none moved)"] + [""] * len(level_names))
+            w.writerow([ts, label, "(none moved)"] + [""] * len(level_names))
         for i in ids:
-            w.writerow([label, f"0x{i:02X}"] + [snaps[n].get(i, "") for n in level_names])
+            w.writerow([ts, label, f"0x{i:02X}"] + [snaps[n].get(i, "") for n in level_names])
     return path.name
 
 
