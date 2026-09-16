@@ -209,10 +209,10 @@ def watch_id(s, rid):
 # monotonically GND -> 3.3V -> 4.5V -> 5V. A flag only snaps between two values.
 MAP_LEVELS = [
     ("rest", "Leave the pin UNTOUCHED (floating baseline)"),
-    ("GND",  "Jumper the pin to GROUND (Pico GND, pin 38)"),
-    ("3.3V", "Jumper the pin to +3.3V (Pico 3V3, pin 36)"),
-    ("4.5V", "Jumper the pin to +4.5V (your 4.5 V source)"),
-    ("5V",   "Jumper the pin to +5V (Pico VBUS, pin 40)"),
+    ("GND",  "Jumper the pin to GROUND      (Pico pin 38, GND)"),
+    ("3.3V", "Jumper the pin to +3.3V       (Pico pin 36, 3V3 OUT)"),
+    ("4.5V", "Jumper the pin to +4.5V       (Pico pin 39, VSYS ~4.5-4.7V)"),
+    ("5V",   "Jumper the pin to +5V         (Pico pin 40, VBUS)"),
 ]
 
 
