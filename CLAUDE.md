@@ -976,14 +976,35 @@ up):**
   the **physical L-line jumper** AND the **`$27` key**, so they can't reprogram/
   immobilise over BLE alone; what's exposed is OBD-level reads, DTC-clear, and some
   actuators. Exposure only exists while the adapter is powered (a bench/diagnostic
-  tool, not a permanent fixture). **Recommended fix (lowest UX cost): app-layer
-  challenge-response** — firmware refuses commands until the host proves a shared
-  secret/HMAC; keeps the no-pairing UX, small firmware change. Alternatives: BLE
-  bonding with a passkey (LE Secure Connections — reintroduces pairing); a central
-  MAC allowlist; or advertise only when physically armed (button/jumper). The same
-  reasoning applies to the **WiFi/TCP** path (`serve` / WiFi Pico) — the network
-  write-gate is client-side only (see QA note C), so an app-layer auth would cover
-  both wireless transports.
+  tool, not a permanent fixture). **Recommended fix (lowest UX cost, DESIGN AGREED
+  2026-09-16): app-layer challenge-response with a shared secret set the same way
+  as WiFi creds.** Keeps the no-pairing UX; one mechanism covers BOTH wireless
+  transports (BLE and WiFi/TCP). Concrete spec:
+  - **Storage (mirror WiFi):** new host command `CMD_SET_SECRET` (next free id
+    after `0x06`/`0x07`) writes the secret to the Pico's **LittleFS**, driven by
+    `gems_t4 kline set-secret` (CLI) + a field on the GUI connection screen -
+    exactly like `set-wifi`/`wifi-status`.
+  - **Auth = challenge-response, NOT sending the secret** (BLE/WiFi are
+    unencrypted): on connect the firmware sends a random **nonce**; the host
+    replies `HMAC(secret, nonce)` (HMAC-SHA256 truncated to 8-16 B); the firmware
+    verifies before accepting any command. The secret never crosses the air; a
+    sniffed response is useless (the nonce changes each time).
+  - **Setting/rotating the secret is gated by trust:** allowed **over USB always**
+    (physical presence = trust), and over BLE/WiFi **only inside an already-
+    authenticated session** (proved knowledge of the current secret). **If no
+    secret is set, or the current one is unknown/forgotten -> USB ONLY.** This both
+    stops a remote attacker overwriting it AND is the recovery path (a forgotten
+    secret is reset at the bench; clearing LittleFS / a reflash also resets it).
+  - **USB stays open** (no challenge needed - physical access already implies
+    trust), so you can never lock yourself out at the bench. Auth applies to the
+    wireless transports (BLE/WiFi) only.
+  - **Host keeps its copy** in the existing connection config (`~/.gems_t4.json`,
+    alongside the WiFi/connection settings) so subsequent BLE/WiFi connects
+    auto-answer the challenge transparently - no per-connect prompt.
+  Alternatives (not chosen): BLE bonding with a passkey (LE Secure Connections -
+  reintroduces pairing); a central MAC allowlist; advertise only when physically
+  armed (button/jumper). Note the **WiFi/TCP** write-gate is currently client-side
+  only (QA note C) - this app-layer auth would properly close it too.
 - **Report the arduino-pico `BLEUUID` 128-bit bug upstream (issue + PR).**
   `earlephilhower/arduino-pico` (found 2026-09-07, core 6.1.0). `BLEUUID(String)`
   in `libraries/BLE/src/BLEUUID.h` parses 128-bit UUIDs with
