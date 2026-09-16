@@ -61,6 +61,15 @@
   h3{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:18px; margin:30px 0 8px;}
   p{max-width:70ch}
   p.small{font-size:13px; color:var(--ink-soft); max-width:74ch;}
+  .pinmap-scroll{overflow-x:auto; margin:8px 0 4px;}
+  .pinmap{border-collapse:collapse; table-layout:fixed; width:100%; min-width:620px;}
+  .pinmap td{border:1px solid var(--line); vertical-align:top; padding:3px 3px; height:48px; text-align:center; overflow:hidden;}
+  .pinmap td.gap{border:0; background:transparent;}
+  .pinmap td.nc{color:var(--ink-faint); background:var(--surface);}
+  .pinmap .pn{display:block; font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:12px; color:var(--accent);}
+  .pinmap .fn{display:block; font-size:9.5px; color:var(--ink-soft); line-height:1.15; margin-top:2px;}
+  .pinmap td.hl{background:rgba(120,160,255,.16);}
+  .pinmap td.hl .fn{color:var(--ink); font-weight:700;}
   ul,ol.body{max-width:70ch}
   li{margin:4px 0}
   code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--sunken); padding:1.5px 5px; border-radius:4px;}
@@ -871,42 +880,105 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble -p COM5 
   <div class="callout ok"><div class="i">&#9432;</div><div><h4>Connector codes — two schemes, same plugs</h4><p>The same three physical plugs carry two code schemes: the SM001 source (Discovery/Morgan) uses <span class="mono">C1017 / C1032 / C1033</span>; the <b>P38 Range Rover</b> loom uses <span class="mono">C507 / C505 / C509</span> respectively. <b>Red 36-way</b> = C1017/C507 (sensors + comms) · <b>Black 36-way</b> = C1032/C505 (outputs/actuators) · <b>Black 18-way</b> = C1033/C509 (ignition/ground/relays).</p></div></div>
 
   <h4>C1017 · C507 — Red 36-way (sensors / inputs / comms)</h4>
-  <table>
-    <thead><tr><th>Pin</th><th>Function</th><th>Pin</th><th>Function</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">1</td><td>Anti-Lock Brake System ECU</td><td class="mono">21</td><td>Heated Front Screen</td></tr>
-      <tr><td class="mono">7</td><td>Fuel Level Sensor</td><td class="mono">23</td><td><b>Data Link Connector (K-line, NAS)</b></td></tr>
-      <tr><td class="mono">8</td><td>Right Heated Oxygen Sensor (post-cat)</td><td class="mono">26</td><td><b>Theft Alarm Unit — mobilise line</b></td></tr>
-      <tr><td class="mono">10</td><td>Knock Sensors</td><td class="mono">27</td><td>Vehicle Speed Output (Instruments)</td></tr>
-      <tr><td class="mono">11</td><td>Left Knock Sensor</td><td class="mono">28</td><td>Air Conditioning Switches</td></tr>
-      <tr><td class="mono">12</td><td>Right Knock Sensor</td><td class="mono">29</td><td>Air Conditioning Switches</td></tr>
-      <tr><td class="mono">13</td><td>Intake Air Temperature Sensor</td><td class="mono">30</td><td>Fuel Pressure Sensor</td></tr>
-      <tr><td class="mono">14</td><td>Engine Coolant Temperature Sensor</td><td class="mono">32</td><td>Heated Oxygen Sensors</td></tr>
-      <tr><td class="mono">15</td><td><b>Throttle Position Sensor</b> (wire <span class="mono">YU</span>)</td><td class="mono">33</td><td>Right Heated Oxygen Sensor</td></tr>
-      <tr><td class="mono">16</td><td>Mass Air Flow Sensor</td><td class="mono">34</td><td>Left Heated Oxygen Sensor</td></tr>
-      <tr><td class="mono">17</td><td>Left Heated Oxygen Sensor (post-cat)</td><td class="mono">35</td><td>Engine Fuel Temperature Sensor</td></tr>
-      <tr><td class="mono">18</td><td>Neutral Sense Diode</td><td class="mono">36</td><td>Multiple Sensor Connection</td></tr>
-      <tr><td class="mono">20</td><td><b>Data Link Connector (K/L line, non-NAS)</b></td><td></td><td></td></tr>
-    </tbody>
-  </table>
-  <p class="small">NAS K-line = pin 23, non-NAS (UK/Euro) = pin 20 — confirmed on hardware. Pin 20 is the L-line, tied to the K node to open the proprietary 0xDA channel. Sensor inputs are <b>0–5 V</b> — never apply 12 V to them.</p>
+  <p class="small">Laid out as the physical connector — <b>MALE view, looking into the ECU header</b> (the loom/plug side is the left–right mirror). Blank cells are keying gaps; dim cells are unpopulated in the source. Highlighted = the pins we probe most.</p>
+  <div class="pinmap-scroll"><table class="pinmap">
+    <tr>
+      <td class="gap"></td>
+      <td><span class="pn">12</span><span class="fn">R Knock Sensor</span></td>
+      <td><span class="pn">11</span><span class="fn">L Knock Sensor</span></td>
+      <td><span class="pn">10</span><span class="fn">Knock Sensors</span></td>
+      <td class="nc"><span class="pn">9</span></td>
+      <td><span class="pn">8</span><span class="fn">R O2 (post-cat)</span></td>
+      <td><span class="pn">7</span><span class="fn">Fuel Level</span></td>
+      <td class="nc"><span class="pn">6</span></td>
+      <td class="nc"><span class="pn">5</span></td>
+      <td class="nc"><span class="pn">4</span></td>
+      <td class="nc"><span class="pn">3</span></td>
+      <td class="nc"><span class="pn">2</span></td>
+      <td><span class="pn">1</span><span class="fn">ABS ECU</span></td>
+    </tr>
+    <tr>
+      <td><span class="pn">13</span><span class="fn">Intake Air Temp</span></td>
+      <td class="hl"><span class="pn">14</span><span class="fn">Coolant Temp</span></td>
+      <td class="hl"><span class="pn">15</span><span class="fn">Throttle Position</span></td>
+      <td class="hl"><span class="pn">16</span><span class="fn">Mass Air Flow</span></td>
+      <td><span class="pn">17</span><span class="fn">L O2 (post-cat)</span></td>
+      <td><span class="pn">18</span><span class="fn">Neutral Sense Diode</span></td>
+      <td class="nc"><span class="pn">19</span></td>
+      <td class="hl"><span class="pn">20</span><span class="fn">K/L line (non-NAS)</span></td>
+      <td><span class="pn">21</span><span class="fn">Heated Front Screen</span></td>
+      <td class="nc"><span class="pn">22</span></td>
+      <td class="hl"><span class="pn">23</span><span class="fn">K-line (NAS)</span></td>
+      <td class="nc"><span class="pn">24</span></td>
+      <td class="gap"></td>
+    </tr>
+    <tr>
+      <td class="gap"></td>
+      <td><span class="pn">36</span><span class="fn">Multiple Sensor</span></td>
+      <td><span class="pn">35</span><span class="fn">Fuel Temp</span></td>
+      <td><span class="pn">34</span><span class="fn">L O2 Sensor</span></td>
+      <td><span class="pn">33</span><span class="fn">R O2 Sensor</span></td>
+      <td><span class="pn">32</span><span class="fn">Heated O2 Sensors</span></td>
+      <td class="nc"><span class="pn">31</span></td>
+      <td><span class="pn">30</span><span class="fn">Fuel Pressure</span></td>
+      <td><span class="pn">29</span><span class="fn">A/C Switches</span></td>
+      <td><span class="pn">28</span><span class="fn">A/C Switches</span></td>
+      <td><span class="pn">27</span><span class="fn">Vehicle Speed Out</span></td>
+      <td class="hl"><span class="pn">26</span><span class="fn">Theft / mobilise</span></td>
+      <td class="nc"><span class="pn">25</span></td>
+    </tr>
+  </table></div>
+  <p class="small">NAS K-line = pin 23, non-NAS (UK/Euro) = pin 20 — confirmed on hardware. Pin 20 is the L-line, tied to the K node to open the proprietary 0xDA channel. TPS (pin 15) wire is <span class="mono">YU</span>. Sensor inputs are <b>0–5 V</b> — never apply 12 V to them.</p>
 
   <h4>C1032 · C505 — Black 36-way (OUTPUTS / actuators)</h4>
-  <table>
-    <thead><tr><th>Pin</th><th>Function</th><th>Pin</th><th>Function</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">1</td><td>A/C Compressor Clutch Relay (coil)</td><td class="mono">21</td><td>Heated Oxygen Sensors (heater)</td></tr>
-      <tr><td class="mono">3</td><td>Condenser Fan Relay (coil)</td><td class="mono">22</td><td><b>Malfunction Indicator Lamp (MIL)</b></td></tr>
-      <tr><td class="mono">6</td><td>EVAP Canister Vent Seal Valve</td><td class="mono">24</td><td><b>Fuel Pump Relay (coil)</b></td></tr>
-      <tr><td class="mono">11</td><td>Fuel Injectors</td><td class="mono">28</td><td>Heated Oxygen Sensors (post-cat, heater)</td></tr>
-      <tr><td class="mono">13</td><td>Fuel Injectors</td><td class="mono">30</td><td>Fuel Injectors</td></tr>
-      <tr><td class="mono">15</td><td>Idle Air Control Valve</td><td class="mono">32</td><td>Fuel Injectors</td></tr>
-      <tr><td class="mono">16</td><td>Idle Air Control Valve</td><td class="mono">33</td><td>Fuel Injectors</td></tr>
-      <tr><td class="mono">18</td><td>Fuel Injectors</td><td class="mono">34</td><td>Idle Air Control Valve</td></tr>
-      <tr><td class="mono">19</td><td>EVAP Canister Purge Valve</td><td class="mono">35</td><td>Idle Air Control Valve</td></tr>
-      <tr><td class="mono"></td><td></td><td class="mono">36</td><td>Fuel Injectors</td></tr>
-    </tbody>
-  </table>
+  <p class="small">Same physical 36-way layout — <b>MALE view, looking into the ECU header</b>. This is where actuator (<code>$31</code>) testing is metered.</p>
+  <div class="pinmap-scroll"><table class="pinmap">
+    <tr>
+      <td class="gap"></td>
+      <td class="nc"><span class="pn">12</span></td>
+      <td><span class="pn">11</span><span class="fn">Fuel Injectors</span></td>
+      <td class="nc"><span class="pn">10</span></td>
+      <td class="nc"><span class="pn">9</span></td>
+      <td class="nc"><span class="pn">8</span></td>
+      <td class="nc"><span class="pn">7</span></td>
+      <td><span class="pn">6</span><span class="fn">EVAP Vent Valve</span></td>
+      <td class="nc"><span class="pn">5</span></td>
+      <td class="nc"><span class="pn">4</span></td>
+      <td><span class="pn">3</span><span class="fn">Condenser Fan Relay</span></td>
+      <td class="nc"><span class="pn">2</span></td>
+      <td class="hl"><span class="pn">1</span><span class="fn">A/C Clutch Relay</span></td>
+    </tr>
+    <tr>
+      <td><span class="pn">13</span><span class="fn">Fuel Injectors</span></td>
+      <td class="nc"><span class="pn">14</span></td>
+      <td><span class="pn">15</span><span class="fn">Idle Air Control</span></td>
+      <td><span class="pn">16</span><span class="fn">Idle Air Control</span></td>
+      <td class="nc"><span class="pn">17</span></td>
+      <td><span class="pn">18</span><span class="fn">Fuel Injectors</span></td>
+      <td><span class="pn">19</span><span class="fn">EVAP Purge Valve</span></td>
+      <td class="nc"><span class="pn">20</span></td>
+      <td><span class="pn">21</span><span class="fn">O2 Heaters</span></td>
+      <td class="hl"><span class="pn">22</span><span class="fn">MIL Lamp</span></td>
+      <td class="nc"><span class="pn">23</span></td>
+      <td class="hl"><span class="pn">24</span><span class="fn">Fuel Pump Relay</span></td>
+      <td class="gap"></td>
+    </tr>
+    <tr>
+      <td class="gap"></td>
+      <td><span class="pn">36</span><span class="fn">Fuel Injectors</span></td>
+      <td><span class="pn">35</span><span class="fn">Idle Air Control</span></td>
+      <td><span class="pn">34</span><span class="fn">Idle Air Control</span></td>
+      <td><span class="pn">33</span><span class="fn">Fuel Injectors</span></td>
+      <td><span class="pn">32</span><span class="fn">Fuel Injectors</span></td>
+      <td class="nc"><span class="pn">31</span></td>
+      <td><span class="pn">30</span><span class="fn">Fuel Injectors</span></td>
+      <td class="nc"><span class="pn">29</span></td>
+      <td><span class="pn">28</span><span class="fn">O2 Heaters (post-cat)</span></td>
+      <td class="nc"><span class="pn">27</span></td>
+      <td class="nc"><span class="pn">26</span></td>
+      <td class="nc"><span class="pn">25</span></td>
+    </tr>
+  </table></div>
   <p class="small">The five SM001 output tests all land here: fuel pump (24), MIL (22), A/C clutch (1), condenser fan (3), O2 heaters (21/28). Fuel pump + injectors are immobiliser-gated — inhibited on a bench ECU with no mobilise signal.</p>
 
   <h4>C1033 · C509 — Black 18-way (ignition / ground / relays)</h4>
