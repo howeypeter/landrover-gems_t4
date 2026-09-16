@@ -63,6 +63,24 @@ def connect_help(exc: BaseException | None = None, kind: str | None = None) -> s
     COM ports.
     """
     text = str(exc or "")
+    ecu_help = (
+        "Couldn't reach the ECU - the K-line init timed out. Check, in order:\n"
+        "  1. Ignition switch ON (and the PSU master switch ON, if you use one).\n"
+        "  2. Power at the ECU: ~12 V at C1033 pin 7 (main) and pin 8 (ignition).\n"
+        "  3. Grounds solid: C1033 pins 5/9/10/16 to the negative bus\n"
+        "     (a lifted ground looks exactly like this).\n"
+        "  4. K-line intact: L9637D pin 6 -> C1017 pin 23, with the 510 ohm\n"
+        "     pull-up in place (K should idle ~12 V).\n"
+        "  5. Wiggle every breadboard jumper - one loose wire is the usual cause.\n"
+        "Just cleared codes? The GEMS ECU reboots for ~1-2 minutes after a "
+        "clear - wait, then retry."
+    )
+    # -- ECU-side FIRST: an init failure means the ADAPTER is fine but the ECU
+    # stayed silent. Point at the K-line/power, NOT the adapter link, whatever
+    # the transport - otherwise a working BLE/USB link gets blamed for a bench
+    # wiring problem. `InitError` is "init failed (status N)" from any transport.
+    if type(exc).__name__ == "InitError" or "init failed" in text or "init timed out" in text:
+        return ecu_help
     # -- BLE (Bluetooth LE): no cable, no COM port, no VID ------------------- #
     if kind == "ble":
         return (
@@ -105,23 +123,19 @@ def connect_help(exc: BaseException | None = None, kind: str | None = None) -> s
             "(the Pico is VID 2E8A).\n"
             "  - Re-flash the pico_kline firmware if it still won't answer."
         )
-    return (
-        "Couldn't reach the ECU - the K-line init timed out. Check, in order:\n"
-        "  1. Ignition switch ON (and the PSU master switch ON, if you use one).\n"
-        "  2. Power at the ECU: ~12 V at C1033 pin 7 (main) and pin 8 (ignition).\n"
-        "  3. Grounds solid: C1033 pins 5/9/10/16 to the negative bus\n"
-        "     (a lifted ground looks exactly like this).\n"
-        "  4. K-line intact: L9637D pin 6 -> C1017 pin 23, with the 510 ohm\n"
-        "     pull-up in place (K should idle ~12 V).\n"
-        "  5. Wiggle every breadboard jumper - one loose wire is the usual cause.\n"
-        "Just cleared codes? The GEMS ECU reboots for ~1-2 minutes after a "
-        "clear - wait, then retry."
-    )
+    return ecu_help
 
 
 def connect_help_short(exc: BaseException | None = None, kind: str | None = None) -> str:
     """A one-line version of :func:`connect_help` for a GUI status bar."""
     text = str(exc or "")
+    ecu_short = (
+        "ECU not responding - check ignition ON, power, grounds and the "
+        "K-line/510 ohm; wiggle the wires. Just cleared codes? Wait ~1-2 min."
+    )
+    # ECU-side first: an init failure means the adapter link is fine (see connect_help).
+    if type(exc).__name__ == "InitError" or "init failed" in text or "init timed out" in text:
+        return ecu_short
     if kind == "ble":
         return "Pico not answering over Bluetooth - check it's powered and advertising as 'gems-pico'."
     if kind == "network":
@@ -133,10 +147,7 @@ def connect_help_short(exc: BaseException | None = None, kind: str | None = None
         return "Can't open the port - check the COM port and that nothing else has it open."
     if "Pico" in text:
         return "Pico not responding - check the USB cable/port and firmware."
-    return (
-        "ECU not responding - check ignition ON, power, grounds and the "
-        "K-line/510 ohm; wiggle the wires. Just cleared codes? Wait ~1-2 min."
-    )
+    return ecu_short
 
 
 class KlineError(TransportError):
