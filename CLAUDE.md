@@ -522,6 +522,25 @@ as static lookalikes for now.
   with other chats' memory). Includes `memory/research/` — the 2026-07-06
   six-agent GEMS dossier (SYNTHESIS.md + gems-hardware, gems-data-catalog,
   kline-protocols, opensource-tools, hardware-interfaces, python-architecture).
+- `bench/` (added 2026-09-15) — **the reusable one-off GEMS bench diagnostic
+  scripts, tracked in the repo.** This REVERSES the old "throwaway probes stay in
+  `~/`, not the repo" rule: the useful probes now live here (curated to ~14:
+  `live_diff.py` sensor-ID wizard with `watch <id>`/`map` modes, `live_sweep.py`,
+  `actuator_hunt.py`, `actuator_test.py`, `pin_test.py`, `pentest_scan.py`,
+  `ble_scan.py`, `da6_unlock.py`/`da7_read.py`/`da8_secure_probe.py`/`da9_sweep.py`,
+  `da10_immo.py`, `immo_align.py`/`immo_xref.py`) so they're referenceable across
+  sessions. Their `.log`/`.csv` capture output is gitignored (regenerable). See
+  `bench/README.md`. Proven capability still graduates into `gems_t4/`. NOTE: the
+  historical `~/xxx.py` paths littered through this file and the memory files refer
+  to these same scripts' old home — they're in `bench/` now.
+- `docs/gems-ecu-pinout.md` (added 2026-09-14) — the **authoritative GEMS ECU
+  connector pinout** (all three plugs C1017/C1032/C1033 = C507/C505/C509, every
+  populated pin, wire colours, male/female physical pin map), from the BlackBox
+  **SM001** help file. The **Field Manual** (`docs/gems_t4-manual.html`, electrical
+  section) now embeds all three plugs — the two 36-way plugs as **physical
+  connector grids** (pin-position layout, not linear lists). Use this for sensor
+  probing + actuator ($31) testing. Key pins: C1017 pin 15 = TPS (analog), pin 20/23
+  = L/K line, pin 26 = theft/mobilise; C1032 pin 24 = fuel pump, 22 = MIL, 1 = A/C.
 
 ## Next steps for implementation
 

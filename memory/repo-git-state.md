@@ -5,6 +5,16 @@ metadata:
   type: project
 ---
 
+**`main` AHEAD of the tag (2026-09-15, ~`a316d0a`):** since v0.0.10, `main` gained
+the tracked **`bench/`** diagnostic scripts (reversed the "probes stay in `~/`"
+rule; see `CLAUDE.md` files list + `bench/README.md`), the **authoritative GEMS
+pinout** (`docs/gems-ecu-pinout.md` + all three plugs embedded in the Field Manual,
+36-way plugs as physical connector grids), and a CLI transport auto-select
+(USB>WiFi>BLE) that came from the other LandRoverV1 chat/fork via branch
+`docs/gems-ecu-pinout`. That branch was **merged (fast-forward) to `main` and
+deleted local+remote** — main is the single source again. If another session/fork
+still has it checked out, `git checkout main && git pull` there to resync.
+
 **LATEST RELEASE: v0.0.10 (2026-09-08)** — annotated tag `v0.0.10` on `main`
 (moved to include the Classic-BT removal, now at commit `8134dc8`; the tag was
 re-pushed with `-f` since the GitHub Release wasn't published yet). Highlights:
