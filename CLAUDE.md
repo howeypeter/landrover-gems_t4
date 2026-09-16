@@ -963,6 +963,27 @@ up):**
 
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
+- **⚠️ SECURITY: the BLE adapter link is UNAUTHENTICATED (add an app-layer gate).**
+  Flagged by the user 2026-09-16 (not urgent). The Pico's BLE firmware advertises
+  an open **Nordic UART Service** as `gems-pico` with **no pairing, no bonding, no
+  encryption, and no app-layer auth** — a deliberate trade-off to avoid the
+  Windows pairing/COM-port pain, but it means **any BLE central in range (~10 m+)
+  can connect and send host-protocol frames** (incl. `CMD_RAW_INIT` and raw K-line
+  commands) whenever the adapter is powered and not already connected (BLE allows
+  one central at a time, so an active laptop session locks others out). **Blast
+  radius is limited:** over BLE an attacker reaches only the **K-line** — the
+  dangerous proprietary writes (coding, immobiliser-synch `A300622588`) need BOTH
+  the **physical L-line jumper** AND the **`$27` key**, so they can't reprogram/
+  immobilise over BLE alone; what's exposed is OBD-level reads, DTC-clear, and some
+  actuators. Exposure only exists while the adapter is powered (a bench/diagnostic
+  tool, not a permanent fixture). **Recommended fix (lowest UX cost): app-layer
+  challenge-response** — firmware refuses commands until the host proves a shared
+  secret/HMAC; keeps the no-pairing UX, small firmware change. Alternatives: BLE
+  bonding with a passkey (LE Secure Connections — reintroduces pairing); a central
+  MAC allowlist; or advertise only when physically armed (button/jumper). The same
+  reasoning applies to the **WiFi/TCP** path (`serve` / WiFi Pico) — the network
+  write-gate is client-side only (see QA note C), so an app-layer auth would cover
+  both wireless transports.
 - **Report the arduino-pico `BLEUUID` 128-bit bug upstream (issue + PR).**
   `earlephilhower/arduino-pico` (found 2026-09-07, core 6.1.0). `BLEUUID(String)`
   in `libraries/BLE/src/BLEUUID.h` parses 128-bit UUIDs with
