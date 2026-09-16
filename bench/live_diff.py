@@ -117,7 +117,8 @@ def ask(prompt):
         return ""
 
 
-def log_map(label, ids, base, hi, lo):
+def log_map(label, ids, level_names, snaps):
+    """Append one row per moved id, with its value at every level tested."""
     import csv
     from pathlib import Path
     path = Path(__file__).with_name("live_map.csv")
@@ -125,11 +126,11 @@ def log_map(label, ids, base, hi, lo):
     with open(path, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         if new:
-            w.writerow(["label", "id", "rest", "at_5v", "at_gnd"])
+            w.writerow(["label", "id"] + level_names)
         if not ids:
-            w.writerow([label, "(none moved)", "", "", ""])
+            w.writerow([label, "(none moved)"] + [""] * len(level_names))
         for i in ids:
-            w.writerow([label, f"0x{i:02X}", base.get(i, ""), hi.get(i, ""), lo.get(i, "")])
+            w.writerow([label, f"0x{i:02X}"] + [snaps[n].get(i, "") for n in level_names])
     return path.name
 
 
@@ -202,48 +203,61 @@ def watch_id(s, rid):
             print("  -> no movement: not this id, or the voltage didn't change.")
 
 
+# The voltage steps the wizard walks you through, in order. "rest" is the
+# baseline (nothing connected); the rest are held levels. Injecting several
+# levels lets a real analog sensor reveal itself: its value should climb
+# monotonically GND -> 3.3V -> 4.5V -> 5V. A flag only snaps between two values.
+MAP_LEVELS = [
+    ("rest", "Leave the pin UNTOUCHED (floating baseline)"),
+    ("GND",  "Jumper the pin to GROUND (Pico GND, pin 38)"),
+    ("3.3V", "Jumper the pin to +3.3V (Pico 3V3, pin 36)"),
+    ("4.5V", "Jumper the pin to +4.5V (your 4.5 V source)"),
+    ("5V",   "Jumper the pin to +5V (Pico VBUS, pin 40)"),
+]
+
+
 def guided_map(s):
-    print("Guided sensor mapping. For each pin I'll snapshot $21 three ways -")
-    print("untouched, at +5V (Pico VBUS pin 40), at ground - and tell you which id")
-    print("moved. Change ONLY the one pin you're testing. Each snap takes ~30s.\n")
+    names = [n for n, _ in MAP_LEVELS]
+    print("Guided sensor mapping. For each pin I'll snapshot $21 at several")
+    print("voltages - " + ", ".join(names) + " - and show each id's value at every")
+    print("level. A real analog sensor climbs across the levels; a flag just snaps.")
+    print(f"Change ONLY the one pin you're testing. {len(MAP_LEVELS)} snaps x ~30s each.\n")
     while True:
-            label = ask("What are you testing? (e.g. 'C1017 p15 TPS'), Enter to quit: ").strip()
-            if not label:
-                break
-            ask("  1/3  Leave the pin UNTOUCHED (rest). Press Enter to snapshot...")
-            base = snapshot(s)
-            print(f"       {len(base)} ids returned data.")
+        label = ask("What are you testing? (e.g. 'C1017 p15 TPS'), Enter to quit: ").strip()
+        if not label:
+            break
+        snaps = {}
+        for idx, (name, instr) in enumerate(MAP_LEVELS, 1):
+            ask(f"  {idx}/{len(MAP_LEVELS)}  {instr}. Press Enter to snapshot...")
+            snaps[name] = snapshot(s)
+            print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
-            ask("  2/3  Jumper the pin to +5V (Pico VBUS, pin 40). Press Enter...")
-            hi = snapshot(s)
-            ch_hi = {i: (a, b) for i, a, b in changes(base, hi)}
+        base = snaps["rest"]
+        levels = names[1:]                       # the held voltages (not rest)
+        # An id "moved" if it differs from rest at any held level.
+        moved = sorted({i for n in levels for i, a, b in changes(base, snaps[n])})
 
-            ask("  3/3  Jumper the pin to GROUND. Press Enter...")
-            lo = snapshot(s)
-            ch_lo = {i: (a, b) for i, a, b in changes(base, lo)}
-
-            print(f"\n  --- result for '{label}' ---")
-            if ch_hi:
-                print("  moved at +5V: " + ", ".join(
-                    f"0x{i:02X} ({base.get(i)}->{ch_hi[i][1]})" for i in sorted(ch_hi)))
-            if ch_lo:
-                print("  moved at GND: " + ", ".join(
-                    f"0x{i:02X} ({base.get(i)}->{ch_lo[i][1]})" for i in sorted(ch_lo)))
-            both = sorted(set(ch_hi) & set(ch_lo))
-            any_moved = sorted(set(ch_hi) | set(ch_lo))
-            if both:
-                print(f"  >>> BEST match for '{label}' (swings BOTH ways): "
-                      + ", ".join(f"0x{i:02X}" for i in both))
-                ids = both
-            elif any_moved:
-                print(f"  >>> candidate(s) for '{label}': "
-                      + ", ".join(f"0x{i:02X}" for i in any_moved))
-                ids = any_moved
+        print(f"\n  --- result for '{label}' ---")
+        if not moved:
+            print("  no ids moved - check the jumper contact / right pin / RED connector.")
+        else:
+            # Rank: ids taking the MOST distinct values across all levels first
+            # (a real analog channel steps through several; a flag has ~2).
+            def distinct(i):
+                return len({snaps[n].get(i) for n in names if i in snaps[n]})
+            print(f"  {'id':<6}" + "".join(f"{n:<10}" for n in names) + "distinct")
+            for i in sorted(moved, key=distinct, reverse=True):
+                row = "".join(f"{(snaps[n].get(i) or '-'):<10}" for n in names)
+                print(f"  0x{i:02X}  {row}{distinct(i)}")
+            top = max(moved, key=distinct)
+            if distinct(top) >= 3:
+                print(f"  >>> BEST analog candidate for '{label}': 0x{top:02X} "
+                      f"(takes {distinct(top)} distinct values across the sweep)")
             else:
-                print("  no ids moved - check the jumper contact / right pin / RED connector.")
-                ids = []
-            fn = log_map(label, ids, base, hi, lo)
-            print(f"  logged to {fn}\n")
+                print(f"  >>> only 2-state changes - likely flags, not '{label}'. "
+                      "Confirm a candidate with:  watch <id>")
+        fn = log_map(label, moved, names, snaps)
+        print(f"  logged to {fn}\n")
 
 
 def parse_args(argv):
