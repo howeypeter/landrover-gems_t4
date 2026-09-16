@@ -16,6 +16,13 @@ This screen is also reachable from every other screen via the persistent "VCI:
 ..." button in the title bar (:meth:`KioskWindow.update_connection_indicator`)
 — you don't have to hunt through the System menu to change the link.
 
+On a successful Apply/Save it also reports the Pico adapter's **firmware
+version** (or "virtual (emulated) ECU"), and — for the USB/BLE connections — it
+exposes **Pico WiFi credential admin** (SSID/password + Set / Status), mirroring
+the CLI ``kline set-wifi`` / ``wifi-status`` so a Pico's WiFi can be configured
+without dropping to the command line. (The 0xDA ``secure`` channel stays CLI-only
+by design — it needs the bench L-line jumper.)
+
 It uses its own **Cancel / Apply / Save** buttons (not the shell's tick/cross/
 back bar): **Apply** switches to and tests the selected connection, staying on
 this screen; **Save** does the same and also remembers it for next time, then
@@ -116,6 +123,31 @@ class ConnectionScreen(Screen):
         )
         lay.addWidget(self._allow_writes)
 
+        # -- WiFi admin (USB/BLE only): set the Pico's WiFi creds without the CLI.
+        # Mirrors `gems_t4 kline set-wifi / wifi-status` (host cmds 0x06/0x07).
+        self._wifi_header = QLabel("Pico WiFi credentials (USB or Bluetooth only)")
+        self._wifi_header.setStyleSheet("font-weight: bold;")
+        lay.addWidget(self._wifi_header)
+        wifi_form = QFormLayout()
+        wifi_form.setHorizontalSpacing(16)
+        self._wifi_ssid = QLineEdit()
+        self._wifi_ssid.setMaximumWidth(260)
+        wifi_form.addRow("WiFi SSID:", self._wifi_ssid)
+        self._wifi_pw = QLineEdit()
+        self._wifi_pw.setEchoMode(QLineEdit.EchoMode.Password)
+        self._wifi_pw.setMaximumWidth(260)
+        wifi_form.addRow("WiFi password:", self._wifi_pw)
+        lay.addLayout(wifi_form)
+        wifi_btns = QHBoxLayout()
+        self._btn_wifi_status = QPushButton("WiFi status")
+        self._btn_wifi_set = QPushButton("Set WiFi credentials")
+        self._btn_wifi_status.clicked.connect(self._on_wifi_status)
+        self._btn_wifi_set.clicked.connect(self._on_wifi_set)
+        wifi_btns.addStretch(1)
+        wifi_btns.addWidget(self._btn_wifi_status)
+        wifi_btns.addWidget(self._btn_wifi_set)
+        lay.addLayout(wifi_btns)
+
         self._current = QLabel("")
         self._current.setObjectName("Lcd")
         self._current.setWordWrap(True)
@@ -173,6 +205,10 @@ class ConnectionScreen(Screen):
         self._tcp_port.setEnabled(kind == "network")
         self._allow_writes.setEnabled(kind == "network")
         self._ble_device.setEnabled(kind == "ble")
+        wifi_ok = kind in ("usb", "ble")            # WiFi admin needs a USB/BLE Pico
+        for w in (self._wifi_header, self._wifi_ssid, self._wifi_pw,
+                  self._btn_wifi_status, self._btn_wifi_set):
+            w.setEnabled(wifi_ok)
 
     def _show_current(self) -> None:
         self._current.setText(f"Current: {self.backend.connection_label}")
@@ -268,7 +304,9 @@ class ConnectionScreen(Screen):
                 )
             self._show_current()
             self._refresh_window_indicator()
-            self._test_result.setText(f"OK: {label}")
+            fw = self.backend.adapter_firmware()
+            detail = f"adapter fw {fw}" if fw else "virtual (emulated) ECU - no adapter"
+            self._test_result.setText(f"OK: {label}  |  {detail}")
             if then_leave:
                 self.status.emit(f"VCI saved — {label}")
                 self.navigate.emit(_MAIN_MENU)
@@ -291,6 +329,77 @@ class ConnectionScreen(Screen):
     def _on_save(self) -> None:
         """Apply + test, persist for next time, then return to the start page."""
         self._apply(persist=True, then_leave=True)
+
+    # -- WiFi admin (mirrors CLI kline set-wifi / wifi-status) -----------------#
+    def _wifi_transport(self):
+        """Build a raw Pico transport (USB or BLE) from the current form, for
+        WiFi admin. Returns the transport, or None (with a status) if the kind
+        isn't a USB/BLE Pico or a required field is missing."""
+        kind = self._selected_kind()
+        if kind == "usb":
+            from gems_t4.transport.pico import PicoAdapterTransport, find_pico_port
+            port = self._com_port.text().strip() or find_pico_port()
+            if not port:
+                self.status.emit("No USB Pico found - enter its COM port.")
+                return None
+            return PicoAdapterTransport(port)
+        if kind == "ble":
+            from gems_t4.transport.ble import BleTransport
+            return BleTransport(self._ble_device.text().strip() or "gems-pico")
+        self.status.emit("WiFi admin needs the USB or Bluetooth LE connection.")
+        return None
+
+    def _on_wifi_status(self) -> None:
+        t = self._wifi_transport()
+        if t is None:
+            return
+
+        def work() -> str:
+            t.open()
+            try:
+                return t.wifi_status()
+            finally:
+                t.close()
+
+        self.run_with_wait(
+            "Reading Pico WiFi status",
+            work,
+            lambda st: (self._test_result.setText(f"WiFi: {st}"),
+                        self.status.emit(f"WiFi: {st}")),
+            lambda exc: (self._test_result.setText(f"WiFi status failed: {exc}"),
+                         self.status.emit(f"WiFi status failed: {exc}")),
+        )
+
+    def _on_wifi_set(self) -> None:
+        ssid = self._wifi_ssid.text().strip()
+        if not ssid:
+            self.status.emit("Enter the WiFi SSID to set.")
+            return
+        pw = self._wifi_pw.text()               # may be empty (open network)
+        t = self._wifi_transport()
+        if t is None:
+            return
+
+        def work() -> str:
+            t.open()
+            try:
+                t.set_wifi(ssid, pw)
+                try:
+                    return t.wifi_status()
+                except Exception:  # noqa: BLE001 - status is best-effort
+                    return "saved"
+            finally:
+                t.close()
+
+        self.run_with_wait(
+            "Saving WiFi credentials to the Pico",
+            work,
+            lambda st: (self._test_result.setText(
+                f"Saved WiFi (SSID '{ssid}'); joins on next boot.  WiFi: {st}"),
+                self.status.emit(f"WiFi credentials saved - SSID '{ssid}'")),
+            lambda exc: (self._test_result.setText(f"Set WiFi failed: {exc}"),
+                         self.status.emit(f"Set WiFi failed: {exc}")),
+        )
 
     def _on_cancel(self) -> None:
         """Return to the start page (boot / self-test) without saving."""
