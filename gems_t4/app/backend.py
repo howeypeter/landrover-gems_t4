@@ -144,6 +144,26 @@ class Backend:
         """
         return self._kind
 
+    def adapter_firmware(self) -> str | None:
+        """The Pico adapter's firmware banner (from its PING), or None when the
+        active transport has no adapter (the virtual ECU) or doesn't answer.
+
+        Real transports (USB/BLE/network) implement ``ping()`` returning the
+        firmware id string, e.g. ``gems_t4-pico-all-pentest 3.0.0``; the virtual
+        transport has none, which is itself the "this is the emulated ECU" tell.
+        """
+        t = self._active_transport()
+        ping = getattr(t, "ping", None)
+        if not callable(ping):
+            return None
+        try:
+            raw = ping()
+        except Exception:  # noqa: BLE001 - a missing/quiet adapter isn't fatal here
+            return None
+        if isinstance(raw, (bytes, bytearray)):
+            return bytes(raw).decode("ascii", "replace").strip() or None
+        return str(raw).strip() or None
+
     @property
     def is_wireless(self) -> bool:
         """True on a network transport (write policy applies). Checks the live

@@ -521,6 +521,22 @@ def _run_kline_wifi_admin(args: argparse.Namespace) -> int:
         t.close()
 
 
+def _print_connection_banner(backend, kind: str) -> None:
+    """Print who we're actually talking to: transport, adapter firmware, and
+    whether this is the emulated ECU - so a real vs virtual session is never
+    ambiguous, and the adapter's firmware version is visible at a glance."""
+    label = backend.connection_label
+    if kind == "virtual":
+        render.console.print(
+            f"[dim]ECU: [yellow]virtual (emulated)[/] - {label}. "
+            "Not a real ECU; for practice.[/]"
+        )
+        return
+    fw = backend.adapter_firmware()
+    fw_txt = f"adapter fw [cyan]{fw}[/]" if fw else "[dim]adapter fw unknown[/]"
+    render.console.print(f"[dim]Connected: {label}  |  {fw_txt}[/]")
+
+
 def _cmd_kline(args: argparse.Namespace) -> int:
     """Talk to a REAL ECU over ISO 9141-2 / OBD-II (bench or on-car).
 
@@ -548,6 +564,7 @@ def _cmd_kline(args: argparse.Namespace) -> int:
         render.console.print("[bold red]Could not connect to the ECU.[/]")
         render.console.print(connect_help(exc, kind=kind))
         return 1
+    _print_connection_banner(backend, kind)
     try:
         if args.kline_action == "dtc":
             dtcs = backend.read_dtcs()
