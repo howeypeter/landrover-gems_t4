@@ -521,22 +521,6 @@ def _run_kline_wifi_admin(args: argparse.Namespace) -> int:
         t.close()
 
 
-def _print_connection_banner(backend, kind: str) -> None:
-    """Print who we're actually talking to: transport, adapter firmware, and
-    whether this is the emulated ECU - so a real vs virtual session is never
-    ambiguous, and the adapter's firmware version is visible at a glance."""
-    label = backend.connection_label
-    if kind == "virtual":
-        render.console.print(
-            f"[dim]ECU: [yellow]virtual (emulated)[/] - {label}. "
-            "Not a real ECU; for practice.[/]"
-        )
-        return
-    fw = backend.adapter_firmware()
-    fw_txt = f"adapter fw [cyan]{fw}[/]" if fw else "[dim]adapter fw unknown[/]"
-    render.console.print(f"[dim]Connected: {label}  |  {fw_txt}[/]")
-
-
 def _cmd_kline(args: argparse.Namespace) -> int:
     """Talk to a REAL ECU over ISO 9141-2 / OBD-II (bench or on-car).
 
@@ -555,16 +539,34 @@ def _cmd_kline(args: argparse.Namespace) -> int:
     backend = Backend()
     if args.kline_action == "secure":
         return _run_kline_secure(args, backend, kind, kwargs)
-    render.communicating()
+    type_name = {"usb": "USB", "ble": "Bluetooth LE",
+                 "network": "Network"}.get(kind, kind)
+    render.console.print(f"[dim]Connecting to Pico ({type_name})...[/]")
+
+    def _on_adapter(fw: str | None) -> None:
+        # Phase 1 done: the laptop<->Pico link is up. Report it (with firmware)
+        # BEFORE the ECU init, so a silent ECU never looks like a Pico failure.
+        fwtxt = f" - firmware {fw}" if fw else ""
+        render.console.print(
+            f"[green]Connected to Pico[/] ({type_name}), status: Connected{fwtxt}")
+        render.communicating()  # phase 2: "Communicating with ECU... please wait"
+
     try:
         # kline is the REAL-ECU command: force the K-line profile over any
         # transport (USB, a WiFi Pico via --connect, or BLE).
-        source = backend.apply_connection(kind, real_ecu=True, **kwargs)
+        source = backend.apply_connection(
+            kind, real_ecu=True, on_adapter=_on_adapter, **kwargs)
     except (TransportError, OSError) as exc:
+        fw = backend.last_adapter_firmware
+        if fw:
+            # The Pico answered (fw known) but the ECU init failed - say so
+            # explicitly so the operator checks the bench, not the Bluetooth.
+            render.console.print(
+                f"[yellow]Pico connected (firmware {fw}), but the ECU did not "
+                "answer.[/]")
         render.console.print("[bold red]Could not connect to the ECU.[/]")
         render.console.print(connect_help(exc, kind=kind))
         return 1
-    _print_connection_banner(backend, kind)
     try:
         if args.kline_action == "dtc":
             dtcs = backend.read_dtcs()

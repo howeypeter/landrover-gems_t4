@@ -50,6 +50,21 @@ class RealEcuUnsupported(RuntimeError):
     """
 
 
+def _ping_firmware(transport: "Transport | None") -> str | None:
+    """PING a transport and return its firmware banner string, or None when the
+    transport has no ``ping`` (the virtual ECU) or doesn't answer."""
+    ping = getattr(transport, "ping", None)
+    if not callable(ping):
+        return None
+    try:
+        raw = ping()
+    except Exception:  # noqa: BLE001 - a quiet/missing adapter isn't fatal here
+        return None
+    if isinstance(raw, (bytes, bytearray)):
+        return bytes(raw).decode("ascii", "replace").strip() or None
+    return str(raw).strip() or None
+
+
 @dataclass(frozen=True, slots=True)
 class ConnectionTestResult:
     """Outcome of :meth:`Backend.test_connection`.
@@ -152,17 +167,7 @@ class Backend:
         firmware id string, e.g. ``gems_t4-pico-all-pentest 3.0.0``; the virtual
         transport has none, which is itself the "this is the emulated ECU" tell.
         """
-        t = self._active_transport()
-        ping = getattr(t, "ping", None)
-        if not callable(ping):
-            return None
-        try:
-            raw = ping()
-        except Exception:  # noqa: BLE001 - a missing/quiet adapter isn't fatal here
-            return None
-        if isinstance(raw, (bytes, bytearray)):
-            return bytes(raw).decode("ascii", "replace").strip() or None
-        return str(raw).strip() or None
+        return _ping_firmware(self._active_transport())
 
     @property
     def is_wireless(self) -> bool:
@@ -273,12 +278,16 @@ class Backend:
         allow_writes: bool = False,
         device: str | None = None,
         real_ecu: bool | None = None,
+        on_adapter: "Callable[[str | None], None] | None" = None,
     ) -> str:
         """:meth:`set_connection` + :meth:`connect`, atomically.
 
         If the new connection cannot be opened, the previous transport (and
         label) are restored so a typo'd endpoint never strands the tool on a
         dead connection. Returns the applied :attr:`connection_label`.
+
+        ``on_adapter`` is forwarded to :meth:`connect` - it fires with the
+        adapter firmware once the laptop<->Pico link is up, before the ECU init.
         """
         prev_factory = self._transport_factory
         prev_label = self._connection_label
@@ -294,7 +303,7 @@ class Backend:
             real_ecu=real_ecu,
         )
         try:
-            self.connect()
+            self.connect(on_adapter=on_adapter)
         except Exception:
             self.disconnect()
             # Restore EVERY field set_connection touched. Missing _use_kline
@@ -308,8 +317,17 @@ class Backend:
             raise
         return self._connection_label
 
-    def connect(self) -> None:
-        """Open a diagnostic session (build the stack, init, start session)."""
+    def connect(self, on_adapter: "Callable[[str | None], None] | None" = None) -> None:
+        """Open a diagnostic session (build the stack, init, start session).
+
+        For a real-ECU (K-line) connection the work is two distinct phases: the
+        laptop<->adapter (Pico) link, then the adapter<->ECU 5-baud init. We
+        open the adapter link FIRST, capture its firmware (``last_adapter_firmware``),
+        and fire ``on_adapter(firmware)`` before attempting the ECU init - so a
+        caller can report "Connected to Pico (fw X)" even when the ECU then stays
+        silent (the init fails). That distinction is the whole point: a silent
+        ECU is a bench-wiring problem, not an adapter/Bluetooth problem.
+        """
         if self.connected:
             return
         if self._transport_factory is not None:
@@ -323,6 +341,13 @@ class Backend:
         if self._use_kline:
             # Real GEMS ECU: ISO 9141-2 K-line profile (5-baud init at 0x33,
             # OBD-II framing). No StartDiagnosticSession — OBD-II has none.
+            # Phase 1: bring up the adapter link and read its firmware, so a
+            # failure in phase 2 (ECU init) doesn't hide that the Pico is fine.
+            transport.open()                       # idempotent; KlineClient reuses it
+            self._adapter_fw = _ping_firmware(transport)
+            if on_adapter is not None:
+                on_adapter(self._adapter_fw)
+            # Phase 2: the ECU 5-baud init (transport.open() inside is a no-op).
             kline = KlineClient(transport)
             kline.connect()
             self._kline = kline
@@ -331,6 +356,12 @@ class Backend:
             client.connect()
             client.start_session()
             self._client = client
+
+    @property
+    def last_adapter_firmware(self) -> str | None:
+        """Firmware banner captured at the last adapter-link open (phase 1),
+        set even when the subsequent ECU init failed. None for the virtual ECU."""
+        return getattr(self, "_adapter_fw", None)
 
     def test_connection(self, *, pings: int = 3) -> ConnectionTestResult:
         """Prove the *currently configured* connection works, and where

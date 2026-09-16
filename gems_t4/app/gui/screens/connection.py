@@ -316,7 +316,13 @@ class ConnectionScreen(Screen):
         def failed(exc: Exception) -> None:
             self._show_current()
             self._refresh_window_indicator()
-            self._test_result.setText(f"FAILED: {exc}")
+            fw = self.backend.last_adapter_firmware
+            if fw:
+                # Adapter link was fine; the ECU init is what failed - say so.
+                self._test_result.setText(
+                    f"Pico connected (fw {fw}), but the ECU didn't answer: {exc}")
+            else:
+                self._test_result.setText(f"FAILED: {exc}")
             self.status.emit(f"Connection failed: {exc}")
 
         self.run_with_wait("Testing VCI connection", work, done, failed)
