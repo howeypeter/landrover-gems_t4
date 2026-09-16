@@ -110,7 +110,20 @@ def changes(prev, cur):
     return [(i, prev.get(i), cur.get(i)) for i in ids if prev.get(i) != cur.get(i)]
 
 
-def ask(prompt):
+def drain_input():
+    """Discard any keystrokes buffered during a long scan, so the next prompt
+    genuinely waits instead of being auto-answered by a stray Enter."""
+    try:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getwch()
+    except Exception:  # noqa: BLE001  (non-Windows / no console)
+        pass
+
+
+def ask(prompt, fresh=False):
+    if fresh:
+        drain_input()
     try:
         return input(prompt)
     except EOFError:
@@ -230,7 +243,10 @@ def guided_map(s):
             break
         snaps = {}
         for idx, (name, instr) in enumerate(MAP_LEVELS, 1):
-            ask(f"  {idx}/{len(MAP_LEVELS)}  {instr}. Press Enter to snapshot...")
+            # fresh=True drains keystrokes buffered during the previous ~30s scan,
+            # so this really waits for you to change the wiring before snapshotting.
+            ask(f"  {idx}/{len(MAP_LEVELS)}  {instr}.\n        change the wiring now, "
+                "then press Enter to snapshot...", fresh=True)
             snaps[name] = snapshot(s)
             print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
