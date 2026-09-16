@@ -119,6 +119,14 @@ class BleTransport(Transport):
 
     # -- lifecycle --------------------------------------------------------- #
     def open(self) -> None:
+        # Idempotent: a second open() must NOT re-scan. A connected BLE
+        # peripheral stops advertising, so re-scanning would fail with
+        # "device not found" - which is exactly what breaks when a caller opens
+        # the transport and then KlineClient.connect() opens it again. If we're
+        # already connected, there's nothing to do.
+        if self._open and self._client is not None:
+            return
+
         try:
             from bleak import BleakClient, BleakScanner  # type: ignore
         except ModuleNotFoundError as exc:  # pragma: no cover
