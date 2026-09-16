@@ -49,6 +49,9 @@ their findings landed in `memory/real-gems-protocol.md`.
 - **Immobiliser block** — `immo_align` (align two page-0x18 dumps + classify),
   `immo_xref` (content cross-ref), `da10_immo` (confirm/map the block, records
   A4-A8). Decoding via same-PROM reference-ECU diff.
+- **Health check** — `ecu_ping` (is the ECU responding?): pings the adapter,
+  then tries the 5-baud init, and tells you WHICH layer is broken -
+  adapter/link vs ECU-not-answering vs software - so a failure isn't a guess.
 - **Pins / init / transport** — `pin_test` (per-pin G/V id),
   `pentest_scan` (full raw 256-address scan), `ble_scan` (dump the gems-pico
   BLE services).
