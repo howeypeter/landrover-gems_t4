@@ -635,6 +635,13 @@ def _cmd_kline(args: argparse.Namespace) -> int:
                 "answer.[/]")
         render.console.print("[bold red]Could not connect to the ECU.[/]")
         render.console.print(connect_help(exc, kind=kind))
+        if getattr(args, "debug", False):
+            import traceback
+            render.console.print("\n[dim]--- traceback (--debug) ---[/]")
+            render.console.print(traceback.format_exc())
+        else:
+            render.console.print("[dim](run again with --debug for the full "
+                                 "traceback)[/]")
         return 1
     try:
         if args.kline_action == "dtc":
@@ -742,6 +749,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"gems_t4 {__version__}")
 
     def add_common(sp: argparse.ArgumentParser) -> None:
+        sp.add_argument("--debug", action="store_true",
+                        help="on any failure, print the full Python traceback")
         sp.add_argument("--fake", action="store_true", default=True,
                         help="use the virtual ECU (default)")
         sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM3)")
@@ -845,6 +854,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "L-line tied): unlock + read coding; 'set-wifi' "
                          "(--ssid/--password) stores WiFi creds on the Pico over "
                          "USB (no reflash); 'wifi-status' reports its WiFi state")
+    sp.add_argument("--debug", action="store_true",
+                    help="on any failure, print the full Python traceback")
     sp.add_argument("--yes", "-y", action="store_true",
                     help="skip confirmation prompts (clear; secure writes)")
     sp.add_argument("--pid", metavar="HEX", action="append",
@@ -883,6 +894,15 @@ def main(argv: list[str] | None = None) -> int:
     except WirelessWriteRefused as exc:
         render.console.print(f"[bold red]REFUSED:[/] {exc}")
         return 1
+    except Exception:
+        # A --debug run prints the full traceback for any otherwise-uncaught
+        # error; without it, re-raise to preserve normal behaviour.
+        if getattr(args, "debug", False):
+            import traceback
+            render.console.print("[dim]--- traceback (--debug) ---[/]")
+            render.console.print(traceback.format_exc())
+            return 1
+        raise
 
 
 if __name__ == "__main__":  # pragma: no cover
