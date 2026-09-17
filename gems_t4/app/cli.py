@@ -351,6 +351,75 @@ def _kline_live_table(rows, source: str):
     return table
 
 
+# Full-scale range per PID for the terminal gauges (lo, hi). Anything not listed
+# falls back to a value-derived range so the bar still moves.
+_GAUGE_RANGES = {
+    0x04: (0, 100), 0x05: (-40, 130), 0x06: (-100, 100), 0x07: (-100, 100),
+    0x08: (-100, 100), 0x09: (-100, 100), 0x0C: (0, 7000), 0x0D: (0, 200),
+    0x0E: (-30, 60), 0x0F: (-40, 130), 0x10: (0, 120), 0x11: (0, 100),
+    0x14: (0, 1.275), 0x15: (0, 1.275), 0x18: (0, 1.275), 0x19: (0, 1.275),
+}
+
+
+def _gauge_chars():
+    """Pick block-drawing gauge glyphs, falling back to ASCII on a console that
+    can't encode them (a legacy cp1252 Windows terminal) so the monitor never
+    crashes mid-refresh. Returns (full, eighths, left_border, right_border)."""
+    import sys
+    enc = getattr(sys.stdout, "encoding", None) or "ascii"
+    try:
+        "█▏▎▍▌▋▊▉".encode(enc)
+        return "█", " ▏▎▍▌▋▊▉", "[", "]"
+    except (UnicodeEncodeError, LookupError):
+        return "#", " ", "[", "]"                 # ASCII fallback: '#' fill, no partials
+
+
+def _kline_gauges(rows):
+    """A panel of horizontal 'speedometer' bars, one per numeric PID, scaled to
+    each PID's range and coloured as it sweeps up. Rendered under the table."""
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+
+    WIDTH = 28
+    FULL, EIGHTHS, LB, RB = _gauge_chars()
+
+    g = Table.grid(padding=(0, 1))
+    g.add_column(justify="right", style="bold")           # label
+    g.add_column()                                        # bar
+    g.add_column(justify="right")                         # value
+    g.add_column(style="dim")                             # unit
+    any_row = False
+    for row in rows:
+        try:
+            v = float(row.value)
+        except (TypeError, ValueError):
+            continue                                       # skip non-numeric
+        any_row = True
+        pid = row.raw if isinstance(row.raw, int) else 0
+        lo, hi = _GAUGE_RANGES.get(pid, (0, max(100.0, abs(v) * 1.5) or 1.0))
+        frac = 0.0 if hi == lo else (v - lo) / (hi - lo)
+        frac = max(0.0, min(1.0, frac))
+        filled = frac * WIDTH
+        full = int(filled)
+        partial = EIGHTHS[int((filled - full) * (len(EIGHTHS) - 1))] if full < WIDTH else ""
+        bar = (FULL * full + partial).ljust(WIDTH)
+        colour = "green" if frac < 0.6 else "yellow" if frac < 0.85 else "red"
+        bartext = Text(LB, style="dim")
+        bartext.append(bar, style=colour)
+        bartext.append(RB, style="dim")
+        g.add_row(row.name, bartext, f"{v:g}", row.unit)
+    if not any_row:
+        return Text("")
+    return Panel(g, title="Gauges", title_align="left", border_style="dim")
+
+
+def _kline_live_view(rows, source: str):
+    """Table + gauge panel stacked, for the live monitor / one-shot view."""
+    from rich.console import Group
+    return Group(_kline_live_table(rows, source), _kline_gauges(rows))
+
+
 def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict) -> int:
     """`kline secure`: the proprietary 0xDA SecurityAccess channel (bench, K+L).
 
@@ -646,19 +715,19 @@ def _cmd_kline(args: argparse.Namespace) -> int:
                 f"[dim]K-line live monitor - {source}{hint}. Ctrl+C to stop.[/]"
             )
             try:
-                with Live(_kline_live_table(backend.read_live(pids), source),
+                with Live(_kline_live_view(backend.read_live(pids), source),
                           console=render.console, refresh_per_second=4) as live:
                     while True:
-                        live.update(_kline_live_table(backend.read_live(pids), source))
+                        live.update(_kline_live_view(backend.read_live(pids), source))
                         time.sleep(0.05 if pids else 0.2)
             except KeyboardInterrupt:
                 render.console.print("stopped.")
             return 0
 
         # live (one-shot)
-        table = _kline_live_table(backend.read_live(pids), source)
-        render.console.print(table)
-        if table.row_count == 0:
+        measures = backend.read_live(pids)
+        render.console.print(_kline_live_view(measures, source))
+        if not measures:
             render.console.print("[yellow]No live PIDs returned by the ECU.[/]")
         return 0
     finally:
