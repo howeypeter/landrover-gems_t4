@@ -150,13 +150,24 @@ class BleTransport(Transport):
                 # shortens the local name to fit the 31-byte advert, so the Pico
                 # may advertise "gems-pic" for a target of "gems-pico". Accept a
                 # match when either name is a prefix of the other.
+                #
+                # find_device_by_filter STOPS as soon as the filter matches -
+                # so a present Pico connects in ~1 s instead of always waiting
+                # the full scan_timeout (discover() drained the whole window even
+                # when the device was seen immediately -> the "slow to connect").
                 t = target.lower()
-                found = await BleakScanner.discover(timeout=self._scan_timeout)
-                for d in found:
-                    n = (d.name or "").lower()
-                    if n and (n == t or n.startswith(t) or t.startswith(n)):
-                        device = d
-                        break
+
+                def _match(d: Any, adv: Any) -> bool:
+                    names = [(d.name or "").lower(),
+                             (getattr(adv, "local_name", "") or "").lower()]
+                    return any(
+                        n and (n == t or n.startswith(t) or t.startswith(n))
+                        for n in names
+                    )
+
+                device = await BleakScanner.find_device_by_filter(
+                    _match, timeout=self._scan_timeout
+                )
             if device is None:
                 raise TransportError(
                     f"BLE device {target!r} not found (is the Pico powered and "
