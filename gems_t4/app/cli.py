@@ -626,26 +626,37 @@ def _cmd_kline(args: argparse.Namespace) -> int:
             )
             return 0
 
+        # Optional PID filter: read ONLY these PIDs so one sensor updates fast
+        # (a full-table read is ~16 slow K-line round-trips = seconds/refresh).
+        pids = None
+        if getattr(args, "pid", None):
+            try:
+                pids = [int(p, 16) for p in args.pid]
+            except ValueError:
+                render.console.print("[bold red]--pid takes hex, e.g. --pid 11[/]")
+                return 1
+
         if args.kline_action == "monitor":
             import time
 
             from rich.live import Live
 
+            hint = f" (PIDs {', '.join(f'0x{p:02X}' for p in pids)})" if pids else ""
             render.console.print(
-                f"[dim]K-line live monitor - {source}. Ctrl+C to stop.[/]"
+                f"[dim]K-line live monitor - {source}{hint}. Ctrl+C to stop.[/]"
             )
             try:
-                with Live(_kline_live_table(backend.read_live(), source),
+                with Live(_kline_live_table(backend.read_live(pids), source),
                           console=render.console, refresh_per_second=4) as live:
                     while True:
-                        live.update(_kline_live_table(backend.read_live(), source))
-                        time.sleep(0.2)
+                        live.update(_kline_live_table(backend.read_live(pids), source))
+                        time.sleep(0.05 if pids else 0.2)
             except KeyboardInterrupt:
                 render.console.print("stopped.")
             return 0
 
         # live (one-shot)
-        table = _kline_live_table(backend.read_live(), source)
+        table = _kline_live_table(backend.read_live(pids), source)
         render.console.print(table)
         if table.row_count == 0:
             render.console.print("[yellow]No live PIDs returned by the ECU.[/]")
@@ -767,6 +778,10 @@ def build_parser() -> argparse.ArgumentParser:
                          "USB (no reflash); 'wifi-status' reports its WiFi state")
     sp.add_argument("--yes", "-y", action="store_true",
                     help="skip confirmation prompts (clear; secure writes)")
+    sp.add_argument("--pid", metavar="HEX", action="append",
+                    help="live/monitor: read ONLY these PID(s) for a fast refresh "
+                         "(e.g. --pid 11 for throttle). Repeatable. Ideal for "
+                         "sweeping one sensor - reads one value per cycle, not all.")
     # `secure`-only options:
     sp.add_argument("--dump", metavar="ADDR:LEN",
                     help="secure: one 0x3C read, hex ADDR:LEN, LEN 1..3F (e.g. 1800:10)")
