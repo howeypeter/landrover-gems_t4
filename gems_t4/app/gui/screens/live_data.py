@@ -253,7 +253,7 @@ class LiveDataScreen(Screen):
         return {"back", "tick"}
 
     def tick_label(self) -> str:
-        return "Resume" if self._paused else "Pause"
+        return "Resume Metrics" if self._paused else "Pause Metrics"
 
     def on_tick(self) -> None:
         self._paused = not self._paused
@@ -262,3 +262,8 @@ class LiveDataScreen(Screen):
         else:
             self._timer.start(self._interval_ms())
         self._emit_rate()
+        # Update the tick button text (Pause <-> Resume) now, not just on nav.
+        win = self.window()
+        refresh = getattr(win, "refresh_nav_buttons", None)
+        if refresh is not None:
+            refresh()

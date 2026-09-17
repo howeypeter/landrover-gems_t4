@@ -49,7 +49,7 @@ def test_pause_stops_timer(qtbot):
     assert screen._timer.isActive()
     screen.on_tick()  # pause
     assert not screen._timer.isActive()
-    assert screen.tick_label() == "Resume"
+    assert screen.tick_label() == "Resume Metrics"
     screen.on_tick()  # resume
     assert screen._timer.isActive()
     screen.on_leave()

@@ -291,6 +291,14 @@ class KioskWindow(QMainWindow):
         return w if isinstance(w, Screen) else None
 
     # -- button delegation -------------------------------------------------- #
+    def refresh_nav_buttons(self) -> None:
+        """Re-apply the current screen's nav-button labels/visibility - so a
+        screen can update e.g. its tick label (Pause<->Resume) after handling a
+        click, without a full navigation."""
+        screen = self._current_screen()
+        if screen is not None:
+            self._apply_nav_buttons(screen)
+
     def _apply_nav_buttons(self, screen: Screen) -> None:
         wanted = screen.nav_buttons()
         self._btn_back.setVisible("back" in wanted)

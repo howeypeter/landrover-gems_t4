@@ -334,11 +334,11 @@ def test_live_data_tick_pauses_and_resumes(window_factory):
         assert screen._timer.isActive()
         screen.on_tick()  # pause
         assert not screen._timer.isActive()
-        assert screen.tick_label() == "Resume"
+        assert screen.tick_label() == "Resume Metrics"
         assert "paused" in _status_text(win)
         screen.on_tick()  # resume
         assert screen._timer.isActive()
-        assert screen.tick_label() == "Pause"
+        assert screen.tick_label() == "Pause Metrics"
     finally:
         win.go("system_menu")
 
