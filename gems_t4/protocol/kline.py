@@ -86,11 +86,14 @@ def connect_help(exc: BaseException | None = None, kind: str | None = None) -> s
         return (
             "The Pico adapter isn't answering over Bluetooth LE - this is the "
             "laptop<->adapter link, not the ECU:\n"
+            "  - ALREADY IN USE? BLE allows only ONE connection at a time. If the "
+            "GUI or another 'kline' command is connected, this can't be - close "
+            "it first. (A connected Pico stops advertising, so it looks 'not "
+            "found' here.)\n"
             "  - Power the Pico (wall charger or power bank) and check its LED - "
             "it must be advertising as 'gems-pico'.\n"
-            "  - Move closer / clear obstructions; only one laptop can hold the "
-            "BLE link at a time (close any GUI or other kline command).\n"
-            "  - Re-flash the pico_kline_ble firmware if it still won't answer.\n"
+            "  - Move closer / clear obstructions.\n"
+            "  - Re-flash the pico_kline firmware if it still won't answer.\n"
             "  - Bluetooth support needs 'bleak' installed (pip install "
             "gems_t4[ble])."
         )
