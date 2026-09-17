@@ -96,3 +96,40 @@ think it is. This is the single easiest way to fry the adapter.
    (`gems_t4 live --port COMx`).
 5. Only after adding the Vs transient clamp + fuse should the adapter go onto a
    running vehicle's live 12 V.
+
+## ⚠️ Post-mortem: Pico killed during sensor injection (2026-09-16)
+
+**What happened.** While identifying live-data `$21` ids by injecting a voltage
+onto GEMS **C1017** sensor pins (to find which id = TPS, etc.), a Pico 2 W adapter
+died: it stopped advertising on BLE, then would not enumerate on USB **even in
+BOOTSEL** with a known-good data cable, and **VBUS (pin 40) sagged to ~2.3 V**
+(should be ~5 V) - the USB host current-limiting into a shorted/overloaded rail.
+Board unrecoverable; replaced.
+
+**Root cause (most likely).** A hand jumper used for injection touched a **12 V
+ECU pin** (or a pin the ECU drives to ~12 V), back-feeding 12 V into a Pico
+GPIO / the 3V3 / VSYS rail (all rated ~3.3-5 V). The **C1017 red connector we
+were probing also carries the K-line, which idles at ~12 V**, and C1033 pins 7/8
+are 12 V, and C1032 outputs can swing to 12 V - so a slip onto 12 V was easy.
+A secondary possibility is shorting the Pico's own 3V3/VSYS pin to ground (also
+kills the regulator). Either way: **the Pico's power pins were exposed on hand
+jumpers next to 12 V.**
+
+**Rules going forward (apply to the bench rig AND the PCB design):**
+1. **Never wire the Pico directly to an ECU pin for injection.** The Pico only
+   ever touches the ECU **through the L9637D** (which exists to isolate 3.3 V
+   logic from the 12 V K-line). The K-line path was never the danger - the
+   injection wiring was.
+2. **Inject from an ISOLATED source** - a separate 0-5 V bench supply, or a
+   pot/divider off a *separate* 5 V. Do NOT use the Pico's VBUS/VSYS/3V3 pins as
+   the injection source.
+3. On **any** test lead that could contact the ECU: **series ~1 kΩ resistor**
+   (limits fault current) **+ a clamp** (TVS or Zener to the rail, and/or clamp
+   diodes to 3V3 and GND) so a stray 12 V is shunted to the supply, not driven
+   into the chip. A single **series diode** (anode at Pico, cathode toward ECU)
+   is the minimal version - it blocks 12 V back-feed but doesn't clamp every case
+   and drops ~0.6 V.
+4. **Meter the pin before energizing** - confirm it's the 0-5 V sensor input you
+   think it is, not an adjacent 12 V / output / K-line pin.
+5. Sensor inputs are **0-5 V - never put 12 V on them** either (the other half of
+   the same discipline).
