@@ -8,6 +8,11 @@ sample every couple of seconds. A gauge-count selector drives both how many
 gauges are shown and — because more gauges means more $61 round-trips over the
 slow K-line — how fast the timer ticks; the effective rate shows in the status bar.
 
+A **Focus** picker lists every parameter as ``0xNN Label`` (the PID + its name):
+selecting one shows just that single gauge at the fast single-gauge refresh -
+ideal for watching one sensor track (e.g. sweeping a pot on the throttle pin).
+``(by count)`` hands control back to the gauge-count selector.
+
 The timer starts in :meth:`on_enter` and stops in :meth:`on_leave` (a dangling
 timer would keep firing off-screen). The tick button pauses/resumes the sweep.
 """
@@ -70,6 +75,13 @@ class LiveDataScreen(Screen):
         self._count_box.setCurrentIndex(1)  # default 4 gauges
         self._count_box.currentIndexChanged.connect(self._on_count_changed)
         controls.addWidget(self._count_box)
+        # Focus: pick ONE parameter (shown as "0xNN Label") to watch just it,
+        # at the fast single-gauge refresh. "(by count)" = the count selector.
+        controls.addWidget(QLabel("Focus:"))
+        self._focus_box = QComboBox()
+        self._focus_box.setMinimumWidth(200)
+        self._focus_box.currentIndexChanged.connect(self._on_focus_changed)
+        controls.addWidget(self._focus_box)
         controls.addStretch(1)
         self._rate_label = QLabel("", objectName="Lcd")
         controls.addWidget(self._rate_label)
@@ -89,11 +101,37 @@ class LiveDataScreen(Screen):
         self._timer.timeout.connect(self._refresh)
 
     # -- selection / cadence ------------------------------------------------ #
+    def _name_for(self, lid: int) -> str:
+        """Human label for a parameter id, in whichever mode we're in."""
+        if self._real:
+            name, unit = self._obd_meta.get(lid, ("", ""))
+            return obd_spec_for(lid, name, unit).label
+        return spec_for(lid).label
+
+    def _populate_focus(self) -> None:
+        """Fill the Focus picker with '0xNN Label' for every available id."""
+        self._focus_box.blockSignals(True)
+        self._focus_box.clear()
+        self._focus_box.addItem("(by count)", None)
+        for lid in self._all_ids:
+            self._focus_box.addItem(f"0x{lid:02X}  {self._name_for(lid)}", lid)
+        self._focus_box.setCurrentIndex(0)
+        self._focus_box.blockSignals(False)
+
+    def _focus_id(self) -> int | None:
+        """The id of the focused parameter, or None for count-based selection."""
+        return self._focus_box.currentData()
+
     def _selected_count(self) -> int:
+        if self._focus_id() is not None:
+            return 1                                  # focused: one fast gauge
         _label, n = _COUNT_CHOICES[self._count_box.currentIndex()]
         return len(self._all_ids) if n == 0 else min(n, len(self._all_ids))
 
     def _selected_ids(self) -> list[int]:
+        fid = self._focus_id()
+        if fid is not None:
+            return [fid]
         return self._all_ids[: self._selected_count()]
 
     def _interval_ms(self) -> int:
@@ -176,6 +214,7 @@ class LiveDataScreen(Screen):
             self._obd_meta = {m.raw: (m.name, m.unit) for m in measures}
         else:
             self._all_ids = list(PARAMETERS)
+        self._populate_focus()
         self._rebuild_gauges()
         self._timer.start(self._interval_ms())
         self._emit_rate()
@@ -185,6 +224,15 @@ class LiveDataScreen(Screen):
 
     # -- controls ----------------------------------------------------------- #
     def _on_count_changed(self, _index: int) -> None:
+        self._rebuild_gauges()
+        if self._timer.isActive():
+            self._timer.setInterval(self._interval_ms())
+        self._emit_rate()
+
+    def _on_focus_changed(self, _index: int) -> None:
+        # A specific parameter overrides the count selector (and gives the fast
+        # single-gauge refresh); "(by count)" hands control back to it.
+        self._count_box.setEnabled(self._focus_id() is None)
         self._rebuild_gauges()
         if self._timer.isActive():
             self._timer.setInterval(self._interval_ms())
