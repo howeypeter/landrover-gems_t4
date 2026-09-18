@@ -60,6 +60,12 @@ NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"  # Pico -> host (notify)
 
 DEFAULT_NAME = "gems-pico"
 
+#: Per-scan window (a present adapter is found in ~1 s; this caps a miss), and
+#: the gap between rescans. The scan is retried until scan_timeout total elapses,
+#: so a transient "not advertising" window recovers instead of erroring.
+_SCAN_ATTEMPT_S = 4.0
+_RESCAN_GAP_S = 1.0
+
 
 class BleTransport(Transport):
     """Talk to the Pico BLE K-line adapter over a Nordic UART Service."""
@@ -137,41 +143,50 @@ class BleTransport(Transport):
 
         self._start_loop()
 
-        async def _connect() -> Any:
+        async def _find() -> Any:
             target = self._target
-            device = None
             # Address form "AA:BB:.." on Windows, or a name to scan for.
             if ":" in target and len(target.split(":")) == 6:
-                device = await BleakScanner.find_device_by_address(
-                    target, timeout=self._scan_timeout
+                return await BleakScanner.find_device_by_address(
+                    target, timeout=_SCAN_ATTEMPT_S
                 )
-            else:
-                # Match by name, tolerating a TRUNCATED advertised name: BLE
-                # shortens the local name to fit the 31-byte advert, so the Pico
-                # may advertise "gems-pic" for a target of "gems-pico". Accept a
-                # match when either name is a prefix of the other.
-                #
-                # find_device_by_filter STOPS as soon as the filter matches -
-                # so a present Pico connects in ~1 s instead of always waiting
-                # the full scan_timeout (discover() drained the whole window even
-                # when the device was seen immediately -> the "slow to connect").
-                t = target.lower()
+            # Match by name, tolerating a TRUNCATED advertised name: BLE shortens
+            # the local name to fit the 31-byte advert, so the Pico may advertise
+            # "gems-pic" for a target of "gems-pico". Accept a prefix match.
+            # find_device_by_filter STOPS as soon as the filter matches -> a
+            # present Pico is found in ~1 s.
+            t = target.lower()
 
-                def _match(d: Any, adv: Any) -> bool:
-                    names = [(d.name or "").lower(),
-                             (getattr(adv, "local_name", "") or "").lower()]
-                    return any(
-                        n and (n == t or n.startswith(t) or t.startswith(n))
-                        for n in names
-                    )
-
-                device = await BleakScanner.find_device_by_filter(
-                    _match, timeout=self._scan_timeout
+            def _match(d: Any, adv: Any) -> bool:
+                names = [(d.name or "").lower(),
+                         (getattr(adv, "local_name", "") or "").lower()]
+                return any(
+                    n and (n == t or n.startswith(t) or t.startswith(n))
+                    for n in names
                 )
+
+            return await BleakScanner.find_device_by_filter(_match, timeout=_SCAN_ATTEMPT_S)
+
+        async def _connect() -> Any:
+            import asyncio
+            import time as _time
+
+            # Retry the scan: BLE advertising is intermittent, and a Pico that
+            # just disconnected (or a Windows BLE hiccup) can miss the first scan
+            # window - a short rescan usually catches it, instead of a spurious
+            # "not found" the user has to retry by hand. Keeps a bounded total
+            # budget so a genuinely-absent adapter still fails reasonably fast.
+            deadline = _time.monotonic() + self._scan_timeout
+            device = None
+            while True:
+                device = await _find()
+                if device is not None or _time.monotonic() >= deadline:
+                    break
+                await asyncio.sleep(_RESCAN_GAP_S)   # let it resume advertising
             if device is None:
                 raise TransportError(
-                    f"BLE device {target!r} not found (is the Pico powered and "
-                    f"advertising as '{DEFAULT_NAME}', and in range?)"
+                    f"BLE device {self._target!r} not found (is the Pico powered "
+                    f"and advertising as '{DEFAULT_NAME}', and in range?)"
                 )
             client = BleakClient(device)
             await client.connect()
