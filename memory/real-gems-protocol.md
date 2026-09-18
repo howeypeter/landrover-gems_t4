@@ -682,6 +682,47 @@ per-session attempt budget; abort on `0x36`/`0x37`; power-cycle + wait between
 sessions; log every attempt. Diagnostic `$27` lockout is recoverable (power
 cycle + delay); it is not the immobiliser PIN.
 
+## ⭐ `$21` live-data map — bench sensor injection (2026-09-17, IN PROGRESS)
+The proprietary **`$21` (readDataByLocalId)** live measures on the 0xDA channel are
+being mapped by **injecting a known 0-5V on a known sensor pin and seeing which
+`$21` id moves**. Method (safe rig, after the Pico was killed injecting off its own
+rails — see `docs/adapter-hardware-improvements.md`): an **ISOLATED 0-5V source (a
+10k pot off a separate 5V) → 1kΩ series → grabber clip → the RED C1017 sensor pin**,
+pot ground on the bench common ground; the Pico is adapter-only. Tie the **L-line
+(C1017 pin 20 → K node / pin 23)** to open 0xDA. Tools: `bench/live_diff.py map`
+(snapshot $21 at pot min/mid/max, diff → which id climbs) then `watch <id>` (sweep
++ watch it live). `map` caches the ~100 responder ids (`live_responders.json`) so
+scans skip the ~156 silent ids.
+
+**⚠️ `$21` ids are a SEPARATE namespace from OBD PIDs** — `$21` id 0x11 = MAF has
+nothing to do with OBD Mode-01 PID 0x11 = Throttle. Don't conflate them.
+
+**CONFIRMED per-sensor `$21` ids (RED plug C1017):**
+| Sensor | pin | `$21` id | behaviour |
+|---|---|---|---|
+| Coolant (raw ADC) | 14 | **0x00** | rises with V; pin-specific (moves 0x00, not 0x01) |
+| Intake air temp (raw ADC) | 13 | **0x01** | rises with V; pin-specific (moves 0x01, not 0x00) |
+| Mass air flow | 16 | **0x11** | rises with V; pin-specific |
+
+**KEY STRUCTURAL FINDING:** the **low ids are a raw-ADC block, one id per physical
+input** (0x00=coolant channel, 0x01=IAT channel …) and are cleanly pin-specific.
+But the **processed/derived temperatures are SHARED**: `0x7B` (and `0x84`, `0x3C`)
+move for BOTH temp pins (13 AND 14) with similar magnitude, and NOT for MAF — so
+`0x7B` is a temperature-family/derived value, **NOT** a single sensor. (An earlier
+premature "coolant = 0x7B" was corrected by this: watch_7B swept 0-52 on pin 14,
+and the IAT map moved 0x7B too.) So: **raw ADC = per-pin reliable; processed temps
+= shared → need disambiguation.**
+
+**Sensor-behaviour tells (useful for ID):** fast sensors (throttle, MAF) track the
+pot INSTANTLY & linearly; NTC temps (coolant/IAT) INVERT (lower V = higher temp),
+**clamp ~2V** (off the plausible range), and **ramp slowly** (the ECU filters temp).
+Temp sensors also DON'T "hide" via fail-safe substitution when injected on the
+RIGHT pin — the earlier coolant null was the WRONG plug (black C1032 p14, unpopulated).
+
+**TODO (extend the map):** throttle (p15 RED — its `$21` id, expected ≠ 0x11), O2s
+(p8/17/33/34 RED, 0-1V only), fuel pressure (p30), disambiguate the 0x7B/0x84/0x3C
+temperature group. Raw captures: `bench/live_map.csv`, `bench/watch_*.csv` (gitignored).
+
 ## NOT yet mapped (the frontier)
 What's proven over the wire is only the **OBD-II emissions subset** (on 0x33). The
 fuller **proprietary GEMS/T4 diagnostics** — the ~108 T4 live measures, actuator
