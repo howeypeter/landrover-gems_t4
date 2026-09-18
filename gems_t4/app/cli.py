@@ -213,6 +213,37 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_api(args: argparse.Namespace) -> int:
+    """Serve the HTTP/WebSocket API over the Backend (the [api] extra).
+
+    A front-end-agnostic way in: same Backend the CLI/GUI use, exposed as JSON.
+    Localhost by default; the transport (BLE/USB/network) is chosen at runtime
+    via POST /api/connection, so the API starts on the virtual ECU.
+    """
+    try:
+        import uvicorn
+        from gems_t4.app.web import build_app
+    except ModuleNotFoundError:
+        render.console.print(
+            "[bold red]The API needs FastAPI + uvicorn.[/] "
+            "Install with: pip install gems_t4[api]"
+        )
+        return 1
+
+    app = build_app()
+    render.console.print(
+        f"[bold]gems_t4 API[/] at http://{args.host}:{args.port}  "
+        f"(docs: /docs) - Ctrl+C to stop."
+    )
+    if args.host in ("127.0.0.1", "localhost"):
+        render.console.print(
+            "[dim]Localhost only. Use --host 0.0.0.0 to allow other machines "
+            "(no auth yet - see the security backlog).[/]"
+        )
+    uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
+    return 0
+
+
 def _cmd_actuator(args: argparse.Namespace) -> int:
     state = actuators.STATE_ON if args.state == "on" else actuators.STATE_OFF
     try:
@@ -839,6 +870,16 @@ def build_parser() -> argparse.ArgumentParser:
                     help="bridge the USB Pico adapter on this serial port "
                          "instead of serving the virtual ECU")
     sp.set_defaults(func=_cmd_serve)
+
+    sp = sub.add_parser(
+        "api",
+        help="serve the HTTP/WebSocket API over the Backend (needs [api] extra)",
+    )
+    sp.add_argument("--host", default="127.0.0.1",
+                    help="bind address (default 127.0.0.1; 0.0.0.0 for the LAN)")
+    sp.add_argument("--port", type=int, default=8080,
+                    help="HTTP port (default 8080)")
+    sp.set_defaults(func=_cmd_api)
 
     sp = sub.add_parser(
         "kline",
