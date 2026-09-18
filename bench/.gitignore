@@ -1,3 +1,4 @@
 # Throwaway capture output from the bench probes - regenerable, not tracked.
 *.log
 *.csv
+live_responders.json

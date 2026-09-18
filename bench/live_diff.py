@@ -242,19 +242,51 @@ MAP_LEVELS = [
 ]
 
 
+def _resp_cache():
+    from pathlib import Path
+    return Path(__file__).with_name("live_responders.json")
+
+
+def load_responders():
+    """The ids that answered last time (cached), so even the FIRST scan skips
+    the ~156 silent ids. Returns a sorted id list, or None if no cache."""
+    import json
+    p = _resp_cache()
+    if not p.exists():
+        return None
+    try:
+        ids = sorted(int(x) for x in json.loads(p.read_text()))
+        return ids or None
+    except Exception:  # noqa: BLE001 - a bad cache just means full scan
+        return None
+
+
+def save_responders(ids):
+    import json
+    try:
+        _resp_cache().write_text(json.dumps(sorted(int(i) for i in ids)))
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def guided_map(s):
     names = [n for n, _ in MAP_LEVELS]
     print("Guided sensor mapping with your isolated 0-5V pot. For each pin I'll")
     print("snapshot $21 at " + ", ".join(names) + " and show each id's value at")
     print("every level. A real analog sensor climbs across the sweep; a flag snaps.")
     print("Inject ONLY on the one pin you're testing (0-5V, pot ground on the bench")
-    print(f"ground). {len(MAP_LEVELS)} snaps x ~30s each - HOLD the pot steady through each.\n")
+    print(f"ground). {len(MAP_LEVELS)} snaps - HOLD the pot steady through each.")
+    cached = load_responders()
+    if cached:
+        print(f"(using {len(cached)} cached responder ids - delete "
+              "live_responders.json to full-rescan.)")
+    print()
     while True:
-        label = ask("What are you testing? (e.g. 'C1017 p14 coolant'), Enter to quit: ").strip()
+        label = ask("What are you testing? (e.g. 'C1017 p14 RED coolant'), Enter to quit: ").strip()
         if not label:
             break
         snaps = {}
-        responders = None                        # first scan is full; then reuse
+        responders = load_responders()           # skip silent ids from the start
         for idx, (name, instr) in enumerate(MAP_LEVELS, 1):
             # fresh=True drains keystrokes buffered during the previous scan, so
             # this really waits for you to set the pot before snapshotting.
@@ -262,8 +294,9 @@ def guided_map(s):
                 "then press Enter to snapshot (keep holding until it finishes)...",
                 fresh=True)
             snaps[name] = snapshot(s, responders)
-            if responders is None:               # only the ids that answered
+            if responders is None:               # first ever run: learn + cache
                 responders = sorted(snaps[name])
+                save_responders(responders)
             print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
         base = snaps[names[0]]                   # compare against the first level (min)
