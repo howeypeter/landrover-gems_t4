@@ -18,7 +18,7 @@ import time
 from gems_t4.protocol.gems_secure import GemsSecureSession
 from gems_t4.transport.base import InitError, TransportError, TransportTimeout
 
-PACE_S = 0.12
+PACE_S = 0.03          # gap before each request (ECU keeps up fine at this rate)
 BACKOFF_S = [0.4, 0.8, 1.5]
 
 
@@ -84,24 +84,26 @@ def value_of(r):
     return (r[2:] if len(r) >= 2 and r[0] == 0x61 else r).hex().upper()
 
 
-def snapshot(s):
+def snapshot(s, ids=None):
+    """Read the given $21 ids (default all 00..FF). Pass the responders from a
+    prior full scan to poll ONLY those - skipping the ~156 silent ids roughly
+    halves the scan (and the time you have to hold the pot)."""
+    id_list = list(range(0x100)) if ids is None else list(ids)
+    total = len(id_list)
     out = {}
     t0 = time.time()
-    total = 0x100
-    for rid in range(total):
+    for done, rid in enumerate(id_list, 1):
         v = value_of(robust(s, bytes([0x21, rid])))
         if v is not None:
             out[rid] = v
-        done = rid + 1
         el = time.time() - t0
         rate = done / el if el else 0
         eta = (total - done) / rate if rate else 0
-        # in-place status line: percent, count, elapsed, ETA, hits so far
-        print(f"\r  scanning 21 00..FF  {done * 100 // total:3d}%  "
-              f"[{done:3d}/{total}]  {el:5.1f}s elapsed  ~{eta:4.0f}s left  "
+        print(f"\r  scanning $21 ({total} ids)  {done * 100 // total:3d}%  "
+              f"[{done:3d}/{total}]  {el:5.1f}s  ~{eta:4.0f}s left  "
               f"{len(out):3d} hits ", end="", flush=True)
-    print(f"\r  scan done: {len(out)} ids returned data in {time.time() - t0:.1f}s"
-          + " " * 20)
+    print(f"\r  scan done: {len(out)}/{total} ids returned data in "
+          f"{time.time() - t0:.1f}s" + " " * 20)
     return out
 
 
@@ -242,13 +244,16 @@ def guided_map(s):
         if not label:
             break
         snaps = {}
+        responders = None                        # first scan is full; then reuse
         for idx, (name, instr) in enumerate(MAP_LEVELS, 1):
-            # fresh=True drains keystrokes buffered during the previous ~30s scan,
-            # so this really waits for you to set the pot before snapshotting.
+            # fresh=True drains keystrokes buffered during the previous scan, so
+            # this really waits for you to set the pot before snapshotting.
             ask(f"  {idx}/{len(MAP_LEVELS)}  {instr}.\n        set it as above and HOLD, "
                 "then press Enter to snapshot (keep holding until it finishes)...",
                 fresh=True)
-            snaps[name] = snapshot(s)
+            snaps[name] = snapshot(s, responders)
+            if responders is None:               # only the ids that answered
+                responders = sorted(snaps[name])
             print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
         base = snaps[names[0]]                   # compare against the first level (min)
