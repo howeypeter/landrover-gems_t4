@@ -224,9 +224,9 @@ def watch_id(s, rid):
 # FIRST level is the baseline the others are compared against, so a real analog
 # channel shows as "changed", while ids unaffected by voltage stay put.
 MAP_LEVELS = [
-    ("min", "Hold the pot at MINIMUM (~0 V)"),
-    ("mid", "Hold the pot at the MIDDLE (~2.5 V)"),
+    ("mid", "RELEASE the pot to its centre (~2.5 V) - the easy one, no holding"),
     ("max", "Hold the pot at MAXIMUM (~5 V)"),
+    ("min", "Hold the pot at MINIMUM (~0 V)"),
 ]
 
 
