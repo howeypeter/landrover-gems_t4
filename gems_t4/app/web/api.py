@@ -252,6 +252,16 @@ def build_app(backend: Backend | None = None) -> FastAPI:
     def maps() -> dict:
         return {"maps": be().available_maps()}
 
+    # -- static front-end (built React app, if present) ----------------------- #
+    # `frontend/npm run build` outputs here; served at / so `gems_t4 api` hosts
+    # the UI too. Absent in a source checkout -> the API still runs headless.
+    import pathlib
+
+    static_dir = pathlib.Path(__file__).with_name("static")
+    if static_dir.is_dir():
+        from fastapi.staticfiles import StaticFiles
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="ui")
+
     return app
 
 

@@ -12,10 +12,10 @@ dependencies = [
 gui = ["PySide6>=6.6"]
 build = ["pyinstaller>=6.0"]
 ble = ["bleak>=0.22"]
-api = ["fastapi>=0.110", "uvicorn>=0.27"]   # HTTP/WebSocket API over the Backend
-all = ["PySide6>=6.6", "bleak>=0.22", "fastapi>=0.110", "uvicorn>=0.27"]
+api = ["fastapi>=0.110", "uvicorn>=0.27", "websockets>=12"]   # HTTP/WS API over the Backend
+all = ["PySide6>=6.6", "bleak>=0.22", "fastapi>=0.110", "uvicorn>=0.27", "websockets>=12"]
 dev = ["pytest>=8.0", "PySide6>=6.6", "pytest-qt>=4.2", "bleak>=0.22",
-       "fastapi>=0.110", "uvicorn>=0.27", "httpx>=0.27"]
+       "fastapi>=0.110", "uvicorn>=0.27", "websockets>=12", "httpx>=0.27"]
 
 [project.scripts]
 gems_t4 = "gems_t4.app.cli:main"
