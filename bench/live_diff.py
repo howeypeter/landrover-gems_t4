@@ -218,35 +218,37 @@ def watch_id(s, rid):
             print("  -> no movement: not this id, or the voltage didn't change.")
 
 
-# The voltage steps the wizard walks you through, in order. "rest" is the
-# baseline (nothing connected); the rest are held levels. Injecting several
-# levels lets a real analog sensor reveal itself: its value should climb
-# monotonically GND -> 3.3V -> 4.5V -> 5V. A flag only snaps between two values.
+# The steps the wizard walks you through, in order, using your ISOLATED 0-5V
+# pot injected on the sensor pin (NOT the Pico's rails). "rest" is the baseline
+# (pot disconnected / pin floating); then sweep the pot low -> mid -> high.
+# A real analog sensor's value climbs across the sweep; a flag only snaps.
+# Exact voltages don't matter for finding the id - only that it changes.
 MAP_LEVELS = [
-    ("rest", "Leave the pin UNTOUCHED (floating baseline)"),
-    ("GND",  "Jumper the pin to GROUND      (Pico pin 38, GND)"),
-    ("3.3V", "Jumper the pin to +3.3V       (Pico pin 36, 3V3 OUT)"),
-    ("4.5V", "Jumper the pin to +4.5V       (Pico pin 39, VSYS ~4.5-4.7V)"),
-    ("5V",   "Jumper the pin to +5V         (Pico pin 40, VBUS)"),
+    ("rest", "Disconnect the pot / leave the pin FLOATING (baseline)"),
+    ("min",  "Connect the pot and hold it at MINIMUM (~0 V)"),
+    ("mid",  "Hold the pot at the MIDDLE (~2.5 V)"),
+    ("max",  "Hold the pot at MAXIMUM (~5 V)"),
 ]
 
 
 def guided_map(s):
     names = [n for n, _ in MAP_LEVELS]
-    print("Guided sensor mapping. For each pin I'll snapshot $21 at several")
-    print("voltages - " + ", ".join(names) + " - and show each id's value at every")
-    print("level. A real analog sensor climbs across the levels; a flag just snaps.")
-    print(f"Change ONLY the one pin you're testing. {len(MAP_LEVELS)} snaps x ~30s each.\n")
+    print("Guided sensor mapping with your isolated 0-5V pot. For each pin I'll")
+    print("snapshot $21 at " + ", ".join(names) + " and show each id's value at")
+    print("every level. A real analog sensor climbs across the sweep; a flag snaps.")
+    print("Inject ONLY on the one pin you're testing (0-5V, pot ground on the bench")
+    print(f"ground). {len(MAP_LEVELS)} snaps x ~30s each - HOLD the pot steady through each.\n")
     while True:
-        label = ask("What are you testing? (e.g. 'C1017 p15 TPS'), Enter to quit: ").strip()
+        label = ask("What are you testing? (e.g. 'C1017 p14 coolant'), Enter to quit: ").strip()
         if not label:
             break
         snaps = {}
         for idx, (name, instr) in enumerate(MAP_LEVELS, 1):
             # fresh=True drains keystrokes buffered during the previous ~30s scan,
-            # so this really waits for you to change the wiring before snapshotting.
-            ask(f"  {idx}/{len(MAP_LEVELS)}  {instr}.\n        change the wiring now, "
-                "then press Enter to snapshot...", fresh=True)
+            # so this really waits for you to set the pot before snapshotting.
+            ask(f"  {idx}/{len(MAP_LEVELS)}  {instr}.\n        set it as above and HOLD, "
+                "then press Enter to snapshot (keep holding until it finishes)...",
+                fresh=True)
             snaps[name] = snapshot(s)
             print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
