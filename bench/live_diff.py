@@ -133,17 +133,27 @@ def ask(prompt, fresh=False):
 
 
 def log_map(label, ids, level_names, snaps):
-    """Append one row per moved id, with its value at every level tested."""
+    """Append one row per moved id, with its value at every level tested.
+
+    If the existing file's header doesn't match the current level order (e.g.
+    the levels were reordered between runs), the old file is rotated aside so
+    rows never land under a mismatched header - the misalignment that made a
+    prior live_map.csv label mid/max/min columns as min/mid/max."""
     import csv
     from datetime import datetime
     from pathlib import Path
     ts = datetime.now().isoformat(timespec="seconds")
+    header = ["time", "label", "id"] + level_names
     path = Path(__file__).with_name("live_map.csv")
+    if path.exists():
+        first = path.read_text(encoding="utf-8").splitlines()[:1]
+        if first and first[0].split(",") != header:
+            path.rename(path.with_name(f"live_map.{ts.replace(':', '')}.csv"))
     new = not path.exists()
     with open(path, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         if new:
-            w.writerow(["time", "label", "id"] + level_names)
+            w.writerow(header)
         if not ids:
             w.writerow([ts, label, "(none moved)"] + [""] * len(level_names))
         for i in ids:
