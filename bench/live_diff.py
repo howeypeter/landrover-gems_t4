@@ -219,15 +219,14 @@ def watch_id(s, rid):
 
 
 # The steps the wizard walks you through, in order, using your ISOLATED 0-5V
-# pot injected on the sensor pin (NOT the Pico's rails). "rest" is the baseline
-# (pot disconnected / pin floating); then sweep the pot low -> mid -> high.
-# A real analog sensor's value climbs across the sweep; a flag only snaps.
-# Exact voltages don't matter for finding the id - only that it changes.
+# pot injected on the sensor pin (NOT the Pico's rails). Just sweep the pot
+# min -> mid -> max; the id that climbs across those three is the sensor. The
+# FIRST level is the baseline the others are compared against, so a real analog
+# channel shows as "changed", while ids unaffected by voltage stay put.
 MAP_LEVELS = [
-    ("rest", "Disconnect the pot / leave the pin FLOATING (baseline)"),
-    ("min",  "Connect the pot and hold it at MINIMUM (~0 V)"),
-    ("mid",  "Hold the pot at the MIDDLE (~2.5 V)"),
-    ("max",  "Hold the pot at MAXIMUM (~5 V)"),
+    ("min", "Hold the pot at MINIMUM (~0 V)"),
+    ("mid", "Hold the pot at the MIDDLE (~2.5 V)"),
+    ("max", "Hold the pot at MAXIMUM (~5 V)"),
 ]
 
 
@@ -252,9 +251,9 @@ def guided_map(s):
             snaps[name] = snapshot(s)
             print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
-        base = snaps["rest"]
-        levels = names[1:]                       # the held voltages (not rest)
-        # An id "moved" if it differs from rest at any held level.
+        base = snaps[names[0]]                   # compare against the first level (min)
+        levels = names[1:]                       # the remaining levels (mid, max)
+        # An id "moved" if it differs from the min level at mid or max.
         moved = sorted({i for n in levels for i, a, b in changes(base, snaps[n])})
 
         print(f"\n  --- result for '{label}' ---")
