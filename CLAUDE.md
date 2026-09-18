@@ -963,6 +963,21 @@ up):**
 
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
+- **Modern web front-end (React) over the API.** Decided 2026-09-17: build a
+  **browser-accessible, modern UI** (NOT the Win98 styling — that's the GUI's job)
+  talking to the new HTTP/WebSocket API. **The API layer is DONE** (`gems_t4 api`,
+  `gems_t4/app/web/`, `[api]` extra — FastAPI over the same `Backend`; see Build
+  status). The front-end is the remaining piece. Agreed stack: **React + Vite +
+  TypeScript + Tailwind + shadcn/ui** (or Mantine), gauges via
+  `react-gauge-component`/Recharts. Node is a BUILD-time tool only — the shipped
+  app is static files **served by FastAPI**, browser talks HTTP/WS to Python; no
+  Electron, no Node runtime. Lives in a `frontend/` dir (its own package.json);
+  built `dist/` served by the API. Phased: (1) connection + live-data dashboard
+  (throttle gauge over the WebSocket) → (2) fault codes / actuators → (3) coding /
+  immobiliser / maps / toolbox parity. **Why an API, not raw TCP-to-Pico:** the
+  Pico is a dumb timed pipe (host-protocol frames only); ALL GEMS/OBD/KWP protocol
+  intelligence is in Python. A browser can't do raw TCP anyway (only HTTP/WS), so
+  the Python API is required as the protocol-aware middle layer.
 - **⚠️ SECURITY: the BLE adapter link is UNAUTHENTICATED (add an app-layer gate).**
   Flagged by the user 2026-09-16 (not urgent). The Pico's BLE firmware advertises
   an open **Nordic UART Service** as `gems-pico` with **no pairing, no bonding, no
