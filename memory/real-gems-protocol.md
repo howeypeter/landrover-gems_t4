@@ -17,6 +17,12 @@ reverse-engineered protocol — use it (not the stylized KWP format in
   (the other DLC pin) — both idle high through the pull-up, so idle voltage does
   NOT tell them apart; only which one *answers* an init does. (C1033 18-way black
   = power/ground: pin 7 main +12, pin 8 ignition +12, grounds 5/9/10/16.)
+  **✅ RAVE-CONFIRMED (2026-09-19):** the Disco-1 `lj` SFI-V8 NAS circuit
+  (`etlj970x.pdf` p9) wires the OBD-II DLC (X318) to ECM **C1017 p23 = WLG =
+  K-line** and **C1017 p20 = WK = L-line** — exactly our hardware finding. (SM001
+  listed both as "DLC K/L line" without splitting; RAVE splits them.) The C1033
+  p7/p8 power labels are still meter-verify (SM001: p7=MFI load relay, p8=satellite
+  fuse box). See `docs/rave-cross-reference.md`.
 - **Init:** 5-baud **slow** init, address **0x33** (the tool's old default 0x10
   was a wrong placeholder). ECU replies `0x55` sync + keybytes **0x08 0x08**
   (standard ISO 9141-2).
@@ -711,19 +717,27 @@ nothing to do with OBD Mode-01 PID 0x11 = Throttle. Don't conflate them.
 | Right O2 | 33 | **0x19** | 19->357 |
 | Left O2 post-cat | 17 | **0x1A** | 21->360 |
 | Right O2 post-cat | 8 | **0x1B** | 15->658 (needed >1.5V to swing; confirmed 2026-09-18) |
-| A/C request (switch) | 28 | **0x06** raw + **0x22** bit | switch, confirmed 2026-09-18 (see below) |
+| A/C evap/press switch | 28 | **0x06** raw + **0x22** bit13 | switch, confirmed 2026-09-18 |
+| A/C request switch | 29 | **0x22** bit6 only | switch, confirmed 2026-09-19 (no raw id) |
+| Heated front screen | 21 | **0x16** raw + **0x22** bit14 | switch, confirmed 2026-09-19 (0x0F=noise) |
 
-**A/C switch pin 28 = 0x06 (confirmed 2026-09-18 via `switch` mode + `watch 06`).**
-Unlike the analog sensors, pin 28 is a **switch-to-ground** input, mapped by
-grounding vs floating (NOT voltage injection). Two ids track it cleanly:
-- **`0x06`** = the raw input: **FLOAT → 0xFF** (ECM pull-up, switch open) / **GND →
-  0x00** (switch closed). `watch 06` snapped between exactly those two values 6×,
-  never an intermediate — textbook switch signature (an analog channel would sweep
-  the middle).
-- **`0x22`** = a decoded **switch-status bitmap** byte: pin 28's state = **bit 5 of
-  the high byte** (`7FC0` float → `5FC0` grounded). The other switch inputs (pins
-  29, 21) should surface as *other bits of this same `0x22` byte* — map each with
-  `switch` and record which bit flips, to decode the whole byte.
+**Switch inputs (pins 28/29/21) — confirmed 2026-09-18/19 via `switch` mode +
+RAVE.** These are **switch-to-ground** inputs (map by grounding vs floating, NOT
+voltage injection). Two ways they show:
+- A **dedicated raw id** that flips **FLOAT=0xFF / GND=0x00** full-scale: pin 28 =
+  **0x06**, pin 21 = **0x16**. (`watch` shows a clean 2-value snap, never an
+  intermediate.) Pin 29 has **no** dedicated raw id — it shows only in the bitmap.
+- **`0x22` = a 16-bit switch-status bitmap** (float = `7FC0`, all inputs pulled
+  up/open). Grounding a switch (closing it) **clears that switch's bit**:
+  **pin 28 → bit 13** (`5FC0`), **pin 21 → bit 14** (`3FC0`), **pin 29 → bit 6**
+  (`7F80`).
+- **`0x0F` is NOISE for switch tests**, not pin 21: it jitters 0↔1 regardless of
+  float/ground and only coincidentally read 00/01/00 at three snapshots — the same
+  ±1 jitter trap as `0x2B`. `switch` mode now ranks by swing magnitude (full-scale
+  wins; ±1 flagged as noise) so this can't mislead again.
+- **RAVE (`lj` SFI-V8 NAS) confirms the pin functions**: p28 = A/C evap-temp
+  (X101) + dual-pressure (X102) switch chain; p29 = front A/C request switch
+  (X225); p21 = heated front screen. Full pin-by-pin: `docs/rave-cross-reference.md`.
 
 **Blocks (contiguous by function):** **O2 voltages = 0x18/0x19/0x1A/0x1B** (four
 sensors); **scaled measures** throttle 0x10 / MAF 0x11 (adjacent) + fuel-press 0x05
@@ -753,13 +767,12 @@ pot INSTANTLY & linearly; NTC temps (coolant/IAT) INVERT (lower V = higher temp)
 Temp sensors also DON'T "hide" via fail-safe substitution when injected on the
 RIGHT pin — the earlier coolant null was the WRONG plug (black C1032 p14, unpopulated).
 
-**TODO (extend the map):** the remaining switch pins — A/C 2nd switch (p29),
-heated screen (p21) — by **ground-vs-float** using `live_diff switch` (added
-2026-09-18: snapshots float→ground→float and flags the id that toggles AND returns),
-NOT voltage injection; watch which **`0x22`** bit each flips. (**p28 A/C = 0x06 /
-0x22 bit5 — DONE.**) The pulse/AC channels (knock 10/11/12, vehicle-speed 27) still
-need a square-wave injector (not built). Raw captures: `bench/live_map.csv`,
-`bench/watch_*.csv` (gitignored).
+**TODO (extend the map):** switch pins 28/29/21 **DONE** (see table + bitmap
+above). Remaining = the **pulse/AC channels**: knock L=C1017 p11 / R=p12 (shield
+p10), CKP=C1033 p12, **vehicle-speed = C1032 p27** (RAVE — NOT C1017 p27 as SM001
+had it) — all need a **square-wave injector** (not built). Raw captures:
+`bench/live_map.csv`, `bench/watch_*.csv` (gitignored). Full RAVE pin-by-pin
+cross-reference (all confirmed): **`docs/rave-cross-reference.md`**.
 
 **⭐ RAVE cross-check (2026-09-18) — use the Disco-1 manual, and A/C pins are
 switch-to-GROUND.** RAVE is available locally (NOT in the repo — LR IP): `~/Downloads/

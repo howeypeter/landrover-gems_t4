@@ -55,11 +55,11 @@ So the **red plug = C1017 = C507**; the pin tables below use the SM001 codes.
 | 16 | Mass Air Flow Sensor |
 | 17 | Left Heated Oxygen Sensor (Post Catalyst) |
 | 18 | Neutral Sense Diode |
-| 20 | Data Link Connector (OBD-II) — K/L line |
+| 20 | Data Link Connector (OBD-II) — **L-line** (RAVE `lj`: WK) |
 | 21 | Heated Front Screen |
-| 23 | Data Link Connector (OBD-II) — K/L line |
+| 23 | Data Link Connector (OBD-II) — **K-line** (RAVE `lj`: WLG) |
 | 26 | Theft Alarm Unit |
-| 27 | Vehicle Speed Output (Instruments) |
+| 27 | Vehicle Speed Output — ⚠️ RAVE `lj` routes VSS to **C1032 p27**, not here; meter-verify |
 | 28 | Air Conditioning Switches |
 | 29 | Air Conditioning Switches |
 | 30 | Fuel Pressure Sensor |
@@ -70,7 +70,9 @@ So the **red plug = C1017 = C507**; the pin tables below use the SM001 codes.
 | 36 | Multiple Sensor Connection |
 
 > NAS K-line = pin 23, non-NAS (UK/Euro) = pin 20 (confirmed on hardware; see
-> `memory/real-gems-protocol.md`).
+> `memory/real-gems-protocol.md`). **RAVE `lj` (Disco-1) confirms C1017 p23=WLG=
+> K-line and p20=WK=L-line** — see `docs/rave-cross-reference.md` for the full
+> pin-by-pin cross-reference against this table (all sensor/switch pins matched).
 
 ## C1032 — Black 36-way (OUTPUTS / actuators) ← actuator testing lives here
 

@@ -372,30 +372,58 @@ def guided_switch(s):
             print(f"       [{name}] {len(snaps[name])} ids returned data.")
 
         f1, gnd, f2 = (snaps[n] for n in names)
+
+        def mag(i):
+            """Magnitude of the float->ground swing for id i (first word as int).
+            A real switch input flips full-scale (FF<->00, span ~255); a jitter
+            channel like 0x0F/0x2B only wobbles +/-1 and must NOT win."""
+            def val(d):
+                v = d.get(i)
+                if not v:
+                    return None
+                return int(v[:4], 16) if len(v) >= 4 else int(v, 16)
+            a, b = val(f1), val(gnd)
+            return abs(a - b) if (a is not None and b is not None) else 0
+
         # toggled: differs between float and ground.
         toggled = {i for i, a, b in changes(f1, gnd)}
         # clean switch: toggled AND the two float readings agree (returned to rest).
-        clean = sorted(i for i in toggled if f1.get(i) == f2.get(i))
+        clean = sorted((i for i in toggled if f1.get(i) == f2.get(i)),
+                       key=mag, reverse=True)
         noisy = sorted(i for i in toggled if i not in clean)
+        # Split clean into a real full-scale flip vs +/-1 jitter that only
+        # coincidentally returned (the 0x0F trap): span >= 8 counts as real.
+        strong = [i for i in clean if mag(i) >= 8]
+        weak = [i for i in clean if mag(i) < 8]
 
         print(f"\n  --- result for '{label}' ---")
         if not toggled:
             print("  no ids toggled - check the grabber contact / right pin / RED connector,")
             print("  or the input may not be a simple switch-to-ground (try 'map').")
         else:
-            hdr = f"  {'id':<6}" + "".join(f"{n:<10}" for n in names) + "verdict"
+            hdr = f"  {'id':<6}" + "".join(f"{n:<10}" for n in names) + "swing  verdict"
             print(hdr)
-            for i in clean + noisy:
+            for i in strong + weak + noisy:
                 row = "".join(f"{(snaps[n].get(i) or '-'):<10}" for n in names)
-                verdict = "CLEAN toggle (returned)" if i in clean else "changed, did NOT return"
-                print(f"  0x{i:02X}  {row}{verdict}")
-            if clean:
-                print(f"  >>> SWITCH id for '{label}': 0x{clean[0]:02X}"
-                      + (f" (also {', '.join(f'0x{i:02X}' for i in clean[1:])})" if len(clean) > 1 else ""))
-                print("      confirm live with:  watch %02X  (should snap between two values)" % clean[0])
+                if i in strong:
+                    verdict = "CLEAN full-scale toggle"
+                elif i in weak:
+                    verdict = "+/-1 jitter (likely NOISE, e.g. 0x0F/0x2B)"
+                else:
+                    verdict = "changed, did NOT return"
+                print(f"  0x{i:02X}  {row}{mag(i):<5d}  {verdict}")
+            if strong:
+                print(f"  >>> SWITCH raw id for '{label}': 0x{strong[0]:02X} (swing {mag(strong[0])})"
+                      + (f" (also {', '.join(f'0x{i:02X}' for i in strong[1:])})" if len(strong) > 1 else ""))
+                print("      confirm live with:  watch %02X  (should snap FF<->00)" % strong[0])
+                print("      also check 0x22 (switch-status bitmap): the grounded switch")
+                print("      CLEARS one bit - note which bit for this pin.")
+            elif 0x22 in toggled:
+                print("  >>> no dedicated raw id, but 0x22 (switch bitmap) moved - this switch")
+                print("      shows ONLY as a cleared bit in 0x22 (like pin 29). Note the bit.")
             else:
-                print("  >>> ids changed but none returned to their float value - likely")
-                print("      noise/drift, not the switch. Re-run and hold each state steady.")
+                print("  >>> only +/-1 jitter / non-returning changes - likely noise, not the")
+                print("      switch. Re-run holding each state steady; ignore 0x0F/0x2B.")
         fn = log_map(label, clean + noisy, names, snaps)
         print(f"  logged to {fn}\n")
 

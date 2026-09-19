@@ -81,16 +81,16 @@ detail + method in `memory/real-gems-protocol.md`.
 | ✅ | 17 | Left O2 post-cat | `0x1A` |
 | ✅ | 8 | Right O2 post-cat | `0x1B` (needed >1.5V to swing) |
 | — | 32 | (O2 heater — output, no voltage id) | n/a |
-| ✅ | 28 | A/C request (switch) | `0x06` (raw: FLOAT=FF / GND=00) — also bit5 hi-byte of `0x22` |
-| ◻ | 29 | A/C (2nd switch) | use `switch` (ground vs float); watch `0x22` bits |
-| ◻ | 21 | Heated front screen | use `switch` (ground vs float); watch `0x22` bits |
+| ✅ | 28 | A/C evap/pressure switch | `0x06` (raw FF/00) + `0x22` **bit13** |
+| ✅ | 29 | A/C request switch | `0x22` **bit6** only (no dedicated raw id) |
+| ✅ | 21 | Heated front screen | `0x16` (raw FF/00) + `0x22` **bit14** (`0x0F` = noise, not it) |
 | ⛔ | 10/11/12 | Knock (AC piezo) | needs square-wave injector |
 | ⛔ | 27 | Vehicle speed (output/pulse) | needs square-wave injector |
 
 **Blocks:** O2 voltages `0x18-0x1B`; scaled measures throttle `0x10`/MAF `0x11`
 /fuel-press `0x05`; raw-ADC temps `0x00`/`0x01`/`0x15`. **Switch-status bitmap
-`0x22`:** the decoded digital-input byte — a switch's state shows as a single bit
-(pin 28 = bit 5 of the high byte: `7FC0` float → `5FC0` grounded). Map the other
-switches (29, 21) with `switch` and note which `0x22` bit each one flips.
+`0x22`:** a 16-bit pull-up switch word (float=`7FC0`, all open); grounding a
+switch **clears its bit**: pin 28→bit13 (`5FC0`), pin 21→bit14 (`3FC0`), pin
+29→bit6 (`7F80`). RAVE-confirmed (see `docs/rave-cross-reference.md`).
 **Noise (ignore):** `0x2B` and idle O2 `0x19-0x1B` jitter (±1 last nibble) appear
 in EVERY run - the real id is the one with a big monotonic swing.
