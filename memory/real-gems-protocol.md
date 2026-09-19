@@ -740,9 +740,29 @@ pot INSTANTLY & linearly; NTC temps (coolant/IAT) INVERT (lower V = higher temp)
 Temp sensors also DON'T "hide" via fail-safe substitution when injected on the
 RIGHT pin — the earlier coolant null was the WRONG plug (black C1032 p14, unpopulated).
 
-**TODO (extend the map):** throttle (p15 RED — its `$21` id, expected ≠ 0x11), O2s
-(p8/17/33/34 RED, 0-1V only), fuel pressure (p30), disambiguate the 0x7B/0x84/0x3C
-temperature group. Raw captures: `bench/live_map.csv`, `bench/watch_*.csv` (gitignored).
+**TODO (extend the map):** the switch pins — A/C (p28/29), heated screen (p21) —
+by **ground-vs-float** (see below), NOT voltage injection; and the pulse/AC channels
+(knock 10/11/12, vehicle-speed 27) need a square-wave injector (not built).
+Raw captures: `bench/live_map.csv`, `bench/watch_*.csv` (gitignored).
+
+**⭐ RAVE cross-check (2026-09-18) — use the Disco-1 manual, and A/C pins are
+switch-to-GROUND.** RAVE is available locally (NOT in the repo — LR IP): `~/Downloads/
+rave/rave/pdf/<model>/` + a section INDEX at `docs/rave-index.md` (gitignored) so we
+don't re-scan PDFs. **Model folders:** `lj` = **Discovery 1 (this vehicle)**, `lp` =
+Range Rover P38, `lt` = Discovery 2, `ld` = Defender, etc. **Always use `lj` for the
+Disco-1** (I first pulled the P38 `lp` A/C circuit by mistake — its connector `C0637`
+and pins don't apply here).
+- On the **Disco-1 (`lj`, SFI-V8 NAS)** RAVE names the ECM connector **C1017** — it
+  **matches SM001** (SM001 fitment includes "Discovery V8 NAS"), so the SM001 pinout
+  is CONFIRMED for our vehicle. (The earlier "SM001 vs RAVE mismatch" was really
+  P38-vs-Disco1; resolved.)
+- **A/C pins are switch-to-GROUND sense lines** (not 5V/12V-driven): **C1017 p29 (PB)**
+  → front A/C switch (X225) → blower/fan switches → **ground (E200)**; **C1017 p28 (YB)**
+  → A/C evaporator-temp switch (X101, trips 0°C) → dual-pressure switch (X102, >32bar/
+  <2.07bar) → back. The ECM pulls the pin up internally and reads A/C-requested when
+  the switch chain **closes to ground**. So on the bench, map p28/p29 by **grounding
+  vs floating** the pin (live_diff `map` with min=grounded, max=floating), NOT by
+  injecting a voltage. (Source: `lj/etlj970x.pdf` p49, "SFI-V8 NAS".)
 
 ## NOT yet mapped (the frontier)
 What's proven over the wire is only the **OBD-II emissions subset** (on 0x33). The
