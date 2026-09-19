@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { liveSocket, type Measure } from "../api";
 import { rangeFor } from "../ranges";
 import Gauge from "./Gauge";
+import MisfireChart from "./MisfireChart";
+
+const isMisfireCyl = (name: string) => /^Misfire count cyl \d$/.test(name);
 
 // Measures where a high reading isn't "worse", so the gauge stays a calm
 // neutral colour instead of the green/amber/red threshold ramp.
@@ -43,7 +46,12 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
   const numeric = measures.filter((m) => typeof m.value === "number");
   // Focus filters by NAME (unique + stable). The id can repeat across the
   // stylized virtual measures, so name is the safe selector.
-  const shown = focus ? numeric.filter((m) => m.name === focus) : numeric;
+  const focused = focus ? numeric.filter((m) => m.name === focus) : [];
+  // In the "all" view the 8 per-cylinder misfire counters collapse into one
+  // bar chart instead of 8 near-identical gauges.
+  const misfire = numeric.filter((m) => isMisfireCyl(m.name));
+  const gridGauges = focus ? focused : numeric.filter((m) => !isMisfireCyl(m.name));
+  const shown = gridGauges;
 
   return (
     <div>
@@ -92,6 +100,12 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
               />
             );
           })}
+        </div>
+      )}
+
+      {!focus && misfire.length > 0 && (
+        <div className="mt-4">
+          <MisfireChart measures={misfire} />
         </div>
       )}
     </div>

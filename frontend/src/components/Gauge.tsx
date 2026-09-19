@@ -48,7 +48,11 @@ export default function Gauge({ label, value, unit, min, max, neutral }: Props) 
           <path d={arc(c, c, r, START, end)} fill="none" stroke={stroke} strokeWidth={12} strokeLinecap="round" />
         )}
         <text x={c} y={c - 4} textAnchor="middle" className="fill-neutral-100" style={{ fontSize: 26, fontWeight: 700 }}>
-          {Number.isFinite(value) ? (Math.abs(value) >= 100 ? Math.round(value) : value.toFixed(1)) : "--"}
+          {!Number.isFinite(value)
+            ? "--"
+            : Number.isInteger(value)
+              ? value
+              : value.toFixed(1)}
         </text>
         <text x={c} y={c + 16} textAnchor="middle" className="fill-neutral-400" style={{ fontSize: 12 }}>
           {unit}
