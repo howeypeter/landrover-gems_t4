@@ -35,7 +35,14 @@ def sections(reader):
     out, prev, start, first_title = [], None, None, None
     for i, p in enumerate(reader.pages):
         t = title_of(p.extract_text() or "")
-        key = re.sub(r"\s+[A-Z]\d{1,2}$", "", t).strip() if t else ""
+        # Normalise for grouping: drop dot-leaders + trailing page num, then the
+        # section code (A3/K2..) whose spacing varies between even/odd pages, so
+        # consecutive pages of one section collapse into a single range.
+        if t:
+            key = re.sub(r"\s*\.(\s*\.)+\s*\d*\s*$", "", t)
+            key = re.sub(r"\s*[A-Z]\d{1,2}\s*$", "", key).strip()
+        else:
+            key = ""
         if key != prev:
             if prev is not None:
                 out.append((first_title, start + 1, i))
