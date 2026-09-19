@@ -982,18 +982,22 @@ up):**
   Do not start until picked up.
 - **Reconstruct the full VIN from the last-6 (+ a decode table).** Idea logged
   2026-09-19. The module stores only the VIN **last-6** (unique serial); for a
-  *known* vehicle the first **11** chars are fixed/derivable (WMI `SAL`, model
-  `LJ`=Discovery, wheelbase `G`=100″, body, engine `M`/`J`/`1`/`2`, gearbox
-  `4`/`8` for NAS auto/manual, year `T/V/W/X`=96–99, plant `A`), so **full VIN ≈
-  derived prefix + read last-6**. Full decode table, a worked Disco-1 template,
-  the caveats (**NAS positions differ — verify vs the plate**; no self-check
-  digit), and a build sketch (pure `gems_t4/gems/vin.py` `decode_vin` /
-  `reconstruct_vin`, surfaced in the Toolbox with a "reconstructed, verify"
-  banner) all live in **`docs/vin-decode.md`**. ⚠️ **Depends on sourcing the
+  *known* vehicle the first **11** chars are fixed/derivable, so **full VIN ≈
+  derived prefix + read last-6**. **The user's truck is NAS** — use the **NAS
+  (US/Canada) scheme**, which is *structurally different* from the ROW/UK table
+  (different field→position mapping, not just codes) AND **has a check digit at
+  position 9**, so a reconstruction is **self-validating** (pos 9 is computed via
+  the NHTSA algorithm, not guessed). Fixed NAS stem for a federal Disco-1 GEMS 4.0
+  auto = **`SALJY124`** (pos 1–8: SAL·J Discovery·Y federal[`N`=California '95–96]·
+  1 4-dr wagon·2 4.0V8[`4`=4.6]·4 ZF auto[`8`=manual]), then computed check digit
+  + year `T/V/W`(96–98) + plant `A` + last-6. Full NAS + ROW tables, worked
+  template, check-digit algorithm, and a build sketch (pure `gems_t4/gems/vin.py`:
+  `check_digit`/`validate_vin`/`decode_vin`/`reconstruct_vin`, Toolbox surfacing
+  with a "reconstructed — verify vs plate" banner) all in **`docs/vin-decode.md`**
+  (NAS source = Wikibooks; ROW = user table). ⚠️ **Depends on sourcing the
   last-6:** on the user's Disco-1 the **ECM does NOT hold it** (`22 04 C4` →
   unavailable) — it's in the **Lucas 10AS**, so this rides the [EKA read from the
-  Lucas 10AS] item. Present any reconstruction as an identification aid only,
-  never as proof of identity. Not started; do when picked up.
+  Lucas 10AS] item. Identification aid only, never proof of identity. Not started.
 
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
