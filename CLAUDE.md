@@ -980,11 +980,15 @@ up):**
   it likely needs the same manufacturer channel we're still trying to open (the
   L-line experiment) plus security-access ($27). See memory/real-gems-protocol.md.
   Do not start until picked up.
-- **Reconstruct the full VIN from the last-6 (+ a decode table).** ◑ **Helper
-  BUILT 2026-09-19** (`gems_t4/gems/vin.py` + `tests/test_vin.py`, 10 tests:
-  `check_digit`/`validate_vin`/`model_year`/`decode_vin`/`reconstruct_vin`,
-  NAS-scheme, self-validating check digit). **Remaining:** source the last-6 (the
-  10AS item) + surface in the Toolbox (web+GUI) with a "verify vs plate" banner.
+- **Reconstruct the full VIN from the last-6 (+ a decode table).** ◑ **Helper +
+  web Toolbox BUILT 2026-09-19.** `gems_t4/gems/vin.py` + `tests/test_vin.py`
+  (10 tests: `check_digit`/`validate_vin`/`model_year`/`decode_vin`/
+  `reconstruct_vin`, NAS-scheme, self-validating check digit) + API
+  `POST /api/vin/reconstruct` & `GET /api/vin/decode` + a **web Toolbox card**
+  (pick engine/gearbox/emissions/year, enter last-6 → assembled VIN + validity +
+  decode + "verify vs plate" banner; browser-verified). **Remaining:** auto-fill
+  the last-6 once it's readable (the 10AS item — user types it today); optional
+  parity card in the PySide6 GUI Toolbox.
   Idea logged 2026-09-19. The module stores only the VIN **last-6** (unique serial); for a
   *known* vehicle the first **11** chars are fixed/derivable, so **full VIN ≈
   derived prefix + read last-6**. **The user's truck is NAS** — use the **NAS

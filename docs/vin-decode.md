@@ -163,11 +163,16 @@ tests, incl. the §3 vectors). Implemented:
   **computes** the check digit (e.g. `("SALJY124","V","123456")` → a validating
   17-char VIN).
 
-⬜ **TODO (when the last-6 can be sourced):** surface it in the Toolbox (web +
-GUI) — show the read last-6, the derived prefix, the computed check digit, the
-assembled VIN with a "reconstructed — verify vs plate" banner, and ✅/❌ from
-`validate_vin`. The last-6 comes from the **[EKA read from the Lucas 10AS]** work
-(Disco 1) or secure ECM coding where a variant stores it (`gems_t4 kline secure`).
+✅ **Web Toolbox surfacing DONE (2026-09-19):** a "VIN Reconstruction
+(Discovery 1)" card — pick engine/gearbox/emissions/year, enter the last-6, and
+it assembles the full VIN, computes+validates the check digit, and shows the
+decoded fields with a "reconstructed — verify vs plate" banner. Endpoints
+`POST /api/vin/reconstruct` + `GET /api/vin/decode` (delegating to `vin.py`).
+
+⬜ **TODO:** (a) auto-fill the last-6 once it can be **read** — via the **[EKA
+read from the Lucas 10AS]** work (Disco 1) or secure ECM coding where a variant
+stores it (`gems_t4 kline secure`); today the user types it. (b) Optional: the
+same card in the **PySide6 GUI** Toolbox for parity.
 
 Original API sketch (as built):
 
