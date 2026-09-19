@@ -63,7 +63,7 @@ def test_live_pid_filter(client: TestClient) -> None:
     # path). On the virtual ECU the filter is by local id; on the real ECU by
     # OBD PID - here we just prove the filter is applied, not the id semantics.
     full = client.get("/api/live").json()["measures"]
-    one = client.get("/api/live", params={"pid": "0C"}).json()["measures"]
+    one = client.get("/api/live", params={"pid": "00"}).json()["measures"]
     assert 0 < len(one) < len(full)
 
 
@@ -84,7 +84,7 @@ def test_actuators_listed(client: TestClient) -> None:
 
 
 def test_live_stream_websocket(client: TestClient) -> None:
-    with client.websocket_connect("/api/live/stream?pid=0C&hz=8") as ws:
+    with client.websocket_connect("/api/live/stream?pid=00&hz=8") as ws:
         msg = ws.receive_json()
         assert "measures" in msg and msg["measures"]
 

@@ -97,7 +97,7 @@ def test_read_methods_autoconnect():
     """GUI_INTERFACES.md: 'read_* auto-connect if needed'."""
     b = Backend("healthy")
     assert not b.connected
-    measures = b.read_live([0x01])
+    measures = b.read_live([0x00])
     assert b.connected
     assert len(measures) == 1
 
@@ -109,7 +109,7 @@ def test_read_live_all_and_selected():
     b = Backend("healthy")
     all_measures = b.read_live()
     assert len(all_measures) == 40, "CLAUDE.md: '40 live-data params'"
-    two = b.read_live([0x01, 0x02])
+    two = b.read_live([0x00, 0x40])
     assert [m.name for m in two] == ["Coolant temperature", "Engine speed"]
     assert two[0].unit == "degC"
     assert two[1].unit == "rpm"
@@ -119,7 +119,7 @@ def test_read_live_all_and_selected():
 def test_coolant_scenario_live_anomaly():
     """GUI_INTERFACES.md: '\"coolant_sensor\" sets P0118 with coolant reading -40'."""
     b = Backend("coolant_sensor")
-    (coolant,) = b.read_live([0x01])
+    (coolant,) = b.read_live([0x00])
     assert coolant.value == -40.0
     b.disconnect()
 
@@ -155,10 +155,10 @@ def test_scenario_driven_actuator_refusal():
 
 def test_tick_advances_the_warmup_curve():
     b = Backend("healthy")
-    (before,) = b.read_live([0x01])
+    (before,) = b.read_live([0x00])
     assert before.value == 85.0  # nominal cold-ish baseline
     b.tick(5.0)
-    (after,) = b.read_live([0x01])
+    (after,) = b.read_live([0x00])
     assert after.value == 88.0  # warm-up curve saturates at 88 degC
     b.disconnect()
 

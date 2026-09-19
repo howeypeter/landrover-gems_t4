@@ -30,6 +30,12 @@ def make_stack(scenario: str = "healthy", **ecu_kwargs):
     return ecu, client
 
 
+def lid(state_key: str) -> int:
+    """The live-data local id for a param, looked up by its stable state_key
+    (ids were realigned to the real GEMS $21 map, so don't hardcode them)."""
+    return livedata.BY_STATE_KEY[state_key].local_id
+
+
 def read_value(client: KwpClient, local_id: int):
     """Read one $61 measure and return its decoded engineering value."""
     raw = client.read_data_by_local_id(local_id)
@@ -55,10 +61,11 @@ def test_tester_present_positive():
 
 def test_read_known_local_id_echoes_id_and_value():
     _, client = make_stack()
-    resp = client.request(Request(0x21, bytes([0x01])), expect_positive=True)
-    assert resp.data[0] == 0x01
+    cid = lid("coolant_temp")
+    resp = client.request(Request(0x21, bytes([cid])), expect_positive=True)
+    assert resp.data[0] == cid
     # value bytes follow the echoed id (coolant temp is a 1-byte param)
-    assert len(resp.data) == 1 + livedata.PARAMETERS[0x01].nbytes
+    assert len(resp.data) == 1 + livedata.PARAMETERS[cid].nbytes
 
 
 def test_unsupported_local_id_answers_negative_out_of_range():
@@ -66,9 +73,10 @@ def test_unsupported_local_id_answers_negative_out_of_range():
     (the '$7f' answer the T4 stylization documents for unsupported ids)."""
     _, client = make_stack()
     with pytest.raises(NegativeResponse) as exc:
-        # 0x50 is above the live-data block (0x01..0x28) and below the coding
+        # 0x70 sits above the live-data block (<=0x60) and below the coding
         # block (0x81..0x87) — no parameter or coding field claims it.
-        client.read_data_by_local_id(0x50)
+        assert 0x70 not in livedata.PARAMETERS
+        client.read_data_by_local_id(0x70)
     assert exc.value.nrc == NRC.REQUEST_OUT_OF_RANGE
     assert exc.value.service == 0x21
 
@@ -95,19 +103,19 @@ def test_engine_run_time_follows_sim_clock():
     """$61 id 0x1D is fed from the sim clock while the engine runs
     (RELEASE_NOTES.md: 'Engine run time (s, fed from sim clock)')."""
     ecu, client = make_stack()
-    assert read_value(client, 0x1D) == 0
+    assert read_value(client, lid("run_time")) == 0
     ecu.tick(2.0)
     ecu.tick(3.0)
-    assert read_value(client, 0x1D) == 5
+    assert read_value(client, lid("run_time")) == 5
 
 
 def test_engine_run_time_holds_when_engine_stops():
     ecu, client = make_stack()
     ecu.tick(4.0)
-    assert read_value(client, 0x1D) == 4
+    assert read_value(client, lid("run_time")) == 4
     ecu.state["engine_running"] = False
     ecu.tick(10.0)
-    assert read_value(client, 0x1D) == 4  # holds its last value
+    assert read_value(client, lid("run_time")) == 4  # holds its last value
 
 
 def test_warm_up_curve_coolant_rises_and_plateaus():
@@ -117,7 +125,7 @@ def test_warm_up_curve_coolant_rises_and_plateaus():
     readings = []
     for _ in range(30):
         ecu.tick(1.0)
-        readings.append(read_value(client, 0x01))
+        readings.append(read_value(client, lid("coolant_temp")))
     assert readings[0] > 20  # it rises
     assert all(b >= a for a, b in zip(readings, readings[1:]))  # monotonic
     assert readings[-1] == 88  # plateaus at operating temperature
@@ -127,7 +135,7 @@ def test_idle_hunt_keeps_rpm_near_idle_target():
     ecu, client = make_stack()
     for dt in (0.7, 1.3, 2.1, 0.4):
         ecu.tick(dt)
-        rpm = read_value(client, 0x02)
+        rpm = read_value(client, lid("rpm"))
         assert 700 <= rpm <= 800  # hunts around the 750 rpm idle target
 
 
@@ -161,7 +169,7 @@ def test_default_ecu_is_mobilised():
     status = immo.read_status(client)
     assert status.mobilised is True
     assert status.learn_mode is False
-    assert read_value(client, 0x1A) == 1  # $61 'Immobiliser mobilised'
+    assert read_value(client, lid("mobilised")) == 1  # $61 'Immobiliser mobilised'
 
 
 def test_immobilised_flag_reports_engine_immobilised():
@@ -175,7 +183,7 @@ def test_immobilised_flag_reports_engine_immobilised():
     assert status.mobilised is False
     assert status.summary == "ENGINE IMMOBILISED"
     # The $61 mirror param agrees with the routine.
-    assert read_value(client, 0x1A) == 0
+    assert read_value(client, lid("mobilised")) == 0
 
 
 def test_enter_learn_without_security_access_is_denied():

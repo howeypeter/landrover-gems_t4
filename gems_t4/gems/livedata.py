@@ -75,56 +75,72 @@ class ParamDef:
                        raw=raw_int, local_id=self.local_id)
 
 
+# Local-id assignment (2026-09-19): the CONFIRMED sensors carry their real GEMS
+# `$21` local ids as reverse-engineered on the bench (see the `$21` map in
+# `memory/real-gems-protocol.md` and `docs/rave-cross-reference.md`), so the
+# emulator's live-data channel mirrors the real proprietary channel:
+#   0x00 coolant · 0x01 intake-air · 0x06 A/C switch · 0x10 throttle (scaled)
+#   0x11 MAF · 0x15 fuel-temp · 0x18 O2 left(pre) · 0x19 O2 right(pre)
+# Reserved-but-unmodelled real ids: 0x02 fuel level, 0x05 fuel pressure,
+#   0x0F throttle(raw), 0x16 heated screen, 0x1A/0x1B O2 post-cat, 0x22 switch
+#   bitmap. Values whose real `$21` id we have NOT confirmed (rpm, battery,
+# timing, injector, misfire, states, ...) live in a clearly-synthetic
+# emulator-only block at 0x40+, so no id here falsely claims a real one. (These
+# stay engineering values, not raw ADC, so the dashboard reads cleanly.)
 _DEFS: tuple[ParamDef, ...] = (
-    ParamDef(0x01, "Coolant temperature", "degC", 1, 1.0, -40.0, False, "coolant_temp", 85),
-    ParamDef(0x02, "Engine speed", "rpm", 2, 0.25, 0.0, False, "rpm", 750),
-    ParamDef(0x03, "Battery voltage", "V", 1, 0.1, 0.0, False, "battery", 13.8),
-    ParamDef(0x04, "Throttle angle", "%", 1, 0.5, 0.0, False, "throttle", 3.0),
-    ParamDef(0x05, "Mass air flow", "kg/h", 1, 1.0, 0.0, False, "maf", 22),
-    ParamDef(0x06, "Intake air temperature", "degC", 1, 1.0, -40.0, False, "intake_air_temp", 30),
-    ParamDef(0x07, "O2 sensor voltage (bank A)", "V", 1, 0.01, 0.0, False, "o2_voltage", 0.45),
-    ParamDef(0x08, "Short-term fuel trim", "%", 1, 1.0, 0.0, True, "fuel_trim_short", 0),
-    ParamDef(0x09, "Long-term fuel trim", "%", 1, 1.0, 0.0, True, "fuel_trim_long", 0),
-    ParamDef(0x0A, "Idle air control valve", "steps", 1, 1.0, 0.0, False, "iacv_steps", 20),
-    ParamDef(0x0B, "Ignition advance", "deg", 1, 0.5, 0.0, True, "ignition_advance", 12),
-    ParamDef(0x0C, "Road speed", "mph", 1, 1.0, 0.0, False, "road_speed", 0),
-    ParamDef(0x0D, "Fuelling loop status", "", 1, 1.0, 0.0, False, "loop_status", "closed"),
-    ParamDef(0x0E, "Misfire count (total)", "", 2, 1.0, 0.0, False, "misfire_total", 0),
-    ParamDef(0x0F, "Fuel temperature", "degC", 1, 1.0, -40.0, False, "fuel_temp", 40),
-    ParamDef(0x10, "Idle speed reference", "rpm", 2, 0.25, 0.0, False, "idle_target", 750),
-    ParamDef(0x11, "Calculated load", "%", 1, 0.5, 0.0, False, "calc_load", 25),
-    ParamDef(0x12, "O2 sensor voltage (bank B)", "V", 1, 0.01, 0.0, False, "o2_voltage_b2", 0.45),
-    ParamDef(0x13, "Gearbox status (0=P,1=D)", "", 1, 1.0, 0.0, False, "gearbox_status", 0),
-    ParamDef(0x14, "A/C request", "", 1, 1.0, 0.0, False, "ac_request", 0),
-    ParamDef(0x15, "Ignition switch", "", 1, 1.0, 0.0, False, "ignition_switch", 1),
-    ParamDef(0x16, "Gearbox torque retard", "%", 1, 1.0, 0.0, False, "gearbox_retard", 17),
-    ParamDef(0x17, "Injector pulse width", "ms", 2, 0.01, 0.0, False, "injector_pw", 2.5),
-    ParamDef(0x18, "Coil charge time", "ms", 2, 0.01, 0.0, False, "coil_charge", 3.0),
-    ParamDef(0x19, "Security learn state", "", 1, 1.0, 0.0, False, "security_learn", 1),
-    ParamDef(0x1A, "Immobiliser mobilised", "", 1, 1.0, 0.0, False, "mobilised", 1),
-    ParamDef(0x1B, "Purge valve duty", "%", 1, 0.5, 0.0, False, "purge_duty", 0),
-    ParamDef(0x1C, "Fuel pump state", "", 1, 1.0, 0.0, False, "fuel_pump", 1),
+    ParamDef(0x00, "Coolant temperature", "degC", 1, 1.0, -40.0, False, "coolant_temp", 85),
+    ParamDef(0x40, "Engine speed", "rpm", 2, 0.25, 0.0, False, "rpm", 750),
+    ParamDef(0x41, "Battery voltage", "V", 1, 0.1, 0.0, False, "battery", 13.8),
+    ParamDef(0x10, "Throttle angle", "%", 1, 0.5, 0.0, False, "throttle", 3.0),
+    ParamDef(0x11, "Mass air flow", "kg/h", 1, 1.0, 0.0, False, "maf", 22),
+    ParamDef(0x01, "Intake air temperature", "degC", 1, 1.0, -40.0, False, "intake_air_temp", 30),
+    ParamDef(0x18, "O2 sensor voltage (bank A)", "V", 1, 0.01, 0.0, False, "o2_voltage", 0.45),
+    ParamDef(0x42, "Short-term fuel trim", "%", 1, 1.0, 0.0, True, "fuel_trim_short", 0),
+    ParamDef(0x43, "Long-term fuel trim", "%", 1, 1.0, 0.0, True, "fuel_trim_long", 0),
+    ParamDef(0x44, "Idle air control valve", "steps", 1, 1.0, 0.0, False, "iacv_steps", 20),
+    ParamDef(0x45, "Ignition advance", "deg", 1, 0.5, 0.0, True, "ignition_advance", 12),
+    ParamDef(0x46, "Road speed", "mph", 1, 1.0, 0.0, False, "road_speed", 0),
+    ParamDef(0x47, "Fuelling loop status", "", 1, 1.0, 0.0, False, "loop_status", "closed"),
+    ParamDef(0x48, "Misfire count (total)", "", 2, 1.0, 0.0, False, "misfire_total", 0),
+    ParamDef(0x15, "Fuel temperature", "degC", 1, 1.0, -40.0, False, "fuel_temp", 40),
+    ParamDef(0x49, "Idle speed reference", "rpm", 2, 0.25, 0.0, False, "idle_target", 750),
+    ParamDef(0x4A, "Calculated load", "%", 1, 0.5, 0.0, False, "calc_load", 25),
+    ParamDef(0x19, "O2 sensor voltage (bank B)", "V", 1, 0.01, 0.0, False, "o2_voltage_b2", 0.45),
+    ParamDef(0x4B, "Gearbox status (0=P,1=D)", "", 1, 1.0, 0.0, False, "gearbox_status", 0),
+    ParamDef(0x06, "A/C request", "", 1, 1.0, 0.0, False, "ac_request", 0),
+    ParamDef(0x4C, "Ignition switch", "", 1, 1.0, 0.0, False, "ignition_switch", 1),
+    ParamDef(0x4D, "Gearbox torque retard", "%", 1, 1.0, 0.0, False, "gearbox_retard", 17),
+    ParamDef(0x4E, "Injector pulse width", "ms", 2, 0.01, 0.0, False, "injector_pw", 2.5),
+    ParamDef(0x4F, "Coil charge time", "ms", 2, 0.01, 0.0, False, "coil_charge", 3.0),
+    ParamDef(0x50, "Security learn state", "", 1, 1.0, 0.0, False, "security_learn", 1),
+    ParamDef(0x51, "Immobiliser mobilised", "", 1, 1.0, 0.0, False, "mobilised", 1),
+    ParamDef(0x52, "Purge valve duty", "%", 1, 0.5, 0.0, False, "purge_duty", 0),
+    ParamDef(0x53, "Fuel pump state", "", 1, 1.0, 0.0, False, "fuel_pump", 1),
     # Fed from the virtual ECU's sim clock while the engine runs; a 2-byte
     # counter saturates at ~18h12m, which the encode() clamp handles for free.
-    ParamDef(0x1D, "Engine run time", "s", 2, 1.0, 0.0, False, "run_time", 0),
-    ParamDef(0x1E, "Oil temperature", "degC", 1, 1.0, -40.0, False, "oil_temp", 90),
-    ParamDef(0x1F, "Catalyst temperature (bank A)", "degC", 2, 1.0, 0.0, False, "cat_temp", 420),
+    ParamDef(0x54, "Engine run time", "s", 2, 1.0, 0.0, False, "run_time", 0),
+    ParamDef(0x55, "Oil temperature", "degC", 1, 1.0, -40.0, False, "oil_temp", 90),
+    ParamDef(0x56, "Catalyst temperature (bank A)", "degC", 2, 1.0, 0.0, False, "cat_temp", 420),
     # Per-cylinder misfire counters, cylinders 1-8 (firing order aside, the
     # display is numeric-order — this is the T4 party piece a generic OBD-II
     # scanner never shows). One byte each; a real counter saturates too.
-    ParamDef(0x20, "Misfire count cyl 1", "", 1, 1.0, 0.0, False, "misfire_cyl1", 0),
-    ParamDef(0x21, "Misfire count cyl 2", "", 1, 1.0, 0.0, False, "misfire_cyl2", 0),
-    ParamDef(0x22, "Misfire count cyl 3", "", 1, 1.0, 0.0, False, "misfire_cyl3", 0),
-    ParamDef(0x23, "Misfire count cyl 4", "", 1, 1.0, 0.0, False, "misfire_cyl4", 0),
-    ParamDef(0x24, "Misfire count cyl 5", "", 1, 1.0, 0.0, False, "misfire_cyl5", 0),
-    ParamDef(0x25, "Misfire count cyl 6", "", 1, 1.0, 0.0, False, "misfire_cyl6", 0),
-    ParamDef(0x26, "Misfire count cyl 7", "", 1, 1.0, 0.0, False, "misfire_cyl7", 0),
-    ParamDef(0x27, "Misfire count cyl 8", "", 1, 1.0, 0.0, False, "misfire_cyl8", 0),
-    ParamDef(0x28, "Cooling fan state", "", 1, 1.0, 0.0, False, "cooling_fan", 0),
+    ParamDef(0x58, "Misfire count cyl 1", "", 1, 1.0, 0.0, False, "misfire_cyl1", 0),
+    ParamDef(0x59, "Misfire count cyl 2", "", 1, 1.0, 0.0, False, "misfire_cyl2", 0),
+    ParamDef(0x5A, "Misfire count cyl 3", "", 1, 1.0, 0.0, False, "misfire_cyl3", 0),
+    ParamDef(0x5B, "Misfire count cyl 4", "", 1, 1.0, 0.0, False, "misfire_cyl4", 0),
+    ParamDef(0x5C, "Misfire count cyl 5", "", 1, 1.0, 0.0, False, "misfire_cyl5", 0),
+    ParamDef(0x5D, "Misfire count cyl 6", "", 1, 1.0, 0.0, False, "misfire_cyl6", 0),
+    ParamDef(0x5E, "Misfire count cyl 7", "", 1, 1.0, 0.0, False, "misfire_cyl7", 0),
+    ParamDef(0x5F, "Misfire count cyl 8", "", 1, 1.0, 0.0, False, "misfire_cyl8", 0),
+    ParamDef(0x60, "Cooling fan state", "", 1, 1.0, 0.0, False, "cooling_fan", 0),
 )
 
 #: All live-data parameters, keyed by local id.
 PARAMETERS: dict[int, ParamDef] = {p.local_id: p for p in _DEFS}
+
+#: Parameters keyed by their stable ``state_key`` - the meaning-based handle
+#: that survives local-id renumbering (prefer this over a raw id in code/tests).
+BY_STATE_KEY: dict[str, ParamDef] = {p.state_key: p for p in _DEFS}
 
 
 def decode_measure(local_id: int, raw: bytes) -> Measure:

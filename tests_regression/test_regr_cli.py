@@ -118,7 +118,7 @@ def test_dtc_clear_without_yes_is_refused_on_empty_stdin():
 # live data
 # --------------------------------------------------------------------------- #
 def test_live_selected_ids_renders_coolant_and_rpm():
-    proc = run_cli("live", "--ids", "0x01", "0x02", "--latency", "0")
+    proc = run_cli("live", "--ids", "0x00", "0x40", "--latency", "0")
     assert proc.returncode == 0
     assert "Coolant temperature" in proc.stdout
     assert "Engine speed" in proc.stdout

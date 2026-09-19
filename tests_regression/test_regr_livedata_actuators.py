@@ -45,51 +45,62 @@ def test_exactly_40_parameters():
 
 
 def test_parameter_id_layout():
-    """Contiguous 0x01..0x28 (0x01..0x1F block + 0x20..0x28 cylinder/fan block)."""
-    expected = set(range(0x01, 0x29))
-    assert set(livedata.PARAMETERS) == expected
+    """Confirmed sensors carry their real GEMS $21 local ids (bench-mapped, see
+    docs/rave-cross-reference.md); emulator-only values sit in a synthetic
+    0x40+ block, and nothing collides with the coding block (0x81+)."""
+    real = {
+        "coolant_temp": 0x00, "intake_air_temp": 0x01, "ac_request": 0x06,
+        "throttle": 0x10, "maf": 0x11, "fuel_temp": 0x15,
+        "o2_voltage": 0x18, "o2_voltage_b2": 0x19,
+    }
+    for key, lid in real.items():
+        assert livedata.BY_STATE_KEY[key].local_id == lid
+    # emulator-only values (no confirmed $21 id) live at 0x40+
+    assert livedata.BY_STATE_KEY["rpm"].local_id >= 0x40
+    # no live id treads on the coding block
+    assert all(lid < 0x81 for lid in livedata.PARAMETERS)
 
 
 @pytest.mark.parametrize(
-    "local_id, name_fragment, unit",
+    "state_key, name_fragment, unit",
     [
-        (0x17, "injector pulse width", "ms"),
-        (0x18, "coil charge", "ms"),
-        (0x1B, "purge", "%"),
-        (0x1C, "fuel pump", ""),
-        (0x1D, "run time", "s"),
+        ("injector_pw", "injector pulse width", "ms"),
+        ("coil_charge", "coil charge", "ms"),
+        ("purge_duty", "purge", "%"),
+        ("fuel_pump", "fuel pump", ""),
+        ("run_time", "run time", "s"),
     ],
 )
-def test_release_notes_new_parameters(local_id, name_fragment, unit):
-    p = livedata.PARAMETERS[local_id]
+def test_release_notes_new_parameters(state_key, name_fragment, unit):
+    p = livedata.BY_STATE_KEY[state_key]
     assert name_fragment in p.name.lower()
     assert p.unit == unit
 
 
 def test_per_cylinder_misfire_params_are_one_byte():
-    """0x20-0x27 misfire counts, cylinders 1-8, 1-byte each (saturate at 255)."""
-    for cyl, local_id in enumerate(range(0x20, 0x28), start=1):
-        p = livedata.PARAMETERS[local_id]
+    """Misfire counts, cylinders 1-8, 1-byte each (saturate at 255)."""
+    for cyl in range(1, 9):
+        p = livedata.BY_STATE_KEY[f"misfire_cyl{cyl}"]
         assert p.nbytes == 1
         assert "misfire" in p.name.lower()
         assert str(cyl) in p.name
 
 
 @pytest.mark.parametrize(
-    "local_id, name_fragment, unit",
+    "state_key, name_fragment, unit",
     [
-        (0x01, "coolant", "degC"),
-        (0x02, "engine speed", "rpm"),
-        (0x03, "battery", "V"),
-        (0x04, "throttle", "%"),
-        (0x05, "air flow", "kg/h"),
-        (0x07, "o2 sensor", "V"),
-        (0x0A, "idle air", "steps"),
-        (0x0F, "fuel temperature", "degC"),
+        ("coolant_temp", "coolant", "degC"),
+        ("rpm", "engine speed", "rpm"),
+        ("battery", "battery", "V"),
+        ("throttle", "throttle", "%"),
+        ("maf", "air flow", "kg/h"),
+        ("o2_voltage", "o2 sensor", "V"),
+        ("iacv_steps", "idle air", "steps"),
+        ("fuel_temp", "fuel temperature", "degC"),
     ],
 )
-def test_common_ids_from_the_docs(local_id, name_fragment, unit):
-    p = livedata.PARAMETERS[local_id]
+def test_common_ids_from_the_docs(state_key, name_fragment, unit):
+    p = livedata.BY_STATE_KEY[state_key]
     assert name_fragment in p.name.lower()
     assert p.unit == unit
 
@@ -99,18 +110,18 @@ def test_common_ids_from_the_docs(local_id, name_fragment, unit):
 # --------------------------------------------------------------------------- #
 
 @pytest.mark.parametrize(
-    "local_id, value",
+    "state_key, value",
     [
-        (0x01, -40),      # coolant at its offset floor
-        (0x01, 88),       # warm coolant
-        (0x02, 750),      # rpm, 2-byte, 0.25 scale
-        (0x03, 13.8),     # battery, 0.1 scale
-        (0x08, -5),       # signed short-term fuel trim
-        (0x17, 2.5),      # injector PW ms, 0.01 scale
+        ("coolant_temp", -40),   # coolant at its offset floor
+        ("coolant_temp", 88),    # warm coolant
+        ("rpm", 750),            # rpm, 2-byte, 0.25 scale
+        ("battery", 13.8),       # battery, 0.1 scale
+        ("fuel_trim_short", -5), # signed short-term fuel trim
+        ("injector_pw", 2.5),    # injector PW ms, 0.01 scale
     ],
 )
-def test_encode_decode_round_trip(local_id, value):
-    p = livedata.PARAMETERS[local_id]
+def test_encode_decode_round_trip(state_key, value):
+    p = livedata.BY_STATE_KEY[state_key]
     m = p.decode(p.encode(value))
     assert m.value == pytest.approx(value, abs=p.scale)
     assert m.name == p.name
@@ -118,7 +129,7 @@ def test_encode_decode_round_trip(local_id, value):
 
 
 def test_one_byte_counter_encode_saturates_at_255():
-    p = livedata.PARAMETERS[0x22]  # misfire count cyl 3
+    p = livedata.BY_STATE_KEY["misfire_cyl3"]  # per-cyl misfire counter
     assert p.encode(500) == b"\xff"
     assert p.decode(b"\xff").value == 255
 

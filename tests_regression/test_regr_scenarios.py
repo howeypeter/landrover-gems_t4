@@ -40,6 +40,11 @@ def make_stack(scenario: str = "healthy", **ecu_kwargs):
     return ecu, client
 
 
+def lid(state_key: str) -> int:
+    """Live-data local id by stable state_key (ids realigned to the real $21 map)."""
+    return livedata.BY_STATE_KEY[state_key].local_id
+
+
 def read_value(client: KwpClient, local_id: int):
     raw = client.read_data_by_local_id(local_id)
     return livedata.decode_measure(local_id, raw).value
@@ -103,37 +108,37 @@ def test_healthy_live_data_is_nominal():
     """CLAUDE.md: healthy vehicle — ~85-88 degC coolant, idle around 750 rpm."""
     ecu, client = make_stack("healthy")
     ecu.tick(1.0)
-    assert 80 <= read_value(client, 0x01) <= 90       # coolant near 87 degC
-    assert 700 <= read_value(client, 0x02) <= 800     # idle ~750 rpm
-    assert read_value(client, 0x03) == pytest.approx(13.8, abs=0.5)  # battery
-    assert read_value(client, 0x0E) == 0              # no misfires
+    assert 80 <= read_value(client, lid("coolant_temp")) <= 90       # coolant near 87 degC
+    assert 700 <= read_value(client, lid("rpm")) <= 800     # idle ~750 rpm
+    assert read_value(client, lid("battery")) == pytest.approx(13.8, abs=0.5)  # battery
+    assert read_value(client, lid("misfire_total")) == 0              # no misfires
     # closed-loop fuelling on a healthy warm engine
-    assert read_value(client, 0x0D) == livedata.LOOP_MAP["closed"]
+    assert read_value(client, lid("loop_status")) == livedata.LOOP_MAP["closed"]
 
 
 def test_coolant_sensor_live_shows_minus_40_failsafe():
     """Open ECT circuit reads as the implausible -40 degC failsafe value."""
     ecu, client = make_stack("coolant_sensor")
-    assert read_value(client, 0x01) == -40
+    assert read_value(client, lid("coolant_temp")) == -40
     # ...and stays pinned there even as the warm-up simulation ticks.
     for _ in range(10):
         ecu.tick(1.0)
-    assert read_value(client, 0x01) == -40
+    assert read_value(client, lid("coolant_temp")) == -40
     # Cold-reading enrichment stretches the injector pulse width past warm idle.
-    assert read_value(client, 0x17) > 2.5
+    assert read_value(client, lid("injector_pw")) > 2.5
 
 
 def test_misfire_puts_whole_count_on_cylinder_3():
     """RELEASE_NOTES.md: cylinder 3's count climbs while 1-2 and 4-8 stay 0."""
     ecu, client = make_stack("misfire_cyl3")
-    total = read_value(client, 0x0E)
+    total = read_value(client, lid("misfire_total"))
     assert total > 0
-    assert read_value(client, 0x22) == total  # cylinder 3 carries it all
-    for local_id in (0x20, 0x21, 0x23, 0x24, 0x25, 0x26, 0x27):
-        assert read_value(client, local_id) == 0
+    assert read_value(client, lid("misfire_cyl3")) == total  # cylinder 3 carries it all
+    for cyl in (1, 2, 4, 5, 6, 7, 8):
+        assert read_value(client, lid(f"misfire_cyl{cyl}")) == 0
     # the count climbs as the fault persists
     ecu.tick(1.0)
-    assert read_value(client, 0x0E) > total
+    assert read_value(client, lid("misfire_total")) > total
 
 
 def test_misfire_cylinder_counter_saturates_at_255():
@@ -142,21 +147,21 @@ def test_misfire_cylinder_counter_saturates_at_255():
     ecu, client = make_stack("misfire_cyl3")
     for _ in range(20):
         ecu.tick(0.5)
-    assert read_value(client, 0x0E) > 255  # 2-byte total keeps climbing
-    assert read_value(client, 0x22) == 255  # 1-byte cyl-3 counter saturated
+    assert read_value(client, lid("misfire_total")) > 255  # 2-byte total keeps climbing
+    assert read_value(client, lid("misfire_cyl3")) == 255  # 1-byte cyl-3 counter saturated
 
 
 def test_misfire_idle_is_rough_and_low():
     ecu, client = make_stack("misfire_cyl3")
     ecu.tick(1.0)
-    assert read_value(client, 0x02) <= 700  # dead-ish cylinder drops idle
+    assert read_value(client, lid("rpm")) <= 700  # dead-ish cylinder drops idle
 
 
 def test_lambda_heater_forces_open_loop():
     """Cold O2 sensor -> no closed loop; O2 voltage floats at ~0.45 V bias."""
     _, client = make_stack("lambda_heater")
-    assert read_value(client, 0x0D) == livedata.LOOP_MAP["open"]
-    assert read_value(client, 0x07) == pytest.approx(0.45, abs=0.05)
+    assert read_value(client, lid("loop_status")) == livedata.LOOP_MAP["open"]
+    assert read_value(client, lid("o2_voltage")) == pytest.approx(0.45, abs=0.05)
 
 
 def test_lambda_heater_blocks_only_the_o2_heater_actuator():

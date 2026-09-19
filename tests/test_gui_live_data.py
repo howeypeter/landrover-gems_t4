@@ -20,9 +20,9 @@ def test_gauges_built_and_timer_runs(qtbot):
     qtbot.addWidget(screen)
     screen.on_enter()
     assert len(screen._gauges) == screen._selected_count()
-    # coolant (0x01) gauge exists and shows a warmed-up value.
-    assert 0x01 in screen._gauges
-    assert 70 <= screen._gauges[0x01].value() <= 95
+    # coolant (0x00) gauge exists and shows a warmed-up value.
+    assert 0x00 in screen._gauges
+    assert 70 <= screen._gauges[0x00].value() <= 95
     assert screen._timer.isActive()
     screen.on_leave()
     assert not screen._timer.isActive()
@@ -60,7 +60,7 @@ def test_refresh_pushes_values(qtbot):
     qtbot.addWidget(screen)
     screen.on_enter()
     # rpm gauge should hold a positive value after a refresh.
-    screen._count_box.setCurrentIndex(4)  # ensure rpm (0x02) is shown
+    screen._count_box.setCurrentIndex(4)  # ensure rpm (0x40) is shown
     screen._refresh()
-    assert screen._gauges[0x02].value() > 0
+    assert screen._gauges[0x40].value() > 0
     screen.on_leave()

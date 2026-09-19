@@ -38,8 +38,9 @@ def test_coolant_scenario_is_coherent():
     client = _client("coolant_sensor")
     codes = [d.code for d in dtc.read_dtcs(client)]
     assert "P0118" in codes
-    coolant_raw = client.read_data_by_local_id(0x01)
-    coolant = livedata.decode_measure(0x01, coolant_raw)
+    cid = livedata.BY_STATE_KEY["coolant_temp"].local_id
+    coolant_raw = client.read_data_by_local_id(cid)
+    coolant = livedata.decode_measure(cid, coolant_raw)
     assert float(coolant.value) == -40  # fail-safe / implausible reading
 
 

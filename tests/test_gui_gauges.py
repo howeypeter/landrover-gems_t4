@@ -16,7 +16,7 @@ from gems_t4.app.gui.widgets import BarGauge, DialGauge, LcdReadout, build_gauge
 
 
 def test_set_value_clamps_to_scale(qtbot):
-    g = DialGauge(spec_for(0x02))  # rpm 0..7000
+    g = DialGauge(spec_for(0x40))  # rpm 0..7000
     qtbot.addWidget(g)
     g.set_value(99999)
     assert g.value() == 7000
@@ -27,23 +27,23 @@ def test_set_value_clamps_to_scale(qtbot):
 
 
 def test_fraction_midscale(qtbot):
-    g = DialGauge(spec_for(0x02))
+    g = DialGauge(spec_for(0x40))
     qtbot.addWidget(g)
     g.set_value(3500)  # half of 0..7000
     assert abs(g._fraction() - 0.5) < 1e-6
 
 
 def test_non_numeric_value_falls_back(qtbot):
-    g = DialGauge(spec_for(0x02))
+    g = DialGauge(spec_for(0x40))
     qtbot.addWidget(g)
     g.set_value("not a number")
     assert g.value() == g.spec.vmin
 
 
 def test_build_gauge_dispatches_by_style(qtbot):
-    assert isinstance(build_gauge(spec_for(0x02)), DialGauge)   # dial
-    assert isinstance(build_gauge(spec_for(0x04)), BarGauge)    # throttle -> bar
-    assert isinstance(build_gauge(spec_for(0x0D)), LcdReadout)  # loop -> lcd
+    assert isinstance(build_gauge(spec_for(0x40)), DialGauge)   # dial
+    assert isinstance(build_gauge(spec_for(0x10)), BarGauge)    # throttle -> bar
+    assert isinstance(build_gauge(spec_for(0x47)), LcdReadout)  # loop -> lcd
 
 
 def test_specs_have_sane_ranges():
@@ -56,7 +56,7 @@ def test_specs_have_sane_ranges():
 
 def test_widgets_paint_without_error(qtbot):
     # grab() forces a paintEvent; catches QPainter mistakes even headless.
-    for lid in (0x01, 0x04, 0x0D):
+    for lid in (0x00, 0x10, 0x47):
         g = build_gauge(spec_for(lid))
         qtbot.addWidget(g)
         g.resize(170, 150)

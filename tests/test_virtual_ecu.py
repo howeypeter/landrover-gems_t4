@@ -17,10 +17,11 @@ def test_session_and_tester_present():
 
 def test_read_coolant_local_id_healthy():
     ecu = VirtualEcu()
-    resp = ecu.handle(Request(0x21, b"\x01"))
+    cid = livedata.BY_STATE_KEY["coolant_temp"].local_id
+    resp = ecu.handle(Request(0x21, bytes([cid])))
     assert not resp.is_negative
-    assert resp.data[0] == 0x01
-    measure = livedata.decode_measure(0x01, resp.data[1:])
+    assert resp.data[0] == cid
+    measure = livedata.decode_measure(cid, resp.data[1:])
     assert 80 <= float(measure.value) <= 90
 
 
@@ -88,9 +89,10 @@ def test_run_time_tracks_sim_clock():
     ecu = VirtualEcu()
     for _ in range(20):
         ecu.tick(0.5)  # 10 s of sim time
-    resp = ecu.handle(Request(0x21, b"\x1d"))
+    rtid = livedata.BY_STATE_KEY["run_time"].local_id
+    resp = ecu.handle(Request(0x21, bytes([rtid])))
     assert not resp.is_negative
-    assert livedata.decode_measure(0x1D, resp.data[1:]).value == 10
+    assert livedata.decode_measure(rtid, resp.data[1:]).value == 10
 
 
 def test_misfire_scenario_counts_climb_on_cylinder_3_only():
@@ -103,9 +105,9 @@ def test_misfire_scenario_counts_climb_on_cylinder_3_only():
         assert not resp.is_negative
         return float(livedata.decode_measure(lid, resp.data[1:]).value)
 
-    cyl3 = read(0x22)
+    cyl3 = read(livedata.BY_STATE_KEY["misfire_cyl3"].local_id)
     assert cyl3 > 0
     # one-byte counter saturates at 255; the running total keeps climbing
     assert cyl3 == min(255, float(ecu.state["misfire_total"]))
-    for lid in (0x20, 0x21, 0x23, 0x24, 0x25, 0x26, 0x27):
-        assert read(lid) == 0
+    for cyl in (1, 2, 4, 5, 6, 7, 8):
+        assert read(livedata.BY_STATE_KEY[f"misfire_cyl{cyl}"].local_id) == 0

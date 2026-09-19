@@ -16,21 +16,21 @@ def test_all_numeric_params_round_trip():
 
 
 def test_coolant_offset_encoding():
-    coolant = livedata.PARAMETERS[0x01]
+    coolant = livedata.BY_STATE_KEY["coolant_temp"]
     raw = coolant.encode(85.0)
     assert raw == bytes([125])  # 85 + 40 offset
     assert coolant.decode(raw).value == 85
 
 
 def test_rpm_two_byte_scale():
-    rpm = livedata.PARAMETERS[0x02]
+    rpm = livedata.BY_STATE_KEY["rpm"]
     raw = rpm.encode(750.0)
     assert len(raw) == 2
     assert rpm.decode(raw).value == 750
 
 
 def test_encode_clamps_out_of_range():
-    coolant = livedata.PARAMETERS[0x01]
+    coolant = livedata.BY_STATE_KEY["coolant_temp"]
     # Absurdly high value must clamp to a valid single byte, not raise.
     raw = coolant.encode(100000.0)
     assert len(raw) == 1
@@ -50,7 +50,7 @@ def test_parameter_count_and_unique_state_keys():
 
 
 def test_injector_pulse_width_two_byte_centiseconds():
-    pw = livedata.PARAMETERS[0x17]
+    pw = livedata.BY_STATE_KEY["injector_pw"]
     raw = pw.encode(2.5)
     assert len(raw) == 2
     assert raw == bytes([0x00, 0xFA])  # 2.5 ms / 0.01 = 250
@@ -59,7 +59,7 @@ def test_injector_pulse_width_two_byte_centiseconds():
 
 def test_per_cylinder_misfire_ids_and_state_keys():
     for cyl in range(1, 9):
-        p = livedata.PARAMETERS[0x20 + cyl - 1]
+        p = livedata.BY_STATE_KEY[f"misfire_cyl{cyl}"]
         assert p.state_key == f"misfire_cyl{cyl}"
         assert p.nbytes == 1
         assert p.decode(p.encode(0)).value == 0
@@ -68,7 +68,7 @@ def test_per_cylinder_misfire_ids_and_state_keys():
 
 
 def test_engine_run_time_two_bytes():
-    rt = livedata.PARAMETERS[0x1D]
+    rt = livedata.BY_STATE_KEY["run_time"]
     raw = rt.encode(3600)
     assert len(raw) == 2
     assert rt.decode(raw).value == 3600
