@@ -74,7 +74,7 @@ detail + method in `memory/real-gems-protocol.md`.
 | ✅ | 34 | Left O2 | `0x18` (inject 0-1V only) |
 | ✅ | 33 | Right O2 | `0x19` |
 | ✅ | 17 | Left O2 post-cat | `0x1A` |
-| ◻ | 8 | Right O2 post-cat | `0x1B`? — **RETRY** (only jittered; re-seat clip) |
+| ✅ | 8 | Right O2 post-cat | `0x1B` (needed >1.5V to swing) |
 | — | 32 | (O2 heater — output, no voltage id) | n/a |
 | ◻ | 28/29 | A/C switches | expect 2-state flag |
 | ◻ | 21 | Heated front screen | expect 2-state flag |

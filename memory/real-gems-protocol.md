@@ -710,7 +710,7 @@ nothing to do with OBD Mode-01 PID 0x11 = Throttle. Don't conflate them.
 | Left O2 | 34 | **0x18** | 19->353 (inject 0-1V only) |
 | Right O2 | 33 | **0x19** | 19->357 |
 | Left O2 post-cat | 17 | **0x1A** | 21->360 |
-| Right O2 post-cat | 8 | **0x1B** (tentative) | weak this run — RETRY (bad clip likely) |
+| Right O2 post-cat | 8 | **0x1B** | 15->658 (needed >1.5V to swing; confirmed 2026-09-18) |
 
 **Blocks (contiguous by function):** **O2 voltages = 0x18/0x19/0x1A/0x1B** (four
 sensors); **scaled measures** throttle 0x10 / MAF 0x11 (adjacent) + fuel-press 0x05
