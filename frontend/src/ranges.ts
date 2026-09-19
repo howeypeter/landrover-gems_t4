@@ -27,7 +27,7 @@ const BY_NAME: Record<string, [number, number]> = {
   "Coil charge time": [0, 10],
   "Purge valve duty": [0, 100],
   "Engine run time": [0, 3600],
-  "Misfire count (total)": [0, 255],
+  "Misfire count (total)": [0, 65535], // 2-byte running counter (per-cyl are 1-byte/255)
   // Two-state / status flags: 0..1 so the arc reads as off/on, not 0/100.
   "Fuelling loop status": [0, 1],
   "Gearbox status (0=P,1=D)": [0, 1],
