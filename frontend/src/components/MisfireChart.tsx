@@ -1,9 +1,16 @@
 import type { Measure } from "../api";
 import Card from "./Card";
 
-// The eight per-cylinder misfire counters as one bar chart (integers). A count
-// of 0 is a calm neutral bar; any misfire shows amber so a bad cylinder pops.
-export default function MisfireChart({ measures }: { measures: Measure[] }) {
+// The eight per-cylinder misfire counters as one bar chart (integers), plus the
+// cumulative grand total as a stat readout (it's a running counter, not a
+// bounded gauge). A count of 0 is a calm neutral bar; any misfire shows amber.
+export default function MisfireChart({
+  measures,
+  total,
+}: {
+  measures: Measure[];
+  total?: Measure;
+}) {
   // measures come in cylinder order (0x20..0x27 -> "Misfire count cyl 1..8").
   const bars = measures.map((m) => {
     const n = Math.max(0, Math.round(Number(m.value) || 0));
@@ -11,9 +18,23 @@ export default function MisfireChart({ measures }: { measures: Measure[] }) {
     return { cyl, n };
   });
   const peak = Math.max(5, ...bars.map((b) => b.n)); // headroom so 0s aren't full
+  const totalN =
+    total != null ? Math.max(0, Math.round(Number(total.value) || 0)) : null;
 
   return (
-    <Card title="Misfire counts (per cylinder)">
+    <Card title="Misfire counts">
+      {totalN != null && (
+        <div className="mb-4 flex items-baseline gap-2">
+          <span
+            className={`text-3xl font-bold tabular-nums ${
+              totalN > 0 ? "text-amber-300" : "text-neutral-100"
+            }`}
+          >
+            {totalN.toLocaleString()}
+          </span>
+          <span className="text-sm text-neutral-500">total misfires (all cylinders)</span>
+        </div>
+      )}
       {/* items-stretch (default) so each column fills the height and the
           flex-1 bar track actually has room to grow. */}
       <div className="flex gap-2 sm:gap-4" style={{ height: 180 }}>

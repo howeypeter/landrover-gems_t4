@@ -5,6 +5,7 @@ import Gauge from "./Gauge";
 import MisfireChart from "./MisfireChart";
 
 const isMisfireCyl = (name: string) => /^Misfire count cyl \d$/.test(name);
+const MISFIRE_TOTAL = "Misfire count (total)";
 
 // Measures where a high reading isn't "worse", so the gauge stays a calm
 // neutral colour instead of the green/amber/red threshold ramp.
@@ -47,11 +48,13 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
   // Focus filters by NAME (unique + stable). The id can repeat across the
   // stylized virtual measures, so name is the safe selector.
   const focused = focus ? numeric.filter((m) => m.name === focus) : [];
-  // In the "all" view the 8 per-cylinder misfire counters collapse into one
-  // bar chart instead of 8 near-identical gauges.
+  // In the "all" view the 8 per-cylinder misfire counters collapse into one bar
+  // chart (with the running total as a stat readout, not a gauge).
   const misfire = numeric.filter((m) => isMisfireCyl(m.name));
-  const gridGauges = focus ? focused : numeric.filter((m) => !isMisfireCyl(m.name));
-  const shown = gridGauges;
+  const misfireTotal = numeric.find((m) => m.name === MISFIRE_TOTAL);
+  const shown = focus
+    ? focused
+    : numeric.filter((m) => !isMisfireCyl(m.name) && m.name !== MISFIRE_TOTAL);
 
   return (
     <div>
@@ -103,9 +106,9 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
         </div>
       )}
 
-      {!focus && misfire.length > 0 && (
+      {!focus && (misfire.length > 0 || misfireTotal) && (
         <div className="mt-4">
-          <MisfireChart measures={misfire} />
+          <MisfireChart measures={misfire} total={misfireTotal} />
         </div>
       )}
     </div>
