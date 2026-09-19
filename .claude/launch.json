@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "gems_t4-api",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "gems_t4", "api", "--host", "127.0.0.1", "--port", "8791"],
+      "port": 8791
+    },
+    {
       "name": "static-file-server",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8731"],

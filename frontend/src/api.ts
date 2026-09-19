@@ -19,6 +19,44 @@ export interface Measure {
   pid_hex: string | null;
 }
 
+export interface Dtc {
+  code: string;
+  description: string;
+  raw: number | string;
+  state: string;
+}
+
+export interface Actuator {
+  id: number;
+  name: string;
+  allowed_engine_running: boolean;
+}
+
+export interface ActuatorResult {
+  actuator_id: number;
+  ok: boolean;
+  message: string;
+}
+
+export interface CodingField {
+  key: string;
+  name: string;
+  writable: boolean;
+  value: string | null;
+}
+
+export interface Immobiliser {
+  mobilised: boolean;
+  learn_mode: boolean;
+}
+
+export interface TestResult {
+  ok: boolean;
+  label: string;
+  message: string;
+  latencies_ms: number[];
+}
+
 export interface ConnectionBody {
   kind: string; // virtual | usb | ble | network
   com_port?: string | null;
@@ -37,22 +75,48 @@ async function jsonOrThrow(res: Response) {
   return body;
 }
 
+const post = (url: string, body?: unknown) =>
+  fetch(url, {
+    method: "POST",
+    headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  }).then(jsonOrThrow);
+
 export const api = {
   status: (): Promise<Status> => fetch("/api/status").then(jsonOrThrow),
 
-  connect: (body: ConnectionBody) =>
-    fetch("/api/connection", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }).then(jsonOrThrow),
+  scenarios: (): Promise<{ scenarios: string[]; current: string }> =>
+    fetch("/api/scenarios").then(jsonOrThrow),
+  setScenario: (scenario: string) => post("/api/scenario", { scenario }),
 
-  disconnect: () => fetch("/api/disconnect", { method: "POST" }).then(jsonOrThrow),
+  connect: (body: ConnectionBody) => post("/api/connection", body),
+  testConnection: (): Promise<TestResult> => post("/api/connection/test"),
+  disconnect: () => post("/api/disconnect"),
 
   live: (pids?: string[]): Promise<{ measures: Measure[] }> => {
     const q = pids?.length ? "?" + pids.map((p) => `pid=${p}`).join("&") : "";
     return fetch("/api/live" + q).then(jsonOrThrow);
   },
+
+  dtcs: (): Promise<{ dtcs: Dtc[] }> => fetch("/api/dtcs").then(jsonOrThrow),
+  clearDtcs: (): Promise<{ cleared: boolean }> => post("/api/dtcs/clear"),
+
+  actuators: (): Promise<{ actuators: Actuator[] }> =>
+    fetch("/api/actuators").then(jsonOrThrow),
+  runActuator: (actuator_id: number, state: number): Promise<ActuatorResult> =>
+    post("/api/actuator", { actuator_id, state }),
+
+  vin: (): Promise<{ vin: string | null }> => fetch("/api/vin").then(jsonOrThrow),
+
+  coding: (): Promise<{ fields: CodingField[] }> =>
+    fetch("/api/coding").then(jsonOrThrow),
+  writeCoding: (field: string, text: string) =>
+    post("/api/coding", { field, text }),
+
+  immobiliser: (): Promise<Immobiliser> =>
+    fetch("/api/immobiliser").then(jsonOrThrow),
+
+  maps: (): Promise<{ maps: unknown[] }> => fetch("/api/maps").then(jsonOrThrow),
 };
 
 // Open the live-data WebSocket. Returns the socket; caller wires onmessage.

@@ -963,21 +963,30 @@ up):**
 
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
-- **Modern web front-end (React) over the API.** Decided 2026-09-17: build a
-  **browser-accessible, modern UI** (NOT the Win98 styling — that's the GUI's job)
-  talking to the new HTTP/WebSocket API. **The API layer is DONE** (`gems_t4 api`,
-  `gems_t4/app/web/`, `[api]` extra — FastAPI over the same `Backend`; see Build
-  status). The front-end is the remaining piece. Agreed stack: **React + Vite +
-  TypeScript + Tailwind + shadcn/ui** (or Mantine), gauges via
-  `react-gauge-component`/Recharts. Node is a BUILD-time tool only — the shipped
-  app is static files **served by FastAPI**, browser talks HTTP/WS to Python; no
-  Electron, no Node runtime. Lives in a `frontend/` dir (its own package.json);
-  built `dist/` served by the API. Phased: (1) connection + live-data dashboard
-  (throttle gauge over the WebSocket) → (2) fault codes / actuators → (3) coding /
-  immobiliser / maps / toolbox parity. **Why an API, not raw TCP-to-Pico:** the
-  Pico is a dumb timed pipe (host-protocol frames only); ALL GEMS/OBD/KWP protocol
-  intelligence is in Python. A browser can't do raw TCP anyway (only HTTP/WS), so
-  the Python API is required as the protocol-aware middle layer.
+- **✅ DONE (2026-09-19) — Modern web front-end (React) over the API.** Decided
+  2026-09-17; **built and browser-verified 2026-09-19.** A browser-accessible
+  modern UI (NOT the Win98 styling — that's the GUI's job) talking to the
+  HTTP/WebSocket API. **API layer** (`gems_t4 api`, `gems_t4/app/web/`, `[api]`
+  extra — FastAPI over the same `Backend`) + **React front-end** in `frontend/`
+  (React 18 + Vite 6 + TypeScript + Tailwind v4; custom SVG radial `Gauge`, no
+  extra chart dep). `npm run build` outputs to `gems_t4/app/web/static/`
+  (gitignored build output) which FastAPI serves at `/`, so `gems_t4 api` hosts
+  the whole UI on one port. Node is BUILD-time only; no Electron, no Node runtime.
+  **All functionality present** in a tabbed shell: Connection (virtual/BLE/USB/
+  network), **Live Data** (WebSocket gauge grid + Focus picker), **Fault Codes**
+  (read/clear with confirm), **Actuators** (run + refusal messages, e.g. fuel-pump
+  interlock), **Coding** (read + gated writes, read-only badges), **Immobiliser**
+  (status; Security-Learn stays CLI-only by design), **Toolbox** (VIN read, VCI
+  self-test + latency, emulator scenario picker, EPROM map list). Verified in-
+  browser against the virtual ECU across all four scenarios (live gauges stream,
+  misfire DTCs P0303/P1303 render, fuel-pump refusal shows, mobile layout wraps).
+  Client: `frontend/src/api.ts` (typed, all endpoints). Run dev: `cd frontend &&
+  npm run dev` (Vite proxies `/api`→127.0.0.1:8080); prod: `npm run build` then
+  `gems_t4 api`. **Why an API, not raw TCP-to-Pico:** the Pico is a dumb timed
+  pipe; ALL GEMS/OBD/KWP intelligence is in Python, and a browser can only do
+  HTTP/WS — so the Python API is the required protocol-aware middle layer.
+  Remaining polish (optional): wire the ⚠️ BLE/WiFi app-layer auth (below) into
+  the connection panel once the firmware side lands; richer map viewer.
 - **⚠️ SECURITY: the BLE adapter link is UNAUTHENTICATED (add an app-layer gate).**
   Flagged by the user 2026-09-16 (not urgent). The Pico's BLE firmware advertises
   an open **Nordic UART Service** as `gems-pico` with **no pairing, no bonding, no
