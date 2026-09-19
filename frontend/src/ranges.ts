@@ -1,27 +1,52 @@
-// Per-measure gauge full-scale ranges. Keyed by OBD PID (real ECU); falls back
-// to a value-derived range so any measure still renders sensibly.
+// Per-measure gauge full-scale ranges, keyed by the measure NAME (the display
+// label is shared between the virtual and real-ECU paths, whereas the numeric
+// id differs). Anything unlisted falls back to a value-derived range so every
+// measure still renders sensibly.
 
-const BY_PID: Record<number, [number, number]> = {
-  0x04: [0, 100], // engine load %
-  0x05: [-40, 130], // coolant °C
-  0x06: [-100, 100],
-  0x07: [-100, 100],
-  0x08: [-100, 100],
-  0x09: [-100, 100],
-  0x0c: [0, 7000], // rpm
-  0x0d: [0, 200], // speed
-  0x0e: [-30, 60], // timing
-  0x0f: [-40, 130], // intake air °C
-  0x10: [0, 120], // MAF
-  0x11: [0, 100], // throttle %
-  0x14: [0, 1.275],
-  0x15: [0, 1.275],
-  0x18: [0, 1.275],
-  0x19: [0, 1.275],
+const BY_NAME: Record<string, [number, number]> = {
+  "Coolant temperature": [-40, 130],
+  "Intake air temperature": [-40, 130],
+  "Fuel temperature": [-40, 130],
+  "Oil temperature": [-40, 160],
+  "Catalyst temperature (bank A)": [0, 900],
+  "Engine speed": [0, 7000],
+  "Idle speed reference": [0, 7000],
+  "Battery voltage": [0, 16],
+  "Throttle angle": [0, 100],
+  "Calculated load": [0, 100],
+  "Mass air flow": [0, 120],
+  "O2 sensor voltage (bank A)": [0, 1.0],
+  "O2 sensor voltage (bank B)": [0, 1.0],
+  "Short-term fuel trim": [-25, 25],
+  "Long-term fuel trim": [-25, 25],
+  "Idle air control valve": [0, 200],
+  "Ignition advance": [-10, 50],
+  "Gearbox torque retard": [0, 30],
+  "Road speed": [0, 160],
+  "Injector pulse width": [0, 20],
+  "Coil charge time": [0, 10],
+  "Purge valve duty": [0, 100],
+  "Engine run time": [0, 3600],
+  "Misfire count (total)": [0, 255],
+  // Two-state / status flags: 0..1 so the arc reads as off/on, not 0/100.
+  "Fuelling loop status": [0, 1],
+  "Gearbox status (0=P,1=D)": [0, 1],
+  "A/C request": [0, 1],
+  "Ignition switch": [0, 1],
+  "Security learn state": [0, 1],
+  "Immobiliser mobilised": [0, 1],
+  "Fuel pump state": [0, 1],
+  "Cooling fan state": [0, 1],
 };
 
-export function rangeFor(pid: number | null, value: number): [number, number] {
-  if (pid != null && BY_PID[pid]) return BY_PID[pid];
+export function rangeFor(
+  name: string,
+  value: number,
+): [number, number] {
+  const hit = BY_NAME[name];
+  if (hit) return hit;
+  // Per-cylinder misfire counters and other unknowns: derive a sane range.
+  if (/misfire count/i.test(name)) return [0, 255];
   const hi = Math.max(100, Math.abs(value) * 1.5) || 1;
   return [0, hi];
 }

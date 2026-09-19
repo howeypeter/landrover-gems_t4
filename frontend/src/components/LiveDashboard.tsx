@@ -18,8 +18,10 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
       setLive(false);
       return;
     }
-    const pids = focus ? [focus.replace(/^0x/i, "")] : [];
-    const ws = liveSocket(pids, focus ? 10 : 4);
+    // Stream all measures; when focused on one, just bump the rate and filter
+    // client-side by name (the id isn't unique on the virtual ECU, so we can't
+    // narrow the server read by pid reliably).
+    const ws = liveSocket([], focus ? 12 : 4);
     sockRef.current = ws;
     ws.onopen = () => {
       setLive(true);
@@ -35,9 +37,9 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
   }, [enabled, focus]);
 
   const numeric = measures.filter((m) => typeof m.value === "number");
-  const shown = focus
-    ? numeric.filter((m) => m.pid_hex?.toLowerCase() === focus.toLowerCase())
-    : numeric;
+  // Focus filters by NAME (unique + stable). The id can repeat across the
+  // stylized virtual measures, so name is the safe selector.
+  const shown = focus ? numeric.filter((m) => m.name === focus) : numeric;
 
   return (
     <div>
@@ -56,7 +58,7 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
           >
             <option value="">All parameters</option>
             {measures.map((m) => (
-              <option key={m.pid_hex ?? m.name} value={m.pid_hex ?? ""}>
+              <option key={m.name} value={m.name}>
                 {m.pid_hex ? `${m.pid_hex}  ${m.name}` : m.name}
               </option>
             ))}
@@ -73,10 +75,10 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {shown.map((m) => {
-            const [lo, hi] = rangeFor(m.pid, m.value as number);
+            const [lo, hi] = rangeFor(m.name, m.value as number);
             return (
               <Gauge
-                key={m.pid_hex ?? m.name}
+                key={m.name}
                 label={m.name}
                 value={m.value as number}
                 unit={m.unit}

@@ -71,7 +71,8 @@ class ParamDef:
             value = int(value)
         else:
             value = round(value, 3)
-        return Measure(name=self.name, value=value, unit=self.unit, raw=raw_int)
+        return Measure(name=self.name, value=value, unit=self.unit,
+                       raw=raw_int, local_id=self.local_id)
 
 
 _DEFS: tuple[ParamDef, ...] = (
@@ -139,6 +140,7 @@ def decode_measure(local_id: int, raw: bytes) -> Measure:
             value=int.from_bytes(raw, "big") if raw else 0,
             unit="",
             raw=int.from_bytes(raw, "big") if raw else 0,
+            local_id=local_id,
         )
     return p.decode(raw)
 

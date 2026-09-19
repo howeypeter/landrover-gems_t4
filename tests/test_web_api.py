@@ -46,6 +46,18 @@ def test_live_returns_measures(client: TestClient) -> None:
     assert {"name", "value", "unit", "pid"} <= set(m)
 
 
+def test_live_measures_have_unique_ids(client: TestClient) -> None:
+    # Regression: `raw` (the undecoded value) was exposed as the id, so ~16
+    # measures collided on pid 0x00 and the web UI rendered duplicate gauges.
+    # Every measure must carry a distinct local id / PID and a distinct name.
+    ms = client.get("/api/live").json()["measures"]
+    pids = [m["pid"] for m in ms]
+    names = [m["name"] for m in ms]
+    assert None not in pids, "every virtual measure has a local id"
+    assert len(set(pids)) == len(pids), "measure ids must be unique (no collisions)"
+    assert len(set(names)) == len(names), "measure names must be unique"
+
+
 def test_live_pid_filter(client: TestClient) -> None:
     # A single-id request narrows the set vs. the full read (fast single-sensor
     # path). On the virtual ECU the filter is by local id; on the real ECU by

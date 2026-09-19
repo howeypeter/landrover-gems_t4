@@ -27,7 +27,11 @@ from gems_t4.transport.base import TransportError
 
 
 def _measure(m: Any) -> dict:
-    pid = m.raw if isinstance(m.raw, int) else None
+    # Identity is the local id / OBD PID this measure was read by - UNIQUE per
+    # measure. (m.raw is the undecoded value, often 0, so it is NOT an id.)
+    pid = getattr(m, "local_id", -1)
+    if not isinstance(pid, int) or pid < 0:
+        pid = None
     return {"name": m.name, "value": m.value, "unit": m.unit,
             "pid": pid, "pid_hex": (f"0x{pid:02X}" if pid is not None else None)}
 

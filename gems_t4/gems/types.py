@@ -43,6 +43,11 @@ class Measure:
     value: float | int | str
     unit: str = ""
     raw: int = 0
+    #: The stable identifier this measure was read by - the $61 local id on the
+    #: virtual/stylized path, or the OBD-II PID on the real-ECU K-line path. This
+    #: is what uniquely names a measure; ``raw`` is the undecoded VALUE (which is
+    #: often 0 and therefore NOT unique). ``-1`` = unset.
+    local_id: int = -1
 
     def formatted(self) -> str:
         if isinstance(self.value, float):

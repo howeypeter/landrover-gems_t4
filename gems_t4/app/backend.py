@@ -465,7 +465,8 @@ class Backend:
         self._ensure_connected()
         if self._kline is not None:
             return [
-                Measure(name=row.name, value=row.value, unit=row.unit, raw=row.pid)
+                Measure(name=row.name, value=row.value, unit=row.unit,
+                        raw=row.pid, local_id=row.pid)
                 for row in self._kline.read_live(ids)
             ]
         return _livedata.read_all(self._require(), ids)
