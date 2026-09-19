@@ -191,6 +191,14 @@ behaviour fixes:
   pulled until `$27` is opened. Deprioritized 2026-09-08 (the earlier GUI "Read VIN"
   feature was reverted — only virtual-ECU coding could resolve it). Revisit once
   P1.1 lands: then wire real-coding reads (VIN last-6, dealer id, …) into the GUI.
+  **VIN reconstruction (new 2026-09-19):** for a *known* vehicle the first 11 VIN
+  chars are fixed/derivable (marque/model/body/engine/gearbox/year/plant), so
+  **full VIN ≈ derived 11-char prefix + read last-6**. Decode table + worked
+  Disco-1 template + build sketch (`gems_t4/gems/vin.py`, Toolbox surfacing) in
+  **`docs/vin-decode.md`**. Caveat: on the user's Disco-1 the ECM does NOT hold
+  the last-6 (`22 04 C4` → unavailable) — it's in the **Lucas 10AS**, so this
+  ties to the [EKA read from the 10AS] item; and NAS VIN positions must be
+  verified against the plate. See the backlog entry below.
 - **Service adjustments** — ignition timing (−6°…+3°) + idle-speed nudge; no
   screen/command today (timing/idle are read-only). [QA-A1]
 - **VCSI connection-chain status** — model laptop→VCSI→J1962→ECU as separate
@@ -541,6 +549,18 @@ as static lookalikes for now.
   connector grids** (pin-position layout, not linear lists). Use this for sensor
   probing + actuator ($31) testing. Key pins: C1017 pin 15 = TPS (analog), pin 20/23
   = L/K line, pin 26 = theft/mobilise; C1032 pin 24 = fuel pump, 22 = MIL, 1 = A/C.
+- `docs/rave-cross-reference.md` (added 2026-09-19) — the Disco-1 `lj` SFI-V8 NAS
+  (GEMS) RAVE circuit (`etlj970x.pdf` A3, pp.39–51) cross-referenced pin-by-pin
+  against SM001 + the bench `$21` map + protocol notes. Confirms K-line=C1017 p23,
+  L-line=p20, and every sensor/switch pin; flags VSS=C1032 p27 (not C1017 p27).
+- `docs/vin-decode.md` (added 2026-09-19) — Land Rover 17-char VIN decode table +
+  the "reconstruct the full VIN from the ECU/10AS last-6" concept (derived
+  11-char prefix + read serial), with a worked Disco-1 template, NAS/verify
+  caveats, and a `gems_t4/gems/vin.py` build sketch. Backlog item, not built.
+- `docs/rave-index.md` (added 2026-09-18, committed) — section→page index of all
+  75 RAVE PDFs (titles + page numbers only; the PDFs themselves stay local/
+  gitignored — LR IP). Generator: `bench/rave_index.py`. Jump straight to a
+  circuit without rescanning.
 
 ## Next steps for implementation
 
@@ -960,6 +980,20 @@ up):**
   it likely needs the same manufacturer channel we're still trying to open (the
   L-line experiment) plus security-access ($27). See memory/real-gems-protocol.md.
   Do not start until picked up.
+- **Reconstruct the full VIN from the last-6 (+ a decode table).** Idea logged
+  2026-09-19. The module stores only the VIN **last-6** (unique serial); for a
+  *known* vehicle the first **11** chars are fixed/derivable (WMI `SAL`, model
+  `LJ`=Discovery, wheelbase `G`=100″, body, engine `M`/`J`/`1`/`2`, gearbox
+  `4`/`8` for NAS auto/manual, year `T/V/W/X`=96–99, plant `A`), so **full VIN ≈
+  derived prefix + read last-6**. Full decode table, a worked Disco-1 template,
+  the caveats (**NAS positions differ — verify vs the plate**; no self-check
+  digit), and a build sketch (pure `gems_t4/gems/vin.py` `decode_vin` /
+  `reconstruct_vin`, surfaced in the Toolbox with a "reconstructed, verify"
+  banner) all live in **`docs/vin-decode.md`**. ⚠️ **Depends on sourcing the
+  last-6:** on the user's Disco-1 the **ECM does NOT hold it** (`22 04 C4` →
+  unavailable) — it's in the **Lucas 10AS**, so this rides the [EKA read from the
+  Lucas 10AS] item. Present any reconstruction as an identification aid only,
+  never as proof of identity. Not started; do when picked up.
 
 ### Backlog / tech debt (not started — do when the pain justifies it)
 
