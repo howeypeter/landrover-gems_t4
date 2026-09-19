@@ -73,6 +73,13 @@ class CodingBody(BaseModel):
     text: str
 
 
+class VinReconstructBody(BaseModel):
+    prefix8: str                          # VIN positions 1-8 (e.g. "SALJY124")
+    year_code: str                        # position 10
+    last6: str                            # positions 12-17 (the read serial)
+    plant: str = "A"                      # position 11
+
+
 # ---- app factory ------------------------------------------------------------ #
 
 
@@ -221,6 +228,34 @@ def build_app(backend: Backend | None = None) -> FastAPI:
             return {"vin": locked(be().read_vin)}
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(409, str(exc)) from exc
+
+    # -- VIN reconstruction (pure; no ECU access) ----------------------------- #
+    @app.post("/api/vin/reconstruct")
+    def vin_reconstruct(body: VinReconstructBody) -> dict:
+        from gems_t4.gems import vin as _vin
+        try:
+            full = _vin.reconstruct_vin(
+                body.prefix8, body.year_code, body.last6, plant=body.plant)
+            d = _vin.decode_vin(full)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return {"vin": full, "valid": _vin.validate_vin(full),
+                "decode": {"wmi": d.wmi, "model_line": d.model_line,
+                           "body": d.body, "engine": d.engine,
+                           "transmission": d.transmission, "year": d.year,
+                           "plant": d.plant, "serial": d.serial}}
+
+    @app.get("/api/vin/decode")
+    def vin_decode(vin: str = Query(...)) -> dict:
+        from gems_t4.gems import vin as _vin
+        try:
+            d = _vin.decode_vin(vin)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return {"vin": d.vin, "valid": d.check_digit_ok, "wmi": d.wmi,
+                "model_line": d.model_line, "body": d.body, "engine": d.engine,
+                "transmission": d.transmission, "year": d.year,
+                "plant": d.plant, "serial": d.serial}
 
     @app.get("/api/coding")
     def coding() -> dict:

@@ -129,6 +129,33 @@ def test_maps_endpoint(client: TestClient) -> None:
     assert isinstance(r.json()["maps"], list)
 
 
+def test_vin_reconstruct_endpoint(client: TestClient) -> None:
+    r = client.post("/api/vin/reconstruct", json={
+        "prefix8": "SALJY124", "year_code": "V", "last6": "123456", "plant": "A"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["vin"].startswith("SALJY124")
+    assert body["vin"].endswith("123456")
+    assert body["valid"] is True                     # computed check digit
+    assert body["decode"]["model_line"] == "Discovery"
+    assert body["decode"]["year"] == 1997
+
+
+def test_vin_reconstruct_rejects_bad_input(client: TestClient) -> None:
+    r = client.post("/api/vin/reconstruct", json={
+        "prefix8": "SHORT", "year_code": "V", "last6": "123456"})
+    assert r.status_code == 400
+
+
+def test_vin_decode_endpoint(client: TestClient) -> None:
+    # round-trip: reconstruct then decode the same VIN
+    full = client.post("/api/vin/reconstruct", json={
+        "prefix8": "SALJY124", "year_code": "T", "last6": "A99999"}).json()["vin"]
+    d = client.get("/api/vin/decode", params={"vin": full}).json()
+    assert d["valid"] is True and d["model_line"] == "Discovery"
+    assert d["year"] == 1996 and d["serial"] == "A99999"
+
+
 def test_connection_test_endpoint(client: TestClient) -> None:
     r = client.post("/api/connection/test")
     assert r.status_code == 200

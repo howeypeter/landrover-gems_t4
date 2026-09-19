@@ -57,6 +57,21 @@ export interface TestResult {
   latencies_ms: number[];
 }
 
+export interface VinReconstruct {
+  vin: string;
+  valid: boolean;
+  decode: {
+    wmi: string;
+    model_line: string;
+    body: string;
+    engine: string;
+    transmission: string;
+    year: number | null;
+    plant: string;
+    serial: string;
+  };
+}
+
 export interface ConnectionBody {
   kind: string; // virtual | usb | ble | network
   com_port?: string | null;
@@ -117,6 +132,13 @@ export const api = {
     fetch("/api/immobiliser").then(jsonOrThrow),
 
   maps: (): Promise<{ maps: unknown[] }> => fetch("/api/maps").then(jsonOrThrow),
+
+  vinReconstruct: (body: {
+    prefix8: string;
+    year_code: string;
+    last6: string;
+    plant?: string;
+  }): Promise<VinReconstruct> => post("/api/vin/reconstruct", body),
 };
 
 // Open the live-data WebSocket. Returns the socket; caller wires onmessage.
