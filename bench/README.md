@@ -55,3 +55,33 @@ their findings landed in `memory/real-gems-protocol.md`.
 - **Pins / init / transport** — `pin_test` (per-pin G/V id),
   `pentest_scan` (full raw 256-address scan), `ble_scan` (dump the gems-pico
   BLE services).
+
+## `$21` live-data map (RED plug C1017) — in progress
+
+Built by isolated 0-5V pot injection on each RED sensor pin, watched over the
+0xDA `$21` channel (L-line tied). `map` to find, `watch <id>` to confirm. Full
+detail + method in `memory/real-gems-protocol.md`.
+
+| ✓ | Pin | Sensor | `$21` id |
+|---|----:|--------|----------|
+| ✅ | 14 | Coolant temp | `0x00` (raw) |
+| ✅ | 13 | Intake air temp | `0x01` (raw) |
+| ✅ | 35 | Fuel temp | `0x15` (raw) |
+| ✅ | 15 | Throttle | `0x0F` (raw) + `0x10` (scaled) |
+| ✅ | 16 | MAF | `0x11` (scaled) |
+| ✅ | 30 | Fuel pressure | `0x05` (scaled) |
+| ✅ | 7 | Fuel level | `0x02` |
+| ✅ | 34 | Left O2 | `0x18` (inject 0-1V only) |
+| ✅ | 33 | Right O2 | `0x19` |
+| ✅ | 17 | Left O2 post-cat | `0x1A` |
+| ◻ | 8 | Right O2 post-cat | `0x1B`? — **RETRY** (only jittered; re-seat clip) |
+| — | 32 | (O2 heater — output, no voltage id) | n/a |
+| ◻ | 28/29 | A/C switches | expect 2-state flag |
+| ◻ | 21 | Heated front screen | expect 2-state flag |
+| ⛔ | 10/11/12 | Knock (AC piezo) | needs square-wave injector |
+| ⛔ | 27 | Vehicle speed (output/pulse) | needs square-wave injector |
+
+**Blocks:** O2 voltages `0x18-0x1B`; scaled measures throttle `0x10`/MAF `0x11`
+/fuel-press `0x05`; raw-ADC temps `0x00`/`0x01`/`0x15`. **Noise (ignore):** `0x2B`
+and idle O2 `0x19-0x1B` jitter (±1 last nibble) appear in EVERY run - the real id
+is the one with a big monotonic swing.

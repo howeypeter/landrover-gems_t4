@@ -1043,6 +1043,41 @@ arduino-cli upload  --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble -p COM5 
   </table></div>
   <div class="callout warn"><div class="i">i</div><div><h4>Two honest caveats on the writes</h4><p><b>(1) Provenance.</b> The <code>$27</code> algorithm and the two <code>A3</code> writes came from decompiling a <b>free third-party Android app (FlemcoDesign)</b> — a troubleshooting lead, <b>not a source of truth</b>. The unlock is trusted because the <em>ECU</em> confirmed it (<code>6702AA</code>); the writes are only implemented and unit-tested against captured frames, and have <b>never been sent to a real ECU</b>. Treat them as unproven.</p><p><b>(2) Bench danger.</b> Do <b>not</b> fire the immobiliser-synch on the bench — it pairs the ECU to a body module that isn't present (no BeCM/10AS on the bench), so it can leave the ECU immobilised. The adaptive-reset ("relearn", <code>A3234800</code>) is the bench-safe one.</p></div></div>
 
+  <h3>Proprietary <code>$21</code> live-data map (RED plug C1017) — in progress</h3>
+  <p>The T4 read ~108 proprietary live measures the OBD subset can't. On the 0xDA
+  channel these are the <code>$21</code> (readDataByLocalId) service, and <b>which
+  <code>$21</code> id is which sensor is undocumented</b> — so we're mapping it by
+  <b>injecting a known 0-5V on a known RED C1017 sensor pin</b> (isolated pot &rarr;
+  1k&Omega; &rarr; the pin) and watching which id moves (<span class="mono">bench/live_diff.py
+  map</span> to find, <span class="mono">watch &lt;id&gt;</span> to confirm). <b>Note:
+  <code>$21</code> ids are their OWN namespace, unrelated to OBD PIDs</b> (e.g.
+  <code>$21</code> 0x11 = MAF has nothing to do with OBD PID 0x11 = throttle).</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>RED pin</th><th>Sensor</th><th><code>$21</code> id</th><th>status</th></tr></thead>
+    <tbody>
+      <tr><td>14</td><td>Coolant temp</td><td class="mono">0x00 (raw)</td><td>✓</td></tr>
+      <tr><td>13</td><td>Intake air temp</td><td class="mono">0x01 (raw)</td><td>✓</td></tr>
+      <tr><td>35</td><td>Fuel temp</td><td class="mono">0x15 (raw)</td><td>✓</td></tr>
+      <tr><td>15</td><td>Throttle</td><td class="mono">0x0F raw + 0x10 scaled</td><td>✓</td></tr>
+      <tr><td>16</td><td>MAF</td><td class="mono">0x11 (scaled)</td><td>✓</td></tr>
+      <tr><td>30</td><td>Fuel pressure</td><td class="mono">0x05 (scaled)</td><td>✓</td></tr>
+      <tr><td>7</td><td>Fuel level</td><td class="mono">0x02</td><td>✓</td></tr>
+      <tr><td>34</td><td>Left O2</td><td class="mono">0x18</td><td>✓ (inject 0-1V only)</td></tr>
+      <tr><td>33</td><td>Right O2</td><td class="mono">0x19</td><td>✓</td></tr>
+      <tr><td>17</td><td>Left O2 post-cat</td><td class="mono">0x1A</td><td>✓</td></tr>
+      <tr><td>8</td><td>Right O2 post-cat</td><td class="mono">0x1B?</td><td>retry (jittered only)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small"><b>Blocks:</b> O2 voltages are contiguous <span class="mono">0x18-0x1B</span>
+  (four sensors); the scaled measures throttle <span class="mono">0x10</span> / MAF
+  <span class="mono">0x11</span> / fuel-pressure <span class="mono">0x05</span> all read
+  ~0/470/860 for a 0-5V sweep (same scaling, different id per pin); the raw-ADC temps
+  are <span class="mono">0x00/0x01/0x15</span>. <b>Ignore noise:</b> <span class="mono">0x2B</span>
+  and idle O2 <span class="mono">0x19-0x1B</span> jitter (&plusmn;1 last nibble) in EVERY
+  run - the real id is the one with a big monotonic swing. Knock (pins 10/11/12),
+  vehicle-speed (27) and other pulse/AC channels need a square-wave injector (not built).
+  Full detail + method: <span class="mono">memory/real-gems-protocol.md</span>.</p>
+
   <h3>The four fault scenarios</h3>
   <div class="tblwrap"><table>
     <thead><tr><th>Scenario</th><th>Symptoms</th></tr></thead>
