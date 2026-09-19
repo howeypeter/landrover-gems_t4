@@ -711,6 +711,19 @@ nothing to do with OBD Mode-01 PID 0x11 = Throttle. Don't conflate them.
 | Right O2 | 33 | **0x19** | 19->357 |
 | Left O2 post-cat | 17 | **0x1A** | 21->360 |
 | Right O2 post-cat | 8 | **0x1B** | 15->658 (needed >1.5V to swing; confirmed 2026-09-18) |
+| A/C request (switch) | 28 | **0x06** raw + **0x22** bit | switch, confirmed 2026-09-18 (see below) |
+
+**A/C switch pin 28 = 0x06 (confirmed 2026-09-18 via `switch` mode + `watch 06`).**
+Unlike the analog sensors, pin 28 is a **switch-to-ground** input, mapped by
+grounding vs floating (NOT voltage injection). Two ids track it cleanly:
+- **`0x06`** = the raw input: **FLOAT → 0xFF** (ECM pull-up, switch open) / **GND →
+  0x00** (switch closed). `watch 06` snapped between exactly those two values 6×,
+  never an intermediate — textbook switch signature (an analog channel would sweep
+  the middle).
+- **`0x22`** = a decoded **switch-status bitmap** byte: pin 28's state = **bit 5 of
+  the high byte** (`7FC0` float → `5FC0` grounded). The other switch inputs (pins
+  29, 21) should surface as *other bits of this same `0x22` byte* — map each with
+  `switch` and record which bit flips, to decode the whole byte.
 
 **Blocks (contiguous by function):** **O2 voltages = 0x18/0x19/0x1A/0x1B** (four
 sensors); **scaled measures** throttle 0x10 / MAF 0x11 (adjacent) + fuel-press 0x05
@@ -740,10 +753,13 @@ pot INSTANTLY & linearly; NTC temps (coolant/IAT) INVERT (lower V = higher temp)
 Temp sensors also DON'T "hide" via fail-safe substitution when injected on the
 RIGHT pin — the earlier coolant null was the WRONG plug (black C1032 p14, unpopulated).
 
-**TODO (extend the map):** the switch pins — A/C (p28/29), heated screen (p21) —
-by **ground-vs-float** (see below), NOT voltage injection; and the pulse/AC channels
-(knock 10/11/12, vehicle-speed 27) need a square-wave injector (not built).
-Raw captures: `bench/live_map.csv`, `bench/watch_*.csv` (gitignored).
+**TODO (extend the map):** the remaining switch pins — A/C 2nd switch (p29),
+heated screen (p21) — by **ground-vs-float** using `live_diff switch` (added
+2026-09-18: snapshots float→ground→float and flags the id that toggles AND returns),
+NOT voltage injection; watch which **`0x22`** bit each flips. (**p28 A/C = 0x06 /
+0x22 bit5 — DONE.**) The pulse/AC channels (knock 10/11/12, vehicle-speed 27) still
+need a square-wave injector (not built). Raw captures: `bench/live_map.csv`,
+`bench/watch_*.csv` (gitignored).
 
 **⭐ RAVE cross-check (2026-09-18) — use the Disco-1 manual, and A/C pins are
 switch-to-GROUND.** RAVE is available locally (NOT in the repo — LR IP): `~/Downloads/
