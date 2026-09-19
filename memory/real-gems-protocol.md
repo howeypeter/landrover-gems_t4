@@ -747,8 +747,8 @@ Raw captures: `bench/live_map.csv`, `bench/watch_*.csv` (gitignored).
 
 **⭐ RAVE cross-check (2026-09-18) — use the Disco-1 manual, and A/C pins are
 switch-to-GROUND.** RAVE is available locally (NOT in the repo — LR IP): `~/Downloads/
-rave/rave/pdf/<model>/` + a section INDEX at `docs/rave-index.md` (gitignored) so we
-don't re-scan PDFs. **Model folders:** `lj` = **Discovery 1 (this vehicle)**, `lp` =
+rave/rave/pdf/<model>/`. A committed section INDEX (titles + page numbers only) is at
+`docs/rave-index.md` so we jump straight to a circuit without re-scanning the PDFs. **Model folders:** `lj` = **Discovery 1 (this vehicle)**, `lp` =
 Range Rover P38, `lt` = Discovery 2, `ld` = Defender, etc. **Always use `lj` for the
 Disco-1** (I first pulled the P38 `lp` A/C circuit by mistake — its connector `C0637`
 and pins don't apply here).
