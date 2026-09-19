@@ -315,9 +315,6 @@ class GemsSecureSession:
         """
         return self._write(WRITE_IMMOBILISER_SYNCH)
 
-    # Back-compat alias (old spelling); prefer immobiliser_sync().
-    immobiliser_synch = immobiliser_sync
-
     def _write(self, payload: bytes) -> bytes:
         if not self.unlocked:
             raise GemsSecureLocked("writes require a successful unlock() first")

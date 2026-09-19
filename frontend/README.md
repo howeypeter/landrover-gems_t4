@@ -46,7 +46,7 @@ Tabbed shell over the full API, browser-verified against the virtual ECU:
 - **Coding** — read every field; writable ones get an inline editor + gated Write
   (the backend enforces backup/verify/confirm); read-only fields are badged.
 - **Immobiliser** — mobilised / learn-mode status. Security-Learn stays on the
-  CLI (`gems_t4 kline secure --immobiliser-synch`) by design, not the browser.
+  CLI (`gems_t4 kline secure --immobiliser-sync`) by design, not the browser.
 - **Toolbox** — VIN read, VCI self-test (with latency), emulator scenario picker,
   and the EPROM map reference list.
 

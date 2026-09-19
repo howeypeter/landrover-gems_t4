@@ -910,9 +910,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="secure: read the immobiliser/security block (page 0x18 A4-A8)")
     sp.add_argument("--reset-adaptive", action="store_true",
                     help="secure: send the reset-adaptive-values write")
-    # `--immobiliser-synch` kept as a hidden back-compat alias (old spelling).
-    sp.add_argument("--immobiliser-sync", "--immobiliser-synch",
-                    dest="immobiliser_sync", action="store_true",
+    sp.add_argument("--immobiliser-sync", action="store_true",
                     help="secure: send the immobiliser-sync (Security-Learn) write")
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")
     sp.add_argument("--connect", metavar="HOST[:PORT]",
