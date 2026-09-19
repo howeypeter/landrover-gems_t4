@@ -4,9 +4,14 @@ Use it to identify which $21 id is which sensor: snapshot, change one input
 (e.g. jumper C1017 pin 15 / TPS to ground or to Pico VBUS 5V), snapshot again,
 and it prints exactly which ids moved. The id that swings = that sensor.
 
-  python live_diff.py map          # guided rest / +5V / ground snapshot diff
+  python live_diff.py map          # guided ANALOG pot sweep (min/mid/max) diff
+  python live_diff.py switch       # guided SWITCH map (float -> ground -> float)
   python live_diff.py watch 2B     # poll ONE id live while you turn a pot
-  python live_diff.py              # interactive menu (map | watch <id> | q)
+  python live_diff.py              # interactive menu (map | switch | watch <id> | q)
+
+Use 'map' for analog sensors (throttle, MAF, temps) with the 0-5V pot; use
+'switch' for two-state inputs (A/C request, heated screen, brake) - do NOT
+inject voltage on those, just ground vs float the pin.
 
 'watch' is the definitive test: a real analog sensor (e.g. TPS on C1017 pin 15)
 tracks a pot smoothly across a range; a derived flag just snaps between two
@@ -327,12 +332,81 @@ def guided_map(s):
         print(f"  logged to {fn}\n")
 
 
+# The switch-mode sequence. A switch input has only two states (grounded ~0 V
+# "closed" / floating pulled-up ~5 V "open"), so a pot sweep won't find it -
+# instead we snapshot FLOAT, then GROUND, then FLOAT again. The real switch id
+# differs between float and ground AND returns to its float value on the second
+# float; an id that only wanders (noise) fails the return-to-baseline check.
+SWITCH_LEVELS = [
+    ("float_1", "Leave the pin FLOATING (nothing connected / switch OPEN)"),
+    ("ground",  "GROUND the pin (touch it to bench ground - switch CLOSED)"),
+    ("float_2", "FLOAT the pin again (disconnect ground - switch OPEN)"),
+]
+
+
+def guided_switch(s):
+    names = [n for n, _ in SWITCH_LEVELS]
+    print("Guided SWITCH mapping - for two-state inputs (A/C request, heated")
+    print("screen, brake, etc.), NOT analog sensors. Do NOT inject voltage:")
+    print("just GROUND the pin, then FLOAT it. I snapshot float -> ground -> float")
+    print("and flag the id that toggles with ground and returns on float.")
+    print("Grabber on the ONE pin you're testing (RED C1017); ground = bench ground.")
+    cached = load_responders()
+    if cached:
+        print(f"(using {len(cached)} cached responder ids - delete "
+              "live_responders.json to full-rescan.)")
+    print()
+    while True:
+        label = ask("What switch are you testing? (e.g. 'C1017 p28 RED A/C'), Enter to quit: ").strip()
+        if not label:
+            break
+        snaps = {}
+        responders = load_responders()
+        for idx, (name, instr) in enumerate(SWITCH_LEVELS, 1):
+            ask(f"  {idx}/{len(SWITCH_LEVELS)}  {instr}.\n        set it as above and HOLD, "
+                "then press Enter to snapshot (hold until it finishes)...", fresh=True)
+            snaps[name] = snapshot(s, responders)
+            if responders is None:
+                responders = sorted(snaps[name])
+                save_responders(responders)
+            print(f"       [{name}] {len(snaps[name])} ids returned data.")
+
+        f1, gnd, f2 = (snaps[n] for n in names)
+        # toggled: differs between float and ground.
+        toggled = {i for i, a, b in changes(f1, gnd)}
+        # clean switch: toggled AND the two float readings agree (returned to rest).
+        clean = sorted(i for i in toggled if f1.get(i) == f2.get(i))
+        noisy = sorted(i for i in toggled if i not in clean)
+
+        print(f"\n  --- result for '{label}' ---")
+        if not toggled:
+            print("  no ids toggled - check the grabber contact / right pin / RED connector,")
+            print("  or the input may not be a simple switch-to-ground (try 'map').")
+        else:
+            hdr = f"  {'id':<6}" + "".join(f"{n:<10}" for n in names) + "verdict"
+            print(hdr)
+            for i in clean + noisy:
+                row = "".join(f"{(snaps[n].get(i) or '-'):<10}" for n in names)
+                verdict = "CLEAN toggle (returned)" if i in clean else "changed, did NOT return"
+                print(f"  0x{i:02X}  {row}{verdict}")
+            if clean:
+                print(f"  >>> SWITCH id for '{label}': 0x{clean[0]:02X}"
+                      + (f" (also {', '.join(f'0x{i:02X}' for i in clean[1:])})" if len(clean) > 1 else ""))
+                print("      confirm live with:  watch %02X  (should snap between two values)" % clean[0])
+            else:
+                print("  >>> ids changed but none returned to their float value - likely")
+                print("      noise/drift, not the switch. Re-run and hold each state steady.")
+        fn = log_map(label, clean + noisy, names, snaps)
+        print(f"  logged to {fn}\n")
+
+
 def parse_args(argv):
     import argparse
     p = argparse.ArgumentParser(
-        description="GEMS $21 sensor-ID tools (guided map, or watch one id live).")
+        description="GEMS $21 sensor-ID tools (guided map, switch mapping, or watch one id live).")
     sub = p.add_subparsers(dest="mode")
-    sub.add_parser("map", help="guided sensor mapping (snapshot at rest / +5V / ground)")
+    sub.add_parser("map", help="guided ANALOG sensor mapping (pot sweep min/mid/max)")
+    sub.add_parser("switch", help="guided SWITCH mapping (float -> ground -> float)")
     w = sub.add_parser("watch", help="poll ONE id live while you vary the voltage")
     w.add_argument("id", help="hex $21 id to watch, 00..FF (e.g. 2B)")
     return p.parse_args(argv)
@@ -340,7 +414,8 @@ def parse_args(argv):
 
 def interactive(s):
     print("Commands:")
-    print("  map          - guided sensor mapping (snapshot at rest / +5V / ground)")
+    print("  map          - guided ANALOG mapping (pot sweep min/mid/max)")
+    print("  switch       - guided SWITCH mapping (float -> ground -> float)")
     print("  watch <id>   - poll ONE id live while you vary the voltage (e.g. watch 2B)")
     print("  q            - quit\n")
     while True:
@@ -352,13 +427,15 @@ def interactive(s):
             break
         if line == "map":
             guided_map(s)
+        elif line == "switch":
+            guided_switch(s)
         elif line.startswith("watch"):
             rid = parse_id(line[5:].strip())
             if rid is None:
                 print("  usage: watch <hex id 00..FF>, e.g. watch 2B"); continue
             watch_id(s, rid)
         else:
-            print("  usage: map | watch <id> | q")
+            print("  usage: map | switch | watch <id> | q")
 
 
 def parse_id(arg):
@@ -391,6 +468,8 @@ def main(argv=None):
             watch_id(s, rid)
         elif args.mode == "map":
             guided_map(s)
+        elif args.mode == "switch":
+            guided_switch(s)
         else:
             interactive(s)          # no subcommand -> menu
     finally:

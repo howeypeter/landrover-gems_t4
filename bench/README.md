@@ -41,8 +41,11 @@ their findings landed in `memory/real-gems-protocol.md`.
   The `$27` seed->key is cracked (`key=(seed*16723)%65536`) and shipped in
   `gems_t4`.
 - **Live data** — `live_sweep` ($21 00..FF sweep, LIVE vs static). The guided
-  sensor-ID wizard `live_diff` (snapshot, inject 5V/ground on a pin, diff to
-  find which $21 id is that sensor) also lives here.
+  sensor-ID wizard `live_diff` also lives here, with three modes: `map` (analog
+  sensors - pot sweep min/mid/max, diff to find which $21 id moves), `switch`
+  (two-state inputs like A/C/heated-screen - float -> ground -> float, flags the
+  id that toggles and returns; do NOT inject voltage), and `watch <id>` (poll
+  one id live to confirm a candidate).
 - **Actuators / outputs** — `actuator_hunt` (interactive `send <hex>` tester),
   `actuator_test` (guided actuator/fuel-pump bench tester). ($31 was ruled out
   as the output-control command.)
@@ -59,7 +62,9 @@ their findings landed in `memory/real-gems-protocol.md`.
 ## `$21` live-data map (RED plug C1017) — in progress
 
 Built by isolated 0-5V pot injection on each RED sensor pin, watched over the
-0xDA `$21` channel (L-line tied). `map` to find, `watch <id>` to confirm. Full
+0xDA `$21` channel (L-line tied). Analog: `map` to find, `watch <id>` to
+confirm. Switch inputs (A/C p28/29, heated screen p21): `switch` (ground vs
+float), not the pot. Full
 detail + method in `memory/real-gems-protocol.md`.
 
 | ✓ | Pin | Sensor | `$21` id |
