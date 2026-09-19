@@ -152,9 +152,26 @@ take an era hint (or clamp Land-Rover GEMS-era VINs to the 20th-century cycle).
 
 ---
 
-## §4 — How this could be built (if picked up)
+## §4 — Build status: helper DONE (2026-09-19); Toolbox surfacing TODO
 
-A small pure helper `gems_t4/gems/vin.py`:
+✅ **Built:** the pure helper `gems_t4/gems/vin.py` + `tests/test_vin.py` (10
+tests, incl. the §3 vectors). Implemented:
+- `check_digit(vin)` / `validate_vin(vin)` — NAS pos-9 (verified vs the vectors).
+- `model_year(code, era=None)` — pos-10 with the 30-year disambiguation (§3b).
+- `decode_vin(vin, era=None) -> VinDecode` — NAS GEMS-era field decode.
+- `reconstruct_vin(prefix8, year_code, last6, plant="A")` — assembles the VIN and
+  **computes** the check digit (e.g. `("SALJY124","V","123456")` → a validating
+  17-char VIN).
+
+⬜ **TODO (when the last-6 can be sourced):** surface it in the Toolbox (web +
+GUI) — show the read last-6, the derived prefix, the computed check digit, the
+assembled VIN with a "reconstructed — verify vs plate" banner, and ✅/❌ from
+`validate_vin`. The last-6 comes from the **[EKA read from the Lucas 10AS]** work
+(Disco 1) or secure ECM coding where a variant stores it (`gems_t4 kline secure`).
+
+Original API sketch (as built):
+
+The pure helper `gems_t4/gems/vin.py`:
 - `check_digit(vin) -> str` — the NAS position-9 algorithm (§3); unit-test it
   against the two vectors in §3 (`1M8GDM9AXKP042788`, all-ones).
 - `validate_vin(vin) -> bool` — recompute pos 9 and compare (NAS only; skip for
