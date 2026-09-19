@@ -3,6 +3,8 @@ import { liveSocket, type Measure } from "../api";
 import { rangeFor } from "../ranges";
 import Gauge from "./Gauge";
 import MisfireChart from "./MisfireChart";
+import StatusTile from "./StatusTile";
+import { stateFor } from "../states";
 
 const isMisfireCyl = (name: string) => /^Misfire count cyl \d$/.test(name);
 const MISFIRE_TOTAL = "Misfire count (total)";
@@ -90,6 +92,18 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {shown.map((m) => {
+            // Binary/state measures render as a status tile, not a 0/1 gauge.
+            const st = stateFor(m.name, m.value as number);
+            if (st) {
+              return (
+                <StatusTile
+                  key={m.name}
+                  label={m.name}
+                  state={st.state}
+                  tone={st.tone}
+                />
+              );
+            }
             const [lo, hi] = rangeFor(m.name, m.value as number);
             return (
               <Gauge
