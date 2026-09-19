@@ -697,12 +697,33 @@ scans skip the ~156 silent ids.
 **⚠️ `$21` ids are a SEPARATE namespace from OBD PIDs** — `$21` id 0x11 = MAF has
 nothing to do with OBD Mode-01 PID 0x11 = Throttle. Don't conflate them.
 
-**CONFIRMED per-sensor `$21` ids (RED plug C1017):**
-| Sensor | pin | `$21` id | behaviour |
+**CONFIRMED per-sensor `$21` ids (RED plug C1017) — updated 2026-09-18:**
+| Sensor | pin | `$21` id | kind / evidence |
 |---|---|---|---|
-| Coolant (raw ADC) | 14 | **0x00** | rises with V; pin-specific (moves 0x00, not 0x01) |
-| Intake air temp (raw ADC) | 13 | **0x01** | rises with V; pin-specific (moves 0x01, not 0x00) |
-| Mass air flow | 16 | **0x11** | rises with V; pin-specific |
+| Coolant | 14 | **0x00** | raw ADC, rises w/ V |
+| Intake air temp | 13 | **0x01** | raw ADC, rises w/ V |
+| Fuel temp | 35 | **0x15** | raw ADC (130->232) |
+| Throttle | 15 | **0x0F** raw + **0x10** scaled | 0x0F 0->212, 0x10 0->859 |
+| Mass air flow | 16 | **0x11** scaled | 0->867 |
+| Fuel pressure | 30 | **0x05** scaled | 0->863 |
+| Fuel level | 7 | **0x02** | 0->70 |
+| Left O2 | 34 | **0x18** | 19->353 (inject 0-1V only) |
+| Right O2 | 33 | **0x19** | 19->357 |
+| Left O2 post-cat | 17 | **0x1A** | 21->360 |
+| Right O2 post-cat | 8 | **0x1B** (tentative) | weak this run — RETRY (bad clip likely) |
+
+**Blocks (contiguous by function):** **O2 voltages = 0x18/0x19/0x1A/0x1B** (four
+sensors); **scaled measures** throttle 0x10 / MAF 0x11 (adjacent) + fuel-press 0x05
+(all read ~0/470/860 for a 0-5V sweep = same scaling, different id per pin); **raw
+ADC** coolant 0x00 / IAT 0x01 / throttle 0x0F / fuel-temp 0x15 / fuel-level 0x02.
+No clean id (expected): pin 32 = O2 **heater** (output, not a voltage input); pins
+36/1(ABS)/18(neutral) = switch/logic, jitter only.
+
+**Reading the map output:** the real responder is the id with a BIG monotonic swing
+(hundreds of counts). Ignore ids that jitter +/-1 in the last nibble across EVERY
+run — `0x2B` (7F7FFD<->7F7FED) and idle `0x19/0x1A/0x1B` (FC03<->FD03) are noise
+channels, NOT shared sensors (this is why pin 14 & 15 can look like they "share" an
+id — they don't: coolant=0x00, throttle=0x0F/0x10).
 
 **KEY STRUCTURAL FINDING:** the **low ids are a raw-ADC block, one id per physical
 input** (0x00=coolant channel, 0x01=IAT channel …) and are cleanly pin-specific.
