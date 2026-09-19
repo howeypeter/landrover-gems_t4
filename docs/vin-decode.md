@@ -121,13 +121,46 @@ So `reconstruct_vin(...)` computes pos 9 from the assembled string (with any
 placeholder at 9), and `validate_vin(vin)` recomputes and compares — catching a
 wrong prefix/serial. (ROW/UK VINs skip this — no check digit to verify against.)
 
+**Verified against Wikibooks "Check digit" (read 2026-09-19).** Compulsory in
+North America; used fairly widely elsewhere **except the UK, which omits it**
+(and it's unreliable for AU/NL). **Test vectors** for a `gems_t4/gems/vin.py`
+implementation:
+- `1M8GDM9A` + `_` + `KP042788` → transliterated·weighted sum **351**, `351 mod
+  11 = 10` → check digit **`X`** → `1M8GDM9AXKP042788`.
+- `11111111111111111` (seventeen 1s) is a **valid** VIN — handy self-check.
+
+## §3b — Model year (position 10)
+
+Per Wikibooks "Model year": the year code sits at **position 10** (NAS). Besides
+`I O Q` (never valid anywhere in a VIN), the letters **`U` `Z`** and the digit
+**`0`** are **not used** for the year. The code runs `A`..`Y` then `1`..`9`, so
+each code repeats on a **30-year cycle**:
+
+| Code | Year(s) | Code | Year(s) |
+|---|---|---|---|
+| M | 1991 / 2021 | T | **1996** / 2026 |
+| N | 1992 / 2022 | V | **1997** / 2027 |
+| P | 1993 / 2023 | W | **1998** / 2028 |
+| R | 1994 / 2024 | X | **1999** / 2029 |
+| S | 1995 / 2025 | Y | 2000 / 2030 |
+
+⚠️ **Ambiguity:** `T` is 1996 *or* 2026. Wikibooks gives **no** position-7
+letter/digit heuristic and no LR-specific tie-breaker, so disambiguation must
+come from **context** — a **GEMS Discovery 1 is a 1996–1999 vehicle**, so
+`T/V/W/X` resolve to 96/97/98/99 (never the 2026+ window). A `decode_vin` should
+take an era hint (or clamp Land-Rover GEMS-era VINs to the 20th-century cycle).
+
 ---
 
 ## §4 — How this could be built (if picked up)
 
 A small pure helper `gems_t4/gems/vin.py`:
-- `check_digit(vin) -> str` — the NAS position-9 algorithm (§3).
-- `validate_vin(vin) -> bool` — recompute pos 9 and compare (NAS only).
+- `check_digit(vin) -> str` — the NAS position-9 algorithm (§3); unit-test it
+  against the two vectors in §3 (`1M8GDM9AXKP042788`, all-ones).
+- `validate_vin(vin) -> bool` — recompute pos 9 and compare (NAS only; skip for
+  UK/ROW, which omit the check digit).
+- `model_year(code, era=None) -> int` — pos-10 decode with the 30-year
+  disambiguation of §3b (clamp GEMS-era LR to 1996–1999).
 - `decode_vin(vin, scheme="nas"|"row") -> dict` — explode into fields (§1/§2).
 - `reconstruct_vin(fields, last6, scheme="nas") -> str` — assemble from known
   attributes + read serial; for NAS, **compute** pos 9; return the 17-char VIN
