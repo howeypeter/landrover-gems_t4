@@ -80,3 +80,45 @@ def test_live_stream_websocket(client: TestClient) -> None:
 def test_immobiliser_status(client: TestClient) -> None:
     body = client.get("/api/immobiliser").json()
     assert set(body) == {"mobilised", "learn_mode"}
+
+
+def test_actuator_run(client: TestClient) -> None:
+    a = client.get("/api/actuators").json()["actuators"][0]
+    r = client.post("/api/actuator", json={"actuator_id": a["id"], "state": 1})
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body) == {"actuator_id", "ok", "message"}
+    assert isinstance(body["ok"], bool)
+
+
+def test_coding_read_and_write(client: TestClient) -> None:
+    fields = client.get("/api/coding").json()["fields"]
+    assert fields
+    assert {"key", "name", "writable", "value"} <= set(fields[0])
+    writable = next((f for f in fields if f["writable"]), None)
+    if writable is not None:
+        # Round-trip a write through the gated Backend path (API confirms server
+        # side). Use the current value so the round-trip is a no-op on the ECU.
+        text = writable["value"] or "000000"
+        r = client.post("/api/coding", json={"field": writable["key"], "text": text})
+        assert r.status_code == 200
+        assert r.json()["field"] == writable["key"]
+
+
+def test_vin_endpoint(client: TestClient) -> None:
+    r = client.get("/api/vin")
+    assert r.status_code == 200
+    assert "vin" in r.json()          # value may be a string or null
+
+
+def test_maps_endpoint(client: TestClient) -> None:
+    r = client.get("/api/maps")
+    assert r.status_code == 200
+    assert isinstance(r.json()["maps"], list)
+
+
+def test_connection_test_endpoint(client: TestClient) -> None:
+    r = client.post("/api/connection/test")
+    assert r.status_code == 200
+    body = r.json()
+    assert {"ok", "label", "message", "latencies_ms"} <= set(body)

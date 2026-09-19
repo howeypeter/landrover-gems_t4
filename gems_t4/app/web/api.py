@@ -234,7 +234,15 @@ def build_app(backend: Backend | None = None) -> FastAPI:
     def write_coding(body: CodingBody) -> dict:
         try:
             data = be().encode_coding_text(body.field, body.text)
-            locked(be().write_coding, body.field, data, confirm=lambda: True)
+
+            # Full gated write: read-before-write backup, then write with
+            # verify-after-write. The browser already confirmed (see the UI),
+            # so confirm() is satisfied here.
+            def _do() -> None:
+                bk = be().backup_coding(body.field)
+                be().write_coding(body.field, data, backup=bk, confirm=lambda: True)
+
+            locked(_do)
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(409, str(exc)) from exc
         return {"field": body.field, "value": locked(be().read_coding_text, body.field)}
