@@ -6,6 +6,9 @@ interface Props {
   unit: string;
   min: number;
   max: number;
+  // When true, the arc stays a calm neutral colour regardless of fill - for
+  // measures where a high reading isn't "worse" (e.g. battery voltage).
+  neutral?: boolean;
 }
 
 const START = 135; // degrees (bottom-left)
@@ -29,19 +32,20 @@ function color(frac: number) {
   return "#f87171"; // red
 }
 
-export default function Gauge({ label, value, unit, min, max }: Props) {
+export default function Gauge({ label, value, unit, min, max, neutral }: Props) {
   const frac = max === min ? 0 : Math.max(0, Math.min(1, (value - min) / (max - min)));
   const size = 160;
   const c = size / 2;
   const r = 62;
   const end = START + SWEEP * frac;
+  const stroke = neutral ? "#60a5fa" : color(frac); // calm blue when neutral
 
   return (
     <div className="flex flex-col items-center rounded-2xl bg-neutral-900/70 ring-1 ring-white/5 p-4 shadow-lg">
       <svg width={size} height={size - 22} viewBox={`0 0 ${size} ${size - 22}`}>
         <path d={arc(c, c, r, START, START + SWEEP)} fill="none" stroke="#27272a" strokeWidth={12} strokeLinecap="round" />
         {frac > 0 && (
-          <path d={arc(c, c, r, START, end)} fill="none" stroke={color(frac)} strokeWidth={12} strokeLinecap="round" />
+          <path d={arc(c, c, r, START, end)} fill="none" stroke={stroke} strokeWidth={12} strokeLinecap="round" />
         )}
         <text x={c} y={c - 4} textAnchor="middle" className="fill-neutral-100" style={{ fontSize: 26, fontWeight: 700 }}>
           {Number.isFinite(value) ? (Math.abs(value) >= 100 ? Math.round(value) : value.toFixed(1)) : "--"}

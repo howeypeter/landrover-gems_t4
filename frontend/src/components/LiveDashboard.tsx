@@ -3,6 +3,10 @@ import { liveSocket, type Measure } from "../api";
 import { rangeFor } from "../ranges";
 import Gauge from "./Gauge";
 
+// Measures where a high reading isn't "worse", so the gauge stays a calm
+// neutral colour instead of the green/amber/red threshold ramp.
+const NEUTRAL = new Set<string>(["Battery voltage"]);
+
 // Streams live measures over the WebSocket and renders a gauge per numeric one.
 // A "Focus" picker narrows the stream to one PID for a fast single-sensor read.
 export default function LiveDashboard({ enabled }: { enabled: boolean }) {
@@ -84,6 +88,7 @@ export default function LiveDashboard({ enabled }: { enabled: boolean }) {
                 unit={m.unit}
                 min={lo}
                 max={hi}
+                neutral={NEUTRAL.has(m.name)}
               />
             );
           })}
