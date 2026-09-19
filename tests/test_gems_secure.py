@@ -191,7 +191,7 @@ def test_writes_gated_then_sent():
     assert s.unlock()
     s.reset_adaptive_values()
     assert s.transport.sent[-1] == gs.WRITE_RESET_ADAPTIVE
-    s.immobiliser_synch()
+    s.immobiliser_sync()
     assert s.transport.sent[-1] == gs.WRITE_IMMOBILISER_SYNCH
 
 

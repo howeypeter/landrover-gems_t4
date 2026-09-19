@@ -24,7 +24,7 @@ and the two known actions use service ``A3``. See ``memory/real-gems-protocol.md
 
 WARNING — writes: ``$27`` locks after ~3 *wrong* keys (NRC 0x36). A *correct*
 key never touches that counter. The ``A3`` writes here (reset-adaptive,
-immobiliser-synch) mutate the ECU; they are refused unless the session is
+immobiliser-sync) mutate the ECU; they are refused unless the session is
 unlocked, and callers should gate them behind explicit user confirmation.
 """
 from __future__ import annotations
@@ -307,13 +307,16 @@ class GemsSecureSession:
         """Send the reset-adaptive-values action. Requires an unlocked session."""
         return self._write(WRITE_RESET_ADAPTIVE)
 
-    def immobiliser_synch(self) -> bytes:
-        """Send the immobiliser-synch (Security-Learn) action. Unlock required.
+    def immobiliser_sync(self) -> bytes:
+        """Send the immobiliser-sync (Security-Learn) action. Unlock required.
 
         This mutates immobiliser pairing — callers must confirm with the user
         first. Returns the raw response data for inspection.
         """
         return self._write(WRITE_IMMOBILISER_SYNCH)
+
+    # Back-compat alias (old spelling); prefer immobiliser_sync().
+    immobiliser_synch = immobiliser_sync
 
     def _write(self, payload: bytes) -> bytes:
         if not self.unlocked:

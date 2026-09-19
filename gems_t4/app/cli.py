@@ -457,7 +457,7 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
     Unlocks with the recovered $27 key, then (by default) reads coding. Optional
     ``--dump ADDR:LEN`` does a single 0x3C read (LEN 1..3F; 0x3C addressing is not
     linear on this ECU, so it's one record, not a range); ``--reset-adaptive`` /
-    ``--immobiliser-synch`` run the two known writes (with confirmation). Needs
+    ``--immobiliser-sync`` run the two known writes (with confirmation). Needs
     the ECU's L-line tied to the K node — this is a bench capability, not on-car.
     """
     from gems_t4.protocol.gems_secure import GemsSecureError
@@ -500,15 +500,15 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
                 render.console.print("[green]Reset-adaptive-values sent.[/]")
             else:
                 render.console.print("Reset cancelled.")
-        if getattr(args, "immobiliser_synch", False):
+        if getattr(args, "immobiliser_sync", False):
             did_action = True
             render.console.print(
-                "[yellow]Immobiliser synch (Security-Learn) mutates BeCM<->ECM "
+                "[yellow]Immobiliser sync (Security-Learn) mutates BeCM<->ECM "
                 "pairing.[/]"
             )
-            if args.yes or _prompt_yes_no("Send immobiliser synch? [y/N] "):
-                session.immobiliser_synch()
-                render.console.print("[green]Immobiliser-synch sent.[/]")
+            if args.yes or _prompt_yes_no("Send immobiliser sync? [y/N] "):
+                session.immobiliser_sync()
+                render.console.print("[green]Immobiliser-sync sent.[/]")
             else:
                 render.console.print("Immobiliser synch cancelled.")
         if getattr(args, "dump", None):
@@ -910,8 +910,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="secure: read the immobiliser/security block (page 0x18 A4-A8)")
     sp.add_argument("--reset-adaptive", action="store_true",
                     help="secure: send the reset-adaptive-values write")
-    sp.add_argument("--immobiliser-synch", action="store_true",
-                    help="secure: send the immobiliser-synch (Security-Learn) write")
+    # `--immobiliser-synch` kept as a hidden back-compat alias (old spelling).
+    sp.add_argument("--immobiliser-sync", "--immobiliser-synch",
+                    dest="immobiliser_sync", action="store_true",
+                    help="secure: send the immobiliser-sync (Security-Learn) write")
     sp.add_argument("--port", help="serial port of the Pico adapter (e.g. COM4)")
     sp.add_argument("--connect", metavar="HOST[:PORT]",
                     help="TCP endpoint (serve bridge or WiFi Pico); default port 9141")

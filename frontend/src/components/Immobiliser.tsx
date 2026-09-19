@@ -64,7 +64,7 @@ export default function Immobiliser({ enabled }: { enabled: boolean }) {
       <p className="mt-4 text-xs text-neutral-600">
         Security-Learn (BeCM↔ECM re-sync) is a gated proprietary write — run it
         from the CLI (<code className="text-neutral-500">gems_t4 kline secure
-        --immobiliser-synch</code>), not the browser.
+        --immobiliser-sync</code>), not the browser.
       </p>
     </Card>
   );

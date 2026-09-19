@@ -71,7 +71,7 @@ The active working list for the next couple of days. Detailed backlog entries
    `dump_memory` (0x3C) + `write_cid` (2E); `tests/test_gems_secure.py`, 18 tests incl. real
    captured frames). **Wired** into `Backend.secure_session()` and the CLI: **`gems_t4 kline
    secure`** (unlock + read coding; `--dump ADDR:LEN` for 0x3C; `--reset-adaptive` /
-   `--immobiliser-synch` writes with confirm). **GUI intentionally deferred** — the 0xDA
+   `--immobiliser-sync` writes with confirm). **GUI intentionally deferred** — the 0xDA
    channel is bench-only (needs the L-line jumper), so the CLI is its correct home; add a GUI
    screen only if it becomes a supported on-car workflow. **Bench-gated remainders** (probe
    `~/da8_secure_probe.py`): verify the `0x3C` positive format live (never seen a positive —
@@ -833,7 +833,7 @@ whole 0xDA handshake and command map: `1002`→`5002`, `2701`→`6701<seed>`,
 `2702<key>`→**`6702AA`** (accept; **`6702CC`** = reject — the oracle our probes lacked, so
 the earlier "canned CC" was just the wrong-key reply). Reads (svc 22): VIN `2204C4`, PROM
 ID `2204E2`, displacement `2204BF`, adaptive `2223xx`. Writes (svc A3): `A3234800`
-reset-adaptive, `A300622588` immobiliser-synch. **Not yet bench-confirmed on our Disco-1
+reset-adaptive, `A300622588` immobiliser-sync. **Not yet bench-confirmed on our Disco-1
 ECU** — one controlled attempt pending (`~/da6_unlock.py`), then implement `security_access`
 + coding in `gems_t4`. This effectively unblocks the whole proprietary tier. Full detail +
 byte map: `memory/real-gems-protocol.md`.
@@ -996,7 +996,7 @@ up):**
   commands) whenever the adapter is powered and not already connected (BLE allows
   one central at a time, so an active laptop session locks others out). **Blast
   radius is limited:** over BLE an attacker reaches only the **K-line** — the
-  dangerous proprietary writes (coding, immobiliser-synch `A300622588`) need BOTH
+  dangerous proprietary writes (coding, immobiliser-sync `A300622588`) need BOTH
   the **physical L-line jumper** AND the **`$27` key**, so they can't reprogram/
   immobilise over BLE alone; what's exposed is OBD-level reads, DTC-clear, and some
   actuators. Exposure only exists while the adapter is powered (a bench/diagnostic
