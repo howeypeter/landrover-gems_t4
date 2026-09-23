@@ -73,7 +73,12 @@ BLE notifies truncate to the ATT MTU (don't fragment) → ≤16 B chunks + delay
 tune `BLE_TX_CHUNK` if replies garble. **Real-ECU read CONFIRMED over BLE
 2026-09-07:** `gems_t4 kline dtc --ble` returned P1193/P0158/P1316/P0125 from a
 real GEMS ECU — full stack proven (BLE + 5-baud init + multi-frame Mode 03).
-Upstream PR for the BLEUUID bug is in the CLAUDE.md backlog.
+**UPDATE 2026-09-23: BLEUUID bug is FIXED UPSTREAM in core 6.1.1** (issue #3524 /
+PR #3526 "Fix BLEUUID String constructor" — byte-wise `readHexByte()`/`%hhx`, no
+long-long). We **upgraded the installed core 6.1.0 → 6.1.1**, dropping our local
+hand-patch. ⚠️ **Core 6.1.0 is BLE-broken (all-zero 128-bit UUIDs) — always build
+BLE on core ≥ 6.1.1.** Our backlog "upstream a PR" item is now moot (someone else
+fixed it). Name-truncation workaround is unrelated and stays.
 **Bluetooth Classic REMOVED 2026-09-08:** `pico_kline_bt` (Classic SPP) and
 `pico_kline_wireless` (WiFi+Classic combined) were `git rm`'d, along with the
 Classic-only `transport/discovery.py` (COM-port autodetect — pointless with BLE).

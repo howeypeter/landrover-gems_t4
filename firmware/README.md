@@ -93,17 +93,21 @@ gems_t4 kline wifi-status            # connected <ip> / offline (creds set: …)
 Use a **2.4 GHz** network (the CYW43 is 2.4 GHz only). WiFi stays idle until creds
 are stored. (Host commands: `CMD_SET_WIFI 0x06`, `CMD_WIFI_STATUS 0x07`.)
 
-### BLE — one-time core patch
+### BLE — require arduino-pico core ≥ 6.1.1
 
-> **⚠️ Requires a one-line patch to the arduino-pico core** (`libraries/BLE/src/
-> BLEUUID.h`). Stock `BLEUUID(String)` parses 128-bit UUIDs with `sscanf(…, "%llx",
-> …)`; **newlib-nano's `sscanf` has no `long long`**, so the parse fails silently
-> and every 128-bit UUID comes out all-zero — which breaks `BLEServiceUART` (bleak
-> can't find `6e400003`). Fix: replace the `%llx` read with a long-long-free split.
-> The patch lives in the toolchain, so **re-apply after any core update** (and it's
-> worth reporting upstream). BLE notifications don't fragment — they truncate to the
-> ATT MTU — so the firmware sends replies in ≤16 B chunks with a short inter-chunk
-> delay; if replies ever garble, tune `BLE_TX_CHUNK` / the delay.
+> **⚠️ Do NOT build BLE on arduino-pico core 6.1.0 — it is broken for BLE.** In
+> 6.1.0, `BLEUUID(String)` parses 128-bit UUIDs with `sscanf(…, "%llx", …)`;
+> **newlib-nano's `sscanf` has no `long long`**, so the parse fails silently and
+> every 128-bit UUID comes out all-zero — which breaks `BLEServiceUART` (bleak
+> can't find `6e400003`). **This is fixed upstream in core 6.1.1** (issue #3524 /
+> PR #3526 "Fix BLEUUID String constructor" — a long-long-free byte-wise parse),
+> so **just use core ≥ 6.1.1 and no patch is needed**. (Historical note: on 6.1.0
+> we hand-patched `libraries/BLE/src/BLEUUID.h`; that workaround is obsolete once
+> the core is ≥ 6.1.1.) Upgrade with:
+> `arduino-cli core upgrade rp2040:rp2040 --additional-urls <earlephilhower index>`.
+> BLE notifications don't fragment — they truncate to the ATT MTU — so the
+> firmware sends replies in ≤16 B chunks with a short inter-chunk delay; if replies
+> ever garble, tune `BLE_TX_CHUNK` / the delay.
 
 ### Security
 

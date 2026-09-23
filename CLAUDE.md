@@ -169,9 +169,11 @@ The active working list for the next couple of days. Detailed backlog entries
    proprietary/unmapped). Enumerate exactly which screens need what.
 
 ### P3
-8. **Upstream the arduino-pico `BLEUUID` bug** (issue + byte-wise PR from the
-   user's GitHub; check for an existing issue first). Details in the tech-debt
-   backlog.
+8. **✅ DONE / MOOT (2026-09-23) — arduino-pico `BLEUUID` bug.** Fixed **upstream**
+   in core **6.1.1** (issue #3524 / PR #3526), so there was nothing for us to
+   submit. **Resolved by upgrading the installed core 6.1.0 → 6.1.1** (which
+   replaced our local patch with their byte-wise parse). ⚠️ **Core 6.1.0 is
+   BLE-broken — require ≥ 6.1.1** (see the tech-debt note + `firmware/README.md`).
 
 ### P4
 9. **Finalize hardware for PCB design.** Decide **whether to consolidate the two
@@ -1075,18 +1077,22 @@ up):**
   reintroduces pairing); a central MAC allowlist; advertise only when physically
   armed (button/jumper). Note the **WiFi/TCP** write-gate is currently client-side
   only (QA note C) - this app-layer auth would properly close it too.
-- **Report the arduino-pico `BLEUUID` 128-bit bug upstream (issue + PR).**
-  `earlephilhower/arduino-pico` (found 2026-09-07, core 6.1.0). `BLEUUID(String)`
-  in `libraries/BLE/src/BLEUUID.h` parses 128-bit UUIDs with
+- **✅ RESOLVED (2026-09-23) — arduino-pico `BLEUUID` 128-bit bug (upstream).**
+  `earlephilhower/arduino-pico` (found 2026-09-07 on core 6.1.0). `BLEUUID(String)`
+  in `libraries/BLE/src/BLEUUID.h` parsed 128-bit UUIDs with
   `sscanf(str, "%x-%x-%x-%x-%llx", …)`; **newlib-nano's `sscanf` has no `long
-  long`**, so the parse fails and every 128-bit UUID comes out all-zero — which
-  breaks the library's own `BLEServiceUART` (a central can't find `6e400003`).
-  We patched our local core to unblock BLE (see `firmware/README.md` "Bluetooth
-  LE" → core-patch note); this backlog item is to contribute it back so future
-  core installs don't need the manual patch. Fix to submit: a dependency-free
-  byte-wise parse (no `sscanf`/no long-long) of the 36-char canonical string.
-  Check for an existing issue first. Not urgent (local patch works); do when
-  there's time. **Do this from the user's GitHub account** — no `gh`/token here.
+  long`**, so the parse failed and every 128-bit UUID came out all-zero — which
+  broke the library's own `BLEServiceUART` (a central can't find `6e400003`).
+  **It was already reported + fixed upstream by someone else** (issue #3524
+  "Bluetooth BLE creates all-zero UUIDs…", PR #3526 "Fix BLEUUID String
+  constructor" — a long-long-free byte-wise `readHexByte()`/`%hhx` parse), shipped
+  in **core 6.1.1** (~21 Sep 2026). So no PR from us was needed. **We upgraded the
+  installed core 6.1.0 → 6.1.1** (`arduino-cli core upgrade rp2040:rp2040
+  --additional-urls <earlephilhower index>`), which dropped our local hand-patch
+  in favour of theirs. ⚠️ **NOTE: core 6.1.0 is BLE-broken (all-zero 128-bit
+  UUIDs) — always build BLE on core ≥ 6.1.1.** The unrelated advertised-name
+  truncation workaround (`startAdvertising(false)` + prefix-match) stays — that's
+  normal BLE 31-byte advertising sizing, not a bug.
 - **Finalize PCB1 Pico power before fab (route A: on-board 12 V→5 V buck).**
   Decided 2026-09-07: interim is **route C** — power the Pico from a USB
   wall-charger / power bank (no board change; the Pico 2 W WiFi firmware already
