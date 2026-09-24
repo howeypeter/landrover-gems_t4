@@ -67,6 +67,16 @@ arduino-cli compile -u --fqbn rp2040:rp2040:rpipico  firmware/pico_kline_all
 > BT). **arduino-cli:** the FQBN must carry `:ipbtstack=ipv4btcble` (as above).
 > Also confirm the board is the **Pico 2 W / Pico W** (only the "W" variants have
 > the CYW43 radio). For a non-radio board, build USB-only with `ENABLE_BLE 0`.
+>
+> **⚠️ Arduino IDE link error — hundreds of `undefined reference to __wrap_memcpy
+> / __wrap__malloc_r / main / _exit`, TinyUSB `mscd_*`/`hidd_*`/`netd_*`?** The IDE
+> isn't linking the arduino-pico **core archive** (a build-config quirk, NOT the
+> code). Check Tools → **USB Stack = "Pico SDK"** (not Adafruit TinyUSB / No USB)
+> and the board-option list above. If the menus already match and it still fails,
+> **build with `arduino-cli` instead** — it is the supported path and links clean
+> on core 6.1.1 (verified). Enable IDE "Show verbose output during compile" to see
+> the broken link line if you want to chase the IDE itself; the usual causes are a
+> bundled-builder mismatch or OneDrive path interference, not our sources.
 
 Sketch usage is ~12% flash / ~17% RAM. `enum ActiveT` lives in
 `kline_transport.h` (a header so Arduino's auto-generated prototypes can see it).
