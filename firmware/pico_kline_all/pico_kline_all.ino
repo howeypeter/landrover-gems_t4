@@ -446,8 +446,12 @@ static void handleSetWifi(const uint8_t *payload, uint8_t len) {
   if (pl >= sizeof(pass)) pl = sizeof(pass) - 1;
   memcpy(pass, payload + 1 + sl, pl);
   if (!saveCreds(ssid, pass)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
-  connectWiFi();
+  // ACK the SAVE immediately: connectWiFi() blocks up to 20 s, which exceeds the
+  // host's ~6 s frame timeout and made set-wifi falsely report "no response"
+  // even though the creds saved and the join succeeded. ST_OK means "saved";
+  // the actual join happens next and is reported by `wifi-status`.
   sendPico(ST_OK, nullptr, 0);
+  connectWiFi();
 }
 
 static void handleWifiStatus() {
