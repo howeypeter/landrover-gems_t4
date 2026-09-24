@@ -130,13 +130,26 @@ class ConnectionScreen(Screen):
         lay.addWidget(self._wifi_header)
         wifi_form = QFormLayout()
         wifi_form.setHorizontalSpacing(16)
+        # Wide enough to read a full SSID/password (was capped at 260px, too
+        # cramped to verify what you typed). Grow with the dialog, floor at 360.
         self._wifi_ssid = QLineEdit()
-        self._wifi_ssid.setMaximumWidth(260)
+        self._wifi_ssid.setMinimumWidth(360)
+        self._wifi_ssid.setPlaceholderText("network name (2.4 GHz)")
         wifi_form.addRow("WiFi SSID:", self._wifi_ssid)
         self._wifi_pw = QLineEdit()
         self._wifi_pw.setEchoMode(QLineEdit.EchoMode.Password)
-        self._wifi_pw.setMaximumWidth(260)
-        wifi_form.addRow("WiFi password:", self._wifi_pw)
+        self._wifi_pw.setMinimumWidth(360)
+        self._wifi_pw.setPlaceholderText("password (blank = open network)")
+        # A "Show" toggle so you can confirm the password before saving it.
+        self._wifi_pw_show = QCheckBox("Show")
+        self._wifi_pw_show.toggled.connect(
+            lambda on: self._wifi_pw.setEchoMode(
+                QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password))
+        pw_row = QHBoxLayout()
+        pw_row.setContentsMargins(0, 0, 0, 0)
+        pw_row.addWidget(self._wifi_pw, 1)
+        pw_row.addWidget(self._wifi_pw_show)
+        wifi_form.addRow("WiFi password:", pw_row)
         lay.addLayout(wifi_form)
         wifi_btns = QHBoxLayout()
         self._btn_wifi_status = QPushButton("WiFi status")
@@ -207,7 +220,7 @@ class ConnectionScreen(Screen):
         self._ble_device.setEnabled(kind == "ble")
         wifi_ok = kind in ("usb", "ble")            # WiFi admin needs a USB/BLE Pico
         for w in (self._wifi_header, self._wifi_ssid, self._wifi_pw,
-                  self._btn_wifi_status, self._btn_wifi_set):
+                  self._wifi_pw_show, self._btn_wifi_status, self._btn_wifi_set):
             w.setEnabled(wifi_ok)
 
     def _show_current(self) -> None:
