@@ -69,14 +69,48 @@ arduino-cli compile -u --fqbn rp2040:rp2040:rpipico  firmware/pico_kline_all
 > the CYW43 radio). For a non-radio board, build USB-only with `ENABLE_BLE 0`.
 >
 > **⚠️ Arduino IDE link error — hundreds of `undefined reference to __wrap_memcpy
-> / __wrap__malloc_r / main / _exit`, TinyUSB `mscd_*`/`hidd_*`/`netd_*`?** The IDE
-> isn't linking the arduino-pico **core archive** (a build-config quirk, NOT the
-> code). Check Tools → **USB Stack = "Pico SDK"** (not Adafruit TinyUSB / No USB)
-> and the board-option list above. If the menus already match and it still fails,
-> **build with `arduino-cli` instead** — it is the supported path and links clean
-> on core 6.1.1 (verified). Enable IDE "Show verbose output during compile" to see
-> the broken link line if you want to chase the IDE itself; the usual causes are a
-> bundled-builder mismatch or OneDrive path interference, not our sources.
+> / __wrap__malloc_r / main / _exit`, TinyUSB `mscd_*`/`hidd_*`/`midid_*`/`netd_*`,
+> lwIP `__wrap_tcp_*`/`__wrap_pbuf_*`?** This is
+> an **IDE build-config/cache problem, NOT the code, the core, or the toolchain** —
+> and **not** a broken install, so **do not reinstall the core** (it won't help).
+>
+> **✅ CONFIRMED ROOT CAUSE + FIX (2026-09-24): a stale IDE core cache.** Clearing
+> the IDE's compiled-core cache and rebuilding made it **link clean**. The IDE keeps
+> a *separate* core cache at **`%LOCALAPPDATA%\arduino\cores\`** (dirs like
+> `rp2040_rp2040_rpipico2w_ipbtstack_ipv4btcble_*`) — **distinct** from the
+> `%LOCALAPPDATA%\arduino\sketches\` and `%TEMP%\arduino*` caches, so a normal
+> "clear the build cache" step misses it. A `core.a` cached during an earlier failed
+> build (e.g. the `_needsbt` BT-off error above, or a wrong USB/IP-BT stack pick) got
+> reused, so the final link ran against a core that didn't match the selected board
+> options. **The fix:** close the IDE and run (PowerShell) —
+> ```
+> Remove-Item "$env:LOCALAPPDATA\arduino\cores\*" -Recurse -Force -ErrorAction SilentlyContinue
+> ```
+> then reopen and rebuild. The first rebuild is slow (it recompiles the whole core —
+> WiFi/BLE/lwIP/LittleFS/TinyUSB — a few minutes); every build after is fast again.
+> Don't cancel that first rebuild — an interrupted build is what poisons the cache.
+>
+> **Why it is NOT a broken install (so do not reinstall the core):** the *identical*
+> sketch — and even a bare empty `setup()/loop()` sketch — link **clean** via
+> `arduino-cli` against the *exact same* on-disk core the IDE uses
+> (`…\Arduino15\packages\rp2040\hardware\rp2040\6.1.1`, `pqt-gcc/5.0.0-9576866`,
+> `arm-none-eabi 16.1.0`). Only **one** rp2040 core is installed (no duplicate), the
+> IDE reads that same path, and the IDE's *bundled* `arduino-cli` is the **same
+> version/commit** as standalone (1.5.1 / `01f3d4f2b`) — same data dir, no env
+> override. The undefined set (`main` + newlib syscalls `_exit`/`_read`/`_write` +
+> the `__wrap_*` shims + libpico's TinyUSB `_usbd_driver` class-driver table) is the
+> signature of a cached core built for a **different board-option combination** than
+> the one selected — a cache mismatch, not a bad toolchain.
+>
+> **If a cache clear ever doesn't fix it:** (1) match every Tools-menu option to the
+> FQBN — **Board = Raspberry Pi Pico 2 W**, **USB Stack = "Pico SDK"**, **IP/Bluetooth
+> Stack = "IPv4 + Bluetooth"** (`ipbtstack=ipv4btcble`); (2) rule out the **OneDrive
+> path** by copying `firmware/pico_kline_all` to `C:\pico\pico_kline_all\` and building
+> there; (3) fall back to `arduino-cli` (the supported path, always links clean):
+> `arduino-cli compile -u -p COM# --fqbn "rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble" firmware/pico_kline_all`.
+> To inspect the IDE's link recipe, turn on **File → Preferences → "Show verbose
+> output during: compile"** and diff its final `…ld.exe…` line against
+> `arduino-cli compile --verbose`.
 
 Sketch usage is ~12% flash / ~17% RAM. `enum ActiveT` lives in
 `kline_transport.h` (a header so Arduino's auto-generated prototypes can see it).
