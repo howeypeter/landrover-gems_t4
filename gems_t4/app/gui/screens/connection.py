@@ -33,14 +33,17 @@ previous (working) connection.
 """
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -62,7 +65,21 @@ class ConnectionScreen(Screen):
     def __init__(self, backend: Backend, parent: QWidget | None = None) -> None:
         super().__init__(backend, parent)
 
-        lay = QVBoxLayout(self)
+        # The screen has a lot of controls; on the fixed 800x600 kiosk it can be
+        # taller than the content area. Host the body in a scroll area so rows
+        # keep their height and SCROLL instead of crushing (was: line-edit rows
+        # collapsed to an unreadable sliver on short windows).
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        outer.addWidget(scroll)
+        body = QWidget()
+        scroll.setWidget(body)
+
+        lay = QVBoxLayout(body)
         lay.setContentsMargins(30, 24, 30, 24)
         lay.setSpacing(14)
 
