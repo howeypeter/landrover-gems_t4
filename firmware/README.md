@@ -60,6 +60,14 @@ arduino-cli compile -u --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble firmw
 arduino-cli compile -u --fqbn rp2040:rp2040:rpipico  firmware/pico_kline_all
 ```
 
+> **⚠️ Build error `static assertion failed: This library needs Bluetooth
+> enabled` (`_needsbt.h`, `ENABLE_CLASSIC 0`)?** The Bluetooth stack isn't
+> compiled in. It is NOT a code bug — it's a board option. **Arduino IDE:** Tools
+> → **IP/Bluetooth Stack → "IPv4 + Bluetooth"** (the default "IPv4 Only" has no
+> BT). **arduino-cli:** the FQBN must carry `:ipbtstack=ipv4btcble` (as above).
+> Also confirm the board is the **Pico 2 W / Pico W** (only the "W" variants have
+> the CYW43 radio). For a non-radio board, build USB-only with `ENABLE_BLE 0`.
+
 Sketch usage is ~12% flash / ~17% RAM. `enum ActiveT` lives in
 `kline_transport.h` (a header so Arduino's auto-generated prototypes can see it).
 
