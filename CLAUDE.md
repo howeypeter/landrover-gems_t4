@@ -1055,7 +1055,10 @@ up):**
   - **Storage (mirror WiFi):** new host command `CMD_SET_SECRET` (next free id
     after `0x06`/`0x07`) writes the secret to the Pico's **LittleFS**, driven by
     `gems_t4 kline set-secret` (CLI) + a field on the GUI connection screen -
-    exactly like `set-wifi`/`wifi-status`.
+    exactly like `set-wifi`/`wifi-status`. **The secret shares the same LittleFS
+    region as `/wifi.txt`, so the firmware MUST be flashed with a non-zero FS**
+    (`flash=4194304_1048576`; the board default "4MB (no FS)" makes both `set-wifi`
+    and `set-secret` fail `status 2` — found 2026-09-24, see `firmware/README.md`).
   - **Auth = challenge-response, NOT sending the secret** (BLE/WiFi are
     unencrypted): on connect the firmware sends a random **nonce**; the host
     replies `HMAC(secret, nonce)` (HMAC-SHA256 truncated to 8-16 B); the firmware

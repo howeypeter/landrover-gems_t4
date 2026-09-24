@@ -88,7 +88,16 @@ WiFi creds via `kline set-wifi`/`wifi-status` over USB or BLE; BLE-verified `gem
 pico-all-pentest 3.0.0`).** The single-transport sketches (`pico_kline`,
 `pico_kline_pentest`, `pico_kline_wifi`, `pico_kline_ble`) and `transport/ftdi.py`
 (unused stub) were all `git rm`'d. Build `pico_kline_all` with
-`--fqbn rpipico2w:ipbtstack=ipv4btcble` (or `ENABLE_BLE 0` + `rpipico` for USB-only). The probe scripts default to `BleTransport("gems-pico")`, with
+`--fqbn rpipico2w:ipbtstack=ipv4btcble` (or `ENABLE_BLE 0` + `rpipico` for USB-only).
+**⚠️ WiFi needs a LittleFS region (found 2026-09-24): the board default is "4MB (no
+FS)" (`flash=4194304_0`), so `set-wifi` fails `status 2` (ST_BUS_ERROR) and
+`wifi-status`=`no-creds` FOREVER. Build with a non-zero FS:
+`--fqbn rp2040:rp2040:rpipico2w:flash=4194304_1048576,ipbtstack=ipv4btcble` (IDE:
+Tools→Flash Size→"…FS: 1MB"). README build cmd had OMITTED this — fixed 2026-09-24.
+Reflash-with-FS fixes an already-flashed no-FS Pico.** The 1MB LittleFS is the
+shared store for BOTH the WiFi SSID/pw (`/wifi.txt`) AND the future BLE/WiFi
+app-layer auth **secret** (`CMD_SET_SECRET`, per the security backlog item) — so
+this FS region is now a prerequisite for that too; both files are tiny, 1MB is ample. The probe scripts default to `BleTransport("gems-pico")`, with
 `GEMS_PORT=COMx` env to force USB serial and `GEMS_BLE` to override the name.
 
 **Bench probe scripts now live IN the repo at `bench/` (2026-09-15)** — the

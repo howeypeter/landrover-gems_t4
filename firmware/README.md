@@ -53,12 +53,24 @@ Using `arduino-cli` with the Arduino-Pico core (Earle Philhower). Build with the
 arduino-cli core install rp2040:rp2040
 
 # Pico 2 W (USB + BLE + WiFi):
-arduino-cli compile -u --fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble firmware/pico_kline_all
+arduino-cli compile -u --fqbn rp2040:rp2040:rpipico2w:flash=4194304_1048576,ipbtstack=ipv4btcble firmware/pico_kline_all
 #   Pico W  -> rpipicow ; IDE -> Tools > IP/Bluetooth Stack > "IPv4 + Bluetooth"
+#   AND     -> Tools > Flash Size > "4MB (Sketch: 3MB, FS: 1MB)"
 
 # Plain Pico / Pico 2 (USB only): set ENABLE_BLE 0 in the sketch, then:
 arduino-cli compile -u --fqbn rp2040:rp2040:rpipico  firmware/pico_kline_all
 ```
+
+> **⚠️ WiFi needs a LittleFS region — `flash=…_1048576` is NOT optional.** WiFi
+> credentials are stored in LittleFS (`set-wifi`), so the build MUST allocate a
+> filesystem. The board **default is "4MB (no FS)"** (`flash=4194304_0`), and a
+> no-FS build makes `set-wifi` fail with **`status 2` (ST_BUS_ERROR)** /
+> `wifi-status` = `no-creds` forever — creds have nowhere to save. Always build
+> the WiFi firmware with a non-zero FS: the FQBN's `flash=4194304_1048576`
+> (1 MB FS) above, or in the IDE **Tools → Flash Size → any "… FS: <n>KB/MB"**
+> option (64 KB is enough; 1 MB is comfortable). Reflashing with an FS fixes an
+> already-flashed no-FS Pico. (USB + BLE-only builds don't use LittleFS, so the FS
+> option only matters when WiFi/`set-wifi` is in play.)
 
 > **⚠️ Build error `static assertion failed: This library needs Bluetooth
 > enabled` (`_needsbt.h`, `ENABLE_CLASSIC 0`)?** The Bluetooth stack isn't
