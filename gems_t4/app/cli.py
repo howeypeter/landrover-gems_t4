@@ -575,11 +575,18 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
 
 def _run_kline_wifi_admin(args: argparse.Namespace) -> int:
     """`kline set-wifi` / `kline wifi-status` — manage the Pico's WiFi creds over
-    USB or BLE (needs the unified firmware; both carry the 0x06/0x07 commands)."""
+    USB, BLE, or the network (--connect, once the Pico is already on WiFi). Needs
+    the unified firmware; every transport carries the 0x06/0x07 commands."""
     from gems_t4.transport.base import TransportError
 
     ble = getattr(args, "ble", None)
-    if ble:
+    connect = getattr(args, "connect", None)
+    if connect:
+        from gems_t4.transport.tcp import TcpTransport, parse_endpoint
+        host, port = parse_endpoint(connect)
+        t = TcpTransport(host, port)
+        render.console.print(f"[dim]via network {host}:{port}[/]")
+    elif ble:
         from gems_t4.transport.ble import BleTransport
         t = BleTransport(ble)
         render.console.print(f"[dim]via BLE '{ble}'[/]")
@@ -894,7 +901,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "'secure' = the proprietary 0xDA $27 channel (bench, "
                          "L-line tied): unlock + read coding; 'set-wifi' "
                          "(--ssid/--password) stores WiFi creds on the Pico over "
-                         "USB (no reflash); 'wifi-status' reports its WiFi state")
+                         "USB, --ble, or --connect (once it's on WiFi; no reflash); "
+                         "'wifi-status' reports its WiFi state")
     sp.add_argument("--debug", action="store_true",
                     help="on any failure, print the full Python traceback")
     sp.add_argument("--yes", "-y", action="store_true",

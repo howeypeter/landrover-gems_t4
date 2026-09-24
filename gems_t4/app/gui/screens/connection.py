@@ -142,7 +142,7 @@ class ConnectionScreen(Screen):
 
         # -- WiFi admin (USB/BLE only): set the Pico's WiFi creds without the CLI.
         # Mirrors `gems_t4 kline set-wifi / wifi-status` (host cmds 0x06/0x07).
-        self._wifi_header = QLabel("Pico WiFi credentials (USB or Bluetooth only)")
+        self._wifi_header = QLabel("Pico WiFi credentials (USB, Bluetooth, or over WiFi)")
         self._wifi_header.setStyleSheet("font-weight: bold;")
         lay.addWidget(self._wifi_header)
         wifi_form = QFormLayout()
@@ -156,7 +156,10 @@ class ConnectionScreen(Screen):
         self._wifi_pw = QLineEdit()
         self._wifi_pw.setEchoMode(QLineEdit.EchoMode.Password)
         self._wifi_pw.setMinimumWidth(360)
-        self._wifi_pw.setPlaceholderText("password (blank = open network)")
+        # The password is write-only on the Pico (never read back, by design), so
+        # this field can't be pre-filled - it's only for setting a new one.
+        self._wifi_pw.setPlaceholderText(
+            "password (write-only - can't be read back; blank = open network)")
         # A "Show" toggle so you can confirm the password before saving it.
         self._wifi_pw_show = QCheckBox("Show")
         self._wifi_pw_show.toggled.connect(
@@ -235,7 +238,9 @@ class ConnectionScreen(Screen):
         self._tcp_port.setEnabled(kind == "network")
         self._allow_writes.setEnabled(kind == "network")
         self._ble_device.setEnabled(kind == "ble")
-        wifi_ok = kind in ("usb", "ble")            # WiFi admin needs a USB/BLE Pico
+        # WiFi admin works over USB, BLE, or - once the Pico is on WiFi - the
+        # network link itself (re-point/read creds over TCP, no bench trip).
+        wifi_ok = kind in ("usb", "ble", "network")
         for w in (self._wifi_header, self._wifi_ssid, self._wifi_pw,
                   self._wifi_pw_show, self._btn_wifi_status, self._btn_wifi_set):
             w.setEnabled(wifi_ok)
@@ -382,8 +387,45 @@ class ConnectionScreen(Screen):
         if kind == "ble":
             from gems_t4.transport.ble import BleTransport
             return BleTransport(self._ble_device.text().strip() or "gems-pico")
-        self.status.emit("WiFi admin needs the USB or Bluetooth LE connection.")
+        if kind == "network":
+            from gems_t4.transport.tcp import TcpTransport
+            host = self._host.text().strip()
+            if not host:
+                self.status.emit("Enter the host/IP of the WiFi Pico.")
+                return None
+            try:
+                port = int(self._tcp_port.text().strip() or "9141")
+            except ValueError:
+                self.status.emit("TCP port must be a number.")
+                return None
+            return TcpTransport(host, port)
+        self.status.emit("WiFi admin needs a USB, Bluetooth LE, or network Pico.")
         return None
+
+    def _apply_wifi_status(self, st: str) -> None:
+        """Reflect a firmware WiFi-status string in the form: pull the SSID into
+        the SSID field and show the IP, so the GUI 'picks up' creds set elsewhere
+        (e.g. via the CLI). The password is write-only and never comes back."""
+        ssid = None
+        detail = f"WiFi: {st}"
+        s = st.strip()
+        # "connected <ip> <ssid>"  (firmware reports both)
+        if s.startswith("connected "):
+            parts = s.split(" ", 2)
+            ip = parts[1] if len(parts) > 1 else "?"
+            if len(parts) > 2 and parts[2]:
+                ssid = parts[2]
+            detail = f"WiFi connected - IP {ip}" + (f", SSID '{ssid}'" if ssid else "")
+        # "offline (creds set: <ssid>)"
+        elif "creds set:" in s:
+            ssid = s.split("creds set:", 1)[1].strip().rstrip(")").strip()
+            detail = f"WiFi offline - creds set for SSID '{ssid}' (not joined yet)"
+        elif s == "no-creds":
+            detail = "WiFi: no credentials stored on the Pico yet"
+        if ssid:
+            self._wifi_ssid.setText(ssid)          # reflect what's actually stored
+        self._test_result.setText(detail)
+        self.status.emit(detail)
 
     def _on_wifi_status(self) -> None:
         t = self._wifi_transport()
@@ -400,8 +442,7 @@ class ConnectionScreen(Screen):
         self.run_with_wait(
             "Reading Pico WiFi status",
             work,
-            lambda st: (self._test_result.setText(f"WiFi: {st}"),
-                        self.status.emit(f"WiFi: {st}")),
+            self._apply_wifi_status,
             lambda exc: (self._test_result.setText(f"WiFi status failed: {exc}"),
                          self.status.emit(f"WiFi status failed: {exc}")),
         )
@@ -427,12 +468,17 @@ class ConnectionScreen(Screen):
             finally:
                 t.close()
 
+        def saved(st: str) -> None:
+            self._apply_wifi_status(st)            # reflect resulting IP/SSID
+            self._test_result.setText(
+                f"Saved WiFi (SSID '{ssid}'); joins on next boot. "
+                + self._test_result.text())
+            self.status.emit(f"WiFi credentials saved - SSID '{ssid}'")
+
         self.run_with_wait(
             "Saving WiFi credentials to the Pico",
             work,
-            lambda st: (self._test_result.setText(
-                f"Saved WiFi (SSID '{ssid}'); joins on next boot.  WiFi: {st}"),
-                self.status.emit(f"WiFi credentials saved - SSID '{ssid}'")),
+            saved,
             lambda exc: (self._test_result.setText(f"Set WiFi failed: {exc}"),
                          self.status.emit(f"Set WiFi failed: {exc}")),
         )

@@ -81,9 +81,11 @@ class VinReconstructBody(BaseModel):
 
 
 class WifiBody(BaseModel):
-    kind: str = "usb"                     # usb | ble (WiFi admin needs a USB/BLE Pico)
+    kind: str = "usb"                     # usb | ble | network
     com_port: str | None = None           # usb: serial port (auto-detect if omitted)
     device: str | None = None             # ble: advertised name (default gems-pico)
+    host: str | None = None               # network: WiFi Pico IP/host
+    tcp_port: int = 9141                  # network: TCP port
     ssid: str | None = None               # set only
     password: str | None = None           # set only (blank = open network)
 
@@ -318,11 +320,22 @@ def build_app(backend: Backend | None = None) -> FastAPI:
             if not port:
                 raise HTTPException(
                     400, "No Pico found over USB - plug it in, set com_port, "
-                    "or use kind='ble'.")
+                    "or use kind='ble'/'network'.")
             t = PicoAdapterTransport(port)
+        elif body.kind == "network":
+            # Once the Pico is on WiFi, manage its creds over the same TCP link.
+            from gems_t4.transport.tcp import TcpTransport, parse_endpoint
+            if not body.host:
+                raise HTTPException(400, "network WiFi admin needs a host/IP.")
+            hp = body.host if ":" in body.host else f"{body.host}:{body.tcp_port}"
+            host, port = parse_endpoint(hp)
+            t = TcpTransport(host, port)
         else:
-            raise HTTPException(400, "WiFi admin needs kind='usb' or 'ble'.")
-        t.open()
+            raise HTTPException(400, "WiFi admin needs kind='usb', 'ble', or 'network'.")
+        try:
+            t.open()
+        except (TransportError, OSError) as exc:
+            raise HTTPException(502, f"could not reach the Pico: {exc}") from exc
         return t
 
     @app.post("/api/wifi/status")

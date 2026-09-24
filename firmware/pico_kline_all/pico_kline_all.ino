@@ -458,7 +458,10 @@ static void handleWifiStatus() {
   char buf[64];
   if (WiFi.status() == WL_CONNECTED) {
     IPAddress ip = WiFi.localIP();
-    snprintf(buf, sizeof(buf), "connected %u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+    // Report the SSID as well as the IP so a client (GUI/CLI/web) can show WHICH
+    // network the Pico joined, not just its address. Format: "connected <ip> <ssid>".
+    snprintf(buf, sizeof(buf), "connected %u.%u.%u.%u %s",
+             ip[0], ip[1], ip[2], ip[3], g_ssid);
   } else if (g_ssid[0]) {
     snprintf(buf, sizeof(buf), "offline (creds set: %s)", g_ssid);
   } else {

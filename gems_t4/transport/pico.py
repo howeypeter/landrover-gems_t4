@@ -60,6 +60,23 @@ def encode_host(cmd: int, payload: bytes = b"") -> bytes:
     return bytes([HOST_START]) + body + bytes([crc8(body)])
 
 
+def encode_set_wifi_payload(ssid: str, password: str) -> bytes:
+    """Build the CMD_SET_WIFI (0x06) payload: ``[ssid_len][ssid][password]``.
+
+    Single source of truth for the WiFi-cred wire format + limits, shared by
+    every transport (USB/BLE/TCP) so ``set_wifi`` behaves identically over each
+    link. The creds themselves are stored only on the Pico (LittleFS); the host
+    never persists them - this just frames the one write command.
+    """
+    sb = ssid.encode("utf-8")
+    pb = password.encode("utf-8")
+    if not sb or len(sb) > 32:
+        raise ValueError("SSID must be 1..32 bytes")
+    if len(pb) > 63:
+        raise ValueError("password must be <= 63 bytes")
+    return bytes([len(sb)]) + sb + pb
+
+
 def decode_pico(frame: bytes) -> tuple[int, bytes]:
     """Parse a complete Pico->host frame into ``(status, payload)``."""
     if len(frame) < 4:
@@ -175,14 +192,7 @@ class PicoAdapterTransport(Transport):
     def set_wifi(self, ssid: str, password: str) -> None:
         """Store WiFi credentials on the Pico (LittleFS) so it can join on the
         next boot - no firmware reflash. Payload: [ssid_len][ssid][password]."""
-        sb = ssid.encode("utf-8")
-        pb = password.encode("utf-8")
-        if not sb or len(sb) > 32:
-            raise ValueError("SSID must be 1..32 bytes")
-        if len(pb) > 63:
-            raise ValueError("password must be <= 63 bytes")
-        payload = bytes([len(sb)]) + sb + pb
-        status, _ = self._transceive(CMD_SET_WIFI, payload)
+        status, _ = self._transceive(CMD_SET_WIFI, encode_set_wifi_payload(ssid, password))
         if status != STATUS_OK:
             raise TransportError(
                 f"set-wifi failed (status {status}) - is this the unified "

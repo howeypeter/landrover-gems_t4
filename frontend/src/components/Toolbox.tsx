@@ -29,9 +29,11 @@ export default function Toolbox({
 // USB/BLE link to the Pico for this, so it must physically reach the adapter —
 // and the Backend must NOT currently hold that same Pico (disconnect first).
 function WifiCard() {
-  const [transport, setTransport] = useState("usb"); // usb | ble
+  const [transport, setTransport] = useState("usb"); // usb | ble | network
   const [device, setDevice] = useState("gems-pico");
   const [comPort, setComPort] = useState("");
+  const [host, setHost] = useState("");
+  const [tcpPort, setTcpPort] = useState("9141");
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -39,9 +41,15 @@ function WifiCard() {
   const [busy, setBusy] = useState<null | "set" | "status">(null);
 
   function body() {
-    return transport === "ble"
-      ? { kind: "ble", device: device.trim() || "gems-pico" }
-      : { kind: "usb", com_port: comPort.trim() || null };
+    if (transport === "ble")
+      return { kind: "ble", device: device.trim() || "gems-pico" };
+    if (transport === "network")
+      return {
+        kind: "network",
+        host: host.trim(),
+        tcp_port: Number(tcpPort) || 9141,
+      };
+    return { kind: "usb", com_port: comPort.trim() || null };
   }
 
   async function doStatus() {
@@ -49,6 +57,13 @@ function WifiCard() {
     setMsg(null);
     try {
       const r = await api.wifiStatus(body());
+      // Firmware format: "connected <ip> <ssid>" | "offline (creds set: <ssid>)"
+      // | "no-creds". Pull the SSID into the field so the UI reflects stored creds
+      // (the password is write-only and never comes back).
+      const m =
+        r.status.match(/^connected \S+ (.+)$/) ??
+        r.status.match(/creds set:\s*(.+?)\)?$/);
+      if (m?.[1]) setSsid(m[1].trim());
       setMsg({ ok: true, text: `WiFi: ${r.status}` });
     } catch (e) {
       setMsg({ ok: false, text: (e as Error).message });
@@ -93,9 +108,10 @@ function WifiCard() {
           opts={[
             { code: "usb", label: "USB" },
             { code: "ble", label: "Bluetooth LE" },
+            { code: "network", label: "Network (WiFi)" },
           ]}
         />
-        {transport === "ble" ? (
+        {transport === "ble" && (
           <label className="flex flex-col text-xs text-neutral-400">
             BLE name
             <input
@@ -104,7 +120,8 @@ function WifiCard() {
               onChange={(e) => setDevice(e.target.value)}
             />
           </label>
-        ) : (
+        )}
+        {transport === "usb" && (
           <label className="flex flex-col text-xs text-neutral-400">
             COM port (auto if blank)
             <input
@@ -114,6 +131,27 @@ function WifiCard() {
               onChange={(e) => setComPort(e.target.value)}
             />
           </label>
+        )}
+        {transport === "network" && (
+          <>
+            <label className="flex flex-col text-xs text-neutral-400">
+              Host / IP
+              <input
+                className="mt-1 w-40 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/10"
+                value={host}
+                placeholder="192.168.1.138"
+                onChange={(e) => setHost(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col text-xs text-neutral-400">
+              TCP port
+              <input
+                className="mt-1 w-24 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/10"
+                value={tcpPort}
+                onChange={(e) => setTcpPort(e.target.value)}
+              />
+            </label>
+          </>
         )}
         <Button onClick={doStatus} disabled={busy !== null} variant="ghost">
           {busy === "status" ? "…" : "Status"}

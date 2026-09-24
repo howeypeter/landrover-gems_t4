@@ -179,3 +179,15 @@ def test_wifi_status_no_usb_pico(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(pico, "find_pico_port", lambda: None)
     r = client.post("/api/wifi/status", json={"kind": "usb"})
     assert r.status_code == 400
+
+
+def test_wifi_network_requires_host(client: TestClient) -> None:
+    r = client.post("/api/wifi/status", json={"kind": "network"})
+    assert r.status_code == 400
+
+
+def test_wifi_network_unreachable_is_502(client: TestClient) -> None:
+    # An unreachable WiFi Pico -> clean 502, not a 500 leaking OSError.
+    r = client.post("/api/wifi/status",
+                    json={"kind": "network", "host": "127.0.0.1", "tcp_port": 9})
+    assert r.status_code == 502

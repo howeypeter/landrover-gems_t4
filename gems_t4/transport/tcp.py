@@ -33,11 +33,14 @@ from gems_t4.transport.pico import (
     CMD_INIT,
     CMD_PING,
     CMD_SEND_RECV,
+    CMD_SET_WIFI,
+    CMD_WIFI_STATUS,
     PICO_START,
     STATUS_OK,
     STATUS_TIMEOUT,
     decode_pico,
     encode_host,
+    encode_set_wifi_payload,
 )
 
 _MODE_CODE = {"slow": 0, "fast": 1}
@@ -210,6 +213,28 @@ class TcpTransport(Transport):
         frame = self._pending
         self._pending = None
         return frame
+
+    # -- WiFi admin ---------------------------------------------------------- #
+    # Same host commands (0x06/0x07) as USB/BLE. Because a WiFi Pico serves the
+    # host protocol over this very socket, you can read AND re-point its WiFi
+    # creds over the existing network link - no USB/BLE trip to the bench.
+    # (When the far end is `gems_t4 serve`, not a real Pico, these return
+    # BAD_REQUEST, surfaced as a clear TransportError.)
+    def set_wifi(self, ssid: str, password: str) -> None:
+        """Store WiFi credentials on a WiFi Pico over the network link."""
+        status, _ = self._transceive(CMD_SET_WIFI, encode_set_wifi_payload(ssid, password))
+        if status != STATUS_OK:
+            raise TransportError(
+                f"set-wifi failed (status {status}) - the far end must be a "
+                f"WiFi Pico running the unified firmware (not `gems_t4 serve`)."
+            )
+
+    def wifi_status(self) -> str:
+        """Ask the far-end WiFi Pico for its WiFi state over the network link."""
+        status, payload = self._transceive(CMD_WIFI_STATUS)
+        if status != STATUS_OK:
+            raise TransportError(f"wifi-status failed (status {status})")
+        return payload.decode("ascii", "replace")
 
 
 def parse_endpoint(value: str) -> tuple[str, int]:

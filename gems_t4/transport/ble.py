@@ -52,6 +52,7 @@ from gems_t4.transport.pico import (
     _MODE_CODE,
     decode_pico,
     encode_host,
+    encode_set_wifi_payload,
 )
 
 NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
@@ -300,14 +301,7 @@ class BleTransport(Transport):
     def set_wifi(self, ssid: str, password: str) -> None:
         """Store WiFi credentials on the Pico (LittleFS) over BLE - no reflash.
         Payload: [ssid_len][ssid][password]."""
-        sb = ssid.encode("utf-8")
-        pb = password.encode("utf-8")
-        if not sb or len(sb) > 32:
-            raise ValueError("SSID must be 1..32 bytes")
-        if len(pb) > 63:
-            raise ValueError("password must be <= 63 bytes")
-        payload = bytes([len(sb)]) + sb + pb
-        status, _ = self._transceive(CMD_SET_WIFI, payload)
+        status, _ = self._transceive(CMD_SET_WIFI, encode_set_wifi_payload(ssid, password))
         if status != STATUS_OK:
             raise TransportError(
                 f"set-wifi failed (status {status}) - is this the unified "

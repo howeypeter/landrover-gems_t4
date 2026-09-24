@@ -73,9 +73,11 @@ export interface VinReconstruct {
 }
 
 export interface WifiBody {
-  kind: string; // usb | ble
+  kind: string; // usb | ble | network
   com_port?: string | null;
   device?: string | null;
+  host?: string | null;
+  tcp_port?: number;
   ssid?: string | null;
   password?: string | null;
 }
