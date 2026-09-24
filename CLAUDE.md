@@ -127,9 +127,16 @@ The active working list for the next couple of days. Detailed backlog entries
    password**. `enum ActiveT` lives in `kline_transport.h` (Arduino auto-prototype
    gotcha). Builds with `--fqbn rp2040:rp2040:rpipico2w:ipbtstack=ipv4btcble`
    (12% flash, 17% RAM). **Hardware-verified over BLE** — reports
-   `gems_t4-pico-all-pentest 3.0.0`. Still to exercise on hardware: the USB and
-   WiFi paths of this build, and concurrent BLE+WiFi stability through the
-   delay()-heavy 5-baud init. The single-transport sketches remain as fallbacks.
+   `gems_t4-pico-all-pentest 3.0.0`. **✅ WiFi/TCP path HARDWARE-VERIFIED 2026-09-24**
+   — connected over `--connect 192.168.1.138`, read the 3.0.0 firmware banner over
+   TCP; BLE+WiFi combined build ran stable (no boot hang). Two gotchas found +
+   fixed en route: (1) **build MUST include a LittleFS region** — the board default
+   `flash=4194304_0` ("no FS") makes `set-wifi` fail `status 2` / `wifi-status`=
+   `no-creds`; build with `flash=4194304_1048576` (README fixed). (2) `set-wifi`
+   now ACKs the save *before* the ~20 s blocking connect (it was timing out as "no
+   response" though the save+join succeeded). Still to exercise: the USB *data*
+   path of this exact build (USB is used for set-wifi/flashing; not yet a full
+   live/dtc-over-USB run on 3.0.0). The single-transport sketches remain fallbacks.
    Also new: **`gems_t4 kline` auto-detects a plugged USB Pico** (VID 0x2E8A) when
    no `--port/--ble/--connect` is given (`find_pico_port`).
 4. **MAPS / calibration — pull, switch 4.0↔4.6, archive a 4.6 reference.** Three
