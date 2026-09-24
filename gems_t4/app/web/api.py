@@ -80,6 +80,14 @@ class VinReconstructBody(BaseModel):
     plant: str = "A"                      # position 11
 
 
+class WifiBody(BaseModel):
+    kind: str = "usb"                     # usb | ble (WiFi admin needs a USB/BLE Pico)
+    com_port: str | None = None           # usb: serial port (auto-detect if omitted)
+    device: str | None = None             # ble: advertised name (default gems-pico)
+    ssid: str | None = None               # set only
+    password: str | None = None           # set only (blank = open network)
+
+
 # ---- app factory ------------------------------------------------------------ #
 
 
@@ -293,6 +301,58 @@ def build_app(backend: Backend | None = None) -> FastAPI:
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(409, str(exc)) from exc
         return {"mobilised": s.mobilised, "learn_mode": s.learn_mode}
+
+    # -- Pico WiFi admin ------------------------------------------------------ #
+    # Manage the adapter's stored WiFi creds (host cmds 0x06/0x07) the same way
+    # the CLI does: open a *fresh* USB/BLE transport just for this, so the API
+    # host must physically reach the Pico. NOTE: don't run this while the Backend
+    # holds the same Pico (BLE = one central; USB = one COM port) - disconnect
+    # first, or the open will fail with a clean 502.
+    def _open_wifi_transport(body: WifiBody):
+        if body.kind == "ble":
+            from gems_t4.transport.ble import BleTransport
+            t = BleTransport(body.device or "gems-pico")
+        elif body.kind == "usb":
+            from gems_t4.transport.pico import PicoAdapterTransport, find_pico_port
+            port = body.com_port or find_pico_port()
+            if not port:
+                raise HTTPException(
+                    400, "No Pico found over USB - plug it in, set com_port, "
+                    "or use kind='ble'.")
+            t = PicoAdapterTransport(port)
+        else:
+            raise HTTPException(400, "WiFi admin needs kind='usb' or 'ble'.")
+        t.open()
+        return t
+
+    @app.post("/api/wifi/status")
+    def wifi_status(body: WifiBody) -> dict:
+        with app.state.lock:
+            t = _open_wifi_transport(body)
+            try:
+                return {"status": t.wifi_status()}
+            except (TransportError, OSError) as exc:
+                raise HTTPException(502, str(exc)) from exc
+            finally:
+                t.close()
+
+    @app.post("/api/wifi/set")
+    def wifi_set(body: WifiBody) -> dict:
+        if not body.ssid:
+            raise HTTPException(400, "ssid is required.")
+        with app.state.lock:
+            t = _open_wifi_transport(body)
+            try:
+                t.set_wifi(body.ssid, body.password or "")
+                try:
+                    status = t.wifi_status()
+                except (TransportError, OSError):
+                    status = None
+                return {"ok": True, "ssid": body.ssid, "status": status}
+            except (TransportError, OSError) as exc:
+                raise HTTPException(502, str(exc)) from exc
+            finally:
+                t.close()
 
     # -- maps ----------------------------------------------------------------- #
     @app.get("/api/maps")

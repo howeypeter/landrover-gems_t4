@@ -161,3 +161,21 @@ def test_connection_test_endpoint(client: TestClient) -> None:
     assert r.status_code == 200
     body = r.json()
     assert {"ok", "label", "message", "latencies_ms"} <= set(body)
+
+
+def test_wifi_set_requires_ssid(client: TestClient) -> None:
+    r = client.post("/api/wifi/set", json={"kind": "usb"})
+    assert r.status_code == 400
+
+
+def test_wifi_bad_kind(client: TestClient) -> None:
+    r = client.post("/api/wifi/status", json={"kind": "network"})
+    assert r.status_code == 400
+
+
+def test_wifi_status_no_usb_pico(client: TestClient, monkeypatch) -> None:
+    # No COM port given and none auto-detected -> clean 400, not a hang/crash.
+    import gems_t4.transport.pico as pico
+    monkeypatch.setattr(pico, "find_pico_port", lambda: None)
+    r = client.post("/api/wifi/status", json={"kind": "usb"})
+    assert r.status_code == 400

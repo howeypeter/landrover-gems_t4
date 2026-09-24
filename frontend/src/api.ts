@@ -72,6 +72,14 @@ export interface VinReconstruct {
   };
 }
 
+export interface WifiBody {
+  kind: string; // usb | ble
+  com_port?: string | null;
+  device?: string | null;
+  ssid?: string | null;
+  password?: string | null;
+}
+
 export interface ConnectionBody {
   kind: string; // virtual | usb | ble | network
   com_port?: string | null;
@@ -139,6 +147,13 @@ export const api = {
     last6: string;
     plant?: string;
   }): Promise<VinReconstruct> => post("/api/vin/reconstruct", body),
+
+  wifiStatus: (body: WifiBody): Promise<{ status: string }> =>
+    post("/api/wifi/status", body),
+  wifiSet: (
+    body: WifiBody,
+  ): Promise<{ ok: boolean; ssid: string; status: string | null }> =>
+    post("/api/wifi/set", body),
 };
 
 // Open the live-data WebSocket. Returns the socket; caller wires onmessage.

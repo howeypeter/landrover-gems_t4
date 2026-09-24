@@ -16,10 +16,149 @@ export default function Toolbox({
     <div className="space-y-6">
       <VinCard enabled={enabled} />
       <VinReconstructCard />
+      <WifiCard />
       <SelfTestCard enabled={enabled} />
       <ScenarioCard status={status} onChange={onChange} />
       <MapsCard />
     </div>
+  );
+}
+
+// Manage the Pico adapter's stored WiFi credentials (host cmds 0x06/0x07), the
+// same as `gems_t4 kline set-wifi`/`wifi-status`. The API host opens a fresh
+// USB/BLE link to the Pico for this, so it must physically reach the adapter —
+// and the Backend must NOT currently hold that same Pico (disconnect first).
+function WifiCard() {
+  const [transport, setTransport] = useState("usb"); // usb | ble
+  const [device, setDevice] = useState("gems-pico");
+  const [comPort, setComPort] = useState("");
+  const [ssid, setSsid] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState<null | "set" | "status">(null);
+
+  function body() {
+    return transport === "ble"
+      ? { kind: "ble", device: device.trim() || "gems-pico" }
+      : { kind: "usb", com_port: comPort.trim() || null };
+  }
+
+  async function doStatus() {
+    setBusy("status");
+    setMsg(null);
+    try {
+      const r = await api.wifiStatus(body());
+      setMsg({ ok: true, text: `WiFi: ${r.status}` });
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function doSet() {
+    setBusy("set");
+    setMsg(null);
+    try {
+      const r = await api.wifiSet({ ...body(), ssid: ssid.trim(), password });
+      setMsg({
+        ok: true,
+        text:
+          `Saved SSID '${r.ssid}' to the Pico (joins on next boot/reconnect).` +
+          (r.status ? ` WiFi: ${r.status}` : ""),
+      });
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const canSet = ssid.trim().length > 0 && busy === null;
+
+  return (
+    <Card title="Pico WiFi Credentials">
+      <p className="mb-3 text-xs text-neutral-600">
+        Store the WiFi SSID/password on the adapter (LittleFS) so it can serve
+        the host protocol over TCP — no reflash needed. The API host must reach
+        the Pico over USB or BLE, and it must not be in use as your active
+        connection.
+      </p>
+      <div className="flex flex-wrap items-end gap-3">
+        <Picker
+          label="Via"
+          value={transport}
+          onChange={setTransport}
+          opts={[
+            { code: "usb", label: "USB" },
+            { code: "ble", label: "Bluetooth LE" },
+          ]}
+        />
+        {transport === "ble" ? (
+          <label className="flex flex-col text-xs text-neutral-400">
+            BLE name
+            <input
+              className="mt-1 w-40 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/10"
+              value={device}
+              onChange={(e) => setDevice(e.target.value)}
+            />
+          </label>
+        ) : (
+          <label className="flex flex-col text-xs text-neutral-400">
+            COM port (auto if blank)
+            <input
+              className="mt-1 w-40 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/10"
+              value={comPort}
+              placeholder="COM5"
+              onChange={(e) => setComPort(e.target.value)}
+            />
+          </label>
+        )}
+        <Button onClick={doStatus} disabled={busy !== null} variant="ghost">
+          {busy === "status" ? "…" : "Status"}
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="flex flex-col text-xs text-neutral-400">
+          SSID
+          <input
+            className="mt-1 w-52 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/10"
+            value={ssid}
+            onChange={(e) => setSsid(e.target.value)}
+          />
+        </label>
+        <label className="flex flex-col text-xs text-neutral-400">
+          Password
+          <input
+            type={showPw ? "text" : "password"}
+            className="mt-1 w-52 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/10"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+        <label className="flex items-center gap-1.5 pb-2 text-xs text-neutral-400">
+          <input
+            type="checkbox"
+            checked={showPw}
+            onChange={(e) => setShowPw(e.target.checked)}
+          />
+          Show
+        </label>
+        <Button onClick={doSet} disabled={!canSet} variant="primary">
+          {busy === "set" ? "…" : "Set WiFi"}
+        </Button>
+      </div>
+
+      {msg && (
+        <div
+          className={`mt-3 text-sm ${msg.ok ? "text-emerald-400" : "text-red-400"}`}
+        >
+          {msg.text}
+        </div>
+      )}
+    </Card>
   );
 }
 
