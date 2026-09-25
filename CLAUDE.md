@@ -129,7 +129,18 @@ The active working list for the next couple of days. Detailed backlog entries
    (12% flash, 17% RAM). **Hardware-verified over BLE** — reports
    `gems_t4-pico-all-pentest 3.0.0`. **✅ WiFi/TCP path HARDWARE-VERIFIED 2026-09-24**
    — connected over `--connect 192.168.1.138`, read the 3.0.0 firmware banner over
-   TCP; BLE+WiFi combined build ran stable (no boot hang). Two gotchas found +
+   TCP; BLE+WiFi combined build ran stable (no boot hang). **✅ 2026-09-25: `kline
+   live` + `dtc` confirmed working well over WiFi/TCP on the real ECU — and
+   noticeably FASTER than BLE** (BLE chunks replies to ~16 B notifies with delays;
+   WiFi sends full frames, Nagle off — wins for chatty live-data/multi-frame DTC).
+   **Intermittent WiFi failures were traced to CONNECTION CONTENTION** (the
+   always-on portal `gems_t4 api` was pointed at the same Pico as the CLI; the
+   WiFi Pico is one-client-at-a-time, so they fought + left stale FinWait2
+   sockets). Fixes: keep the portal on the virtual ECU while CLI-driving real HW
+   (or `Stop-ScheduledTask gems_t4-web`), AND **firmware 3.2.0 makes the WiFi
+   server single-client, LAST-connection-wins** (new tester cleanly takes over a
+   stale/previous connection instead of the old first-wins lockout; needs reflash).
+   Two gotchas found +
    fixed en route: (1) **build MUST include a LittleFS region** — the board default
    `flash=4194304_0` ("no FS") makes `set-wifi` fail `status 2` / `wifi-status`=
    `no-creds`; build with `flash=4194304_1048576` (README fixed). (2) `set-wifi`
