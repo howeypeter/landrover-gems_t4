@@ -671,13 +671,18 @@ def _cmd_kline(args: argparse.Namespace) -> int:
         fw = backend.last_adapter_firmware
         # The adapter link is confirmed up if on_adapter fired at all (phase 1),
         # even when the firmware PING returned nothing (e.g. over the network) -
-        # so a later failure is ECU-side, never the adapter. Don't blame the link.
+        # so a later failure is ECU-side, never the adapter. The HEADLINE must
+        # match: if the Pico link never came up, say the Pico is unreachable, not
+        # "the ECU" (we never got as far as the ECU).
         if adapter_up:
             render.console.print(
                 f"[yellow]Pico connected ({type_name}"
                 f"{f', firmware {fw}' if fw else ''}), but the ECU did not "
                 "answer.[/]")
-        render.console.print("[bold red]Could not connect to the ECU.[/]")
+            render.console.print("[bold red]Could not connect to the ECU.[/]")
+        else:
+            render.console.print(
+                f"[bold red]Could not reach the Pico adapter ({type_name}).[/]")
         render.console.print(connect_help(exc, kind=kind, adapter_ok=adapter_up))
         if getattr(args, "debug", False):
             import traceback
