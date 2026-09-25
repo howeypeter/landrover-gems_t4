@@ -159,6 +159,25 @@ class Backend:
         """
         return self._kind
 
+    # -- audit -------------------------------------------------------------- #
+    def _audit(self, op: str, kind: str, **fields: object) -> None:
+        """Write one ECU audit event, enriched with the live connection context.
+
+        Called from the read/write methods so EVERY front-end (CLI/GUI/web) that
+        goes through this one Backend is captured in a single log. Never raises.
+        """
+        from gems_t4.app.audit import audit
+
+        audit({
+            "op": op,
+            "kind": kind,                       # "read" | "write"
+            "connection": self._connection_label,
+            "connection_kind": self._kind,
+            "on_real_ecu": self._kline is not None,
+            "scenario": self._scenario_name,
+            **fields,
+        })
+
     def adapter_firmware(self) -> str | None:
         """The Pico adapter's firmware banner (from its PING), or None when the
         active transport has no adapter (the virtual ECU) or doesn't answer.
@@ -490,8 +509,12 @@ class Backend:
                     state=DtcState.PENDING)
                 for code in self._kline.read_pending_dtcs()
             ]
-            return stored + pending
-        return _dtc.read_dtcs(self._require())
+            dtcs = stored + pending
+        else:
+            dtcs = _dtc.read_dtcs(self._require())
+        self._audit("read_dtcs", "read", count=len(dtcs),
+                    codes=[d.code for d in dtcs])
+        return dtcs
 
     def clear_dtcs(self) -> bool:
         """Clear fault codes (OBD-II Mode 04 on a real ECU).
@@ -504,10 +527,17 @@ class Backend:
         operator to cycle the ignition.
         """
         self._ensure_connected()
-        if self._kline is not None:
-            return bool(self._kline.clear_dtcs())
-        _dtc.clear_dtcs(self._require())
-        return True
+        try:
+            if self._kline is not None:
+                acked = bool(self._kline.clear_dtcs())
+            else:
+                _dtc.clear_dtcs(self._require())
+                acked = True
+        except Exception as exc:  # noqa: BLE001 - log the failure, then re-raise
+            self._audit("clear_dtcs", "write", ok=False, error=str(exc))
+            raise
+        self._audit("clear_dtcs", "write", ok=True, acknowledged=acked)
+        return acked
 
     def read_vin(self) -> str | None:
         """Read the vehicle VIN (OBD-II Service 09 PID 02) on a real ECU.
@@ -518,13 +548,22 @@ class Backend:
         the virtual/KWP stack has no VIN and returns ``None``.
         """
         self._ensure_connected()
-        if self._kline is not None:
-            return self._kline.read_vin()
-        return None
+        vin = self._kline.read_vin() if self._kline is not None else None
+        self._audit("read_vin", "read", vin=vin, available=vin is not None)
+        return vin
 
     def run_actuator(self, actuator_id: int, state: int) -> ActuatorOutcome:
         """Command an actuator test; returns the outcome (incl. refusals)."""
-        return _actuators.run(self._require(), actuator_id, state)
+        try:
+            outcome = _actuators.run(self._require(), actuator_id, state)
+        except Exception as exc:  # noqa: BLE001
+            self._audit("run_actuator", "write", actuator_id=actuator_id,
+                        state=state, ok=False, error=str(exc))
+            raise
+        self._audit("run_actuator", "write", actuator_id=actuator_id, state=state,
+                    ok=getattr(outcome, "ok", None),
+                    message=getattr(outcome, "message", None))
+        return outcome
 
     # -- proprietary 0xDA secure channel (real ECU, bench L-line) ---------- #
     def secure_session(self) -> "GemsSecureSession":
@@ -553,7 +592,10 @@ class Backend:
 
     def read_coding(self, field: str) -> bytes:
         """Read a coding field's current bytes."""
-        return _prog.read_coding(self._require(), field)
+        data = _prog.read_coding(self._require(), field)
+        self._audit("read_coding", "read", field=field,
+                    value=data.hex() if isinstance(data, (bytes, bytearray)) else None)
+        return data
 
     def read_coding_text(self, field: str) -> str:
         """Read a coding field rendered for display (ASCII or hex)."""
@@ -573,9 +615,22 @@ class Backend:
         confirm: Callable[[], bool] | None = None,
     ) -> WriteResult:
         """Write a coding field through every safety gate (see gems/programming)."""
-        return _prog.write_coding(
-            self._require(), field, value, backup=backup, verify=verify, confirm=confirm
-        )
+        before = getattr(backup, "data", None)
+        before_hex = before.hex() if isinstance(before, (bytes, bytearray)) else None
+        try:
+            result = _prog.write_coding(
+                self._require(), field, value, backup=backup, verify=verify,
+                confirm=confirm,
+            )
+        except Exception as exc:  # noqa: BLE001 - record refused/failed writes too
+            self._audit("write_coding", "write", field=field, before=before_hex,
+                        after=value.hex(), verify=verify, ok=False, error=str(exc))
+            raise
+        self._audit("write_coding", "write", field=field, before=before_hex,
+                    after=value.hex(), verify=verify,
+                    ok=getattr(result, "ok", None),
+                    verified=getattr(result, "verified", None))
+        return result
 
     @staticmethod
     def encode_coding_text(field: str, text: str) -> bytes:
@@ -596,7 +651,12 @@ class Backend:
 
     def security_access(self) -> None:
         """Perform SecurityAccess ($27 seed/key) on the ECU."""
-        self._require().security_access(compute_key)
+        try:
+            self._require().security_access(compute_key)
+        except Exception as exc:  # noqa: BLE001
+            self._audit("security_access", "write", ok=False, error=str(exc))
+            raise
+        self._audit("security_access", "write", ok=True)
 
     def security_learn(
         self,
@@ -605,7 +665,17 @@ class Backend:
         on_progress: Callable[[str], None] | None = None,
     ) -> SecurityLearnResult:
         """Run the full immobiliser Security-Learn re-sync."""
-        return _immo.security_learn(self._require(), becm_code, on_progress=on_progress)
+        try:
+            result = _immo.security_learn(
+                self._require(), becm_code, on_progress=on_progress)
+        except Exception as exc:  # noqa: BLE001
+            self._audit("security_learn", "write", becm_code=becm_code,
+                        ok=False, error=str(exc))
+            raise
+        self._audit("security_learn", "write", becm_code=becm_code,
+                    ok=getattr(result, "ok", None),
+                    message=getattr(result, "message", None))
+        return result
 
     # -- maps (chip-swap lookalike) ---------------------------------------- #
     @staticmethod
