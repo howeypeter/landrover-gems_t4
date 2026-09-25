@@ -562,6 +562,15 @@ as static lookalikes for now.
   (GEMS) RAVE circuit (`etlj970x.pdf` A3, pp.39–51) cross-referenced pin-by-pin
   against SM001 + the bench `$21` map + protocol notes. Confirms K-line=C1017 p23,
   L-line=p20, and every sensor/switch pin; flags VSS=C1032 p27 (not C1017 p27).
+- `docs/10as-pinout.md` (added 2026-09-25) — **Lucas 10AS / Theft Alarm Unit
+  (Z163) pinout + bench wiring**, from RAVE `etlj970x.pdf` §T2 (NAS Disco-1). Both
+  connectors C225/C274 (pin/wire/function tables), the minimal bench rig, the two
+  direct 10AS↔ECM wires (C225 pin 15 → ECM C1017 pin 26 = coded **mobilise**;
+  C225 pin 11 → ECM C1032 pin 22 = shared-with-MIL, verify), and a **pairing/
+  bench-mobilise** plan. Key finds: **diagnostic serial = C225 pin 17 (KB)** (car:
+  OBD-II pin 8, a *separate* line from the engine K-line pin 7); protocol is
+  proprietary Lucas (unmapped). Feeds the [EKA read from the 10AS] + [immobiliser
+  from the bench] backlog items.
 - `docs/vin-decode.md` (added 2026-09-19) — Land Rover 17-char VIN decode table +
   the "reconstruct the full VIN from the ECU/10AS last-6" concept (derived
   11-char prefix + read serial), with a worked Disco-1 template, NAS/verify
