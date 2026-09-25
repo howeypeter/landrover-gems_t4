@@ -7,9 +7,10 @@ over **USB, BLE, and (optional) WiFi at the same time**, so there's only one thi
 to flash. The Pico owns all K-line timing; the Python transports drive it
 (`transport/pico.py` = USB, `transport/ble.py` = BLE, `transport/tcp.py` = WiFi/TCP).
 
-**Hardware-verified over BLE** — PING reports `gems_t4-pico-all-pentest 3.0.0`.
-It's a superset that also answers the pentest `CMD_RAW_INIT`, so the debug/probe
-scripts work too.
+**Hardware-verified over BLE** at `3.0.0`; the current source is **`3.1.0`**
+(adds the MAC to `wifi-status` — see below) and needs a reflash to run on
+hardware. PING reports `gems_t4-pico-all-pentest <version>`. It's a superset that
+also answers the pentest `CMD_RAW_INIT`, so the debug/probe scripts work too.
 
 ## Which board
 
@@ -151,11 +152,26 @@ The unified firmware stores WiFi creds in **LittleFS**, set over USB *or* BLE �
 ```
 gems_t4 kline set-wifi --ssid "YourNet" --password "yourpass"       # over USB
 gems_t4 kline set-wifi --ble --ssid "YourNet" --password "yourpass"  # over BLE
-gems_t4 kline wifi-status            # connected <ip> / offline (creds set: …) / no-creds
+gems_t4 kline set-wifi --connect <ip> --ssid "YourNet" --password … # over WiFi (once joined)
+gems_t4 kline wifi-status            # see format below
 ```
 
 Use a **2.4 GHz** network (the CYW43 is 2.4 GHz only). WiFi stays idle until creds
 are stored. (Host commands: `CMD_SET_WIFI 0x06`, `CMD_WIFI_STATUS 0x07`.)
+
+**`wifi-status` reply format (firmware ≥ 3.1.0)** — the **MAC is always reported**
+(handy for a DHCP reservation), placed *before* the SSID since the SSID can
+contain spaces and the MAC can't:
+
+```
+connected <ip> <mac> <ssid>
+offline <mac> (creds set: <ssid>)
+no-creds <mac>
+```
+
+Older firmware (≤ 3.0.0) omits the MAC (`connected <ip> <ssid>` / `offline (creds
+set: <ssid>)` / `no-creds`); `gems_t4.transport.wifi_status.parse_wifi_status`
+parses both. WiFi admin also works over `--connect` once the Pico is on WiFi.
 
 ### BLE — require arduino-pico core ≥ 6.1.1
 

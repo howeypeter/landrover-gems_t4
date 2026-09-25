@@ -72,7 +72,7 @@ static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.0.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.1.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -455,17 +455,27 @@ static void handleSetWifi(const uint8_t *payload, uint8_t len) {
 }
 
 static void handleWifiStatus() {
-  char buf[64];
+  char buf[96];
+  // MAC is always reported so a client can set a DHCP reservation without
+  // digging through the router. SSID is LAST because it can contain spaces;
+  // the MAC (fixed 17 chars, no spaces) sits before it so parsing stays
+  // unambiguous. Formats:
+  //   connected <ip> <mac> <ssid>
+  //   offline <mac> (creds set: <ssid>)
+  //   no-creds <mac>
+  uint8_t mac[6] = {0};
+  WiFi.macAddress(mac);
+  char macs[18];
+  snprintf(macs, sizeof(macs), "%02X:%02X:%02X:%02X:%02X:%02X",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   if (WiFi.status() == WL_CONNECTED) {
     IPAddress ip = WiFi.localIP();
-    // Report the SSID as well as the IP so a client (GUI/CLI/web) can show WHICH
-    // network the Pico joined, not just its address. Format: "connected <ip> <ssid>".
-    snprintf(buf, sizeof(buf), "connected %u.%u.%u.%u %s",
-             ip[0], ip[1], ip[2], ip[3], g_ssid);
+    snprintf(buf, sizeof(buf), "connected %u.%u.%u.%u %s %s",
+             ip[0], ip[1], ip[2], ip[3], macs, g_ssid);
   } else if (g_ssid[0]) {
-    snprintf(buf, sizeof(buf), "offline (creds set: %s)", g_ssid);
+    snprintf(buf, sizeof(buf), "offline %s (creds set: %s)", macs, g_ssid);
   } else {
-    snprintf(buf, sizeof(buf), "no-creds");
+    snprintf(buf, sizeof(buf), "no-creds %s", macs);
   }
   sendPico(ST_OK, (const uint8_t *)buf, (uint8_t)strlen(buf));
 }

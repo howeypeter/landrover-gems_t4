@@ -57,14 +57,16 @@ function WifiCard() {
     setMsg(null);
     try {
       const r = await api.wifiStatus(body());
-      // Firmware format: "connected <ip> <ssid>" | "offline (creds set: <ssid>)"
-      // | "no-creds". Pull the SSID into the field so the UI reflects stored creds
-      // (the password is write-only and never comes back).
+      // Firmware >=3.1.0: "connected <ip> <mac> <ssid>" | "offline <mac> (creds
+      // set: <ssid>)" | "no-creds <mac>" (MAC before SSID; SSID last since it can
+      // contain spaces). Older firmware omits the MAC. Pull the SSID into the
+      // field (password is write-only and never comes back).
+      const mac = r.status.match(/[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}/)?.[0];
       const m =
-        r.status.match(/^connected \S+ (.+)$/) ??
+        r.status.match(/^connected \S+ (?:[0-9A-Fa-f:]{17} )?(.+)$/) ??
         r.status.match(/creds set:\s*(.+?)\)?$/);
       if (m?.[1]) setSsid(m[1].trim());
-      setMsg({ ok: true, text: `WiFi: ${r.status}` });
+      setMsg({ ok: true, text: `WiFi: ${r.status}` + (mac ? `  (MAC ${mac})` : "") });
     } catch (e) {
       setMsg({ ok: false, text: (e as Error).message });
     } finally {

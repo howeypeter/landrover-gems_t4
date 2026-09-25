@@ -404,26 +404,15 @@ class ConnectionScreen(Screen):
 
     def _apply_wifi_status(self, st: str) -> None:
         """Reflect a firmware WiFi-status string in the form: pull the SSID into
-        the SSID field and show the IP, so the GUI 'picks up' creds set elsewhere
-        (e.g. via the CLI). The password is write-only and never comes back."""
-        ssid = None
-        detail = f"WiFi: {st}"
-        s = st.strip()
-        # "connected <ip> <ssid>"  (firmware reports both)
-        if s.startswith("connected "):
-            parts = s.split(" ", 2)
-            ip = parts[1] if len(parts) > 1 else "?"
-            if len(parts) > 2 and parts[2]:
-                ssid = parts[2]
-            detail = f"WiFi connected - IP {ip}" + (f", SSID '{ssid}'" if ssid else "")
-        # "offline (creds set: <ssid>)"
-        elif "creds set:" in s:
-            ssid = s.split("creds set:", 1)[1].strip().rstrip(")").strip()
-            detail = f"WiFi offline - creds set for SSID '{ssid}' (not joined yet)"
-        elif s == "no-creds":
-            detail = "WiFi: no credentials stored on the Pico yet"
-        if ssid:
-            self._wifi_ssid.setText(ssid)          # reflect what's actually stored
+        the SSID field and show the IP + MAC, so the GUI 'picks up' creds set
+        elsewhere (e.g. via the CLI) and you can read the MAC for a DHCP
+        reservation. The password is write-only and never comes back."""
+        from gems_t4.transport.wifi_status import parse_wifi_status
+
+        status = parse_wifi_status(st)
+        if status.ssid:
+            self._wifi_ssid.setText(status.ssid)   # reflect what's actually stored
+        detail = status.summary()
         self._test_result.setText(detail)
         self.status.emit(detail)
 
