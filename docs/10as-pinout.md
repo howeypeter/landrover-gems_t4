@@ -6,6 +6,36 @@ the authoritative circuit for the user's exact truck. RAVE labels the Lucas 10AS
 the **"Theft Alarm Unit (Z163)"**; it has two connectors, **C225** (multiway) and
 **C274**.
 
+## Bench unit (this project's physical 10AS)
+
+Photographed 2026-09-25. Confirmed the **full 10AS alarm/immobiliser ECU** (NOT a
+standalone fob receiver — it has both connectors below, and the RF receiver is
+*integrated*, which is why it carries an FCC ID):
+
+| Label | Value |
+|---|---|
+| Land Rover P/N | **AMR 6428** |
+| System / freq | **10AS-315 MHz** → **NAS** (North America; ROW = 433 MHz) |
+| Lucas P/N | 52010377A |
+| Serial | 1095784 |
+| Build date | **wk 39 / 1996** |
+| Receiver | Lucas **5RXA**, FCC ID **KHH5RXA** (integrated 315 MHz fob RX) |
+
+**Connector ↔ RAVE mapping (this unit):**
+
+| Physical connector | RAVE name | Pins | Role |
+|---|---|---|---|
+| **Grey** | **C225** | ~26-way | K-line, mobilise, power, antenna, switch inputs |
+| **Green** | **C274** | ~12-way | ground, 30 A lock feed, indicators, horn, LED |
+
+⚠️ **NOT from the same truck as the bench GEMS ECM** (user, 2026-09-25) — so
+auto-pair won't work; mobilising the ECM with this 10AS needs **Security-Learn**
+(`A300622588`). See "Pairing the ECM to the 10AS" below.
+
+⚠️ **Verify physical pin numbering** on the grey 26-way before clipping in — find
+the moulded pin-1 marker and row order; RAVE gives logical pin numbers, not the
+cavity map.
+
 > ⚠️ **Bench context.** This is for wiring the 10AS **directly to the bench**, not
 > through the OBD-II socket. Pin numbers below are the **10AS unit-connector** pins
 > (what you clip to on the bench). Where the car routes a wire to the OBD socket it
@@ -18,7 +48,7 @@ the **"Theft Alarm Unit (Z163)"**; it has two connectors, **C225** (multiway) an
 > is electrical step one — the addressing/commands to read the EKA are still
 > unmapped and need bench probing.
 
-## Connector C225
+## Connector C225 (the GREY ~26-way on the bench unit)
 
 | Pin | Wire | Function | Category |
 |---|---|---|---|
@@ -39,7 +69,7 @@ the **"Theft Alarm Unit (Z163)"**; it has two connectors, **C225** (multiway) an
 | 25 | P | **+12 V feed** — Satellite Fuse Box 1, F1 (15 A) | **Power** |
 | 26 | WB | Antenna (receiver) | RF |
 
-## Connector C274
+## Connector C274 (the GREEN ~12-way on the bench unit)
 
 | Pin | Wire | Function | Category |
 |---|---|---|---|
