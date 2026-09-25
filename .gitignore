@@ -52,3 +52,6 @@ gems_t4/app/web/static/
 
 # RAVE PDFs (Land Rover IP) - local reference only, never publish
 docs/rave/
+
+# 10AS connector graphic (third-party; kept local like the RAVE PDFs)
+docs/img/10as-central-locking-connections.png

@@ -48,6 +48,39 @@ cavity map.
 > is electrical step one — the addressing/commands to read the EKA are still
 > unmapped and need bench probing.
 
+## Physical connector layout (cavity map)
+
+From a community "10AS Central Locking Connections" graphic (added 2026-09-25;
+kept local at `docs/img/10as-central-locking-connections.png`, gitignored as
+third-party like the RAVE PDFs). This resolves the pin-numbering caveat — it's the
+**connector-face view** (looking into the terminal side), and it **corroborates
+RAVE**: the graphic draws C225 pin 7 yellow (= RAVE `YK`), C274 pin 2 orange
+(= `O`), C274 pin 3 pink (= `K`) — the drawing colours ARE the LR wire colours.
+
+```
+GREY connector = C225 (26-way), connector face:
+  top row:    13 12 11 10  9  8  7  6  5  4  3  2  1
+  bottom row: 26 25 24 23 22 21 20 19 18 17 16 15 14
+  -> pin 1 = top RIGHT; top row numbers 1->13 right-to-left;
+     bottom row 14 sits under pin 1, numbers 14->26 right-to-left.
+
+GREEN connector = C274 (12-way), connector face:
+  top row:     5  4     3  2  1
+  bottom row: 12 11    10  9  8  7  6
+  -> pin 1 = top RIGHT; centre key between the groups.
+```
+
+⚠️ Confirm this is the **face** (mating) side vs the wire-entry side on your actual
+plug before probing — mirror left/right if you're looking at the back.
+
+Central-locking wires shown in the graphic (all match the tables below):
+| Pin | Wire | Drives |
+|---|---|---|
+| C225 pin 7 | YK (yellow) | Driver's door lock actuator |
+| C274 pin 2 | O (orange) | Passenger's door lock actuator |
+| C274 pin 3 | K (pink) | door lock actuators (other direction) |
+| C274 pin 11 | B (black) | ground |
+
 ## Connector C225 (the GREY ~26-way on the bench unit)
 
 | Pin | Wire | Function | Category |
