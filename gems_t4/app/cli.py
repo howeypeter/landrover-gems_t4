@@ -648,26 +648,33 @@ def _cmd_kline(args: argparse.Namespace) -> int:
         return _run_kline_secure(args, backend, kind, kwargs)
     type_name = {"usb": "USB", "ble": "Bluetooth LE",
                  "network": "Network"}.get(kind, kind)
-    render.console.print(f"[dim]Connecting to Pico ({type_name})...[/]")
-
     adapter_up = False
+    # Two transient spinners that each resolve to ONE clean status line:
+    #   "Connecting to Pico..."     -> "Connected to Pico (...) - firmware X"
+    #   "Communicating with ECU..." -> "Connected to ECU (...)"
+    # (was two leftover "...ing" lines, one with a redundant "status: Connected").
+    pico_status = render.console.status(f"Connecting to Pico ({type_name})...")
+    ecu_status = render.console.status("Communicating with ECU... please wait")
 
     def _on_adapter(fw: str | None) -> None:
         # Phase 1 done: the laptop<->Pico link is up. Report it (with firmware)
         # BEFORE the ECU init, so a silent ECU never looks like a Pico failure.
         nonlocal adapter_up
         adapter_up = True
+        pico_status.stop()
         fwtxt = f" - firmware {fw}" if fw else ""
-        render.console.print(
-            f"[green]Connected to Pico[/] ({type_name}), status: Connected{fwtxt}")
-        render.communicating()  # phase 2: "Communicating with ECU... please wait"
+        render.console.print(f"[green]Connected to Pico[/] ({type_name}){fwtxt}")
+        ecu_status.start()  # phase 2: the ECU 5-baud init is now in progress
 
+    pico_status.start()
     try:
         # kline is the REAL-ECU command: force the K-line profile over any
         # transport (USB, a WiFi Pico via --connect, or BLE).
         source = backend.apply_connection(
             kind, real_ecu=True, on_adapter=_on_adapter, **kwargs)
     except (TransportError, OSError) as exc:
+        pico_status.stop()
+        ecu_status.stop()
         fw = backend.last_adapter_firmware
         # The adapter link is confirmed up if on_adapter fired at all (phase 1),
         # even when the firmware PING returned nothing (e.g. over the network) -
@@ -692,6 +699,10 @@ def _cmd_kline(args: argparse.Namespace) -> int:
             render.console.print("[dim](run again with --debug for the full "
                                  "traceback)[/]")
         return 1
+    finally:
+        pico_status.stop()  # backstop: always clear the spinner
+    ecu_status.stop()
+    render.console.print(f"[green]Connected to ECU[/] ({source})")
     try:
         if args.kline_action == "dtc":
             dtcs = backend.read_dtcs()
