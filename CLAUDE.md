@@ -562,6 +562,16 @@ as static lookalikes for now.
   (GEMS) RAVE circuit (`etlj970x.pdf` A3, pp.39–51) cross-referenced pin-by-pin
   against SM001 + the bench `$21` map + protocol notes. Confirms K-line=C1017 p23,
   L-line=p20, and every sensor/switch pin; flags VSS=C1032 p27 (not C1017 p27).
+- `docs/chip-tooling.md` (added 2026-09-25) — chip **reader** decision + a
+  **contingent** write-path option. Bought an **XGecu T48 "+3 parts"** ($49.99,
+  ~1 mo delivery) to read/dump the GEMS EPROMs (27C512 / 27C1001) and, as a
+  *fallback*, the 10AS EEPROM (SOIC-8; add a ~$8 clip for in-circuit). Reading is
+  the committed use. **Write-path is SPECULATIVE** — only if the 10AS findings
+  lead there (e.g. an immobiliser-deleted chip = patch the 27C1001 `0x2000` code
+  image, burn to a reusable **W27C512 / W27C010** substitute; no UV eraser). Key
+  framing: the **K-line at C225 pin 17 is the PRIMARY 10AS route** (no chip reader
+  needed); the T48 is the fallback + the GEMS-EPROM-dump tool. Ties to [EKA read],
+  [EPROM programmability], [immobiliser-from-bench].
 - `docs/10as-pinout.md` (added 2026-09-25) — **Lucas 10AS / Theft Alarm Unit
   (Z163) pinout + bench wiring**, from RAVE `etlj970x.pdf` §T2 (NAS Disco-1). Both
   connectors C225/C274 (pin/wire/function tables), the minimal bench rig, the two
