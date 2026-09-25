@@ -234,6 +234,23 @@ def test_connect_help_short_ble() -> None:
     assert "Bluetooth" in msg and "USB" not in msg
 
 
+def test_connect_help_adapter_ok_never_blames_the_link() -> None:
+    """When the adapter link is confirmed up, a later failure is ECU-side -
+    even over the network, and even with a non-init exception whose text
+    mentions 'Pico'. This is the 'Connected to Pico ... then couldn't reach the
+    adapter' contradiction fix."""
+    for knd in ("network", "ble", "usb", None):
+        msg = kline.connect_help(
+            TransportTimeout("no response from Pico"), kind=knd, adapter_ok=True)
+        # ECU-side checklist, not adapter-link advice:
+        assert "Ignition" in msg and "K-line" in msg
+        assert "over the network" not in msg
+        assert "Bluetooth LE - this is the" not in msg
+        short = kline.connect_help_short(
+            TransportTimeout("no response from Pico"), kind=knd, adapter_ok=True)
+        assert "ECU not responding" in short
+
+
 def test_bank2_pids_present_and_decode() -> None:
     by_pid = {p.pid: p for p in kline.PIDS}
     assert {0x08, 0x09, 0x18, 0x19} <= set(by_pid)  # V8 bank-2 coverage

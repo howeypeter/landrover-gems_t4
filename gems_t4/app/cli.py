@@ -650,9 +650,13 @@ def _cmd_kline(args: argparse.Namespace) -> int:
                  "network": "Network"}.get(kind, kind)
     render.console.print(f"[dim]Connecting to Pico ({type_name})...[/]")
 
+    adapter_up = False
+
     def _on_adapter(fw: str | None) -> None:
         # Phase 1 done: the laptop<->Pico link is up. Report it (with firmware)
         # BEFORE the ECU init, so a silent ECU never looks like a Pico failure.
+        nonlocal adapter_up
+        adapter_up = True
         fwtxt = f" - firmware {fw}" if fw else ""
         render.console.print(
             f"[green]Connected to Pico[/] ({type_name}), status: Connected{fwtxt}")
@@ -665,14 +669,16 @@ def _cmd_kline(args: argparse.Namespace) -> int:
             kind, real_ecu=True, on_adapter=_on_adapter, **kwargs)
     except (TransportError, OSError) as exc:
         fw = backend.last_adapter_firmware
-        if fw:
-            # The Pico answered (fw known) but the ECU init failed - say so
-            # explicitly so the operator checks the bench, not the Bluetooth.
+        # The adapter link is confirmed up if on_adapter fired at all (phase 1),
+        # even when the firmware PING returned nothing (e.g. over the network) -
+        # so a later failure is ECU-side, never the adapter. Don't blame the link.
+        if adapter_up:
             render.console.print(
-                f"[yellow]Pico connected (firmware {fw}), but the ECU did not "
+                f"[yellow]Pico connected ({type_name}"
+                f"{f', firmware {fw}' if fw else ''}), but the ECU did not "
                 "answer.[/]")
         render.console.print("[bold red]Could not connect to the ECU.[/]")
-        render.console.print(connect_help(exc, kind=kind))
+        render.console.print(connect_help(exc, kind=kind, adapter_ok=adapter_up))
         if getattr(args, "debug", False):
             import traceback
             render.console.print("\n[dim]--- traceback (--debug) ---[/]")

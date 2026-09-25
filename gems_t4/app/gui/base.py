@@ -111,7 +111,11 @@ class Screen(QWidget):
                     # not a raw "init failed (status 1)".
                     from gems_t4.protocol.kline import connect_help_short
                     kind = getattr(self.backend, "connection_kind", None)
-                    self.status.emit(connect_help_short(exc, kind=kind))
+                    # If the adapter link came up (firmware captured), the failure
+                    # is ECU-side - don't blame the adapter link.
+                    adapter_ok = bool(getattr(self.backend, "last_adapter_firmware", None))
+                    self.status.emit(
+                        connect_help_short(exc, kind=kind, adapter_ok=adapter_ok))
                 else:
                     self.status.emit(f"ECU communication error: {exc}")
         win = self.window()

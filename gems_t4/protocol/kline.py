@@ -53,7 +53,8 @@ __all__ = [
 ]
 
 
-def connect_help(exc: BaseException | None = None, kind: str | None = None) -> str:
+def connect_help(exc: BaseException | None = None, kind: str | None = None,
+                 *, adapter_ok: bool = False) -> str:
     """A friendly, actionable checklist for a failed real-ECU connect/init.
 
     Distinguishes the adapter (Pico) side from the ECU/K-line side by the
@@ -61,6 +62,12 @@ def connect_help(exc: BaseException | None = None, kind: str | None = None) -> s
     the transport ("usb", "network", "ble") so adapter-side advice matches how
     we're actually connected - a BLE failure must not talk about USB cables or
     COM ports.
+
+    ``adapter_ok=True`` means the caller already confirmed the laptop<->adapter
+    link is up (e.g. the on_adapter phase-1 callback fired) - so whatever failed
+    afterwards is ECU-side, and we NEVER blame the adapter link, whatever the
+    transport or the exception text. This is the fix for "Connected to Pico ...
+    then 'couldn't reach the adapter'": a confirmed link can't be unreachable.
     """
     text = str(exc or "")
     ecu_help = (
@@ -79,7 +86,10 @@ def connect_help(exc: BaseException | None = None, kind: str | None = None) -> s
     # stayed silent. Point at the K-line/power, NOT the adapter link, whatever
     # the transport - otherwise a working BLE/USB link gets blamed for a bench
     # wiring problem. `InitError` is "init failed (status N)" from any transport.
-    if type(exc).__name__ == "InitError" or "init failed" in text or "init timed out" in text:
+    # `adapter_ok` is the definitive signal (caller saw the link come up); the
+    # text checks are the fallback when the caller didn't pass it.
+    if (adapter_ok or type(exc).__name__ == "InitError"
+            or "init failed" in text or "init timed out" in text):
         return ecu_help
     # -- BLE (Bluetooth LE): no cable, no COM port, no VID ------------------- #
     if kind == "ble":
@@ -129,15 +139,18 @@ def connect_help(exc: BaseException | None = None, kind: str | None = None) -> s
     return ecu_help
 
 
-def connect_help_short(exc: BaseException | None = None, kind: str | None = None) -> str:
+def connect_help_short(exc: BaseException | None = None, kind: str | None = None,
+                       *, adapter_ok: bool = False) -> str:
     """A one-line version of :func:`connect_help` for a GUI status bar."""
     text = str(exc or "")
     ecu_short = (
         "ECU not responding - check ignition ON, power, grounds and the "
         "K-line/510 ohm; wiggle the wires. Just cleared codes? Wait ~1-2 min."
     )
-    # ECU-side first: an init failure means the adapter link is fine (see connect_help).
-    if type(exc).__name__ == "InitError" or "init failed" in text or "init timed out" in text:
+    # ECU-side first: an init failure (or a confirmed adapter link) means the
+    # adapter is fine (see connect_help).
+    if (adapter_ok or type(exc).__name__ == "InitError"
+            or "init failed" in text or "init timed out" in text):
         return ecu_short
     if kind == "ble":
         return "Pico not answering over Bluetooth - check it's powered and advertising as 'gems-pico'."
