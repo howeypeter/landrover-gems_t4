@@ -7,10 +7,21 @@ over **USB, BLE, and (optional) WiFi at the same time**, so there's only one thi
 to flash. The Pico owns all K-line timing; the Python transports drive it
 (`transport/pico.py` = USB, `transport/ble.py` = BLE, `transport/tcp.py` = WiFi/TCP).
 
-**Hardware-verified over BLE** at `3.0.0`; the current source is **`3.1.0`**
-(adds the MAC to `wifi-status` — see below) and needs a reflash to run on
-hardware. PING reports `gems_t4-pico-all-pentest <version>`. It's a superset that
-also answers the pentest `CMD_RAW_INIT`, so the debug/probe scripts work too.
+**Hardware-verified over BLE** at `3.0.0`; the current source is **`3.2.0`** and
+needs a reflash to run on hardware. Changes since 3.0.0: **3.1.0** adds the MAC to
+`wifi-status` (see below); **3.2.0** makes the **WiFi server single-client,
+last-connection-wins** — a new tester cleanly takes over and drops any previous/
+stale connection (fixes the first-wins lockout where a second client's socket was
+accepted but never serviced → silent/intermittent WiFi failures, and a half-closed
+connection held the slot). PING reports `gems_t4-pico-all-pentest <version>`. It's
+a superset that also answers the pentest `CMD_RAW_INIT`, so the debug/probe
+scripts work too.
+
+> ⚠️ **WiFi = one tester at a time.** Even with last-wins takeover, only ONE
+> client should actively drive the Pico. If the always-on portal (`gems_t4 api`)
+> is pointed at the same WiFi Pico as your CLI, they'll keep kicking each other
+> off. Keep the portal on the **virtual ECU** while bench-driving real hardware
+> from the CLI (or `Stop-ScheduledTask gems_t4-web`).
 
 ## Which board
 

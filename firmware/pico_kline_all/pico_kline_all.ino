@@ -72,7 +72,7 @@ static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.1.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.2.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -512,12 +512,21 @@ void setup() {
 
 void loop() {
 #if ENABLE_WIFI
-  // Keep WiFi up and accept one tester at a time.
+  // Keep WiFi up. SINGLE client, LAST-connection-wins: always check for a NEW
+  // connection and let it TAKE OVER, dropping any previous/stale one. This fixes
+  // the old first-wins lockout, where once a client was connected a second
+  // tester's socket was accepted by the TCP stack but never serviced (silent
+  // hangs / intermittent failures), and a half-closed connection held the slot
+  // forever. A healthy lone client is untouched - accept() only yields a client
+  // when a genuinely new connection arrives - so a fresh `kline`/portal connect
+  // cleanly takes over from a dead one instead of fighting it.
   if (WiFi.status() == WL_CONNECTED) {
     MDNS.update();
-    if (!client || !client.connected()) {
-      WiFiClient incoming = server.accept();
-      if (incoming) { if (client) client.stop(); client = incoming; client.setNoDelay(true); }
+    WiFiClient incoming = server.accept();
+    if (incoming) {
+      if (client) client.stop();        // drop the previous / stale tester
+      client = incoming;
+      client.setNoDelay(true);
     }
   }
 #endif
