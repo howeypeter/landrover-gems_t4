@@ -937,3 +937,39 @@ Still-open alternatives if that fails: (a) donor 10AS is ARMED (wrong code) → 
 the EKA to disarm (T48 chip read, ~2 wks); (b) those five routines are ENGINE-STATE
 gated (need a running engine), not immobiliser — a static bench can't fire them.
 The mobilise-line activity leans AWAY from "10AS silent" toward (a)/capture-timing.
+
+---
+
+## EKA door-key entry — documented procedure + how the 10AS senses DIRECTION (2026-09-26)
+
+Researched the documented **EKA (Emergency Key Access)** door-lock entry and,
+crucially, dug the **direction-sensing wiring** out of RAVE `etlj970x.pdf` §T2
+(pages 7/8/4). Full write-up in `docs/10as-pinout.md` ("How the 10AS senses
+key-turn DIRECTION"). Load-bearing facts:
+
+**Documented Disco-1 (Lucas 10AS) EKA entry** (source: remotekey.co.uk; diag.net
+for NAS caveat): key in driver's door → LOCK + hold 5 s → return centre; then
+enter 4 digits as turn-and-return counts, alternating direction **UNLOCK (d1),
+LOCK (d2), UNLOCK (d3), LOCK (d4)**; finish with one UNLOCK → red LED out, engine
+starts. **Digits are 1–9 (never 0).** Delimited by the direction switch (no
+pause/door-open between digits — that's the Defender ignition-switch method).
+Lockout ~3 attempts then a timed lockout (10–30 min per related Lucas systems;
+Disco-1 not stated). **NAS caveat:** the NAS owner's manual OMITS EKA and points
+to the remote — door-lock EKA may be **disabled** on our 315 MHz NAS unit.
+"Default 1515" is a forum claim only, undocumented.
+
+**⭐ Direction sensing (RAVE, corrects our earlier pinout):**
+- **C225 pin 8 (UG)** = X201 key switch = SINGLE momentary "key operated" pulse
+  to ground — **NO lock/unlock direction**.
+- **C225 pin 7 (YK)** = **M114 driver's-door lock-actuator POSITION switch**
+  (`[1] Lock`/`[2] Unlock`, other side gnd) = the **lock-state feedback**. This
+  is how the 10AS knows direction. We + the community graphic had pin 7 mislabeled
+  as a "lock DRIVE output" — **it's an INPUT (sense)**. The lock MOTORS are driven
+  by the **C274 pin 2 (O) / pin 3 (K)** bus (§T2 p8), not C225 p7.
+- So bench EKA sim needs BOTH pin 8 (pulse) AND pin 7 (state), plus the
+  all-closed precondition inputs (pins 1/16/5 door-ajar, 9 bonnet) left OPEN.
+
+**Unknowns before a bench EKA sim:** exact Lock/Unlock sense of pin 7 (grounded
+vs open per state), pin-8→pin-7 timing, and whether NAS enables door-lock EKA at
+all. Don't brute-force by turning the key (~3-attempt lockout). Ties to the [EKA
+read from the 10AS] + [immobiliser from the bench] backlog items.

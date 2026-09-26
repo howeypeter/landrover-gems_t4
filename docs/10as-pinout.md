@@ -76,7 +76,7 @@ plug before probing — mirror left/right if you're looking at the back.
 Central-locking wires shown in the graphic (all match the tables below):
 | Pin | Wire | Drives |
 |---|---|---|
-| C225 pin 7 | YK (yellow) | Driver's door lock actuator |
+| C225 pin 7 | YK (yellow) | Driver's door lock actuator — **position SENSE**, not drive (see direction-sensing §) |
 | C274 pin 2 | O (orange) | Passenger's door lock actuator |
 | C274 pin 3 | K (pink) | door lock actuators (other direction) |
 | C274 pin 11 | B (black) | ground |
@@ -85,12 +85,12 @@ Central-locking wires shown in the graphic (all match the tables below):
 
 | Pin | Wire | Function | Category |
 |---|---|---|---|
-| 1 | WP | Door/tailgate switch sense | Perimetric input |
+| 1 | WP | LH-front-door + tailgate ajar sense (X150, X265 via Z277 diode) | Perimetric input |
 | 3 | WB | Volumetric alarm sensor (X213) | Input |
-| 5 | PG | Door switch sense / seat-relay diode | Perimetric input |
-| 7 | YK | Central-locking **lock** drive | Output |
-| 8 | UG | LH front door key switch (X201) | Input |
-| 9 | PO | Bonnet switch (X212) | Input |
+| 5 | PG | Door ajar sense via left seat-power relay diode (Z223) | Perimetric input |
+| 7 | YK | **Driver's-door lock-actuator (M114) POSITION switch** — Lock/Unlock state feedback ⭐ | **Input (latch state)** |
+| 8 | UG | LH front door key switch (X201) — momentary "key operated", **no direction** | Input |
+| 9 | PO | Bonnet switch (X212) | Perimetric input |
 | 10 | GK | **+12 V feed** — Satellite Fuse Box 1, F5 (10 A) | **Power** |
 | 11 | RS | → ECM C1032 pin 22 (shared with MIL line) | ECM link (verify) |
 | 13 | SCR | Antenna screen/shield | RF |
@@ -115,6 +115,60 @@ Central-locking wires shown in the graphic (all match the tables below):
 | 8 | PN | **+12 V feed** — Engine bay fuse box, F4 (30 A) | **Power (lock motors, 30 A)** |
 | 10 | BO | Park/neutral → engine crank inhibit | Input |
 | 11 | BO | **Ground** (S204 → E200) | **GND** |
+
+## How the 10AS senses key-turn DIRECTION (EKA entry) ⭐
+
+Source: RAVE `etlj970x.pdf` §T2 circuit page 7 (driver's-door circuit) +
+page 8 (lock-motor bus) + page 4 ("Perimetric Testing"). This is the piece the
+documented EKA procedure needs to be bench-drivable.
+
+The documented EKA procedure enters a 4-digit code at the driver's door by
+turning the key an alternating **UNLOCK / LOCK / UNLOCK / LOCK** count. For that
+the 10AS must distinguish a lock turn from an unlock turn — but the **key switch
+does not carry direction**:
+
+- **C225 pin 8 (UG) — X201 Left Front Door Key Switch.** RAVE draws it as a
+  SINGLE momentary switch (`[1] Key turned` / `[2] Key out`), one wire to pin 8,
+  other side to ground (via C504 p4 → S501 → E201). It grounds pin 8 **whenever
+  the key is turned in the barrel, either way.** No lock/unlock distinction.
+
+Direction comes from a **second input** — the driver's-door lock **position**:
+
+- **C225 pin 7 (YK) — M114 Left Front Door Lock Actuator POSITION switch.**
+  Page 7 draws M114 here as a switch with `[1] Lock` / `[2] Unlock`, wired
+  pin 7 → C2101 p6 → C507 p5, other side to ground (C507 p3, B). It reports the
+  **mechanical lock state** of the driver's door back to the 10AS.
+  ⚠️ This corrects our earlier table + the community graphic, which called pin 7
+  a "lock drive output." It is an **INPUT (lock-state sense)**, not a drive.
+
+The lock **motors** are driven separately — page 8 shows all five actuators
+(M114/M122/M117/M125/M132 motor windings) fed by the **C274 pin 2 (O)** and
+**pin 3 (K)** bus. So on C225, pin 7 is sense-only.
+
+**Direction logic (inferred):** each key operation = a pin-8 pulse; the 10AS
+then reads pin 7 to see which position the lock ended in (Lock vs Unlock) and
+counts operations per direction. Combined with the alternating UNLOCK→LOCK→…
+digit pattern, that yields the 4 digits.
+
+### Bench simulation of EKA — the minimum signal set
+
+To drive an EKA attempt on the bench you would need to reproduce BOTH signals,
+not just pin 8:
+
+| Signal | 10AS pin | Bench action |
+|---|---|---|
+| "Key operated" pulse | C225 **pin 8 (UG)** | momentary switch/GPIO to ground, one pulse per turn |
+| Lock-state feedback | C225 **pin 7 (YK)** | hold to ground for one state, open for the other, matching the digit's direction |
+| Precondition: all closed | pins 1 (WP), 16 (PW), 5 (PG), 9 (PO) | leave OPEN (= all doors/bonnet shut) so the module accepts entry |
+
+⚠️ **Unknowns before this can work:** (1) the exact SENSE of pin 7 — which state
+(grounded vs open) the M114 switch presents for Lock vs Unlock; (2) the precise
+timing the 10AS expects between the pin-8 pulse and the pin-7 settle; (3) whether
+NAS units even enable door-lock EKA (the diag.net thread notes the **NAS owner's
+manual omits EKA** and points to the remote — a real risk this path is disabled
+on our 315 MHz NAS unit). All three are bench-probe questions. Lockout after ~3
+bad attempts means **don't brute-force by turning the key** — model it in software
+against the K-line first if the 10AS diagnostic protocol is ever mapped.
 
 ## Minimal bench rig
 

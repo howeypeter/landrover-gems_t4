@@ -590,8 +590,13 @@ as static lookalikes for now.
   C225 pin 11 → ECM C1032 pin 22 = shared-with-MIL, verify), and a **pairing/
   bench-mobilise** plan. Key finds: **diagnostic serial = C225 pin 17 (KB)** (car:
   OBD-II pin 8, a *separate* line from the engine K-line pin 7); protocol is
-  proprietary Lucas (unmapped). Feeds the [EKA read from the 10AS] + [immobiliser
-  from the bench] backlog items.
+  proprietary Lucas (unmapped). **Updated 2026-09-26** — added the documented EKA
+  door-key entry procedure and, from RAVE §T2 p7/8, the **key-turn direction
+  sensing**: C225 **pin 8 (UG)** = X201 momentary "key operated" (NO direction);
+  **pin 7 (YK)** = M114 driver's-door lock-actuator **POSITION sense** (the
+  latch-state feedback the 10AS uses for direction) — this **corrects** pin 7's
+  old "lock drive" label (drive is on C274 p2/p3). Feeds the [EKA read from the
+  10AS] + [immobiliser from the bench] backlog items.
 - `docs/vin-decode.md` (added 2026-09-19) — Land Rover 17-char VIN decode table +
   the "reconstruct the full VIN from the ECU/10AS last-6" concept (derived
   11-char prefix + read serial), with a worked Disco-1 template, NAS/verify
@@ -1008,6 +1013,18 @@ up):**
   10AS present). A new bench-wiring diagram for the 10AS (like
   `diagrams/gems-bench-rig-wiring.html`) will be part of this. Ties to the
   immobiliser Security-Learn and "unlock the immobiliser from the bench" items.
+  **UPDATE 2026-09-26 — documented EKA entry + direction-sensing wiring found**
+  (detail: `docs/10as-pinout.md`, `memory/real-gems-protocol.md`). Two paths to
+  the EKA now understood: **(a) read** it from the 10AS EEPROM over its
+  proprietary K-line channel (unmapped — the main goal), or **(b) enter** the
+  documented door-key sequence (LOCK-hold-5s, then 4 digits as turn counts
+  alternating UNLOCK/LOCK/UNLOCK/LOCK, digits 1–9). RAVE §T2 shows the 10AS senses
+  key-turn **direction** via TWO C225 pins: **pin 8 (UG)** = momentary "key
+  operated" (no direction) + **pin 7 (YK)** = driver's-door lock-actuator
+  position SENSE. A bench EKA sim needs both, plus all-closed preconditions.
+  ⚠️ **NAS caveat:** the NAS owner's manual omits door-lock EKA (points to the
+  remote), so this path may be **disabled** on our 315 MHz unit — and "1-5-1-5" is
+  only a forum claim. ~3-attempt lockout → do NOT brute-force by turning the key.
 - **Unlock / handle the immobiliser from the bench (no BeCM present).** The
   immobiliser Security-Learn is a BeCM↔ECM re-sync — normally a car job,
   because the **BeCM only exists in the vehicle**, not on the bench. Research
