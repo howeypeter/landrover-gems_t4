@@ -876,3 +876,28 @@ IDs (+ a few id services), read-only, hunt the EKA/EEPROM. NOTE the correct KWP
 **target byte** for the 10AS is still unconfirmed (sweep used dest=0x33; try
 dest=addr). Full session handshake at 9600 may be needed for clean reads (raw_init
 does NOT complete the inverted-keybyte handshake).
+
+---
+
+## Immobilised baseline for the Relearn A/B test (2026-09-26, `actuator_test.py` scan)
+
+Clean bench scan with the 10AS wired in (over WiFi/TCP). The `$31` routine set is
+`0x00..0x0B`; everything `0x0C+` = `subFunctionNotSupported` (not routines).
+
+- **GATED (`conditionsNotCorrect 0x22`) = `{0x00, 0x02, 0x03, 0x06, 0x08}`** — FIVE
+  routines (refines the earlier "0x02/0x03/0x06/0x08"; **0x00 is gated too**). The
+  **fuel pump (C1032 pin 24) is one of these five.**
+- **FIREABLE (positive `71<id>`) = `{0x01, 0x04, 0x05, 0x07, 0x09, 0x0A, 0x0B}`** —
+  seven. Confirmed: **`0x05` = injector test** (drove C1032 pin 11) — note it fires
+  even while immobilised, so injectors are a POOR immobiliser indicator; the gated
+  set is the tell.
+
+This is a valid **immobilised** proof: the ECU is alive (7 routines fire) yet the
+five above are refused = the anti-theft gate, not a dead ECU. It's the "before"
+half of the immobiliser Relearn A/B:
+  1. blocked (this) → 2. relearn (`secure --reset-adaptive` then `--immobiliser-sync`,
+  A300622588, over the 0xDA channel; L-line jumper on) → 3. re-scan: SUCCESS = the
+  five gated ids flip to `ACCEPTED (71xx)`; then meter pin 24 while firing to pin
+  down the fuel pump specifically. Caveat: the ECM only mobilises if the (different-
+  truck) 10AS is DISARMED/sending mobilise — relies on its power-up state; if the
+  five stay gated after a clean pair, that's the 10AS armed, not a relearn failure.
