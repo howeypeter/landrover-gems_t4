@@ -55,3 +55,6 @@ docs/rave/
 
 # 10AS connector graphic (third-party; kept local like the RAVE PDFs)
 docs/img/10as-central-locking-connections.png
+
+# Bench-script runtime state (regenerable; like the .log/.csv captures)
+bench/*.state.json
