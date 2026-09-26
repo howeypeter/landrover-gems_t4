@@ -901,3 +901,39 @@ half of the immobiliser Relearn A/B:
   down the fuel pump specifically. Caveat: the ECM only mobilises if the (different-
   truck) 10AS is DISARMED/sending mobilise — relies on its power-up state; if the
   five stay gated after a clean pair, that's the 10AS armed, not a relearn failure.
+
+---
+
+## Immobiliser Relearn attempt on the bench (2026-09-26) — CHECKPOINT
+
+**Milestone:** `A300622588` (immobiliser-sync / Security-Learn) **fired and was
+accepted on real hardware for the first time** — `gems_t4 kline secure
+--immobiliser-sync`. Also `--reset-adaptive` (`A3234800`) sent OK. So the whole
+0xDA WRITE tier is now validated end-to-end (unlock + A3 writes). CLI fix that
+made it work: confirm BEFORE unlock (the `[y/N]` after unlock let the `$27`
+session lapse → instant write timeout) + A3 writes are fire-and-forget (no ack).
+
+**Result so far: NOT mobilised.** After the sync + ignition cycle, the actuator
+scan is UNCHANGED — the five immobiliser-gated routines `{00,02,03,06,08}` still
+return `conditionsNotCorrect`; fireable set unchanged. So the ECM is still
+immobilised.
+
+**Mobilise-line probing (ECM C1017 pin 26 = 10AS C225 pin 15, DC volts to gnd):**
+- ignition OFF → 0 V; ignition ON → jumps to ~11 V for ~1 s, then steady ~8 V.
+- With the 10AS wire (C225 p15) disconnected → pin 26 read **0 V** (⚠️ user later
+  said they may have MISREAD this — RE-VERIFY). If true, the 10AS IS driving the
+  burst = the 10AS is actively transmitting a coded signal at ignition-on (NOT a
+  silent/armed-dead line).
+
+**Leading hypothesis / next to try:** the Security-Learn likely didn't CAPTURE the
+code because it wasn't synced to an ignition-on burst (ECU was already powered/idle
+when the write went). Retry SYNCHRONISED:
+  1. reconnect C225 p15 → C1017 p26;
+  2. `gems_t4 kline secure --port COM4 --immobiliser-sync --yes`;
+  3. cycle ignition (BOTH ECU + 10AS together, off ~10 s → on) so the 10AS emits
+     its burst and the learn-moded ECM captures it; cycle once more;
+  4. re-run `actuator_test.py` — success = the five flip to `ACCEPTED`.
+Still-open alternatives if that fails: (a) donor 10AS is ARMED (wrong code) → needs
+the EKA to disarm (T48 chip read, ~2 wks); (b) those five routines are ENGINE-STATE
+gated (need a running engine), not immobiliser — a static bench can't fire them.
+The mobilise-line activity leans AWAY from "10AS silent" toward (a)/capture-timing.
