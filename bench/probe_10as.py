@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
 from rich.console import Console
 
@@ -35,7 +36,31 @@ CMD_RAW_INIT = 0x05
 BAUD = 9600                      # the 10AS baud (GEMS is 10400)
 MODE_SLOW = 0                    # 5-baud slow init
 
-console = Console()
+#: Every run is mirrored to this log (append) so the 0x21 sweep output is kept,
+#: not just shown. Gitignored like the other bench .log captures.
+LOG = Path(__file__).with_name("probe_10as.log")
+
+
+class _Tee:
+    """Print to the terminal AND append to the log file (flushed per line)."""
+
+    def __init__(self, path: Path) -> None:
+        self._con = Console()
+        self._fh = open(path, "a", encoding="utf-8")
+        self._filecon = Console(file=self._fh, width=100)
+
+    def print(self, *a, **k) -> None:
+        self._con.print(*a, **k)
+        self._filecon.print(*a, **k)
+        self._fh.flush()
+
+    def rule(self, *a, **k) -> None:
+        self._con.rule(*a, **k)
+        self._filecon.rule(*a, **k)
+        self._fh.flush()
+
+
+console = _Tee(LOG)
 
 
 def make_transport():
