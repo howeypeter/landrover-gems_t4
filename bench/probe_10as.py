@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from pathlib import Path
 
 from rich.console import Console
@@ -128,11 +129,18 @@ def split_echo(frame: bytes, raw: bytes) -> tuple[bytes, bytes]:
 
 def probe(t, addr: int) -> None:
     console.rule(f"10AS probe  addr 0x{addr:02X} @ {BAUD} baud (full handshake)")
+    # Settle: a module left in-session by a prior address won't accept a fresh
+    # 5-baud init until its session times out. Wait so back-to-back addresses
+    # (e.g. 0x9D then 0x1C) both init instead of the 2nd falsely reading silent.
+    time.sleep(3.0)
     kb = full_init(t, addr)
     console.print(f"full init -> {hexs(kb)}")
     if not kb:
-        console.print("[yellow]no init response — 10AS powered? K on the node? "
-                      "firmware >= 3.3.0 flashed? right addr?[/]")
+        console.print("[yellow]no init response. Usually the module is still "
+                      "in-session from the PREVIOUS address (probe this addr "
+                      "alone: `probe_10as.py "
+                      f"{addr:02X}`). Else: 10AS powered? K on the node? "
+                      "firmware >= 3.4.0? right addr?[/]")
         return
 
     def reinit() -> bool:
