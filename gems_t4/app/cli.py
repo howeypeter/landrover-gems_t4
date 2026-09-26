@@ -462,7 +462,7 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
     """
     from gems_t4.protocol.gems_secure import GemsSecureError
     from gems_t4.protocol.kline import connect_help
-    from gems_t4.transport.base import TransportError
+    from gems_t4.transport.base import TransportError, TransportTimeout
 
     try:
         # Register the transport WITHOUT the OBD 0x33 connect; the secure session
@@ -473,6 +473,24 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
         render.console.print(f"[bold red]{exc}[/]")
         return 1
 
+    # Confirm the WRITES *before* unlocking. The $27 session is time-sensitive and
+    # does NOT survive a human typing at a prompt - a [y/N] after the unlock let
+    # the session lapse, so the write hit a dead session and timed out instantly.
+    # So: ask first, then unlock + fire with no human delay in between.
+    do_reset = getattr(args, "reset_adaptive", False)
+    do_immo = getattr(args, "immobiliser_sync", False)
+    if do_reset and not args.yes and not _prompt_yes_no(
+            "Reset ECU adaptive values? [y/N] "):
+        do_reset = False
+        render.console.print("Reset cancelled.")
+    if do_immo and not args.yes:
+        render.console.print(
+            "[yellow]Immobiliser sync (Security-Learn) mutates BeCM<->ECM "
+            "pairing.[/]")
+        if not _prompt_yes_no("Send immobiliser sync? [y/N] "):
+            do_immo = False
+            render.console.print("Immobiliser synch cancelled.")
+
     render.communicating()
     try:
         session.connect()
@@ -480,6 +498,19 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
         render.console.print("[bold red]Could not open the 0xDA channel.[/]")
         render.console.print(connect_help(exc, kind=kind))
         return 1
+
+    def _fire_write(label: str, fn) -> None:
+        # The A3 writes are fire-and-forget: the ECU often resets / returns no ack
+        # (the FlemcoDesign app sends them and moves on without validating). So a
+        # response TIMEOUT here means "sent, no ack" - NOT a failure. Report it as
+        # such instead of crashing with a traceback.
+        try:
+            fn()
+            render.console.print(f"[green]{label} sent.[/]")
+        except TransportTimeout:
+            render.console.print(
+                f"[green]{label} sent[/] - no ack (expected: the ECU resets / "
+                "doesn't reply to A3 writes).")
 
     try:
         if not session.unlock():
@@ -493,24 +524,12 @@ def _run_kline_secure(args: argparse.Namespace, backend, kind: str, kwargs: dict
         render.console.print(f"[green]Unlocked ($27) — seed {seed:04X}.[/]")
 
         did_action = False
-        if getattr(args, "reset_adaptive", False):
+        if do_reset:
             did_action = True
-            if args.yes or _prompt_yes_no("Reset ECU adaptive values? [y/N] "):
-                session.reset_adaptive_values()
-                render.console.print("[green]Reset-adaptive-values sent.[/]")
-            else:
-                render.console.print("Reset cancelled.")
-        if getattr(args, "immobiliser_sync", False):
+            _fire_write("Reset-adaptive-values", session.reset_adaptive_values)
+        if do_immo:
             did_action = True
-            render.console.print(
-                "[yellow]Immobiliser sync (Security-Learn) mutates BeCM<->ECM "
-                "pairing.[/]"
-            )
-            if args.yes or _prompt_yes_no("Send immobiliser sync? [y/N] "):
-                session.immobiliser_sync()
-                render.console.print("[green]Immobiliser-sync sent.[/]")
-            else:
-                render.console.print("Immobiliser synch cancelled.")
+            _fire_write("Immobiliser-sync", session.immobiliser_sync)
         if getattr(args, "dump", None):
             did_action = True
             try:
