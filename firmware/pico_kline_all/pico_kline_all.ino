@@ -72,7 +72,7 @@ static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.2.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.3.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -231,7 +231,7 @@ static bool klineReadByte(uint8_t *b, uint32_t timeout_ms) {
   return true;
 }
 
-static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
+static bool slowInit(uint8_t address, uint32_t baud, uint8_t *keybytes, uint8_t *kb_len) {
   Serial1.end();
   pinMode(KLINE_TX_PIN, OUTPUT);
   digitalWrite(KLINE_TX_PIN, HIGH);
@@ -243,7 +243,9 @@ static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
   }
   digitalWrite(KLINE_TX_PIN, HIGH); delay(200);
 
-  Serial1.begin(KLINE_BAUD);
+  // Session UART baud: GEMS = 10400; the Lucas 10AS alarm unit = 9600. The full
+  // W4 handshake (below) must run at the module's baud, so it's a parameter now.
+  Serial1.begin(baud);
   uint8_t sync, kb1, kb2;
   if (!klineReadByte(&sync, 500) || sync != 0x55) return false;
   if (!klineReadByte(&kb1, 50)) return false;
@@ -262,13 +264,13 @@ static bool slowInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
   return true;
 }
 
-static bool fastInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
+static bool fastInit(uint8_t address, uint32_t baud, uint8_t *keybytes, uint8_t *kb_len) {
   Serial1.end();
   pinMode(KLINE_TX_PIN, OUTPUT);
   digitalWrite(KLINE_TX_PIN, HIGH); delay(300);
   digitalWrite(KLINE_TX_PIN, LOW);  delay(25);
   digitalWrite(KLINE_TX_PIN, HIGH); delay(25);
-  Serial1.begin(KLINE_BAUD);
+  Serial1.begin(baud);
 
   uint8_t sc[5] = { 0x81, address, 0xF7, 0x81, 0 };
   sc[4] = (uint8_t)(sc[0] + sc[1] + sc[2] + sc[3]);
@@ -292,9 +294,14 @@ static bool fastInit(uint8_t address, uint8_t *keybytes, uint8_t *kb_len) {
 static void handleInit(const uint8_t *payload, uint8_t len) {
   if (len < 2) { sendPico(ST_BAD_REQUEST, nullptr, 0); return; }
   uint8_t address = payload[0], mode = payload[1];
+  // Optional baud in payload[2..3] (big-endian). Backward-compatible: a 2-byte
+  // payload (old host) defaults to KLINE_BAUD (10400, GEMS). Pass 9600 for the
+  // 10AS. This is a FULL-handshake init (unlike CMD_RAW_INIT), so the addressed
+  // module enters a real diagnostic session and will answer SEND_RECV.
+  uint32_t baud = (len >= 4) ? (((uint32_t)payload[2] << 8) | payload[3]) : KLINE_BAUD;
   uint8_t kb[2], kb_len = 0;
-  bool ok = (mode == 1) ? fastInit(address, kb, &kb_len)
-                        : slowInit(address, kb, &kb_len);
+  bool ok = (mode == 1) ? fastInit(address, baud, kb, &kb_len)
+                        : slowInit(address, baud, kb, &kb_len);
   if (ok) sendPico(ST_OK, kb, kb_len);
   else    sendPico(ST_TIMEOUT, nullptr, 0);
 }

@@ -31,8 +31,9 @@ from pathlib import Path
 from rich.console import Console
 
 CMD_PING = 0x01
+CMD_INIT = 0x02                  # FULL W4-handshake init (needs firmware >= 3.3.0 for baud)
 CMD_SEND_RECV = 0x03
-CMD_RAW_INIT = 0x05
+CMD_RAW_INIT = 0x05             # init WITHOUT the handshake (no real session)
 BAUD = 9600                      # the 10AS baud (GEMS is 10400)
 MODE_SLOW = 0                    # 5-baud slow init
 
@@ -94,19 +95,31 @@ def raw_init(t, addr: int) -> bytes:
     return resp if st == 0 else b""
 
 
+def full_init(t, addr: int, baud: int = BAUD) -> bytes:
+    """FULL W4-handshake init at `baud` -> a REAL diagnostic session (unlike
+    raw_init). Needs firmware >= 3.3.0 (older firmware ignores the baud bytes and
+    inits at 10400, which is wrong for the 9600 10AS). Returns keybytes or b''."""
+    payload = bytes([addr, MODE_SLOW, (baud >> 8) & 0xFF, baud & 0xFF])
+    st, resp = t._transceive(CMD_INIT, payload)
+    return resp if st == 0 else b""
+
+
 def send_recv(t, frame: bytes) -> bytes:
     st, pl = t._transceive(CMD_SEND_RECV, frame)
     return pl if st == 0 else b""
 
 
 def probe(t, addr: int) -> None:
-    console.rule(f"10AS probe  addr 0x{addr:02X} @ {BAUD} baud")
-    kb = raw_init(t, addr)
-    console.print(f"init -> {hexs(kb)}")
+    console.rule(f"10AS probe  addr 0x{addr:02X} @ {BAUD} baud (full handshake)")
+    kb = full_init(t, addr)
+    console.print(f"full init -> {hexs(kb)}")
     if not kb:
         console.print("[yellow]no init response — 10AS powered? K on the node? "
-                      "right baud/addr?[/]")
+                      "firmware >= 3.3.0 flashed? right addr?[/]")
         return
+
+    def reinit() -> bool:
+        return bool(full_init(t, addr))
 
     # 1) FRAMING recon: which target byte does the 10AS answer? Try 21 01 several
     #    ways so we learn the correct header before sweeping.
@@ -117,13 +130,13 @@ def probe(t, addr: int) -> None:
         ("kwp dest=0x00", kwp(0x00, [0x21, 0x01])),
         ("bare 21 01", bytes([0x21, 0x01])),
     ):
-        raw_init(t, addr)
+        reinit()
         console.print(f"    {label:16} -> {hexs(send_recv(t, frame))}")
 
-    # 2) svc 0x21 readDataByLocalIdentifier sweep. Uses dest=addr; init once, then
-    #    re-init if the pseudo-session drops (a run of silents).
+    # 2) svc 0x21 readDataByLocalIdentifier sweep. Uses dest=addr; session held,
+    #    re-init if it drops (a run of silents).
     console.print("[bold]-- svc 0x21 (readDataByLocalId) sweep 0x00..0xFF --[/]")
-    raw_init(t, addr)
+    reinit()
     silent = 0
     for lid in range(0x100):
         r = send_recv(t, kwp(addr, [0x21, lid]))
@@ -133,7 +146,7 @@ def probe(t, addr: int) -> None:
         else:
             silent += 1
             if silent >= 12:               # session may have timed out; re-init
-                if raw_init(t, addr):
+                if reinit():
                     r = send_recv(t, kwp(addr, [0x21, lid]))
                     if r:
                         console.print(f"    21 {lid:02X} -> {hexs(r)} (re-init)")
@@ -152,7 +165,7 @@ def probe(t, addr: int) -> None:
         ("23 read mem", [0x23, 0x00, 0x00, 0x00, 0x01]),
         ("3E (tester present)", [0x3E]),
     ):
-        raw_init(t, addr)
+        reinit()
         console.print(f"    {label:22} -> {hexs(send_recv(t, kwp(addr, data)))}")
 
 
@@ -164,7 +177,16 @@ def main() -> None:
     try:
         try:
             st, ver = t._transceive(CMD_PING)
-            console.print(f"[dim]firmware: {ver.decode('ascii', 'replace')}[/]")
+            fw = ver.decode('ascii', 'replace')
+            console.print(f"[dim]firmware: {fw}[/]")
+            # The 9600 full-handshake init needs the baud-parameterised CMD_INIT
+            # added in 3.3.0. Older firmware silently inits at 10400 -> wrong.
+            import re as _re
+            m = _re.search(r"(\d+)\.(\d+)\.(\d+)", fw)
+            if m and tuple(int(x) for x in m.groups()) < (3, 3, 0):
+                console.print("[bold yellow]WARNING: firmware < 3.3.0 — the 9600 "
+                              "full-init needs 3.3.0; flash it or this won't "
+                              "session the 10AS.[/]")
         except Exception:  # noqa: BLE001
             console.print("[yellow]PING failed — continuing anyway[/]")
         for a in addrs:
