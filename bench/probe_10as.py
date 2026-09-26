@@ -32,8 +32,9 @@ from rich.console import Console
 
 CMD_PING = 0x01
 CMD_INIT = 0x02                  # FULL W4-handshake init (needs firmware >= 3.3.0 for baud)
-CMD_SEND_RECV = 0x03
+CMD_SEND_RECV = 0x03            # echo-cancelled send/recv
 CMD_RAW_INIT = 0x05             # init WITHOUT the handshake (no real session)
+CMD_RAW_XFER = 0x08            # raw send/recv, NO echo cancel (needs firmware >= 3.4.0)
 BAUD = 9600                      # the 10AS baud (GEMS is 10400)
 MODE_SLOW = 0                    # 5-baud slow init
 
@@ -109,6 +110,22 @@ def send_recv(t, frame: bytes) -> bytes:
     return pl if st == 0 else b""
 
 
+def raw_xfer(t, frame: bytes) -> bytes:
+    """Send `frame` at the session baud with NO echo cancel; return the full raw
+    RX (echo + any response). Needs firmware >= 3.4.0."""
+    st, pl = t._transceive(CMD_RAW_XFER, frame)
+    return pl if st == 0 else b""
+
+
+def split_echo(frame: bytes, raw: bytes) -> tuple[bytes, bytes]:
+    """Separate the leading echo (== our sent frame) from the real response."""
+    n = len(frame)
+    if raw[:n] == frame:
+        return raw[:n], raw[n:]
+    # echo may be mangled/short; fall back to a byte-count split
+    return raw[:n], raw[n:]
+
+
 def probe(t, addr: int) -> None:
     console.rule(f"10AS probe  addr 0x{addr:02X} @ {BAUD} baud (full handshake)")
     kb = full_init(t, addr)
@@ -120,6 +137,25 @@ def probe(t, addr: int) -> None:
 
     def reinit() -> bool:
         return bool(full_init(t, addr))
+
+    # 0) RAW ground-truth exchange (no echo cancel). Shows exactly what's on the
+    #    wire: [echo of our frame] + [any real 10AS response]. This is how we tell
+    #    a genuine reply from mangled echo. If 'resp' is empty for every framing,
+    #    the 10AS isn't answering our header -> try a different frame format.
+    console.print("[bold]-- RAW exchange (echo | response), no echo-cancel --[/]")
+    for label, frame in (
+        (f"kwp dest=0x{addr:02X} 21 01", kwp(addr, [0x21, 0x01])),
+        ("kwp dest=0x33 21 01", kwp(0x33, [0x21, 0x01])),
+        ("bare 21 01", bytes([0x21, 0x01])),
+        (f"kwp dest=0x{addr:02X} 3E", kwp(addr, [0x3E])),
+        (f"kwp dest=0x{addr:02X} 1A 80", kwp(addr, [0x1A, 0x80])),
+    ):
+        reinit()
+        raw = raw_xfer(t, frame)
+        echo, resp = split_echo(frame, raw)
+        console.print(f"    {label:24} sent={frame.hex(' ')}")
+        console.print(f"      raw={hexs(raw)}")
+        console.print(f"      echo={hexs(echo)}  [bold]response={hexs(resp)}[/]")
 
     # 1) FRAMING recon: which target byte does the 10AS answer? Try 21 01 several
     #    ways so we learn the correct header before sweeping.
@@ -183,10 +219,10 @@ def main() -> None:
             # added in 3.3.0. Older firmware silently inits at 10400 -> wrong.
             import re as _re
             m = _re.search(r"(\d+)\.(\d+)\.(\d+)", fw)
-            if m and tuple(int(x) for x in m.groups()) < (3, 3, 0):
-                console.print("[bold yellow]WARNING: firmware < 3.3.0 — the 9600 "
-                              "full-init needs 3.3.0; flash it or this won't "
-                              "session the 10AS.[/]")
+            if m and tuple(int(x) for x in m.groups()) < (3, 4, 0):
+                console.print("[bold yellow]WARNING: firmware < 3.4.0 — the RAW "
+                              "exchange (CMD_RAW_XFER) and 9600 full-init need "
+                              ">= 3.4.0; reflash or the 10AS probe won't work.[/]")
         except Exception:  # noqa: BLE001
             console.print("[yellow]PING failed — continuing anyway[/]")
         for a in addrs:

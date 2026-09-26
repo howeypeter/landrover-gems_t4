@@ -7,7 +7,7 @@ over **USB, BLE, and (optional) WiFi at the same time**, so there's only one thi
 to flash. The Pico owns all K-line timing; the Python transports drive it
 (`transport/pico.py` = USB, `transport/ble.py` = BLE, `transport/tcp.py` = WiFi/TCP).
 
-**Hardware-verified over BLE** at `3.0.0`; the current source is **`3.3.0`** and
+**Hardware-verified over BLE** at `3.0.0`; the current source is **`3.4.0`** and
 needs a reflash to run on hardware. Changes since 3.0.0: **3.1.0** adds the MAC to
 `wifi-status` (see below); **3.2.0** makes the **WiFi server single-client,
 last-connection-wins** — a new tester cleanly takes over and drops any previous/
@@ -18,7 +18,11 @@ full W4-handshake init now runs at a caller-chosen baud (payload `[addr, mode,
 baud_hi, baud_lo]`; 2-byte payload still defaults to 10400). This lets us open a
 **real session with the Lucas 10AS at 9600** (GEMS is 10400) — `CMD_RAW_INIT`
 only wakes a module, it does NOT complete the handshake, so it can't session the
-10AS. PING reports `gems_t4-pico-all-pentest <version>`. It's a superset that also
+10AS; **3.4.0** adds **`CMD_RAW_XFER` (0x08)** — raw send/recv at the session baud
+with NO echo cancellation, returning the full RX (echo + response) so the host can
+separate them (the RE tool for the 10AS, whose framing/echo timing the normal
+echo-cancelling `SEND_RECV` path mangles). PING reports
+`gems_t4-pico-all-pentest <version>`. It's a superset that also
 answers the pentest `CMD_RAW_INIT`, so the debug/probe scripts work too.
 
 > ⚠️ **WiFi = one tester at a time.** Even with last-wins takeover, only ONE

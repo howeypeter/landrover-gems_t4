@@ -66,13 +66,14 @@ static const uint8_t HOST_START = 0xA5;
 static const uint8_t PICO_START = 0x5A;
 static const uint8_t CMD_PING = 0x01, CMD_INIT = 0x02, CMD_SEND_RECV = 0x03, CMD_SET_TIMING = 0x04;
 static const uint8_t CMD_RAW_INIT = 0x05;
+static const uint8_t CMD_RAW_XFER = 0x08;   // raw send/recv, NO echo cancel (RE tool)
 static const uint8_t CMD_SET_WIFI = 0x06, CMD_WIFI_STATUS = 0x07;
 static const uint8_t ST_OK = 0x00, ST_TIMEOUT = 0x01, ST_BUS_ERROR = 0x02, ST_BAD_REQUEST = 0x03;
 static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.3.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.4.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -369,6 +370,26 @@ static void handleRawInit(const uint8_t *payload, uint8_t len) {
   sendPico(ST_OK, buf, (uint8_t)n);
 }
 
+// Raw send/recv at the CURRENT session baud, with NO echo cancellation: flush
+// stale RX, transmit the frame, then collect EVERYTHING received over a fixed
+// window (echo bytes first, then any ECU response) and hand it all back. The
+// host separates echo (the first N = frame length) from the real response. This
+// is the reverse-engineering tool for modules whose framing/echo timing we don't
+// model yet (e.g. the Lucas 10AS at 9600, where the normal echo-cancelling
+// SEND_RECV path returns only mangled echo). Read-only w.r.t. the sketch.
+static void handleRawXfer(const uint8_t *payload, uint8_t len) {
+  while (Serial1.available()) Serial1.read();          // drop stale RX
+  for (uint8_t i = 0; i < len; i++) Serial1.write(payload[i]);
+  Serial1.flush();                                     // wait for TX to drain
+  static uint8_t buf[200];
+  size_t n = 0;
+  uint32_t start = millis();
+  while (n < sizeof(buf) && (millis() - start) < 400) {  // fixed 400 ms capture
+    if (Serial1.available()) buf[n++] = Serial1.read();
+  }
+  sendPico(ST_OK, buf, (uint8_t)n);
+}
+
 // Parse and dispatch ONE host frame from the ACTIVE transport (0xA5 framed).
 static void serviceHostFrame() {
   if (hostReadByte(g_active) != HOST_START) return;   // resync on stray byte
@@ -391,6 +412,7 @@ static void serviceHostFrame() {
     case CMD_SEND_RECV:  handleSendRecv(payload, len); break;
     case CMD_SET_TIMING: handleSetTiming(payload, len); break;
     case CMD_RAW_INIT:   handleRawInit(payload, len); break;
+    case CMD_RAW_XFER:   handleRawXfer(payload, len); break;
 #if ENABLE_WIFI
     case CMD_SET_WIFI:    handleSetWifi(payload, len); break;
     case CMD_WIFI_STATUS: handleWifiStatus(); break;
