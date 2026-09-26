@@ -25,11 +25,20 @@ LOGCSV = Path(__file__).with_name("actuator_map.csv")
 
 
 def make_transport():
-    """Pick a transport, precedence USB > WiFi > BLE (matches the unified firmware).
-      - GEMS_PORT=COMx  forces that USB port; else a plugged Pico is auto-detected.
-      - GEMS_CONNECT=host[:port]  uses WiFi/TCP.
-      - else BLE (GEMS_BLE overrides the device name, default 'gems-pico').
+    """Pick a transport. Precedence: an EXPLICIT env var wins, GEMS_CONNECT first
+    (so switching to WiFi isn't overridden by a stale GEMS_PORT / an auto-detected
+    USB Pico), then GEMS_PORT, then a plugged Pico, then BLE. Matches the other
+    bench scripts (pentest_scan / probe_10as).
+      - GEMS_CONNECT=host[:port]  -> WiFi/TCP
+      - GEMS_PORT=COMx            -> that USB port
+      - (else) a plugged Pico is auto-detected; else BLE ('gems-pico').
     """
+    conn = os.environ.get("GEMS_CONNECT")
+    if conn:
+        from gems_t4.transport.tcp import TcpTransport, parse_endpoint
+        host, tcp_port = parse_endpoint(conn)
+        print(f"[transport: WiFi {host}:{tcp_port}]")
+        return TcpTransport(host, tcp_port, allow_writes=True)
     port = os.environ.get("GEMS_PORT")
     if not port:
         try:
@@ -41,12 +50,6 @@ def make_transport():
         from gems_t4.transport.pico import PicoAdapterTransport
         print(f"[transport: USB {port}]")
         return PicoAdapterTransport(port)
-    conn = os.environ.get("GEMS_CONNECT")
-    if conn:
-        from gems_t4.transport.tcp import TcpTransport, parse_endpoint
-        host, tcp_port = parse_endpoint(conn)
-        print(f"[transport: WiFi {host}:{tcp_port}]")
-        return TcpTransport(host, tcp_port, allow_writes=True)
     from gems_t4.transport.ble import BleTransport
     name = os.environ.get("GEMS_BLE", "gems-pico")
     print(f"[transport: BLE {name}]")
