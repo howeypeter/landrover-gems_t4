@@ -843,3 +843,36 @@ command to amortize RTT (UX, not correctness). Not built yet.
 
 Related: [[implementation-status]], [[repo-git-state]], [[pico-board-support]],
 [[gems-p38-focus]].
+
+---
+
+## ⭐ 10AS FOUND on the bench K-line (2026-09-25)
+
+With the **Lucas 10AS** (AMR 6428, NAS 315 MHz) wired onto the bench K node
+alongside the GEMS ECU, `bench/pentest_scan.py` (over WiFi/TCP, `GEMS_CONNECT`)
+found **new responders that only appear with the 10AS present** → the 10AS's
+diagnostic channel:
+
+- **Baud: 9600** (NOT 10400). GEMS = 10400; the 10AS = **9600**. The two coexist
+  on one K node because they run different bauds. (The earlier garbled `03`/`03f7`
+  at 10400 were the 9600 replies misread at the wrong baud.)
+- **Init: 5-baud SLOW** (like GEMS; no fast-init hits).
+- **Addresses: 0x1C and 0x9D** both answer. Clean init responses at 9600:
+  - `0x1C` → `55 83 76`  (0x55 sync + **keybytes 83 76**)
+  - `0x9D` → `55 83 f7`  (0x55 sync + **keybytes 83 f7**)
+- **Speaks KWP-ish services.** At 0x9D @9600 (framing `[0x80|len] 0x33 0xF7 …`):
+  - `3E` (TesterPresent) → `f7 3e fa`
+  - `21 01` (readDataByLocalIdentifier) → `21 c0 ce ce`  ← **engages service 0x21**
+- Keybyte1 `0x83` on both; keybyte2 differs by address (0x76 vs 0xf7). Whether
+  0x1C and 0x9D are two logical channels of the one 10AS, or one real + one alias/
+  crosstalk, is TBD by focused probing.
+
+**Why this matters:** service **0x21 (readDataByLocalIdentifier)** is exactly how
+tools pull the **EKA** out of the 10AS EEPROM. This is the channel for the
+[EKA read from the 10AS] backlog item.
+
+**Next:** `bench/probe_10as.py` — init at 9600 on 0x9D/0x1C, sweep svc 0x21 local
+IDs (+ a few id services), read-only, hunt the EKA/EEPROM. NOTE the correct KWP
+**target byte** for the 10AS is still unconfirmed (sweep used dest=0x33; try
+dest=addr). Full session handshake at 9600 may be needed for clean reads (raw_init
+does NOT complete the inverted-keybyte handshake).
