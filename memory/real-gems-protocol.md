@@ -691,8 +691,9 @@ cycle + delay); it is not the immobiliser PIN.
 ## ⭐ `$21` live-data map — bench sensor injection (2026-09-17, IN PROGRESS)
 The proprietary **`$21` (readDataByLocalId)** live measures on the 0xDA channel are
 being mapped by **injecting a known 0-5V on a known sensor pin and seeing which
-`$21` id moves**. Method (safe rig, after the Pico was killed injecting off its own
-rails — see `docs/adapter-hardware-improvements.md`): an **ISOLATED 0-5V source (a
+`$21` id moves**. Method (safe rig, adopted after an injection SCARE — a misplaced
+injection wire made the Pico look dead, but it was NOT damaged; the single original
+Pico still works, see `docs/adapter-hardware-improvements.md`): an **ISOLATED 0-5V source (a
 10k pot off a separate 5V) → 1kΩ series → grabber clip → the RED C1017 sensor pin**,
 pot ground on the bench common ground; the Pico is adapter-only. Tie the **L-line
 (C1017 pin 20 → K node / pin 23)** to open 0xDA. Tools: `bench/live_diff.py map`

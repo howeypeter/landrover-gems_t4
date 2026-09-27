@@ -97,23 +97,28 @@ think it is. This is the single easiest way to fry the adapter.
 5. Only after adding the Vs transient clamp + fuse should the adapter go onto a
    running vehicle's live 12 V.
 
-## ⚠️ Post-mortem: Pico killed during sensor injection (2026-09-16)
+## ⚠️ Near-miss: Pico injection SCARE (2026-09-16) — NO damage, was a misplaced wire
 
-**What happened.** While identifying live-data `$21` ids by injecting a voltage
-onto GEMS **C1017** sensor pins (to find which id = TPS, etc.), a Pico 2 W adapter
-died: it stopped advertising on BLE, then would not enumerate on USB **even in
-BOOTSEL** with a known-good data cable, and **VBUS (pin 40) sagged to ~2.3 V**
-(should be ~5 V) - the USB host current-limiting into a shorted/overloaded rail.
-Board unrecoverable; replaced.
+**CORRECTION (2026-09-27):** the Pico was **never damaged.** It briefly *looked*
+dead during sensor injection, but the cause was a **misplaced injection wire**, not
+a fried board. Once the wire was corrected the **same single original Pico worked
+fine — and is the only Pico this project has ever used** (no board was killed, none
+replaced). The safety rules below still stand — they're what makes injection safe —
+but the "board unrecoverable" claim was wrong and has been retracted.
 
-**Root cause (most likely).** A hand jumper used for injection touched a **12 V
-ECU pin** (or a pin the ECU drives to ~12 V), back-feeding 12 V into a Pico
-GPIO / the 3V3 / VSYS rail (all rated ~3.3-5 V). The **C1017 red connector we
-were probing also carries the K-line, which idles at ~12 V**, and C1033 pins 7/8
-are 12 V, and C1032 outputs can swing to 12 V - so a slip onto 12 V was easy.
-A secondary possibility is shorting the Pico's own 3V3/VSYS pin to ground (also
-kills the regulator). Either way: **the Pico's power pins were exposed on hand
-jumpers next to 12 V.**
+**What happened (as it appeared at the time).** While identifying live-data `$21`
+ids by injecting a voltage onto GEMS **C1017** sensor pins (to find which id = TPS,
+etc.), the Pico 2 W stopped responding — it seemed to stop advertising on BLE and
+not enumerate on USB. This turned out to be a **wiring mistake on the injection
+lead**, not board death; the Pico recovered fully once the wiring was fixed.
+
+**Why the scare was plausible (the real hazard to respect).** A hand jumper used
+for injection can touch a **12 V ECU pin** (or a pin the ECU drives to ~12 V),
+back-feeding 12 V into a Pico GPIO / the 3V3 / VSYS rail (all rated ~3.3-5 V). The
+**C1017 red connector also carries the K-line, which idles at ~12 V**, C1033 pins
+7/8 are 12 V, and C1032 outputs can swing to 12 V - so a slip onto 12 V is easy,
+and the next slip might not be so lucky. That real risk is why the rules below
+exist, even though this particular incident did no harm.
 
 **Rules going forward (apply to the bench rig AND the PCB design):**
 1. **Never wire the Pico directly to an ECU pin for injection.** The Pico only
