@@ -561,6 +561,12 @@ as static lookalikes for now.
   `bench/README.md`. Proven capability still graduates into `gems_t4/`. NOTE: the
   historical `~/xxx.py` paths littered through this file and the memory files refer
   to these same scripts' old home — they're in `bench/` now.
+- `docs/hardware-shopping-list.md` (added 2026-09-27) — consolidated parts/build
+  list for the two-board rig (GEMS-simple vs universal tiers): Board 1, Board 2,
+  connectors (OBD pigtails → screw terminals), 10AS branch, chip reads (T48),
+  enclosure notes (plastic box for the Pico W radio; 2 box inputs = OBD2 pigtail +
+  microUSB), a "do NOT buy" list, and the immediate buy list. Companion to
+  `two-board-rig.md`. Inventory truth: **one working Pico, none destroyed**.
 - `docs/two-board-rig.md` (added 2026-09-27) — **current preferred physical
   architecture**: Board 1 = universal adapter (Pico + L9637D + **male J1962
   pigtail**, TVS/fuse/510Ω populated, USB-power, JP1 L↔K tie) that plugs into a
