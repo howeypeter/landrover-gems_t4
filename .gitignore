@@ -60,3 +60,4 @@ docs/img/10as-central-locking-connections.png
 bench/*.state.json
 bench/*.log
 bench/*.csv
+bench/*.bin

@@ -56,6 +56,7 @@
 #include "kline_transport.h"  // enum ActiveT (in a header so auto-prototypes see it)
 #include "hardware/pio.h"     // PIO logic capture for the immobiliser-line sniffer
 #include "hardware/clocks.h"  // clock_get_hz for the PIO sample-rate divider
+#include "hardware/dma.h"     // DMA for the long buffered capture (CMD_CAPTURE)
 
 // ---- pins / config (identical to the USB firmware) -------------------------
 static const uint32_t KLINE_BAUD = 10400;
@@ -75,14 +76,16 @@ static const uint8_t CMD_PING = 0x01, CMD_INIT = 0x02, CMD_SEND_RECV = 0x03, CMD
 static const uint8_t CMD_RAW_INIT = 0x05;
 static const uint8_t CMD_RAW_XFER = 0x08;   // raw send/recv, NO echo cancel (RE tool)
 static const uint8_t CMD_MONITOR_L = 0x09;  // sniff transitions on LMON_PIN/GP2 (LO)
-static const uint8_t CMD_PIO_CAPTURE = 0x0A; // PIO hardware-timed logic capture, GP2
+static const uint8_t CMD_PIO_CAPTURE = 0x0A; // PIO short (~10ms) one-frame logic capture
+static const uint8_t CMD_CAPTURE = 0x0B;    // PIO+DMA LONG buffered capture into RAM
+static const uint8_t CMD_READBUF = 0x0C;    // read back a chunk of the capture buffer
 static const uint8_t CMD_SET_WIFI = 0x06, CMD_WIFI_STATUS = 0x07;
 static const uint8_t ST_OK = 0x00, ST_TIMEOUT = 0x01, ST_BUS_ERROR = 0x02, ST_BAD_REQUEST = 0x03;
 static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.6.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.7.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -475,7 +478,7 @@ static PIO lmon_pio = pio0;
 static int lmon_sm = -1;
 static uint lmon_off = 0;
 
-static bool lmonPioInit(uint32_t rate_hz) {
+static bool lmonPioInit(uint32_t rate_hz, uint32_t threshold) {
   if (lmon_sm < 0) {
     lmon_sm = pio_claim_unused_sm(lmon_pio, false);
     if (lmon_sm < 0) return false;
@@ -484,13 +487,80 @@ static bool lmonPioInit(uint32_t rate_hz) {
   pio_sm_config c = pio_get_default_sm_config();
   sm_config_set_wrap(&c, lmon_off, lmon_off);          // single-instruction loop
   sm_config_set_in_pins(&c, LMON_PIN);
-  sm_config_set_in_shift(&c, false, true, 8);          // shift left, autopush @ 8 bits
+  sm_config_set_in_shift(&c, false, true, threshold);  // shift left, autopush @ threshold
   sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);       // deeper RX FIFO
   float div = (float)clock_get_hz(clk_sys) / (float)rate_hz;
   if (div < 1.0f) div = 1.0f;
   sm_config_set_clkdiv(&c, div);
   pio_sm_init(lmon_pio, lmon_sm, lmon_off, &c);
   return true;
+}
+
+// CMD_CAPTURE: LONG buffered logic capture of GP2 via PIO + DMA. Fixes the
+// 255-byte-frame limit of CMD_PIO_CAPTURE (only ~10 ms) that made it impossible
+// to time a manual ignition-on into. Waits (up to 20 s) for the first GP2 edge,
+// then DMAs CAP_WORDS 32-bit words (32 samples each) into RAM — ~1.6 s at 200 kS/s,
+// long enough for the whole 0->11->8 V mobilise event. Read it back with
+// CMD_READBUF. autopush=32, shift-left => in each word, bit31 = earliest sample.
+//
+//   payload (optional): [rate_khz_hi][rate_khz_lo] (default 200), [trigger] (default
+//                       1; 0 = capture immediately, for a self-test on the idle line).
+//   reply: [nbytes_hi][nbytes_lo][rate_khz_hi][rate_khz_lo]. ST_TIMEOUT if no edge.
+static const uint16_t CAP_WORDS = 10000;               // *4 = 40000 B, *32 = 320k samples
+static uint32_t g_cap[CAP_WORDS];                      // 40 KB capture buffer
+static uint16_t g_cap_bytes = 0;                       // valid bytes for readback
+
+static void handleCapture(const uint8_t *payload, uint8_t len) {
+  uint32_t rate = 200000;
+  uint8_t  trig = 1;
+  if (len >= 2) { uint32_t khz = ((uint32_t)payload[0] << 8) | payload[1];
+                  if (khz) rate = khz * 1000UL; }
+  if (len >= 3) trig = payload[2];
+
+  pinMode(LMON_PIN, INPUT);
+  if (!lmonPioInit(rate, 32)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
+
+  if (trig) {
+    uint8_t lvl0 = digitalRead(LMON_PIN) ? 1 : 0;
+    uint32_t t0 = millis();
+    while ((digitalRead(LMON_PIN) ? 1 : 0) == lvl0) {
+      if (millis() - t0 > 20000) { sendPico(ST_TIMEOUT, nullptr, 0); return; }
+    }
+  }
+
+  int dma = dma_claim_unused_channel(false);
+  if (dma < 0) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
+  dma_channel_config c = dma_channel_get_default_config(dma);
+  channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
+  channel_config_set_read_increment(&c, false);
+  channel_config_set_write_increment(&c, true);
+  channel_config_set_dreq(&c, pio_get_dreq(lmon_pio, lmon_sm, false));  // RX dreq
+
+  pio_sm_clear_fifos(lmon_pio, lmon_sm);
+  pio_sm_restart(lmon_pio, lmon_sm);
+  dma_channel_configure(dma, &c, g_cap, &lmon_pio->rxf[lmon_sm], CAP_WORDS, true);
+  pio_sm_set_enabled(lmon_pio, lmon_sm, true);
+  dma_channel_wait_for_finish_blocking(dma);
+  pio_sm_set_enabled(lmon_pio, lmon_sm, false);
+  dma_channel_unclaim(dma);
+
+  g_cap_bytes = (uint16_t)(CAP_WORDS * 4);
+  uint16_t rk = (uint16_t)(rate / 1000);
+  uint8_t meta[4] = { (uint8_t)(g_cap_bytes >> 8), (uint8_t)(g_cap_bytes & 0xFF),
+                      (uint8_t)(rk >> 8), (uint8_t)(rk & 0xFF) };
+  sendPico(ST_OK, meta, 4);
+}
+
+// CMD_READBUF: return a chunk of the last capture buffer.
+//   payload: [off_hi][off_lo][len]  (len clamped to MAX_PAYLOAD and to what's left)
+static void handleReadBuf(const uint8_t *payload, uint8_t len) {
+  if (len < 3) { sendPico(ST_BAD_REQUEST, nullptr, 0); return; }
+  uint16_t off = ((uint16_t)payload[0] << 8) | payload[1];
+  uint16_t n = payload[2];
+  if (n > MAX_PAYLOAD) n = MAX_PAYLOAD;
+  if (off >= g_cap_bytes) { sendPico(ST_OK, nullptr, 0); return; }
+  if (off + n > g_cap_bytes) n = g_cap_bytes - off;
+  sendPico(ST_OK, ((const uint8_t *)g_cap) + off, (uint8_t)n);
 }
 
 static void handlePioCapture(const uint8_t *payload, uint8_t len) {
@@ -501,7 +571,7 @@ static void handlePioCapture(const uint8_t *payload, uint8_t len) {
   if (len >= 3 && payload[2]) nbytes = payload[2] > MAX_PAYLOAD ? MAX_PAYLOAD : payload[2];
 
   pinMode(LMON_PIN, INPUT);
-  if (!lmonPioInit(rate)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
+  if (!lmonPioInit(rate, 8)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
 
   // Trigger: wait for the first level change so the capture starts at the event.
   uint8_t lvl0 = digitalRead(LMON_PIN) ? 1 : 0;
@@ -547,6 +617,8 @@ static void serviceHostFrame() {
     case CMD_RAW_XFER:   handleRawXfer(payload, len); break;
     case CMD_MONITOR_L:  handleMonitorL(payload, len); break;
     case CMD_PIO_CAPTURE: handlePioCapture(payload, len); break;
+    case CMD_CAPTURE:    handleCapture(payload, len); break;
+    case CMD_READBUF:    handleReadBuf(payload, len); break;
 #if ENABLE_WIFI
     case CMD_SET_WIFI:    handleSetWifi(payload, len); break;
     case CMD_WIFI_STATUS: handleWifiStatus(); break;
