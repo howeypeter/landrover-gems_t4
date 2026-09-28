@@ -104,3 +104,24 @@ checksum algorithm) — just generic tool-dev guidance plus a few plausible spec
 **Actionable takeaway:** none new on its own; it slightly reinforces the immo-delete
 plan (patch the 27C1001 validation routine + fix the checksum). Verify everything
 against the T48 dump when it arrives.
+
+### Gemini follow-up (2026-09-28) — "fixed 16-bit mobilise code" claim (UNVERIFIED)
+
+Second Gemini message claims the 10AS→ECM mobilise signal is a **fixed 16-bit code**
+(not rolling), sent as a **serial burst** each ignition-on, "sniffable once," e.g.
+`A3F2` (a fabricated placeholder — no source, no real capture).
+
+- ✅ **"Fixed, not rolling" aligns with our inference** (stored two-copy immo block
+  A4–A8, synced by Security-Learn ⇒ stored secret, not a rolling counter). But BOTH
+  are inference, not proof. (The fob→10AS RF link IS rolling; that's separate.)
+- ⚠️ **CONFLICTS with our hardware:** we captured that exact wire (C225 p15 /
+  C1017 p26) with the PIO sniffer at ignition-on and saw **NO structured serial** —
+  only a ~1 ms transient then flat. So "just sniff the 4 hex chars" is **not a free
+  lunch; we tried and got nothing.** Either the burst rides on the high DC level
+  (8–11 V) where the 1-bit L9637D comparator can't resolve it (needs a scope/ADC),
+  or the claim is wrong.
+- ⚠️ "16-bit / 2 bytes" unconfirmed — our located block is records A4–A8 (maybe
+  >2 B). "force-learn 0000" is speculative.
+- **Takeaway:** IF fixed, the code lives in the EEPROM (ECM A4–A8 via `0x3C` / T48,
+  and the 10AS EEPROM) — **read the chip, not the wire** (the wire came up empty).
+  Reinforces the T48/0x3C plan; do NOT re-chase wire-sniffing on this claim alone.
