@@ -54,6 +54,8 @@
   #include <LittleFS.h>     // persistent WiFi creds (set at runtime; survive reflash)
 #endif
 #include "kline_transport.h"  // enum ActiveT (in a header so auto-prototypes see it)
+#include "hardware/pio.h"     // PIO logic capture for the immobiliser-line sniffer
+#include "hardware/clocks.h"  // clock_get_hz for the PIO sample-rate divider
 
 // ---- pins / config (identical to the USB firmware) -------------------------
 static const uint32_t KLINE_BAUD = 10400;
@@ -73,13 +75,14 @@ static const uint8_t CMD_PING = 0x01, CMD_INIT = 0x02, CMD_SEND_RECV = 0x03, CMD
 static const uint8_t CMD_RAW_INIT = 0x05;
 static const uint8_t CMD_RAW_XFER = 0x08;   // raw send/recv, NO echo cancel (RE tool)
 static const uint8_t CMD_MONITOR_L = 0x09;  // sniff transitions on LMON_PIN/GP2 (LO)
+static const uint8_t CMD_PIO_CAPTURE = 0x0A; // PIO hardware-timed logic capture, GP2
 static const uint8_t CMD_SET_WIFI = 0x06, CMD_WIFI_STATUS = 0x07;
 static const uint8_t ST_OK = 0x00, ST_TIMEOUT = 0x01, ST_BUS_ERROR = 0x02, ST_BAD_REQUEST = 0x03;
 static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.5.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.6.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -451,6 +454,74 @@ static void handleMonitorL(const uint8_t *payload, uint8_t len) {
   sendPico(ST_OK, buf, (uint8_t)n);
 }
 
+// CMD_PIO_CAPTURE: HARDWARE-TIMED logic capture of GP2 (L9637D LO) using a PIO
+// state machine — trustworthy microsecond timing, unlike the CMD_MONITOR_L
+// busy-poll. One-instruction PIO program `in pins, 1` samples GP2 every PIO clock;
+// autopush packs 8 samples/byte (MSB = earliest sample). To land the capture ON the
+// event, it first waits (up to 10 s) for the FIRST level change on GP2, THEN samples
+// `nbytes` bytes back-to-back. Purely read-only.
+//
+//   payload (optional): [rate_khz_hi][rate_khz_lo] sample rate in kHz (default 200),
+//                       [nbytes] bytes to return (default 255 = 2040 samples).
+//   reply: nbytes raw sample bytes; each byte = 8 consecutive samples, bit7 =
+//          earliest. e.g. 200 kS/s * 2040 = ~10.2 ms window. Reconstruct the
+//          bitstream host-side and UART-decode at 9600/10400 to test the serial
+//          hypothesis. Returns ST_TIMEOUT if no edge arrives within 10 s.
+static const uint16_t LMON_PIO_INSTR[] = { 0x4001 };   // IN PINS, 1
+static const struct pio_program LMON_PIO_PROG = {
+  .instructions = LMON_PIO_INSTR, .length = 1, .origin = -1,
+};
+static PIO lmon_pio = pio0;
+static int lmon_sm = -1;
+static uint lmon_off = 0;
+
+static bool lmonPioInit(uint32_t rate_hz) {
+  if (lmon_sm < 0) {
+    lmon_sm = pio_claim_unused_sm(lmon_pio, false);
+    if (lmon_sm < 0) return false;
+    lmon_off = pio_add_program(lmon_pio, &LMON_PIO_PROG);
+  }
+  pio_sm_config c = pio_get_default_sm_config();
+  sm_config_set_wrap(&c, lmon_off, lmon_off);          // single-instruction loop
+  sm_config_set_in_pins(&c, LMON_PIN);
+  sm_config_set_in_shift(&c, false, true, 8);          // shift left, autopush @ 8 bits
+  sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);       // deeper RX FIFO
+  float div = (float)clock_get_hz(clk_sys) / (float)rate_hz;
+  if (div < 1.0f) div = 1.0f;
+  sm_config_set_clkdiv(&c, div);
+  pio_sm_init(lmon_pio, lmon_sm, lmon_off, &c);
+  return true;
+}
+
+static void handlePioCapture(const uint8_t *payload, uint8_t len) {
+  uint32_t rate = 200000;
+  uint16_t nbytes = MAX_PAYLOAD;
+  if (len >= 2) { uint32_t khz = ((uint32_t)payload[0] << 8) | payload[1];
+                  if (khz) rate = khz * 1000UL; }
+  if (len >= 3 && payload[2]) nbytes = payload[2] > MAX_PAYLOAD ? MAX_PAYLOAD : payload[2];
+
+  pinMode(LMON_PIN, INPUT);
+  if (!lmonPioInit(rate)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
+
+  // Trigger: wait for the first level change so the capture starts at the event.
+  uint8_t lvl0 = digitalRead(LMON_PIN) ? 1 : 0;
+  uint32_t t0 = millis();
+  while ((digitalRead(LMON_PIN) ? 1 : 0) == lvl0) {
+    if (millis() - t0 > 10000) { sendPico(ST_TIMEOUT, nullptr, 0); return; }
+  }
+
+  pio_sm_clear_fifos(lmon_pio, lmon_sm);
+  pio_sm_restart(lmon_pio, lmon_sm);
+  pio_sm_set_enabled(lmon_pio, lmon_sm, true);
+  static uint8_t buf[MAX_PAYLOAD];
+  for (uint16_t i = 0; i < nbytes; i++) {
+    uint32_t w = pio_sm_get_blocking(lmon_pio, lmon_sm);   // 8 samples, in bits [7:0]
+    buf[i] = (uint8_t)(w & 0xFF);
+  }
+  pio_sm_set_enabled(lmon_pio, lmon_sm, false);
+  sendPico(ST_OK, buf, (uint8_t)nbytes);
+}
+
 // Parse and dispatch ONE host frame from the ACTIVE transport (0xA5 framed).
 static void serviceHostFrame() {
   if (hostReadByte(g_active) != HOST_START) return;   // resync on stray byte
@@ -475,6 +546,7 @@ static void serviceHostFrame() {
     case CMD_RAW_INIT:   handleRawInit(payload, len); break;
     case CMD_RAW_XFER:   handleRawXfer(payload, len); break;
     case CMD_MONITOR_L:  handleMonitorL(payload, len); break;
+    case CMD_PIO_CAPTURE: handlePioCapture(payload, len); break;
 #if ENABLE_WIFI
     case CMD_SET_WIFI:    handleSetWifi(payload, len); break;
     case CMD_WIFI_STATUS: handleWifiStatus(); break;
