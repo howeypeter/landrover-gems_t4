@@ -25,10 +25,24 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 CMD_PING = 0x01
 CMD_MONITOR_L = 0x09
 MAX_WIN_MS = 5000            # firmware clamps to this
+
+#: Every run is mirrored here (append) so captures survive terminal scrollback.
+#: Gitignored like the other bench .log captures.
+LOG = Path(__file__).with_name("monitor_l.log")
+_fh = open(LOG, "a", encoding="utf-8")
+
+
+def out(msg: str = "") -> None:
+    """Print to the terminal AND append to monitor_l.log (flushed per line)."""
+    print(msg)
+    _fh.write(msg + "\n")
+    _fh.flush()
 
 
 def make_transport():
@@ -36,7 +50,7 @@ def make_transport():
     if conn:
         from gems_t4.transport.tcp import TcpTransport, parse_endpoint
         host, port = parse_endpoint(conn)
-        print(f"[transport: WiFi {host}:{port}]")
+        out(f"[transport: WiFi {host}:{port}]")
         return TcpTransport(host, port)
     port = os.environ.get("GEMS_PORT")
     if not port:
@@ -47,11 +61,11 @@ def make_transport():
             port = None
     if port:
         from gems_t4.transport.pico import PicoAdapterTransport
-        print(f"[transport: USB {port}]")
+        out(f"[transport: USB {port}]")
         return PicoAdapterTransport(port)
     from gems_t4.transport.ble import BleTransport
     name = os.environ.get("GEMS_BLE", "gems-pico")
-    print(f"[transport: BLE {name}]")
+    out(f"[transport: BLE {name}]")
     return BleTransport(name)
 
 
@@ -70,40 +84,41 @@ def decode(resp: bytes):
 def summarize(initial, deltas) -> None:
     if not deltas:
         lvl = "HIGH" if initial else "LOW"
-        print(f"  STATIC at {lvl} for the whole window - NO transitions.")
-        print("  => either no digital signal, OR a signal the 1-bit comparator")
-        print("     can't resolve. NOT proof of 'nothing there' - confirm with a")
-        print("     scope. (Also check: board powered? common ground? LI T'd on?)")
+        out(f"  STATIC at {lvl} for the whole window - NO transitions.")
+        out("  => either no digital signal, OR a signal the 1-bit comparator")
+        out("     can't resolve. NOT proof of 'nothing there' - confirm with a")
+        out("     scope. (Also check: board powered? common ground? LI T'd on?)")
         return
     n = len(deltas)
     lo, hi = min(deltas), max(deltas)
     nonzero = [d for d in deltas if d > 0]
     smallest = min(nonzero) if nonzero else 0
-    print(f"  {n} transitions. initial={'HIGH' if initial else 'LOW'} "
+    out(f"  {n} transitions. initial={'HIGH' if initial else 'LOW'} "
           f"(levels alternate from there)")
-    print(f"  gap us: min={lo} max={hi}")
+    out(f"  gap us: min={lo} max={hi}")
     if smallest:
-        print(f"  smallest non-zero gap ~= 1 bit time -> est. baud ~ {1_000_000 // smallest} "
+        out(f"  smallest non-zero gap ~= 1 bit time -> est. baud ~ {1_000_000 // smallest} "
               f"(if this is a serial line)")
     # first chunk of edges for eyeballing
     show = deltas[:40]
     edges = "  ".join(str(d) for d in show)
-    print(f"  first {len(show)} gaps (us): {edges}"
+    out(f"  first {len(show)} gaps (us): {edges}"
           + (" ..." if n > len(show) else ""))
     if n >= 127:
-        print("  (hit the 127-transition cap - the line is busier; capture is truncated)")
+        out("  (hit the 127-transition cap - the line is busier; capture is truncated)")
 
 
 def capture(t, win_ms: int) -> None:
+    out(f"--- capture {datetime.now().strftime('%H:%M:%S')} ---")
     payload = bytes([(win_ms >> 8) & 0xFF, win_ms & 0xFF])
     t0 = time.time()
     st, resp = t._transceive(CMD_MONITOR_L, payload)
     dt = time.time() - t0
     if st != 0:
-        print(f"  MONITOR_L returned status {st} (not OK).")
+        out(f"  MONITOR_L returned status {st} (not OK).")
         return
     initial, deltas = decode(resp)
-    print(f"  [{win_ms} ms window, replied in {dt:.2f}s, {len(resp)} bytes]")
+    out(f"  [{win_ms} ms window, replied in {dt:.2f}s, {len(resp)} bytes]  raw={resp.hex(' ')}")
     summarize(initial, deltas)
 
 
@@ -118,9 +133,9 @@ def main() -> None:
             try:
                 win_ms = int(a)
             except ValueError:
-                print(f"ignoring arg {a!r}")
+                out(f"ignoring arg {a!r}")
     if win_ms > MAX_WIN_MS:
-        print(f"window clamped to {MAX_WIN_MS} ms (firmware max)")
+        out(f"window clamped to {MAX_WIN_MS} ms (firmware max)")
         win_ms = MAX_WIN_MS
 
     t = make_transport()
@@ -129,23 +144,23 @@ def main() -> None:
         try:
             st, ver = t._transceive(CMD_PING)
             fw = ver.decode("ascii", "replace")
-            print(f"firmware: {fw}")
+            out(f"firmware: {fw}")
             m = re.search(r"(\d+)\.(\d+)\.(\d+)", fw)
             if m and tuple(int(x) for x in m.groups()) < (3, 5, 0):
-                print("WARNING: firmware < 3.5.0 - CMD_MONITOR_L not present; reflash.")
+                out("WARNING: firmware < 3.5.0 - CMD_MONITOR_L not present; reflash.")
         except Exception:  # noqa: BLE001
-            print("PING failed - continuing anyway")
+            out("PING failed - continuing anyway")
 
-        print("\nMonitoring GP2 (L9637D LO). Trigger/ignition-cycle during the window.\n")
+        out("\nMonitoring GP2 (L9637D LO). Trigger/ignition-cycle during the window.\n")
         if loop:
-            print("(loop mode - Ctrl-C to stop)\n")
+            out("(loop mode - Ctrl-C to stop)\n")
             try:
                 while True:
                     capture(t, win_ms)
-                    print()
+                    out()
                     time.sleep(0.5)
             except KeyboardInterrupt:
-                print("\n(stopped)")
+                out("\n(stopped)")
         else:
             capture(t, win_ms)
     finally:
