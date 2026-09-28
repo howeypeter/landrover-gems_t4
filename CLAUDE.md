@@ -561,6 +561,16 @@ as static lookalikes for now.
   `bench/README.md`. Proven capability still graduates into `gems_t4/`. NOTE: the
   historical `~/xxx.py` paths littered through this file and the memory files refer
   to these same scripts' old home — they're in `bench/` now.
+- `docs/two-board-rig.md` (added 2026-09-27) — **current preferred physical
+  architecture**: Board 1 = universal adapter (Pico + L9637D + **male J1962
+  pigtail**, TVS/fuse/510Ω populated, USB-power, JP1 L↔K tie) that plugs into a
+  car OR into Board 2; Board 2 = bench hub (**female J1962 pigtail**, DC-jack 12V,
+  fans 12V/GND/K/L to **both the ECU and the 10AS** via screw terminals). Build
+  method: everything lands on **PCB-mount screw terminal blocks** — OBD2 come as
+  pigtails, no OBD housing soldered to a board. Pin-exact nets both boards + the
+  off-board 10AS→ECM mobilise wire. **Supersedes the TOPOLOGY** of
+  `hardware/gems-2pcb/` (OBD2 replaces the 4-pin Molex link; TVS/fuse move to
+  Board 1; Board 2 adds the 10AS branch); that package still owns fab/BOM.
 - `docs/gems-ecu-pinout.md` (added 2026-09-14) — the **authoritative GEMS ECU
   connector pinout** (all three plugs C1017/C1032/C1033 = C507/C505/C509, every
   populated pin, wire colours, male/female physical pin map), from the BlackBox
