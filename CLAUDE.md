@@ -605,6 +605,15 @@ as static lookalikes for now.
   *generic* primitive (e.g. **driving the L-line** for 5-baud-init cars — the
   L9637D can sense but NOT drive L, so the universal build adds an external
   open-collector L driver; GEMS-simple build uses the passive JP1 L↔K strap).
+  **DUAL TRANSCEIVER + on-car power (DECIDED 2026-09-28):** Board 1 now carries
+  **2× L9637D** — U1 = engine K-line (UART0 GP0/1, LO→GP2), U3 = 2nd channel
+  (UART1 GP4/5, LO→GP6) for **concurrent** 10AS/EAS/SRS while the engine session is
+  live (each own 510 Ω + own K-patch bank; K nodes kept SEPARATE). **Firmware TODO:**
+  add a `channel` byte (0=Serial1, 1=Serial2) to the K-line commands. And **route-A
+  power is now IN** (resolves the parked backlog item): OBD 12 V → 1 A fuse → TVS →
+  {both Vs, buck}; **buck (fixed 5 V, 5–30 Vin, 3 A) → 1N5817 → Pico VSYS(39)**,
+  diode-OR'd with USB (no switch; never VBUS). Pico self-powered on a running truck,
+  USB optional. Full diagram/nets in `docs/two-board-rig.md` + `hardware-shopping-list.md`.
 - `docs/gems-ecu-pinout.md` (added 2026-09-14) — the **authoritative GEMS ECU
   connector pinout** (all three plugs C1017/C1032/C1033 = C507/C505/C509, every
   populated pin, wire colours, male/female physical pin map), from the BlackBox
@@ -1194,6 +1203,12 @@ up):**
   UUIDs) — always build BLE on core ≥ 6.1.1.** The unrelated advertised-name
   truncation workaround (`startAdvertising(false)` + prefix-match) stays — that's
   normal BLE 31-byte advertising sizing, not a bug.
+- **✅ RESOLVED 2026-09-28 — route A adopted (OBD-12V powers the Pico).** In the
+  current two-board design (`docs/two-board-rig.md`), Board 1 is self-powered on-car:
+  OBD 12 V → 1 A fuse → TVS → buck (fixed 5 V, 5–30 Vin, 3 A) → **1N5817 → Pico
+  VSYS(39)**, diode-OR'd with USB (no switch, never VBUS). Parts on hand. The
+  historical route-A/route-C notes below apply to the *old* `hardware/gems-2pcb/`
+  package (superseded by the two-board rig for topology).
 - **Finalize PCB1 Pico power before fab (route A: on-board 12 V→5 V buck).**
   Decided 2026-09-07: interim is **route C** — power the Pico from a USB
   wall-charger / power bank (no board change; the Pico 2 W WiFi firmware already

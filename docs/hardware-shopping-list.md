@@ -23,15 +23,17 @@ Two build tiers:
 
 | Item | Spec | Have? | Notes |
 |---|---|---|---|
-| Raspberry Pi Pico / Pico 2 (W) | RP2040/RP2350 | ✅ have (1) | powered over **microUSB** only; W gives WiFi/BLE |
-| ST L9637D | SO-8 + SO-8→DIP breakout | need breakout | K-line transceiver; cheap — grab a spare chip |
-| Resistor 510 Ω | ¼ W | — | **required** K→Vs pull-up |
-| **TVS 1.5KE24A** | 1500 W, 24 V, unidirectional | ordering | Vs clamp — **populated** (Board 1 is car-capable). DO-27 leads are fat: ream perfboard holes or bend a lead |
-| Inline fuse + holder | **1–2 A** | — | on the +12 V (OBD pin 16) feed |
+| Raspberry Pi Pico / Pico 2 (W) | RP2040/RP2350 | ✅ have (1) | 2 hardware UARTs → drives both transceivers |
+| ST L9637D ×**2** (U1 + U3) | SO-8 + SO-8→DIP breakout ×2 | have 2 chips | **U1** = engine K-line (UART0 GP0/1); **U3** = 2nd channel (UART1 GP4/5) for 10AS/EAS/SRS |
+| Resistor 510 Ω ×**2** (R1, R2) | ¼ W | — | **required** K→Vs pull-up, one per transceiver |
+| **TVS 1.5KE24A** | 1500 W, 24 V, unidirectional | ✅ have (20-pk) | 12 V-node clamp (protects both Vs + the buck). DO-27 leads are fat: ream/bend |
+| Inline fuse + holder | **1–2 A** | — | one, on the +12 V (OBD pin 16) feed; covers both chips + buck |
+| **Buck converter 12→5 V** | fixed 5 V, 5–30 Vin, 3 A | ✅ have (6-pk) | OBD-12V → Pico 5 V so it's self-powered on-car (route A) |
+| **Schottky 1N5817** | 1 A, 20 V | ✅ have (pk) | buck 5 V → **VSYS (pin 39)**; diode-ORs with USB, no switch. Band toward Pico |
+| (opt.) Zener/TVS ~5.6–6.2 V | e.g. SMAJ5.0A | — | VSYS→GND, failsafe vs a shorted buck |
 | Cap 100 nF ceramic ("104") | 50 V+ | — | optional Vcc decoupling. **Skip** the ≤1.3 nF K cap |
-| Header + shunt (JP1) | 2-pin 2.54 mm | — | L↔K tie: fit for GEMS/0xDA + bench, pull for plain car OBD |
 | **male J1962 pigtail** | OBD2 plug on a flying lead | — | into a car OR into Board 2 |
-| 5-way PCB screw terminal block | 5 mm pitch | — | pigtail leads screw in: 12V / GND / GND / K / L |
+| PCB screw terminal blocks | 5 mm pitch, several | — | full 16-pin pigtail lands here; **two K-patch banks** (A→U1, B→U3) |
 
 ### Enclosure (Board 1 box)
 Only **two things enter the box**: the **OBD2 pigtail** and the **microUSB**.
@@ -108,7 +110,8 @@ Off-board wire: **10AS C225 pin 15 → ECU C1017 pin 26** (coded mobilise). See
 
 ## 6 · Do NOT buy (per decisions)
 
-- ❌ **Buck converter / Schottky / VSYS wiring** — Pico is **USB-only powered**.
+- ✅ **Buck + 1N5817 → VSYS is now IN the build** (route A, decided 2026-09-28) —
+  OBD-12V powers the Pico on-car; USB optional. (Was "USB-only"; reversed.)
 - ❌ **GPIO injection clamp diodes + 1 kΩ leads** — GPIO sensor injection retired;
   any residual sensor-ID work uses an **isolated 0–5 V supply + K-line observe**
   (`bench/live_diff.py`), not the Pico's pins.
@@ -118,16 +121,20 @@ Off-board wire: **10AS C225 pin 15 → ECU C1017 pin 26** (coded mobilise). See
 
 ---
 
-## 7 · Immediate buy (to finish the on-car GEMS-simple tool)
+## 7 · Immediate buy / on-hand (dual-transceiver, on-car-powered Board 1)
 
-- Spare **L9637D** + **SO-8→DIP breakout**
-- **510 Ω** resistor
-- **1.5KE24A** TVS (have a 20-pk on the way)
-- **1–2 A inline fuse** + holder
+**On hand already:** Pico, **2× L9637D**, **1.5KE24A** TVS (20-pk), **buck**
+(6-pk), **1N5817** (pk).
+
+**Still to get:**
+- **2× SO-8→DIP breakout** (one per L9637D)
+- **2× 510 Ω** resistor (R1, R2 — one pull-up per transceiver)
+- **1–2 A inline fuse** + holder (one, covers both chips + buck)
 - **male + female J1962 pigtail** pair
-- **PCB-mount screw terminal blocks** (5 mm pitch, a few)
-- **DC barrel jack**, **2 A fuse**, two **toggle switches**
+- **PCB-mount screw terminal blocks** (5 mm pitch, several — full 16-pin + 2 K-patch banks)
+- Board 2: **DC barrel jack**, **2 A fuse**, two **toggle switches**
 - **2× perfboard**, 22 AWG wire
+- (opt.) **~5.6–6.2 V Zener/TVS** for the VSYS failsafe
 
 Add later for **universal**: the L-driver transistor + 2 resistors. Add for
 **10AS work**: C225/C274 pigtails + a momentary button. Add for **chip reads**:

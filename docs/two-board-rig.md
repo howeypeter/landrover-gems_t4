@@ -229,15 +229,53 @@ L9637D LO (pin 2) ──► Pico GP2 (physical pin 4)   (3.3 V digital copy; int
   monitor itself). Zero transitions = static line **or** a signal the 1-bit
   comparator can't resolve — a scope disambiguates. Not proof of "no signal."
 
-### Concurrency: do we need a 2nd L9637D?
-For all **sequential** diagnostics (read/clear/code any module, one at a time) —
-**no**, one transceiver + the K-patch bank covers it. The only maybe is the
-**immobiliser relearn** if it needs the ECM's learn session live *while*
-commanding the 10AS (a single chip holds one session at a time). Don't commit now —
-**leave board room for an optional 2nd L9637D**; the screw-terminal design makes
-adding it trivial. Electronic pin-switching, if ever wanted, is best done as
-multiple cheap transceivers muxed on the 3.3 V logic side, not by switching the
-12 V bus.
+### DUAL transceiver — U1 + U3, two K-line channels (DECIDED 2026-09-28)
+
+Board 1 now carries **TWO L9637D transceivers** so it can drive **two independent
+K-line channels at once** — engine on one, a second module (10AS / EAS / SRS) on the
+other — with **independent baud** (engine 10400, 10AS 9600) on the RP2040's two
+hardware UARTs. This is what the immobiliser relearn wants (ECM learn session live
+on U1 *while* commanding the 10AS on U3) and what multi-line vehicles need (P38
+engine on pin 7 *and* EAS on 11/12 concurrently).
+
+| | **U1 — K-line #1 (engine)** | **U3 — K-line #2 (10AS/EAS/SRS)** |
+|---|---|---|
+| UART | **UART0 / `Serial1`** | **UART1 / `Serial2`** |
+| TX (4) | Pico **GP0** | Pico **GP4** (`Serial2.setTX(4)`) |
+| RX (1) | Pico **GP1** | Pico **GP5** (`Serial2.setRX(5)`) |
+| LO (2) | Pico **GP2** (immo monitor) | Pico **GP6** (opt. 2nd monitor) |
+| K (6) | **R1 510 Ω → Vs**; K-patch **A** (dflt pin 7) | **R2 510 Ω → Vs**; K-patch **B** (dflt pin 8) |
+| Vs (7) / Vcc (3) / GND (5) | shared 12 V (fused+TVS) / 3V3 / GND | same shared rails |
+
+- **Two K nodes, kept SEPARATE** — each has its own 510 Ω pull-up and its own
+  K-patch terminal bank. **Never short the two K nodes** (that recreates the
+  shared-node contention that broke the 10AS probing).
+- **Shared power** — both chips off the one fused (1 A) + TVS 12 V node and the
+  Pico 3V3. One fuse still covers both. (GP8/GP9 are the no-config UART1 default if
+  you'd rather not `setTX/setRX`.)
+- **Firmware TODO (hardware ready, U3 idle until then):** add a **`channel` byte**
+  (0 = U1/Serial1, 1 = U3/Serial2 at its own baud) to the K-line commands
+  (`CMD_INIT` / `CMD_SEND_RECV` / `CMD_RAW_XFER` / `CMD_MONITOR_L` / `CMD_CAPTURE`),
+  mirroring the existing Serial1 handlers onto Serial2.
+
+### On-car power — OBD 12 V powers the Pico (route A, DECIDED 2026-09-28)
+
+Board 1 is **self-powered on a running truck** — no separate 5 V brick. USB is now
+**optional** (data/flashing only).
+
+```
+OBD pin 16 (+12 V) ─[F1 1A]─┬─[TVS 1.5KE24A]─► U1 Vs + U3 Vs
+                            └─► BUCK 12→5V (fixed, 5–30 Vin, 3 A) ─► 1N5817 ─► Pico VSYS (pin 39)
+```
+- **1N5817** (band toward Pico) diode-ORs the buck with USB **automatically — no
+  switch**. Two sources at ~5 V share/priority safely; VSYS never exceeds ~5 V and
+  never sees 12 V (the buck steps it down first). **Feed VSYS (39), NEVER VBUS (40).**
+- Fixed-5V buck is fine (VSYS ~4.7 V after the Schottky). Optional belt-and-braces
+  vs a *failed* buck: a ~5.6–6.2 V Zener/TVS on VSYS→GND.
+- Buck taps the 12 V **after** F1 (one fuse covers L9637D×2 + buck).
+
+This resolves the long-parked "route A" power decision; it supersedes the earlier
+"USB-only" note above.
 
 ---
 
