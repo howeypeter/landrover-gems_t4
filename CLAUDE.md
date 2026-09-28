@@ -571,6 +571,14 @@ as static lookalikes for now.
   off-board 10AS→ECM mobilise wire. **Supersedes the TOPOLOGY** of
   `hardware/gems-2pcb/` (OBD2 replaces the 4-pin Molex link; TVS/fuse move to
   Board 1; Board 2 adds the 10AS branch); that package still owns fab/BOM.
+  **Multi-vehicle scope (2026-09-27):** the hardware is a **universal pre-CAN
+  K-line adapter**, not GEMS-only — the L9637D is a K-line/ISO-9141 transceiver
+  (❌ CAN, ❌ J1850; ✅ ISO 9141-2 / KWP2000, ~1996–2005). Architecture: **one
+  generic Pico firmware (dumb timed K pipe) + per-car Python HOST profiles — no
+  reflash to switch cars**; GEMS is one profile. Firmware changes only for a new
+  *generic* primitive (e.g. **driving the L-line** for 5-baud-init cars — the
+  L9637D can sense but NOT drive L, so the universal build adds an external
+  open-collector L driver; GEMS-simple build uses the passive JP1 L↔K strap).
 - `docs/gems-ecu-pinout.md` (added 2026-09-14) — the **authoritative GEMS ECU
   connector pinout** (all three plugs C1017/C1032/C1033 = C507/C505/C509, every
   populated pin, wire colours, male/female physical pin map), from the BlackBox

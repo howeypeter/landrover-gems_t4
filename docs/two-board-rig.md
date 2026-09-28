@@ -49,6 +49,60 @@ connector-to-board solder joints) and means the whole rig is screw-terminal wiri
 end to end. Pick blocks rated for the current (the +12 V / ECU-power contacts carry
 a few amps — 5 mm-pitch blocks are ample; K/L/GND signal contacts can be smaller).
 
+## Multi-vehicle scope & architecture
+
+Set 2026-09-27. The hardware is **not GEMS-specific** — it is a **universal
+pre-CAN K-line adapter**. GEMS is simply the first vehicle it speaks to.
+
+### What it can and cannot reach (a hardware envelope, not a firmware limit)
+The **L9637D is a purpose-built K-line / ISO 9141 transceiver** (ST Doc ID 1765,
+"Monolithic bus driver with ISO 9141 interface"): one bidirectional **K** pin +
+an **L** comparator (sense only — it does *not* drive L). That silicon choice sets
+the envelope:
+
+| Bus | OBD pins | This device? |
+|---|---|---|
+| **ISO 9141-2 / ISO 14230 (KWP2000)** K-line | 7 (K), 15 (L) | ✅ **yes** — its whole purpose |
+| **CAN** (ISO 11898) | 6, 14 | ❌ no — needs a CAN transceiver + controller; different silicon |
+| **J1850** PWM/VPW (Ford/GM) | 2, 10 | ❌ no — different physical layer |
+
+So the reach is the **K-line family, roughly 1996–2005 pre-CAN** (heavy on
+European/Asian makes). CAN is a hardware wall, not a firmware gap.
+
+### One adapter · one firmware · many host profiles
+The Pico firmware is a **dumb, generic timed K-line byte pipe** (5-baud/fast init,
+byte timing, half-duplex echo cancellation, framing-by-timeout). **All
+vehicle-specific intelligence lives in the Python host**, so switching cars is a
+**profile swap in software — no reflashing.**
+
+| Layer | Varies per car? | Reflash to switch? |
+|---|---|---|
+| Board 1 + Board 2 hardware | no — identical | — |
+| Pico firmware | no — one generic pipe | **No** |
+| Host profile (Python) — init address, keybytes, baud, L-mode, service/PID map, upper protocol | **yes** | **No — just select the profile** |
+
+**GEMS is one host profile** (`protocol/obd.py`, `gems_secure.py`); other 1990s
+K-line cars are additional profiles. The GEMS-flavoured firmware bit (the keybyte
+handshake) is really just the standard ISO 9141-2 handshake; `CMD_INIT` already
+takes a baud parameter and `CMD_RAW_INIT` / `CMD_RAW_XFER` give raw access, so the
+firmware is already ~90 % generic.
+
+**Firmware changes only for a new *generic* low-level primitive**, never per-car —
+e.g. driving the L-line for 5-baud-init cars that need it (see below), or an
+unusual init variant. You add it as a capability the host invokes, not as a
+GEMS-vs-other build split.
+
+### The one hardware addition that makes it truly universal: an L-line driver
+The L9637D can *sense* L but **cannot drive it**. Some pre-CAN ECUs (older VAG
+KWP1281, some Mercedes/BMW/Opel) require the 5-baud init address **driven on the
+L-line**, then released — a GEMS passive strap won't serve them. To be universal,
+Board 1 should add a **small external open-collector L driver** (one Pico GPIO →
+~1 kΩ → NPN/MOSFET pulling the L net low, with a pull-up), which is exactly the
+classic KKL-cable topology (L9637D for K + a transistor for L). The three L modes
+are then **mutually exclusive per session**: K-only, K + driven-L, or K + L↔K
+strap (GEMS/JP1) — don't drive L while it's strapped to K. See the L-line notes
+below; the GEMS-simple build omits the driver, the universal build adds it.
+
 ## J1962 (OBD2) pins used
 
 | OBD pin | Signal |
@@ -95,6 +149,30 @@ Notes:
 - **12 V lands only on U1 pin 7.** Verify L9637D pin-1 orientation before power.
 - TVS + fuse are populated here so Board 1 is protected **in the car**; on the
   clean bench 12 V they simply sit idle.
+
+### L-line handling (GEMS-simple vs universal)
+
+The L9637D's L pins are a **comparator — sense only; it does NOT drive L** (Doc ID
+1765, pin 2 LO / pin 8 LI). K and L are kept as **separate nets**; how L is used
+is a build choice:
+
+- **GEMS-simple build (default):** L (OBD.15) → **JP1** → K node. L9637D LI→GND,
+  LO→n/c. Passive strap only — this is what opens the GEMS **0xDA** channel. No
+  L driving.
+- **Universal build (multi-make):** add an **external open-collector L driver** so
+  firmware can drive the 5-baud init on L for cars that need it:
+  ```
+  Pico GPIO(Ldrv) ── ~1kΩ ── base/gate of NPN/N-MOSFET ── open-collector → L net
+  L net ── pull-up (to L-bus rail via ~510Ω–1k)
+  (optional L sense: L net → U1.8 LI ;  U1.2 LO → Pico GPIO)
+  ```
+  Keep **JP1** too (for the GEMS strap). The three L modes are **mutually
+  exclusive per session** — K-only, K+driven-L, or K+strap — never drive L while
+  JP1 straps it to K (the L driver would fight the K driver). A firmware/profile
+  interlock enforces this.
+- **Protection:** with JP1 closed, L joins the K node and shares its 510 Ω pull-up
+  + Vs TVS. When JP1 is open and L is undriven, the L pin floats — harmless. The
+  external driver transistor should be rated for the 12 V L-bus (≥40 V part).
 
 ---
 
