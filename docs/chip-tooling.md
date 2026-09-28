@@ -77,3 +77,30 @@ So the ~1-month wait blocks nothing: use it to crack the 10AS K-line, and have t
 T48 ready as the fallback + for the GEMS EPROM dump/write work. Ties to the
 [EKA read from the 10AS], [EPROM programmability], and [immobiliser-from-bench]
 backlog items.
+
+## External lead — Gemini "GEMS 8 tool dev" guide (2026-09-28, UNVERIFIED)
+
+A user-supplied LLM (Gemini) architecture write-up. Treat as **leads/hypotheses,
+NOT ground truth** (same rule as the FlemcoDesign app: validate against the T48
+dump / LR data / raw bytes). It contains **no hard data** (no offsets, no bytes, no
+checksum algorithm) — just generic tool-dev guidance plus a few plausible specifics.
+
+**Corroborates (consistent with our docs):**
+- Intel **87C196KC** (MCS-96) + **M27C1001**, 128 KB / 131072 bytes (0x0–0x1FFFF).
+- Immobiliser = a **startup validation routine** that checks the 10AS's coded serial
+  frames against internal registers → an **immo-delete = binary-patch that routine**
+  in the 27C1001 code image (matches the speculative write-path above), then
+  **recompute the block checksum** or the 87C196KC drops to fail-safe.
+- **Checksum-after-modify** is a real constraint to remember for any EPROM patch.
+
+**Do NOT trust (unverified / likely invented / conflicting):**
+- Claims the **fuel map lives in the M27C1001** — CONFLICTS with our split
+  (**27C512 = fuel maps, 27C1001 = ignition + code**). Don't accept.
+- Specific map dims/axes/units (e.g. "AFR 8×10, X=RPM Y=coolant"; 16×16 fuel/ign
+  ms/°BTDC) — plausible-sounding but unverified LLM detail.
+- Checksum "8- or 16-bit summation over designated boundaries" — vague/generic;
+  unconfirmed GEMS uses it or where.
+
+**Actionable takeaway:** none new on its own; it slightly reinforces the immo-delete
+plan (patch the 27C1001 validation routine + fix the checksum). Verify everything
+against the T48 dump when it arrives.
