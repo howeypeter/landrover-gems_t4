@@ -61,19 +61,25 @@ static const uint8_t  KLINE_TX_PIN = 0;
 static const uint8_t  KLINE_RX_PIN = 1;
 static uint16_t P1 = 20, P2 = 50, P3 = 55, P4 = 10;
 
+// Immobiliser-line monitor: GP2 (physical pin 4) <- L9637D pin 2 (LO), the 3.3 V
+// comparator copy of a tapped 12 V line (e.g. the 10AS->ECM coded mobilise wire,
+// C225 p15 / C1017 p26, T'd into LI pin 8). Read-only sniffer; see CMD_MONITOR_L.
+static const uint8_t  LMON_PIN = 2;
+
 // ---- host protocol constants (must match HOST_PROTOCOL.md) -----------------
 static const uint8_t HOST_START = 0xA5;
 static const uint8_t PICO_START = 0x5A;
 static const uint8_t CMD_PING = 0x01, CMD_INIT = 0x02, CMD_SEND_RECV = 0x03, CMD_SET_TIMING = 0x04;
 static const uint8_t CMD_RAW_INIT = 0x05;
 static const uint8_t CMD_RAW_XFER = 0x08;   // raw send/recv, NO echo cancel (RE tool)
+static const uint8_t CMD_MONITOR_L = 0x09;  // sniff transitions on LMON_PIN/GP2 (LO)
 static const uint8_t CMD_SET_WIFI = 0x06, CMD_WIFI_STATUS = 0x07;
 static const uint8_t ST_OK = 0x00, ST_TIMEOUT = 0x01, ST_BUS_ERROR = 0x02, ST_BAD_REQUEST = 0x03;
 static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.4.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.5.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -390,6 +396,61 @@ static void handleRawXfer(const uint8_t *payload, uint8_t len) {
   sendPico(ST_OK, buf, (uint8_t)n);
 }
 
+// CMD_MONITOR_L: passively capture digital TRANSITIONS on LMON_PIN (GP2 <- L9637D
+// LO). This is the immobiliser-line sniffer: LI (pin 8) is T'd onto the 10AS->ECM
+// coded mobilise wire, the comparator hands GP2 a 3.3 V copy, and this logs when it
+// changes. Purely read-only (LO is an output of the chip; we only read GP2).
+//
+// It is a CHARACTERISATION tool, not a decoder: it tells you whether the tapped
+// line carries digital activity the comparator can resolve, and its rough timing
+// (=> baud). Cycle the ignition (or trigger a mobilise event) during the window.
+//
+//   payload (optional): [win_hi][win_lo] = capture window in ms (default 1000,
+//                       clamped to 5000 to stay inside the host frame timeout).
+//   reply payload: [initial_level] then N pairs [dt_hi][dt_lo], each = microseconds
+//                  since the previous transition (uint16, saturating at 65535).
+//                  Levels ALTERNATE starting from initial_level. Up to 127 pairs
+//                  (payload cap); truncated if the line is busier than that.
+//   ZERO pairs => the line was STATIC at initial_level for the whole window: either
+//                 no digital signal, OR a signal the 1-bit comparator can't resolve
+//                 (a scope disambiguates). Not proof of "nothing there".
+//
+// Limitation: this is a digitalRead busy-poll (sample interval a few us), fine for
+// ~9600/10400-baud-class lines but it will alias anything much faster. Once a
+// signal is confirmed serial at a known baud, add a PIO UART capture as a follow-up.
+static void handleMonitorL(const uint8_t *payload, uint8_t len) {
+  uint16_t win_ms = 1000;
+  if (len >= 2) win_ms = ((uint16_t)payload[0] << 8) | payload[1];
+  if (win_ms == 0) win_ms = 1000;
+  if (win_ms > 5000) win_ms = 5000;
+
+  pinMode(LMON_PIN, INPUT);            // LO has an internal pull-up; plain INPUT
+
+  static uint8_t buf[MAX_PAYLOAD];
+  size_t n = 0;
+  uint8_t initial = digitalRead(LMON_PIN) ? 1 : 0;
+  buf[n++] = initial;
+
+  uint8_t  last   = initial;
+  uint32_t win_us = (uint32_t)win_ms * 1000UL;
+  uint32_t t0     = micros();
+  uint32_t t_prev = t0;
+
+  while ((micros() - t0) < win_us && (n + 2) <= MAX_PAYLOAD) {
+    uint8_t cur = digitalRead(LMON_PIN) ? 1 : 0;
+    if (cur != last) {
+      uint32_t now = micros();
+      uint32_t dt  = now - t_prev;
+      if (dt > 65535UL) dt = 65535UL;
+      buf[n++] = (uint8_t)(dt >> 8);
+      buf[n++] = (uint8_t)(dt & 0xFF);
+      last   = cur;
+      t_prev = now;
+    }
+  }
+  sendPico(ST_OK, buf, (uint8_t)n);
+}
+
 // Parse and dispatch ONE host frame from the ACTIVE transport (0xA5 framed).
 static void serviceHostFrame() {
   if (hostReadByte(g_active) != HOST_START) return;   // resync on stray byte
@@ -413,6 +474,7 @@ static void serviceHostFrame() {
     case CMD_SET_TIMING: handleSetTiming(payload, len); break;
     case CMD_RAW_INIT:   handleRawInit(payload, len); break;
     case CMD_RAW_XFER:   handleRawXfer(payload, len); break;
+    case CMD_MONITOR_L:  handleMonitorL(payload, len); break;
 #if ENABLE_WIFI
     case CMD_SET_WIFI:    handleSetWifi(payload, len); break;
     case CMD_WIFI_STATUS: handleWifiStatus(); break;
@@ -517,6 +579,7 @@ void setup() {
   Serial1.setTX(KLINE_TX_PIN);
   Serial1.setRX(KLINE_RX_PIN);
   Serial1.begin(KLINE_BAUD);
+  pinMode(LMON_PIN, INPUT);          // GP2 <- L9637D LO: immobiliser-line monitor
 
 #if ENABLE_BLE
   BLE.begin(BLE_NAME);

@@ -27,7 +27,9 @@ Pico -> Host:  0x5A  <status>  <len>  <payload[len]>  <crc8>
 | 0x04 | SET_TIMING  | `P1 P2 P3 P4` as 4× uint16 ms        | — |
 | 0x05 | RAW_INIT    | `[mode][baudHi][baudLo][addr][frame…]` (pentest superset builds) | raw K-line bytes, unfiltered |
 | 0x06 | SET_WIFI    | `[ssidLen][ssid…][password…]` (unified firmware) | — (creds saved to LittleFS + reconnect; no reflash) |
-| 0x07 | WIFI_STATUS | —                                    | ASCII: `connected <ip>` / `offline (creds set: <ssid>)` / `no-creds` |
+| 0x07 | WIFI_STATUS | —                                    | ASCII: `connected <ip> <mac> <ssid>` / `offline <mac> (creds set: <ssid>)` / `no-creds <mac>` |
+| 0x08 | RAW_XFER    | one frame (sent at session baud, NO echo cancel; RE tool) | full raw RX = echo + any response |
+| 0x09 | MONITOR_L   | `[winHi][winLo]` capture window ms (opt; default 1000, max 5000) | `[initial_level]` + N×`[dtHi][dtLo]` µs-between-transition (levels alternate). Immobiliser-line sniffer on GP2 ← L9637D LO. Zero pairs = static/unresolved. Needs firmware ≥ 3.5.0 |
 
 ## Status (pico → host)
 

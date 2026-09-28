@@ -974,3 +974,53 @@ to the remote — door-lock EKA may be **disabled** on our 315 MHz NAS unit.
 vs open per state), pin-8→pin-7 timing, and whether NAS enables door-lock EKA at
 all. Don't brute-force by turning the key (~3-attempt lockout). Ties to the [EKA
 read from the 10AS] + [immobiliser from the bench] backlog items.
+
+---
+
+## ⭐ DLC pinouts VERIFIED + multiple diagnostic lines (2026-09-27)
+
+Read the RAVE **DATA LINK CONNECTOR (D3)** pages directly and cross-checked the
+connector pin numbering against fixed J1962 pins (16=+12V, 4/5=gnd, 7=K, 15=L all
+matched → the harness-connector pin numbers ARE physical J1962 pins). Full tables:
+`docs/dlc-pinouts.md`. **Big correction: the "single shared K-line on pin 7" model
+is WRONG — these trucks have MULTIPLE separate diagnostic lines** (that's why the T4
+needed the VCSI *demultiplexer*).
+
+- **Disco 1 (user's truck, `etlj970x.pdf` D3 p99-100, DLC X318/C2083):**
+  pin **7 (K, WLG)** + **15 (L, WK)** = **engine ECM (C1017 p23/p20) + ABS** shared;
+  **pin 8 (KB) = 10AS/theft alarm — its OWN line**; **pin 13 = airbag/SRS — own
+  line**; 4/5 gnd, 16 +12V. **→ reaching the 10AS needs OBD pin 8, NOT pin 7.**
+  Our bench tied the 10AS onto the shared engine K node (wrong — car keeps it on
+  pin 8); likely why the 9600 probing gave phantom echo (contention). Probe the
+  10AS on its OWN line (engine's pin 7 removed).
+- **P38 (`lp/etlp970e.pdf` D3 p112-114, DLC X318/C231):** pins **7/15** shared by
+  **engine ECM (C507 p23) + ABS + HEVAC + BeCM (Z238 C255 p8→p7 / p17→p15)**;
+  **11/12 = EAS air-susp ECU (Z165)**; **13/14 = airbag**; **1 = air-susp delay
+  timer**. **BeCM is on the SHARED bus, not its own pin** (opposite of Disco 1's
+  10AS). P38 has a BeCM; Disco 1 does not (10AS instead).
+- **L9637D = K-line/ISO-9141 only.** NOT CAN (pins 6/14) or J1850 (pins 2/10).
+
+## Immobiliser-line sniffer + firmware CMD_MONITOR_L (2026-09-27)
+
+Plan to capture the coded **mobilise** line (10AS C225 p15 → ECM C1017 p26) using the
+L9637D's **spare read-only L channel**: T the mobilise wire onto **LI (pin 8)**,
+route **LO (pin 2) → Pico GP2** (phys pin 4). LI is 12V-rated + high-Z, so it's a
+passive, non-invasive tap — **no pull-up, no cap** (the 10AS actively drives the
+line; a pull-up could fight an unknown driver type). Gives a 2nd channel from ONE
+chip (monitor immobiliser while K drives engine) — no 2nd transceiver needed.
+**Firmware:** `pico_kline_all` **3.5.0** adds **`CMD_MONITOR_L` (0x09)** — logs
+digital transitions on GP2 over a window, returns `[initial_level]`+`[dt]` µs pairs.
+**Compiles clean** (17%/17%); NOT yet flashed/bench-verified. ⚠️ Characterisation
+tool only — captures a *digital* line; zero transitions = static OR comparator can't
+resolve (scope disambiguates). digitalRead busy-poll (ok ~9600/10400; aliases
+faster → PIO UART capture is the follow-up). Host-side command + `bench/monitor_l.py`
+still TODO. Detail: `docs/two-board-rig.md`, `firmware/HOST_PROTOCOL.md`.
+
+## Two-board rig — Board 1 finalized (2026-09-27)
+Screw-terminal "K-patch" bank: all OBD pins land on labelled terminals; a bank of
+terminals bussed to **L9637D pin 6** is ONE electrical node — land whichever OBD pin
+you want to talk to (pin 7 engine; pin 7+15 co-terminated = 0xDA strap; pin 8 =
+10AS with engine's pin 7 REMOVED to avoid contention). Full 16-pin pigtail landed;
+CAN/J1850 exposed but unpopulated. One transceiver suffices for sequential diag;
+reserve room for an optional 2nd L9637D only if the relearn needs 2 concurrent
+sessions. Detail: `docs/two-board-rig.md`.

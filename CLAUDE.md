@@ -331,13 +331,26 @@ identification in the emulator is authentic, not pedantry.
 
 ### The headline: No CAN bus
 
-A late-90s Land Rover has **no CAN bus**. Every ECU hangs off a **single shared
-diagnostic wire** — the **ISO 9141 "K-line" on pin 7 of the J1962 OBD socket**
-— running at ~10.4 kbit/s, half-duplex, tester-initiated. The TestBook addresses
-each module individually over that one wire. It is a star for diagnostics only;
-the modules do not talk to each other over it.
+A late-90s Land Rover has **no CAN bus**. Diagnostics are **ISO 9141 K-line**
+(~10.4 kbit/s, half-duplex, tester-initiated), the TestBook addressing each module
+individually. The modules do not talk to each other over it (star, diag-only).
 
-**CAN only arrives with the BMW-engineered L322 Range Rover in 2002.**
+⚠️ **CORRECTION (2026-09-27, VERIFIED from RAVE — see `docs/dlc-pinouts.md`):** it
+is **NOT a single shared wire on pin 7.** These trucks use **multiple separate
+diagnostic lines** on different DLC pins — which is why the real T4 needed the
+**VCSI *demultiplexer*** to route among them. Verified:
+- **Discovery 1 (user's truck):** DLC pin 7 (K) + pin 15 (L) = **engine ECM + ABS**
+  (shared); **pin 8 = 10AS/theft alarm (own line)**; **pin 13 = airbag/SRS (own
+  line)**. So the 10AS is reachable only on **OBD pin 8**, not pin 7.
+- **P38 (BeCM):** pins 7/15 shared by **engine + ABS + HEVAC + BeCM**; airbag 13/14;
+  **EAS air-suspension 11/12**; air-susp timer pin 1. The BeCM is on the shared bus,
+  NOT its own pin (opposite of the Disco 1's 10AS).
+The old "one K-line, pin 7, everything" line was a simplification; it holds only for
+engine + ABS.
+
+**CAN only arrives with the BMW-engineered L322 Range Rover in 2002.** The L9637D
+adapter is **K-line family (ISO 9141-2 / KWP2000) only** — not CAN (pins 6/14) or
+J1850 (pins 2/10).
 
 ### Modules on board (GEMS P38 Range Rover)
 
@@ -561,6 +574,13 @@ as static lookalikes for now.
   `bench/README.md`. Proven capability still graduates into `gems_t4/`. NOTE: the
   historical `~/xxx.py` paths littered through this file and the memory files refer
   to these same scripts' old home — they're in `bench/` now.
+- `docs/dlc-pinouts.md` (added 2026-09-27) — **VERIFIED OBD-II/J1962 DLC pinouts**
+  from RAVE D3 (pin numbering cross-checked against fixed J1962 pins). **Disco 1**
+  (X318/C2083): pin7 K + pin15 L = engine+ABS (shared), **pin8 = 10AS/theft (own
+  line)**, pin13 = SRS; **three separate diagnostic lines**. **P38** (X318/C231):
+  pins7/15 shared by engine+ABS+HEVAC+**BeCM**, pin11/12 = EAS, pin13/14 = SRS,
+  pin1 = air-susp timer. Corrects the old "single K-line on pin 7" model. 10AS
+  needs **OBD pin 8**; CAN(6/14)/J1850(2/10) not reachable with the L9637D.
 - `docs/hardware-shopping-list.md` (added 2026-09-27) — consolidated parts/build
   list for the two-board rig (GEMS-simple vs universal tiers): Board 1, Board 2,
   connectors (OBD pigtails → screw terminals), 10AS branch, chip reads (T48),

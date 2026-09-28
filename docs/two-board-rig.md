@@ -174,6 +174,71 @@ is a build choice:
   + Vs TVS. When JP1 is open and L is undriven, the L pin floats — harmless. The
   external driver transistor should be rated for the 12 V L-bus (≥40 V part).
 
+### Finalized Board 1 I/O — screw-terminal "K-patch" bank (2026-09-27)
+
+Because Board 1 uses an OBD pigtail landing on **PCB-mount screw terminals**, the
+"routable transceiver / VCSI-demux" idea is free — **the screw block IS the
+selector.** No jumper header, no second chip needed for multi-module reach.
+
+- **Land the FULL 16-pin pigtail** on labelled terminals (costs nothing extra —
+  the pigtail already carries all wires; future-proofs everything).
+- **Fixed terminals:** OBD **pin 16 → L9637D Vs** (via fuse + TVS); OBD **pin 4/5 →
+  GND**. These never move.
+- **A bank of terminals all bussed to L9637D pin 6 (K)** — the "K-patch" node. To
+  talk to a module, land (or short-jumper) its OBD wire onto this node:
+  | Target | Land on the K-patch node |
+  |---|---|
+  | Engine, normal OBD | pin 7 only |
+  | GEMS **0xDA** | pin 7 **and** pin 15 (both on the node = the L↔K strap) |
+  | **10AS** (Disco 1) | pin 8 only — **remove pin 7** (else shared-node contention) |
+  | Airbag / others | pin 13 / etc. |
+  - ⚠️ **The K-patch terminals are ONE electrical node.** The labels are
+    organizational only — whatever is landed is tied together. For single-module
+    isolation, **populate only the one you want** (leaving the engine's pin 7 in
+    while probing the 10AS re-creates the shared-node contention that likely caused
+    the bench "phantom echo").
+- **CAN (6/14) and J1850 (2/10):** land on terminals but leave **unconnected** —
+  out of scope for the L9637D, but available for a future daughterboard, no respin.
+- This subsumes JP1: the 0xDA strap is just "co-terminate pin 7 + pin 15 on the
+  K-patch node." A dedicated JP1 header is optional convenience.
+
+Verified DLC pin meanings per model live in **`docs/dlc-pinouts.md`** (Disco 1:
+10AS on pin 8; P38: BeCM shares 7/15). Reaching the **10AS needs OBD pin 8**, not 7.
+
+### Immobiliser-line sniffer — the spare L channel as a 12 V-safe monitor
+
+The L9637D's L channel is **read-only (LI→LO, sense; can't drive)** — which makes it
+the *right* tool to passively watch the coded **mobilise line** (10AS C225 p15 →
+ECM C1017 p26) **while K drives the engine**: two channels, one chip, no 2nd
+transceiver, and LI is **12 V-rated** (a bare Pico GPIO would be destroyed).
+
+```
+10AS C225 p15 ──┬──► ECU C1017 p26     (mobilise — unchanged, still works)
+                └──► L9637D LI (pin 8)  (T'd tap; high-Z read-only, no pull-up/cap)
+L9637D LO (pin 2) ──► Pico GP2 (physical pin 4)   (3.3 V digital copy; internal pull-up)
++ common ground between L9637D, 10AS, ECM; board powered.
+```
+
+- **No pull-up, no cap** on LI (the mobilise line is *actively driven* by the 10AS,
+  so nothing needs to hold it; a pull-up could fight an unknown driver type) or on
+  LO→GP2 (a cap would smear the edges).
+- **Firmware:** `CMD_MONITOR_L` (0x09), added in `pico_kline_all` **3.5.0** —
+  captures digital transitions on GP2 over a window and returns the edge timing.
+- ⚠️ **Must be verified on the bench** — this captures a *digital* line; we don't
+  yet know the mobilise signal's waveform. Characterize once (scope best; or the
+  monitor itself). Zero transitions = static line **or** a signal the 1-bit
+  comparator can't resolve — a scope disambiguates. Not proof of "no signal."
+
+### Concurrency: do we need a 2nd L9637D?
+For all **sequential** diagnostics (read/clear/code any module, one at a time) —
+**no**, one transceiver + the K-patch bank covers it. The only maybe is the
+**immobiliser relearn** if it needs the ECM's learn session live *while*
+commanding the 10AS (a single chip holds one session at a time). Don't commit now —
+**leave board room for an optional 2nd L9637D**; the screw-terminal design makes
+adding it trivial. Electronic pin-switching, if ever wanted, is best done as
+multiple cheap transceivers muxed on the 3.3 V logic side, not by switching the
+12 V bus.
+
 ---
 
 ## Board 2 — BENCH hub

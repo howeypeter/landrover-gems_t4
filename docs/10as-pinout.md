@@ -96,7 +96,7 @@ Central-locking wires shown in the graphic (all match the tables below):
 | 13 | SCR | Antenna screen/shield | RF |
 | 15 | B | **→ ECM C1017 pin 26 = coded MOBILISE line** | **ECM link ⭐** |
 | 16 | PW | Door switch sense (via MFU Z148) | Perimetric input |
-| 17 | KB | **→ diagnostic serial line** (car: OBD-II DLC pin 8) | **Comms ⭐** |
+| 17 | KB | **→ diagnostic serial line, car: OBD-II DLC pin 8** (VERIFIED — RAVE D3, `etlj970x.pdf` p99: C225 p17 KB → C2083 p8 → X318) — a SEPARATE line from the engine K-line (pin 7) | **Comms ⭐** |
 | 18 | PR | Window Lift ECU (Z147) link | Link |
 | 20 | BN | Volumetric alarm sensor (X213) | Input |
 | 25 | P | **+12 V feed** — Satellite Fuse Box 1, F1 (15 A) | **Power** |
@@ -179,9 +179,18 @@ Four wires power it and let you talk to it; add two more to mobilise a GEMS ECM.
 | Logic power (feed both) | C225 pin 25 | P | +12 V |
 | Logic power (feed both) | C225 pin 10 | GK | +12 V |
 | Ground | C274 pin 11 | BO | Bench GND (**shared with ECM GND**) |
-| Diagnostics (read EKA) | C225 pin 17 | KB | Adapter K-line (via L9637D) |
+| Diagnostics (read EKA) | C225 pin 17 | KB | Adapter K-line (via L9637D) — see ⚠️ below |
 | Coded mobilise → ECM | C225 pin 15 | B | GEMS ECM **C1017 pin 26** |
 | *(optional)* lock-motor power | C274 pin 8 | PN | +12 V (only to drive central locking) |
+
+⚠️ **The 10AS is on its OWN diagnostic line, not the engine K-line** (VERIFIED
+2026-09-27, `docs/dlc-pinouts.md`): in the car the 10AS serial (C225 p17) goes to
+**OBD DLC pin 8**, a *separate* line from the engine K-line (pin 7). Our bench tied
+the 10AS's p17 onto the **shared engine K node** — NOT how the car wires it — which
+is a likely cause of the 9600-baud "phantom echo" (engine ECU + 10AS contending on
+one node). For proper 10AS probing, give it its **own** line (its own K node /
+transceiver, or the K-patch bank with the engine's pin 7 REMOVED), matching the
+car's pin-8 separation. See `two-board-rig.md` → "K-patch bank".
 
 Notes:
 - The 10AS has **two logic feeds** (pins 25 + 10); one is a permanent battery feed

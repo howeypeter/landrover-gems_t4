@@ -21,8 +21,18 @@ only wakes a module, it does NOT complete the handshake, so it can't session the
 10AS; **3.4.0** adds **`CMD_RAW_XFER` (0x08)** — raw send/recv at the session baud
 with NO echo cancellation, returning the full RX (echo + response) so the host can
 separate them (the RE tool for the 10AS, whose framing/echo timing the normal
-echo-cancelling `SEND_RECV` path mangles). PING reports
-`gems_t4-pico-all-pentest <version>`. It's a superset that also
+echo-cancelling `SEND_RECV` path mangles); **3.5.0** adds **`CMD_MONITOR_L` (0x09)**
+— a passive **immobiliser-line sniffer** on **GP2** (physical pin 4), fed by the
+L9637D's read-only **LO (pin 2)** with **LI (pin 8)** T'd onto the coded mobilise
+wire (10AS C225 p15 → ECM C1017 p26). It logs digital transitions on GP2 over a
+window (payload `[win_hi, win_lo]` ms, default 1000, clamped 5000) and returns
+`[initial_level]` + `[dt_hi, dt_lo]` µs-between-edge pairs (levels alternate; up to
+127 pairs). It is a **characterisation** capture — zero pairs = static line **or** a
+signal the 1-bit comparator can't resolve (scope disambiguates), not proof of "no
+signal"; and it's a `digitalRead` busy-poll (fine for ~9600/10400-class lines, will
+alias faster ones → a PIO UART capture is the follow-up once a signal is confirmed
+serial). LI is 12 V-rated and high-Z; **no pull-up, no cap** on the tap; common
+ground required. PING reports `gems_t4-pico-all-pentest <version>`. It's a superset that also
 answers the pentest `CMD_RAW_INIT`, so the debug/probe scripts work too.
 
 > ⚠️ **WiFi = one tester at a time.** Even with last-wins takeover, only ONE
