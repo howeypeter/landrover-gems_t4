@@ -1016,6 +1016,36 @@ resolve (scope disambiguates). digitalRead busy-poll (ok ~9600/10400; aliases
 faster → PIO UART capture is the follow-up). Host-side command + `bench/monitor_l.py`
 still TODO. Detail: `docs/two-board-rig.md`, `firmware/HOST_PROTOCOL.md`.
 
+## Immobiliser-line sniffer — RESULT + PARKED (2026-09-28)
+
+Built the mobilise-line sniffer end-to-end and captured the real event. **Result:
+the mobilise line is DC-enable-like, NOT a decodable serial bus.** PARKED — don't
+re-chase without a scope or a new reason.
+
+- **Wiring:** 10AS C225 p15 → ECM C1017 p26 mobilise wire, T'd onto L9637D **LI
+  (pin 8)**; **LO (pin 2) → Pico GP2**. Read-only, 12V-safe, no pull-up/cap.
+- **Firmware built (`pico_kline_all`):** `CMD_MONITOR_L` (0x09, busy-poll
+  transitions, 3.5.0), `CMD_PIO_CAPTURE` (0x0A, ~10ms PIO one-frame, 3.6.0), and
+  `CMD_CAPTURE`/`CMD_READBUF` (0x0B/0x0C, PIO+DMA **1.6 s buffered** capture into
+  40 KB RAM, 3.7.0 — the usable one). Host tools `bench/monitor_l.py` +
+  `bench/lmon_scope.py`. All flashed + verified on the Pico (COM4, 3.7.0).
+- **Captures (triggered on the first edge at ignition-ON, 1.6 s window @ 200 kS/s):
+  every time a tiny burst of 4–10 edges in the first ~1 ms, then FLAT for 1.6 s.**
+  "Decoded" byte differed every run (FA / FC / 1E / BE) = spurious, NOT repeatable
+  → **no coded serial message.** The 1-bit comparator sees the 0V→high crossing
+  (a little ringing) then can't distinguish 11V vs 8V (both "high") → flat. Matches
+  the multimeter 0V→11V(1s)→8V.
+- **Conclusion:** the coded security exchange is NOT decodable off this wire. Either
+  it's a pure DC enable (code exchanged over the K-line/0xDA, which we have), or it's
+  analog voltage structure the comparator flattens (would need a **scope** — Pico
+  ADC + a 12V→3.3V divider was the fallback; **not worth building**). The bench ECM
+  staying immobilised is about the **10AS not emitting the right code** (armed /
+  wrong-code / not synced), not something on this line.
+- **Higher-value path forward:** the **T48 10AS EEPROM read** (EKA/security value
+  straight from the chip, arriving ~soon) or a properly-synchronized Security-Learn
+  retry — attack the actual lock, not this symptom. Sniffer left in place; usable
+  again if a scope or new lead appears.
+
 ## Two-board rig — Board 1 finalized (2026-09-27)
 Screw-terminal "K-patch" bank: all OBD pins land on labelled terminals; a bank of
 terminals bussed to **L9637D pin 6** is ONE electrical node — land whichever OBD pin
