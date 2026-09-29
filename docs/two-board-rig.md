@@ -237,13 +237,17 @@ diagnostic electronics. On most vehicles they're already bonded near the connect
 anyway, and our L9637D circuit is high-impedance/low-current (just reading/driving
 a K-line, not switching real power), so keeping them separate buys nothing here.
 
-**Decision: bond pins 4 and 5 together, at ONE star-ground point on the board**
-(not just shorted terminal-to-terminal). Both OBD GND terminals run as separate
-wires to that single point, where they join: L9637D U1 GND, L9637D U3 GND, buck
-GND, and Pico GND. That single point then ties into the ground pour (below). This
-avoids a small ground loop that a terminal-to-terminal short could create, while
-landing on the same practical result (they end up bonded) that most simple K-line
-adapters use.
+**Decision: bond pins 4 and 5 together via the ground pour, which IS the star
+point** (not a terminal-to-terminal short, and not a separate discrete junction
+pad either). Both OBD GND terminals live on the **top layer** (with the rest of
+the terminal block); each one drops **its own via straight down into the
+bottom-layer ground pour**, same as L9637D U1 GND, L9637D U3 GND, buck GND, and
+Pico GND. A classic single-pad "star ground" is a technique for boards **without**
+a ground plane — once you have a full continuous pour, the pour itself is a big,
+low-resistance, effectively-equipotential sheet, so every ground pin vias into it
+independently, right where it sits, and they're all tied together through the
+plane rather than through one dedicated home-run node. Same practical result
+(pins 4/5 end up bonded, no ground loop), simpler layout.
 
 ### PCB layer strategy — 2 layers, ground pour + zoned placement (2026-09-29)
 
