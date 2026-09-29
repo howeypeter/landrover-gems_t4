@@ -18,10 +18,10 @@ OBD pin reaches which vehicle module).
 | U1 | Raspberry Pi Pico 2 W | — | Host MCU; two hardware UARTs drive U2 and U3 independently |
 | U2 | ST L9637D | SOIC-8 | K-line transceiver, primary channel (engine) |
 | U3 | ST L9637D | SOIC-8 | K-line transceiver, secondary channel |
-| R1 | Resistor | 510 Ω | K-line pull-up for U2 (K ↔ Vs) |
-| R2 | Resistor | 510 Ω | K-line pull-up for U3 (K ↔ Vs) |
+| R1 | Resistor | 510 Ω, **1 W** | K-line pull-up for U2 (K ↔ Vs). K held low dissipates ~0.28 W at 12 V, ~0.41 W at 14.4 V, ~0.64 W at 18 V — ¼ W has no margin |
+| R2 | Resistor | 510 Ω, **1 W** | K-line pull-up for U3 (K ↔ Vs), same rating and rationale as R1 |
 | F1 | Fuse | 1 A | Inline on the +12 V input, protects the whole board |
-| D1 | TVS diode | 1.5KE24A, 24 V standoff, unidirectional | Clamps the fused 12 V node |
+| D1 | TVS diode | 1.5KE24A, unidirectional (breakdown-voltage grade "24"; VRWM ≈ 20.5 V, not literally a 24 V standoff — see note) | Clamps the fused 12 V node |
 | REG1 | Buck converter | Fixed 5 V out, 5–30 V in, 3 A | Steps 12 V down for the Pico |
 | D2 | Schottky diode | 1N5817, 1 A / 20 V | Buck output → Pico VSYS; diode-ORs with USB power |
 | C1 | Ceramic capacitor | 100 nF ("104"), 50 V+ | Vcc decoupling for U2, mounted close to U2 pin 3 |
@@ -116,8 +116,8 @@ J1 pin 16 (+12V)
    │                    │               │                      │
    ▼                    ▼               ▼                      ▼
  [D1] TVS           U2 pin 7 (Vs)   U3 pin 7 (Vs)          REG1 VIN
- 1.5KE24A                                                  (buck 12→5V)
- (→ GND, clamp)                                                 │
+ K(cathode)=VS_FUSED                                       (buck 12→5V)
+ A(anode)=GND, clamp                                             │
                                                                  ▼
                                                             REG1 VOUT (5V)
                                                                  │
@@ -135,8 +135,13 @@ J1 pin 16 (+12V)
 
 - **F1 (1 A)** is the only fuse on the board — it protects both L9637D pull-ups,
   the TVS, and the buck, since all three tap the same fused node.
-- **D1 (TVS)** sits across VS_FUSED → GND, clamping automotive load-dump spikes
-  before they reach either transceiver's Vs pin or the buck's input.
+- **D1 (TVS)** sits across VS_FUSED → GND with its **cathode (banded end) on
+  VS_FUSED and anode on GND** — this keeps it reverse-biased (inert) during
+  normal operation and lets it clamp only on a positive overvoltage spike,
+  protecting both transceivers' Vs pins and the buck's input. ⚠️ The exact
+  clamp voltage (Vc) at the relevant test current is not yet independently
+  confirmed against the manufacturer datasheet — verify before finalizing
+  REG1's required absolute-max input rating (must exceed Vc with margin).
 - **REG1 (buck)** steps 12 V down to a fixed 5 V. Its input sees the same fused +
   TVS-protected node as the transceivers.
 - **D2 (Schottky)** is in series between the buck's output and Pico VSYS. Its
@@ -159,7 +164,7 @@ J1 pin 16 (+12V)
 | U3 pin 5 | GND |
 | REG1 GND | GND |
 | U1 (Pico) GND | GND |
-| D1 (TVS) cathode return | GND |
+| D1 (TVS) anode | GND |
 | C1 pin B | GND |
 | C2 pin B | GND |
 
@@ -213,10 +218,10 @@ firmware isn't yet.
 | K2_LO | U3 pin 2, U1 GP6 |
 | LI2 | Terminal B3, U3 pin 8 |
 | 12V_IN | Terminal 12V, F1 pin A |
-| VS_FUSED | F1 pin B, D1 anode-side, U2 pin 7, U3 pin 7, REG1 VIN, R1 pin B, R2 pin B |
+| VS_FUSED | F1 pin B, **D1 cathode**, U2 pin 7, U3 pin 7, REG1 VIN, R1 pin B, R2 pin B |
 | VSYS_5V | REG1 VOUT, D2 anode, D2 cathode → U1 VSYS |
 | P3V3 | U1 3V3, U2 pin 3, U3 pin 3, C1 pin A, C2 pin A |
-| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, D1 cathode-side, C1 pin B, C2 pin B |
+| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, **D1 anode**, C1 pin B, C2 pin B |
 
 ---
 
