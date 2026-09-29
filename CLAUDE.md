@@ -587,6 +587,16 @@ as static lookalikes for now.
   enclosure notes (plastic box for the Pico W radio; 2 box inputs = OBD2 pigtail +
   microUSB), a "do NOT buy" list, and the immediate buy list. Companion to
   `two-board-rig.md`. Inventory truth: **one working Pico, none destroyed**.
+- `diagrams/PCB_Board_Scheme/PCB_Board_Scheme.md` (added 2026-09-29) — **the
+  authoritative electrical design for Board 1** — full BOM (refdes U1=Pico,
+  U2/U3=L9637D, R1/R2, F1, D1, REG1, D2, C1/C2), the complete 9-terminal
+  assignment table, every pin on U2/U3, the power path, ground handling, Pico
+  pin usage, and a full net summary. Schematic-level only, no PCB
+  placement/routing (that stays in `two-board-rig.md`). Written for external
+  submission (flux.ai schematic capture); passed an adversarial cross-check
+  against `two-board-rig.md`, `hardware-shopping-list.md`, and
+  `dlc-pinouts.md` (2026-09-29) — see the DUAL TRANSCEIVER entry above for
+  what that check found and fixed.
 - `docs/two-board-rig.md` (added 2026-09-27) — **current preferred physical
   architecture**: Board 1 = universal adapter (Pico + L9637D + **male J1962
   pigtail**, TVS/fuse/510Ω populated, USB-power, JP1 L↔K tie) that plugs into a
@@ -604,21 +614,28 @@ as static lookalikes for now.
   reflash to switch cars**; GEMS is one profile. Firmware changes only for a new
   *generic* primitive (e.g. **driving the L-line** for 5-baud-init cars — the
   L9637D can sense but NOT drive L, so the universal build adds an external
-  open-collector L driver; GEMS-simple build uses the passive JP1 L↔K strap).
-  **DUAL TRANSCEIVER + on-car power (DECIDED 2026-09-28):** Board 1 now carries
-  **2× L9637D** — U1 = engine K-line (UART0 GP0/1, LO→GP2), U3 = 2nd channel
-  (UART1 GP4/5, LO→GP6) for **concurrent** 10AS/EAS/SRS while the engine session is
-  live (each own 510 Ω pull-up; K nodes kept SEPARATE). **Firmware TODO:**
-  add a `channel` byte (0=Serial1, 1=Serial2) to the K-line commands. And **route-A
-  power is now IN** (resolves the parked backlog item): OBD 12 V → 1 A fuse → TVS →
-  {both Vs, buck}; **buck (fixed 5 V, 5–30 Vin, 3 A) → 1N5817 → Pico VSYS(39)**,
-  diode-OR'd with USB (no switch; never VBUS). Pico self-powered on a running truck,
-  USB optional. **Terminal scheme CORRECTED 2026-09-29:** each channel gets a
-  3-terminal patch bank split into TWO nets, not one bussed node —
-  **A1/A2 = K-line (2 slots, same node; A2 = strap point, e.g. GEMS L-line for 0xDA)**,
-  **A3 = LI read-only listen tap** (immobiliser-sniffer input); same for B1/B2/B3 on
-  U3. LO is a fixed wire to GP2/GP6, not a terminal. Full diagram/nets in
-  `docs/two-board-rig.md` + `hardware-shopping-list.md`.
+  open-collector L driver; GEMS-simple build straps L↔K via a screw terminal).
+  **DUAL TRANSCEIVER + on-car power (DECIDED 2026-09-28, refdes + terminals
+  FINALIZED 2026-09-29):** Board 1 carries **2× L9637D**. Refdes (locked):
+  **U1 = Pico 2 W** (host MCU), **U2 = L9637D** (engine channel, UART0 GP0/1,
+  LO→GP2), **U3 = L9637D** (2nd channel, UART1 GP4/5, LO→GP6) for **concurrent**
+  10AS/EAS/SRS while the engine session is live (each own 510 Ω pull-up + own
+  100 nF Vcc decoupling cap (C1/C2); K nodes SEPARATE). **Terminals:** ONE row,
+  9 total — `A1 A2 A3 · B1 B2 B3 · 12V · GND GND` — and the OBD pigtail wires
+  land **directly** on them, no separate patch layer. A1/A2 = one K-line node
+  (A1=OBD pin7, A2=OBD pin15/L — tied on purpose, keeps GEMS 0xDA permanently
+  open); A3 = LI, a separate read-only listen tap. B1/B2/B3 mirror this for U3
+  (B1=OBD pin8/10AS). **Firmware TODO:** add a `channel` byte (0=Serial1/U2,
+  1=Serial2/U3) to the K-line commands. **Route-A power IN:** OBD 12V → 1A fuse
+  → TVS → {U2/U3 Vs, buck}; buck (fixed 5V, 5–30Vin, 3A) → 1N5817 → Pico
+  VSYS(39), diode-OR'd with USB (no switch; never VBUS). **Full electrical
+  design (BOM/pins/nets, the source of truth) is now its own doc:
+  `diagrams/PCB_Board_Scheme/PCB_Board_Scheme.md`** — `docs/two-board-rig.md`
+  stays narrative/rationale. An adversarial-review pass (2026-09-29) found +
+  fixed a real bug in Board 2's nets (10AS was wired to share OBD pin 7 with
+  the engine — recreated the exact contention Board 1's dual-transceiver split
+  was built to avoid; now routes via pin 8, kept separate) plus several stale
+  JP1/patch-bank references across `hardware-shopping-list.md`.
 - `docs/gems-ecu-pinout.md` (added 2026-09-14) — the **authoritative GEMS ECU
   connector pinout** (all three plugs C1017/C1032/C1033 = C507/C505/C509, every
   populated pin, wire colours, male/female physical pin map), from the BlackBox

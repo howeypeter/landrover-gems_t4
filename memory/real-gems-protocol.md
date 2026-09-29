@@ -1046,11 +1046,29 @@ re-chase without a scope or a new reason.
   retry — attack the actual lock, not this symptom. Sniffer left in place; usable
   again if a scope or new lead appears.
 
-## Two-board rig — Board 1 finalized (2026-09-27)
-Screw-terminal "K-patch" bank: all OBD pins land on labelled terminals; a bank of
-terminals bussed to **L9637D pin 6** is ONE electrical node — land whichever OBD pin
-you want to talk to (pin 7 engine; pin 7+15 co-terminated = 0xDA strap; pin 8 =
-10AS with engine's pin 7 REMOVED to avoid contention). Full 16-pin pigtail landed;
-CAN/J1850 exposed but unpopulated. One transceiver suffices for sequential diag;
-reserve room for an optional 2nd L9637D only if the relearn needs 2 concurrent
-sessions. Detail: `docs/two-board-rig.md`.
+## Two-board rig — Board 1 FINALIZED, refdes + terminals locked (2026-09-27→29)
+⚠️ Superseded 2026-09-29 — this note originally described a single-bussed-node
+scheme and "one transceiver suffices"; both were corrected. Current design:
+
+**Refdes (locked):** U1 = Pico 2 W (host MCU); U2 = L9637D engine channel
+(UART0 GP0/1, LO→GP2); U3 = L9637D 2nd channel (UART1 GP4/5, LO→GP6) for
+concurrent 10AS/EAS/SRS. Each has its own 510 Ω pull-up + 100 nF Vcc decoupling
+cap (C1 for U2, C2 for U3). K nodes SEPARATE — never bridge.
+
+**Terminals:** ONE row, 9 total — `A1 A2 A3 · B1 B2 B3 · 12V · GND GND` — the
+OBD pigtail wires land **directly** on these (no patch-jumper layer; moving a
+wire between terminals IS the reconfiguration mechanism). Each channel splits
+into TWO nets, not one bussed node: **A1/A2 = the K-line node** (A1=OBD pin7
+engine, A2=OBD pin15/L — tied on purpose for this build, keeps GEMS 0xDA
+permanently open); **A3 = LI, a separate read-only listen tap** (used for the
+immobiliser-line sniffer). B1/B2/B3 mirror this for U3 (B1=OBD pin8 = 10AS).
+
+**Authoritative electrical doc (BOM/pins/nets):**
+`diagrams/PCB_Board_Scheme/PCB_Board_Scheme.md` — written for external
+submission to flux.ai (schematic capture MCP added 2026-09-29, needs a fresh
+session to load). `docs/two-board-rig.md` stays narrative/PCB-layout-strategy;
+`docs/hardware-shopping-list.md` is the parts list. All three passed an
+adversarial cross-check (2026-09-29) that found + fixed a real bug: Board 2's
+nets had OBD pin 7 shared between the ECU and the 10AS ("shared K bus") —
+recreating the exact contention the dual-transceiver split exists to avoid.
+Fixed to route via pin 8 for the 10AS, kept separate from pin 7/engine.
