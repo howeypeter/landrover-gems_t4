@@ -174,7 +174,7 @@ is a build choice:
   + Vs TVS. When JP1 is open and L is undriven, the L pin floats — harmless. The
   external driver transistor should be rated for the 12 V L-bus (≥40 V part).
 
-### Finalized Board 1 I/O — screw-terminal "K-patch" bank (2026-09-27)
+### Finalized Board 1 I/O — screw-terminal patch banks (2026-09-27, terminal scheme CORRECTED 2026-09-29)
 
 Because Board 1 uses an OBD pigtail landing on **PCB-mount screw terminals**, the
 "routable transceiver / VCSI-demux" idea is free — **the screw block IS the
@@ -184,23 +184,38 @@ selector.** No jumper header, no second chip needed for multi-module reach.
   the pigtail already carries all wires; future-proofs everything).
 - **Fixed terminals:** OBD **pin 16 → L9637D Vs** (via fuse + TVS); OBD **pin 4/5 →
   GND**. These never move.
-- **A bank of terminals all bussed to L9637D pin 6 (K)** — the "K-patch" node. To
-  talk to a module, land (or short-jumper) its OBD wire onto this node:
-  | Target | Land on the K-patch node |
+- **Each transceiver gets its own 3-terminal patch bank, split into TWO nets, not
+  one bussed node** (corrects the earlier "one bussed node" description):
+
+  | Terminal | Net | Purpose |
+  |---|---|---|
+  | **A1** | K-line (U1 pin 6) | default patch point — e.g. OBD pin 7 (engine K) |
+  | **A2** | K-line, **tied to A1** (same node, 2nd physical slot) | strap point — e.g. **for GEMS, land OBD pin 15 (L) here** to tie L↔K and open the 0xDA channel |
+  | **A3** | **LI** (U1 pin 8) — read-only line-in | listen-only tap for anything you want to *sniff* without driving — e.g. the 10AS→ECM mobilise wire on the bench |
+  | **B1** | K-line secondary (U3 pin 6) | default patch point for an *alternate* K-line bus — 10AS diagnostic line, EAS bus, etc. |
+  | **B2** | K-line secondary, **tied to B1** (same node) | strap point on the secondary bus, same role as A2 but for channel B |
+  | **B3** | **LI** (U3 pin 8) — read-only line-in | a second, independent listen-only tap |
+
+  So each channel (A/B) is a complete, general-purpose unit: **one driven K node
+  (2 slots) + one listen-only LI tap.** A and B never share a node with each other.
+  LO (U1 pin 2 / U3 pin 2) is **not** a terminal — it goes straight to the Pico
+  (**GP2** / **GP6**), since it's the comparator's output *to* the microcontroller,
+  not something you patch external wires onto.
+
+  | Target | Land on |
   |---|---|
-  | Engine, normal OBD | pin 7 only |
-  | GEMS **0xDA** | pin 7 **and** pin 15 (both on the node = the L↔K strap) |
-  | **10AS** (Disco 1) | pin 8 only — **remove pin 7** (else shared-node contention) |
-  | Airbag / others | pin 13 / etc. |
-  - ⚠️ **The K-patch terminals are ONE electrical node.** The labels are
-    organizational only — whatever is landed is tied together. For single-module
-    isolation, **populate only the one you want** (leaving the engine's pin 7 in
-    while probing the 10AS re-creates the shared-node contention that likely caused
-    the bench "phantom echo").
+  | Engine, normal OBD | OBD pin 7 → **A1** |
+  | GEMS **0xDA** | OBD pin 7 → **A1**, OBD pin 15 → **A2** (both on the K node = the L↔K strap) |
+  | **10AS** (Disco 1) diagnostic bus | OBD pin 8 → **B1** (own channel — do NOT also patch pin 7 into A1 at the same time if you want isolation, though A/B being separate nodes means it's no longer strictly required) |
+  | Immobiliser mobilise-line sniff (bench) | 10AS C225 p15 / ECM C1017 p26 → **A3** or **B3** |
+  | Airbag / EAS / other secondary bus | pin 13 / 11 / 12 → **B1** |
+  - ⚠️ **A1/A2 are ONE electrical node** (same for B1/B2) — whatever's landed on
+    either is tied together. **A3/B3 are separate, read-only nodes**, isolated from
+    the K nodes.
 - **CAN (6/14) and J1850 (2/10):** land on terminals but leave **unconnected** —
   out of scope for the L9637D, but available for a future daughterboard, no respin.
-- This subsumes JP1: the 0xDA strap is just "co-terminate pin 7 + pin 15 on the
-  K-patch node." A dedicated JP1 header is optional convenience.
+- This subsumes JP1: the 0xDA strap is just "OBD pin 7 → A1, OBD pin 15 → A2." A
+  dedicated JP1 header is no longer needed.
 
 Verified DLC pin meanings per model live in **`docs/dlc-pinouts.md`** (Disco 1:
 10AS on pin 8; P38: BeCM shares 7/15). Reaching the **10AS needs OBD pin 8**, not 7.
@@ -214,7 +229,7 @@ transceiver, and LI is **12 V-rated** (a bare Pico GPIO would be destroyed).
 
 ```
 10AS C225 p15 ──┬──► ECU C1017 p26     (mobilise — unchanged, still works)
-                └──► L9637D LI (pin 8)  (T'd tap; high-Z read-only, no pull-up/cap)
+                └──► terminal A3 (or B3) ──► L9637D LI (pin 8)  (high-Z read-only, no pull-up/cap)
 L9637D LO (pin 2) ──► Pico GP2 (physical pin 4)   (3.3 V digital copy; internal pull-up)
 + common ground between L9637D, 10AS, ECM; board powered.
 ```
@@ -243,13 +258,14 @@ engine on pin 7 *and* EAS on 11/12 concurrently).
 | UART | **UART0 / `Serial1`** | **UART1 / `Serial2`** |
 | TX (4) | Pico **GP0** | Pico **GP4** (`Serial2.setTX(4)`) |
 | RX (1) | Pico **GP1** | Pico **GP5** (`Serial2.setRX(5)`) |
-| LO (2) | Pico **GP2** (immo monitor) | Pico **GP6** (opt. 2nd monitor) |
-| K (6) | **R1 510 Ω → Vs**; K-patch **A** (dflt pin 7) | **R2 510 Ω → Vs**; K-patch **B** (dflt pin 8) |
+| LO (2) | Pico **GP2** (fixed wire, not a terminal) | Pico **GP6** (fixed wire, not a terminal) |
+| K (6) | **R1 510 Ω → Vs**; terminals **A1/A2** (dflt pin 7) | **R2 510 Ω → Vs**; terminals **B1/B2** (dflt pin 8) |
+| LI (8) | terminal **A3** (read-only listen tap) | terminal **B3** (read-only listen tap) |
 | Vs (7) / Vcc (3) / GND (5) | shared 12 V (fused+TVS) / 3V3 / GND | same shared rails |
 
 - **Two K nodes, kept SEPARATE** — each has its own 510 Ω pull-up and its own
-  K-patch terminal bank. **Never short the two K nodes** (that recreates the
-  shared-node contention that broke the 10AS probing).
+  A1/A2 (or B1/B2) terminal pair. **Never short the two K nodes** (that recreates
+  the shared-node contention that broke the 10AS probing).
 - **Shared power** — both chips off the one fused (1 A) + TVS 12 V node and the
   Pico 3V3. One fuse still covers both. (GP8/GP9 are the no-config UART1 default if
   you'd rather not `setTX/setRX`.)
