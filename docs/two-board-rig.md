@@ -361,7 +361,13 @@ V12S ── TB-ECU:+12main                (ECU C1033 pin 7)
 V12S ── SW2 ── TB-ECU:+12ign          (ECU C1033 pin 8)
 V12S ── TB-10AS:+12  (×2)             (10AS C225 pin 25 AND pin 10 — feed both)
 
-P2.7  (K) ── TB-ECU:K  ── TB-10AS:K   (ECU C1017 p23  +  10AS C225 p17)   [shared K bus]
+P2.7  (K1, Board 1 channel A / U2) ── TB-ECU:K    (ECU C1017 p23)
+P2.8  (K2, Board 1 channel B / U3) ── TB-10AS:K   (10AS C225 p17)
+                                       [K1 and K2 stay SEPARATE through Board 2 —
+                                        never bridge them; see the dual-transceiver
+                                        note above. Fixes an earlier draft that
+                                        shared both onto pin 7, which would recreate
+                                        the shared-node contention.]
 P2.15 (L) ── TB-ECU:L                 (ECU C1017 p20 only — 10AS has no L)
 
 GND (J2−) ── P2.4 ── P2.5 ──
@@ -387,7 +393,8 @@ lets the 10AS mobilise the ECM on the bench — see `docs/10as-pinout.md`.
 | Signal | Car mode | Bench mode |
 |---|---|---|
 | +12 V | car OBD pin 16 → Board 1 | DC adapter → Board 2 → OBD pin 16 → Board 1 |
-| K-line | Board 1 ↔ car ECU (OBD pin 7) | Board 1 ↔ Board 2 → ECU C1017 p23 **and** 10AS C225 p17 |
+| K1 (engine, U2) | Board 1 ↔ car ECU (OBD pin 7) | Board 1 ↔ Board 2 → ECU C1017 p23 |
+| K2 (secondary, U3) | Board 1 ↔ car pin 8 module | Board 1 ↔ Board 2 → 10AS C225 p17 — **separate from K1**, never bridged |
 | L-line | Board 1 terminal A2↔K, OBD pin 15 → car | Board 1 terminal A2↔K, OBD pin 15 → Board 2 → ECU C1017 p20 |
 | GND | car OBD pin 4/5 | DC adapter → Board 2 → OBD pin 4/5 + ECU + 10AS |
 | U1 (Pico) power | buck → VSYS (route A), USB optional (data/flashing) | same — buck fed from Board 2's DC 12 V via the OBD pass-through |

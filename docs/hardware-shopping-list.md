@@ -33,7 +33,7 @@ Two build tiers:
 | (opt.) Zener/TVS ~5.6–6.2 V | e.g. SMAJ5.0A | — | VSYS→GND, failsafe vs a shorted buck |
 | Cap 100 nF ceramic ("104") | 50 V+ | — | optional Vcc decoupling. **Skip** the ≤1.3 nF K cap |
 | **male J1962 pigtail** | OBD2 plug on a flying lead | — | into a car OR into Board 2 |
-| PCB screw terminal blocks | 5 mm pitch, several | — | full 16-pin pigtail lands here; **two K-patch banks** (A→U2, B→U3) |
+| PCB screw terminal blocks | 5 mm pitch, 9-way (one row) | — | the OBD pigtail's wires land **directly** on these — no separate patch bank; A1/A2/A3→U2, B1/B2/B3→U3 |
 
 ### Enclosure (Board 1 box)
 Only **two things enter the box**: the **OBD2 pigtail** and the **microUSB**.
@@ -42,8 +42,9 @@ Everything else is internal. Notes:
   WiFi/BLE.
 - **USB to the wall:** a **panel-mount USB extension** to a box-wall connector is
   cleaner and saves the Pico's fragile onboard micro-USB (vs. a bare cutout).
-- **JP1 access:** if you'll switch car-OBD ↔ GEMS/0xDA modes often, bring JP1 out
-  as a **panel toggle**; otherwise leave it an internal jumper.
+- **Terminal access:** the 9-terminal block (A1/A2/A3/B1/B2/B3/12V/GND/GND) is
+  the reconfiguration mechanism — no jumper header needed. Mount it somewhere
+  accessible if you'll move wires (e.g. car-OBD vs GEMS/0xDA mode) often.
 - **Optional status LED** on the face (power/comms).
 
 ### Universal build — add for the external L-line driver (multi-make)
@@ -56,7 +57,9 @@ The L9637D senses but can't **drive** L; 5-baud-init cars (VAG KWP1281 etc.) nee
 | Resistor ~510 Ω–1 kΩ | ¼ W | L-bus pull-up |
 | (1 Pico GPIO) | — | firmware "drive L" line |
 
-GEMS-simple build omits all four (LI→GND, LO→n/c, passive JP1 strap only).
+GEMS-simple build omits all four — LI stays on its read-only terminal (A3/B3,
+unused for now), LO still wires to the Pico (GP2/GP6); L (OBD pin 15) just
+lands on terminal A2 as the passive strap.
 
 ---
 
@@ -81,7 +84,7 @@ GEMS-simple build omits all four (LI→GND, LO→n/c, passive JP1 strap only).
 | Perfboard | 0.1″ pitch, ×2 | one per board |
 | Hookup wire | 22 AWG | keep +12 V / ECU-power runs good for a few A |
 | Dupont / header pins | assorted | bench wiring |
-| USB cable | data-capable micro/USB-C | Pico power + data (USB-only power — no buck/Schottky/VSYS) |
+| USB cable | data-capable micro/USB-C | Pico data + optional power — on-car power is the buck → 1N5817 → VSYS path (route A, §1); USB just diode-ORs in automatically |
 
 ---
 
