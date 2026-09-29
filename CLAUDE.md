@@ -1064,6 +1064,28 @@ up):**
   "ECU-to-engine matching" procedure. Ties into
   [EPROM programmability] and [4.0/4.6 toggle] above.
 
+- **EA (External Access) pin — possible hardware bypass of the 87C196KC's
+  internal security/ROM protection.** Logged 2026-09-29 from a user-heard
+  claim ("ground a pin and it takes down security, gives access to the
+  bootloader or memory") — **UNVERIFIED**, same status as the other
+  external/community leads in `docs/chip-tooling.md`. Plausible mechanism:
+  the Intel 8XC196 family (GEMS's core) has a documented **EA pin**, sampled
+  at reset, that selects internal-ROM vs external-memory program fetch. On a
+  locked/masked chip, forcing external-access mode is a known general
+  technique (used across embedded/automotive hacking, not GEMS-specific
+  confirmation) for substituting your own code path in place of the
+  internal secured code — potentially reachable without EMFI/fault
+  injection (see the PicoEMP fallback already logged in `docs/chip-tooling.md`).
+  Backlog: (1) confirm the EA pin's exact behavior in the 87C196KC datasheet,
+  (2) locate it on the GEMS ECU's actual pinout (`docs/gems-ecu-pinout.md` /
+  `docs/gems_t4-manual.html`) — not yet cross-referenced, (3) bench-test ONLY
+  on a spare/parts ECU (pin state at reset is timing-sensitive; wrong
+  handling risks a non-responsive chip, not a graceful failure) before
+  considering it for a real diagnostic workflow. Ties to the [EPROM
+  programmability] item and the EMFI/PicoEMP fallback already in
+  `docs/chip-tooling.md` — if EA-mode access works, it may make the more
+  invasive fault-injection approach unnecessary.
+
 - **Read the EKA code from the Lucas 10AS (Discovery 1 alarm/immobiliser).**
   Requested 2026-09-07. The **EKA (Emergency Key Access)** is the 4-digit code
   that lets you disarm the alarm / mobilise via the key when the fob fails. On
