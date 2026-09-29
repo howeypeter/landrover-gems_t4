@@ -39,8 +39,12 @@ harness); each wire in the pigtail screws into a **PCB-mount screw terminal
 block** on the perfboard. So on every board the *board-side* of each interface is
 a screw terminal block:
 
-- **Board 1:** a **male J1962 pigtail** → its 5 used wires screw into a 5-way
-  terminal block (12 V / GND / GND / K / L).
+- **Board 1:** a **male J1962 pigtail** → its wires screw **directly** into the
+  9-terminal block described below (A1/A2/A3, B1/B2/B3, GND, GND, 12V). There is
+  no separate "patch bank" downstream of a J1962 terminal block — the terminals
+  ARE the pigtail termination points. **Reconfiguring which vehicle line goes to
+  which transceiver channel = physically moving which pigtail wire is screwed into
+  which terminal** — that's the whole point of screw terminals over solder joints.
 - **Board 2:** a **female J1962 pigtail** → screw terminal block; plus the DC
   jack, the ECU terminal block and the 10AS terminal block.
 
@@ -174,48 +178,52 @@ is a build choice:
   + Vs TVS. When JP1 is open and L is undriven, the L pin floats — harmless. The
   external driver transistor should be rated for the 12 V L-bus (≥40 V part).
 
-### Finalized Board 1 I/O — screw-terminal patch banks (2026-09-27, terminal scheme CORRECTED 2026-09-29)
+### Finalized Board 1 I/O — the 9-terminal block IS the OBD pigtail termination (2026-09-27, terminal scheme CORRECTED 2026-09-29)
 
-Because Board 1 uses an OBD pigtail landing on **PCB-mount screw terminals**, the
-"routable transceiver / VCSI-demux" idea is free — **the screw block IS the
-selector.** No jumper header, no second chip needed for multi-module reach.
+Board 1 has **ONE terminal block, stacked two rows, 9 terminals total** — and the
+OBD pigtail wires land **directly** on these terminals. There is no separate
+downstream "patch bank" — the terminals themselves are both the pigtail
+termination point AND the transceiver-channel selector. **The screw terminals ARE
+the reconfiguration mechanism**: to change which vehicle line a channel talks to,
+you physically move which pigtail wire is screwed into which terminal.
 
-- **Land the FULL 16-pin pigtail** on labelled terminals (costs nothing extra —
-  the pigtail already carries all wires; future-proofs everything).
-- **Fixed terminals:** OBD **pin 16 → L9637D Vs** (via fuse + TVS); OBD **pin 4/5 →
-  GND**. These never move.
-- **Each transceiver gets its own 3-terminal patch bank, split into TWO nets, not
-  one bussed node** (corrects the earlier "one bussed node" description):
+```
+ONE ROW:    [ A1 ][ A2 ][ A3 ]   [ B1 ][ B2 ][ B3 ]   [ 12V ]   [GND ][GND ]
+```
 
-  | Terminal | Net | Purpose |
-  |---|---|---|
-  | **A1** | K-line (U1 pin 6) | default patch point — e.g. OBD pin 7 (engine K) |
-  | **A2** | K-line, **tied to A1** (same node, 2nd physical slot) | strap point — e.g. **for GEMS, land OBD pin 15 (L) here** to tie L↔K and open the 0xDA channel |
-  | **A3** | **LI** (U1 pin 8) — read-only line-in | listen-only tap for anything you want to *sniff* without driving — e.g. the 10AS→ECM mobilise wire on the bench |
-  | **B1** | K-line secondary (U3 pin 6) | default patch point for an *alternate* K-line bus — 10AS diagnostic line, EAS bus, etc. |
-  | **B2** | K-line secondary, **tied to B1** (same node) | strap point on the secondary bus, same role as A2 but for channel B |
-  | **B3** | **LI** (U3 pin 8) — read-only line-in | a second, independent listen-only tap |
+Each terminal has a fixed internal trace to a transceiver pin; each pigtail wire
+is landed wherever you want that OBD line to go:
 
-  So each channel (A/B) is a complete, general-purpose unit: **one driven K node
-  (2 slots) + one listen-only LI tap.** A and B never share a node with each other.
-  LO (U1 pin 2 / U3 pin 2) is **not** a terminal — it goes straight to the Pico
-  (**GP2** / **GP6**), since it's the comparator's output *to* the microcontroller,
-  not something you patch external wires onto.
+| Terminal | Internal net | Current build's pigtail wire |
+|---|---|---|
+| **A1** | U1 pin 6 (K) | OBD **pin 7** (engine K-line) |
+| **A2** | U1 pin 6 (K) — **same node as A1**, 2nd slot | OBD **pin 15** (L-line) — **intentionally tied to A1**, so U1 always has the GEMS 0xDA L↔K strap open |
+| **A3** | U1 pin 8 (LI) — read-only listen tap | not currently used |
+| **B1** | U3 pin 6 (K, secondary channel) | OBD **pin 8** (10AS diagnostic bus) |
+| **B2** | U3 pin 6 (K) — same node as B1, 2nd slot | not currently used |
+| **B3** | U3 pin 8 (LI) — read-only listen tap | not currently used |
+| **GND** | common ground | OBD pin 4 |
+| **GND** | common ground | OBD pin 5 |
+| **12V** | fuse → TVS → {Vs, buck} | OBD pin 16 |
 
-  | Target | Land on |
-  |---|---|
-  | Engine, normal OBD | OBD pin 7 → **A1** |
-  | GEMS **0xDA** | OBD pin 7 → **A1**, OBD pin 15 → **A2** (both on the K node = the L↔K strap) |
-  | **10AS** (Disco 1) diagnostic bus | OBD pin 8 → **B1** (own channel — do NOT also patch pin 7 into A1 at the same time if you want isolation, though A/B being separate nodes means it's no longer strictly required) |
-  | Immobiliser mobilise-line sniff (bench) | 10AS C225 p15 / ECM C1017 p26 → **A3** or **B3** |
-  | Airbag / EAS / other secondary bus | pin 13 / 11 / 12 → **B1** |
-  - ⚠️ **A1/A2 are ONE electrical node** (same for B1/B2) — whatever's landed on
-    either is tied together. **A3/B3 are separate, read-only nodes**, isolated from
-    the K nodes.
-- **CAN (6/14) and J1850 (2/10):** land on terminals but leave **unconnected** —
-  out of scope for the L9637D, but available for a future daughterboard, no respin.
-- This subsumes JP1: the 0xDA strap is just "OBD pin 7 → A1, OBD pin 15 → A2." A
-  dedicated JP1 header is no longer needed.
+- **A1/A2 are ONE electrical node** (same for B1/B2) — whatever's landed on either
+  is tied together permanently until a wire is physically moved. **A3/B3 are
+  separate, read-only LI nodes**, isolated from the K nodes.
+- **A1+A2 tied to pins 7+15 is a deliberate design choice for this build** — it
+  keeps U1's 0xDA channel permanently open rather than optional/removable. To go
+  back to plain OBD (no L↔K strap), unscrew the pin-15 wire from A2. To route L
+  elsewhere instead (e.g. if not using the immobiliser work), move it to B1/B2/B3
+  as needed — **that's the reconfiguration model: move wires between screws, not
+  jumpers or code.**
+- LO (U1 pin 2 / U3 pin 2) is **not** a terminal — it's a fixed internal wire
+  straight to the Pico (**GP2** / **GP6**), since it's the comparator's output *to*
+  the microcontroller, never something an external pigtail wire connects to.
+- **The other 10 OBD pins** (1, 2, 3, 6, 9, 10, 11, 12, 13, 14 — incl. CAN 6/14 and
+  J1850 2/10) are simply **not landed on any terminal** in this 9-terminal build.
+  Out of scope for the L9637D; add more terminal slots later if a use-case needs
+  them (no respin — same perfboard/PCB, more terminals).
+- This subsumes JP1 — a dedicated jumper header is not needed; the terminal screws
+  do that job.
 
 Verified DLC pin meanings per model live in **`docs/dlc-pinouts.md`** (Disco 1:
 10AS on pin 8; P38: BeCM shares 7/15). Reaching the **10AS needs OBD pin 8**, not 7.
