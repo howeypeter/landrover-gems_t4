@@ -15,10 +15,10 @@ OBD pin reaches which vehicle module).
 | Ref | Part | Value / Spec | Notes |
 |---|---|---|---|
 | J1 | OBD2 pigtail | Male J1962, 9 wires terminated | Wires land directly on the board's terminal block — no separate connector |
-| U1 | ST L9637D | SOIC-8 | K-line transceiver, primary channel (engine) |
+| U1 | Raspberry Pi Pico 2 W | — | Host MCU; two hardware UARTs drive U2 and U3 independently |
+| U2 | ST L9637D | SOIC-8 | K-line transceiver, primary channel (engine) |
 | U3 | ST L9637D | SOIC-8 | K-line transceiver, secondary channel |
-| U2 | Raspberry Pi Pico 2 W | — | Host MCU; two hardware UARTs drive U1 and U3 independently |
-| R1 | Resistor | 510 Ω | K-line pull-up for U1 (K ↔ Vs) |
+| R1 | Resistor | 510 Ω | K-line pull-up for U2 (K ↔ Vs) |
 | R2 | Resistor | 510 Ω | K-line pull-up for U3 (K ↔ Vs) |
 | F1 | Fuse | 1 A | Inline on the +12 V input, protects the whole board |
 | D1 | TVS diode | 1.5KE24A, 24 V standoff, unidirectional | Clamps the fused 12 V node |
@@ -42,9 +42,9 @@ Physical order, left to right, single row:
 
 | Terminal | Internal net | This build's OBD pin |
 |---|---|---|
-| A1 | K1 (U1 pin 6) | pin 7 — engine K-line |
-| A2 | K1 (U1 pin 6) — **same node as A1** | pin 15 — L-line, **intentionally tied to A1** (keeps the GEMS 0xDA L↔K strap permanently open) |
-| A3 | LI1 (U1 pin 8, read-only) | not currently used |
+| A1 | K1 (U2 pin 6) | pin 7 — engine K-line |
+| A2 | K1 (U2 pin 6) — **same node as A1** | pin 15 — L-line, **intentionally tied to A1** (keeps the GEMS 0xDA L↔K strap permanently open) |
+| A3 | LI1 (U2 pin 8, read-only) | not currently used |
 | B1 | K2 (U3 pin 6) | pin 8 — 10AS diagnostic bus |
 | B2 | K2 (U3 pin 6) — same node as B1 | not currently used |
 | B3 | LI2 (U3 pin 8, read-only) | not currently used |
@@ -57,7 +57,7 @@ J1850 on 2/10) are **not landed on any terminal** in this build.
 
 ---
 
-## 3. U1 — L9637D (primary / engine channel)
+## 3. U2 — L9637D (primary / engine channel)
 
 | Pin | Name | Net | Direction |
 |---|---|---|---|
@@ -76,7 +76,7 @@ J1850 on 2/10) are **not landed on any terminal** in this build.
 
 ## 4. U3 — L9637D (secondary channel)
 
-Identical pin function to U1, on its own independent net set:
+Identical pin function to U2, on its own independent net set:
 
 | Pin | Name | Net | Direction |
 |---|---|---|---|
@@ -110,7 +110,7 @@ J1 pin 16 (+12V)
  VS_FUSED ──────────────┬───────────────┬──────────────────────┐
    │                    │               │                      │
    ▼                    ▼               ▼                      ▼
- [D1] TVS           U1 pin 7 (Vs)   U3 pin 7 (Vs)          REG1 VIN
+ [D1] TVS           U2 pin 7 (Vs)   U3 pin 7 (Vs)          REG1 VIN
  1.5KE24A                                                  (buck 12→5V)
  (→ GND, clamp)                                                 │
                                                                  ▼
@@ -121,14 +121,14 @@ J1 pin 16 (+12V)
                                                           (band → Pico)
                                                                  │
                                                                  ▼
-                                                        Pico VSYS (pin 39)
+                                                        Pico (U1) VSYS (pin 39)
                                                                  ▲
                                                                  │
                                                     (diode-ORs automatically
                                                      with USB VBUS — no switch)
 ```
 
-- **F1 (1 A)** is the only fuse on the board — it protects the L9637D pull-ups,
+- **F1 (1 A)** is the only fuse on the board — it protects both L9637D pull-ups,
   the TVS, and the buck, since all three tap the same fused node.
 - **D1 (TVS)** sits across VS_FUSED → GND, clamping automotive load-dump spikes
   before they reach either transceiver's Vs pin or the buck's input.
@@ -150,10 +150,10 @@ J1 pin 16 (+12V)
 |---|---|
 | J1 pin 4 (chassis ground) | GND |
 | J1 pin 5 (signal ground) | GND |
-| U1 pin 5 | GND |
+| U2 pin 5 | GND |
 | U3 pin 5 | GND |
 | REG1 GND | GND |
-| Pico GND | GND |
+| U1 (Pico) GND | GND |
 | D1 (TVS) cathode return | GND |
 
 **Pins 4 and 5 are intentionally bonded into one net (GND).** They're
@@ -165,26 +165,26 @@ and the Pico — are a single electrical net.
 
 ---
 
-## 7. Pico 2 W pin usage
+## 7. U1 (Pico 2 W) pin usage
 
 | Pico pin | Net | Purpose |
 |---|---|---|
 | VSYS (39) | VSYS_5V | Power in from the buck (via D2), diode-OR'd with USB |
 | VBUS (40) | — (not used) | USB power — never wired to anything on this board |
-| 3V3 | P3V3 | Powers U1.VCC and U3.VCC |
+| 3V3 | P3V3 | Powers U2.VCC and U3.VCC |
 | GND | GND | Common ground |
-| GP0 | K1_TX | Drives U1's TX (K-line output) |
-| GP1 | K1_RX | Reads U1's RX (K-line input) |
-| GP2 | K1_LO | Reads U1's LI-comparator result (immobiliser-line sniffer, channel 1) |
+| GP0 | K1_TX | Drives U2's TX (K-line output) |
+| GP1 | K1_RX | Reads U2's RX (K-line input) |
+| GP2 | K1_LO | Reads U2's LI-comparator result (immobiliser-line sniffer, channel 1) |
 | GP4 | K2_TX | Drives U3's TX |
 | GP5 | K2_RX | Reads U3's RX |
 | GP6 | K2_LO | Reads U3's LI-comparator result (channel 2) |
 
-GP0/GP1 = UART0 (`Serial1`, driving U1). GP4/GP5 = UART1 (`Serial2`, driving
-U3) — two independent hardware UARTs, so U1 and U3 can run at different bauds
+GP0/GP1 = UART0 (`Serial1`, driving U2). GP4/GP5 = UART1 (`Serial2`, driving
+U3) — two independent hardware UARTs, so U2 and U3 can run at different bauds
 simultaneously (e.g. engine at 10400, a 10AS-style bus at 9600).
 
-⚠️ **Firmware note:** as of this writing, only the U1/Serial1 path is wired up
+⚠️ **Firmware note:** as of this writing, only the U2/Serial1 path is wired up
 in `pico_kline_all`. Using U3 requires adding a `channel` selector (0 = Serial1,
 1 = Serial2) to the host-protocol commands — the hardware is ready, the
 firmware isn't yet.
@@ -195,21 +195,21 @@ firmware isn't yet.
 
 | Net | Members |
 |---|---|
-| K1 | Terminal A1, Terminal A2, U1 pin 6, R1 pin A |
-| K1_TX | U1 pin 4, Pico GP0 |
-| K1_RX | U1 pin 1, Pico GP1 |
-| K1_LO | U1 pin 2, Pico GP2 |
-| LI1 | Terminal A3, U1 pin 8 |
+| K1 | Terminal A1, Terminal A2, U2 pin 6, R1 pin A |
+| K1_TX | U2 pin 4, U1 GP0 |
+| K1_RX | U2 pin 1, U1 GP1 |
+| K1_LO | U2 pin 2, U1 GP2 |
+| LI1 | Terminal A3, U2 pin 8 |
 | K2 | Terminal B1, Terminal B2, U3 pin 6, R2 pin A |
-| K2_TX | U3 pin 4, Pico GP4 |
-| K2_RX | U3 pin 1, Pico GP5 |
-| K2_LO | U3 pin 2, Pico GP6 |
+| K2_TX | U3 pin 4, U1 GP4 |
+| K2_RX | U3 pin 1, U1 GP5 |
+| K2_LO | U3 pin 2, U1 GP6 |
 | LI2 | Terminal B3, U3 pin 8 |
 | 12V_IN | Terminal 12V, F1 pin A |
-| VS_FUSED | F1 pin B, D1 anode-side, U1 pin 7, U3 pin 7, REG1 VIN, R1 pin B, R2 pin B |
-| VSYS_5V | REG1 VOUT, D2 anode, D2 cathode → Pico VSYS |
-| P3V3 | Pico 3V3, U1 pin 3, U3 pin 3 |
-| GND | Terminal GND ×2 (OBD pins 4 & 5), U1 pin 5, U3 pin 5, REG1 GND, Pico GND, D1 cathode-side |
+| VS_FUSED | F1 pin B, D1 anode-side, U2 pin 7, U3 pin 7, REG1 VIN, R1 pin B, R2 pin B |
+| VSYS_5V | REG1 VOUT, D2 anode, D2 cathode → U1 VSYS |
+| P3V3 | U1 3V3, U2 pin 3, U3 pin 3 |
+| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, D1 cathode-side |
 
 ---
 
@@ -231,3 +231,7 @@ firmware isn't yet.
   board hold two K-line sessions open at once (e.g. talking to the engine ECM
   while also reading a 10AS-style diagnostic bus), without the contention that
   comes from putting two vehicle modules on one shared node.
+- **Why U1 = the Pico:** the Pico is the board's host/brain — it owns every
+  protocol decision, both UARTs, and the wireless links — so it takes the
+  U1 designator by convention; U2/U3 are the peripheral transceiver ICs it
+  drives.
