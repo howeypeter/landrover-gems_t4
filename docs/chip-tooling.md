@@ -125,3 +125,28 @@ Second Gemini message claims the 10AS→ECM mobilise signal is a **fixed 16-bit 
 - **Takeaway:** IF fixed, the code lives in the EEPROM (ECM A4–A8 via `0x3C` / T48,
   and the 10AS EEPROM) — **read the chip, not the wire** (the wire came up empty).
   Reinforces the T48/0x3C plan; do NOT re-chase wire-sniffing on this claim alone.
+
+## Fault injection (EMFI) — a REAL fallback via PicoEMP (not ruled out)
+
+Revised 2026-09-28 (was briefly "ruled out"). The specific attack in O'Flynn's
+"Bam the BAM" paper (glitch the BAM password check) is **PowerPC/MPC5xxx-specific**
+and does NOT apply to GEMS. BUT the underlying **fault-injection technique is
+general** and applies to any MCU, including the GEMS **Intel 87C196KC**.
+
+- **Where it could help GEMS:** (1) ⭐ **extract locked INTERNAL 87C196KC code** IF
+  the T48 can't read it (the internal-vs-external code-split caveat — critical code
+  like the immo validation / `$27` handler *might* be in the MCU's read-protected
+  internal memory, not the external 27C1001). Fault injection is the standard way to
+  defeat read-out protection. (2) Glitch the immobiliser validation branch to
+  mobilise without the code.
+- **Cost barrier is GONE:** the **PicoEMP** (NewAE — same folks as the paper) is an
+  **open-source ~$30 RP2040-based EMFI tool** (a Pico + HV pulse circuit), vs a ~$3k
+  ChipShouter. Fits our existing Pico toolchain.
+- **Still effort-intensive / not plug-and-play:** PicoEMP is only the pulse
+  generator; a working attack also needs a trigger, success/failure detection,
+  target power/reset control, and probe XY+timing+voltage sweeping. Success not
+  guaranteed.
+- **Gating:** only needed IF the T48 dump shows critical code is **locked inside the
+  MCU**. If it's all in the external 27C1001 (our assumption), just READ it — no EMFI.
+  **So: dump with the T48 FIRST, check the code split; keep PicoEMP as the cheap
+  plan-B for locked internal code / immo-glitch.**
