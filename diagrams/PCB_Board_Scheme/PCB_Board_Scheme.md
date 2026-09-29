@@ -24,6 +24,8 @@ OBD pin reaches which vehicle module).
 | D1 | TVS diode | 1.5KE24A, 24 V standoff, unidirectional | Clamps the fused 12 V node |
 | REG1 | Buck converter | Fixed 5 V out, 5–30 V in, 3 A | Steps 12 V down for the Pico |
 | D2 | Schottky diode | 1N5817, 1 A / 20 V | Buck output → Pico VSYS; diode-ORs with USB power |
+| C1 | Ceramic capacitor | 100 nF ("104"), 50 V+ | Vcc decoupling for U2, mounted close to U2 pin 3 |
+| C2 | Ceramic capacitor | 100 nF ("104"), 50 V+ | Vcc decoupling for U3, mounted close to U3 pin 3 |
 
 ---
 
@@ -71,6 +73,8 @@ J1850 on 2/10) are **not landed on any terminal** in this build.
 | 8 | LI | LI1 (= terminal A3) | input, read-only listen tap |
 
 **R1 (510 Ω)** bridges pin 6 (K) and pin 7 (Vs) — the required K-line pull-up.
+**C1 (100 nF)** bridges pin 3 (VCC) and pin 5 (GND) — Vcc decoupling, mounted
+close to the chip.
 
 ---
 
@@ -90,7 +94,8 @@ Identical pin function to U2, on its own independent net set:
 | 8 | LI | LI2 (= terminal B3) | input, read-only listen tap |
 
 **R2 (510 Ω)** bridges pin 6 (K) and pin 7 (Vs) — the pull-up for the secondary
-channel.
+channel. **C2 (100 nF)** bridges pin 3 (VCC) and pin 5 (GND) — Vcc decoupling,
+mounted close to the chip.
 
 ⚠️ **K1 and K2 are separate nets — never bridge them.** Bridging the two K-line
 buses recreates the shared-node contention that caused the earlier "phantom
@@ -155,6 +160,8 @@ J1 pin 16 (+12V)
 | REG1 GND | GND |
 | U1 (Pico) GND | GND |
 | D1 (TVS) cathode return | GND |
+| C1 pin B | GND |
+| C2 pin B | GND |
 
 **Pins 4 and 5 are intentionally bonded into one net (GND).** They're
 electrically distinct on a real vehicle (chassis vs. signal reference), but our
@@ -208,8 +215,8 @@ firmware isn't yet.
 | 12V_IN | Terminal 12V, F1 pin A |
 | VS_FUSED | F1 pin B, D1 anode-side, U2 pin 7, U3 pin 7, REG1 VIN, R1 pin B, R2 pin B |
 | VSYS_5V | REG1 VOUT, D2 anode, D2 cathode → U1 VSYS |
-| P3V3 | U1 3V3, U2 pin 3, U3 pin 3 |
-| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, D1 cathode-side |
+| P3V3 | U1 3V3, U2 pin 3, U3 pin 3, C1 pin A, C2 pin A |
+| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, D1 cathode-side, C1 pin B, C2 pin B |
 
 ---
 
