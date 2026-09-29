@@ -23,17 +23,17 @@ Two build tiers:
 
 | Item | Spec | Have? | Notes |
 |---|---|---|---|
-| Raspberry Pi Pico / Pico 2 (W) | RP2040/RP2350 | ✅ have (1) | 2 hardware UARTs → drives both transceivers |
-| ST L9637D ×**2** (U1 + U3) | SO-8 + SO-8→DIP breakout ×2 | have 2 chips | **U1** = engine K-line (UART0 GP0/1); **U3** = 2nd channel (UART1 GP4/5) for 10AS/EAS/SRS |
+| Raspberry Pi Pico / Pico 2 (W) (**U1**) | RP2040/RP2350 | ✅ have (1) | Host MCU; 2 hardware UARTs → drives both transceivers |
+| ST L9637D ×**2** (U2 + U3) | SO-8 + SO-8→DIP breakout ×2 | have 2 chips | **U2** = engine K-line (UART0 GP0/1); **U3** = 2nd channel (UART1 GP4/5) for 10AS/EAS/SRS |
 | Resistor 510 Ω ×**2** (R1, R2) | ¼ W | — | **required** K→Vs pull-up, one per transceiver |
 | **TVS 1.5KE24A** | 1500 W, 24 V, unidirectional | ✅ have (20-pk) | 12 V-node clamp (protects both Vs + the buck). DO-27 leads are fat: ream/bend |
-| Inline fuse + holder | **1–2 A** | — | one, on the +12 V (OBD pin 16) feed; covers both chips + buck |
+| Inline fuse + holder | **1 A** (F1) | — | one, on the +12 V (OBD pin 16) feed; covers both chips + buck |
 | **Buck converter 12→5 V** | fixed 5 V, 5–30 Vin, 3 A | ✅ have (6-pk) | OBD-12V → Pico 5 V so it's self-powered on-car (route A) |
 | **Schottky 1N5817** | 1 A, 20 V | ✅ have (pk) | buck 5 V → **VSYS (pin 39)**; diode-ORs with USB, no switch. Band toward Pico |
 | (opt.) Zener/TVS ~5.6–6.2 V | e.g. SMAJ5.0A | — | VSYS→GND, failsafe vs a shorted buck |
 | Cap 100 nF ceramic ("104") | 50 V+ | — | optional Vcc decoupling. **Skip** the ≤1.3 nF K cap |
 | **male J1962 pigtail** | OBD2 plug on a flying lead | — | into a car OR into Board 2 |
-| PCB screw terminal blocks | 5 mm pitch, several | — | full 16-pin pigtail lands here; **two K-patch banks** (A→U1, B→U3) |
+| PCB screw terminal blocks | 5 mm pitch, several | — | full 16-pin pigtail lands here; **two K-patch banks** (A→U2, B→U3) |
 
 ### Enclosure (Board 1 box)
 Only **two things enter the box**: the **OBD2 pigtail** and the **microUSB**.
@@ -129,7 +129,7 @@ Off-board wire: **10AS C225 pin 15 → ECU C1017 pin 26** (coded mobilise). See
 **Still to get:**
 - **2× SO-8→DIP breakout** (one per L9637D)
 - **2× 510 Ω** resistor (R1, R2 — one pull-up per transceiver)
-- **1–2 A inline fuse** + holder (one, covers both chips + buck)
+- **1 A inline fuse** (F1) + holder (one, covers both chips + buck)
 - **male + female J1962 pigtail** pair
 - **PCB-mount screw terminal blocks** (5 mm pitch, several — full 16-pin + 2 K-patch banks)
 - Board 2: **DC barrel jack**, **2 A fuse**, two **toggle switches**

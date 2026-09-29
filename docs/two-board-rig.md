@@ -104,7 +104,7 @@ Board 1 should add a **small external open-collector L driver** (one Pico GPIO �
 ~1 kΩ → NPN/MOSFET pulling the L net low, with a pull-up), which is exactly the
 classic KKL-cable topology (L9637D for K + a transistor for L). The three L modes
 are then **mutually exclusive per session**: K-only, K + driven-L, or K + L↔K
-strap (GEMS/JP1) — don't drive L while it's strapped to K. See the L-line notes
+strap (GEMS, via terminal A2) — don't drive L while it's strapped to K. See the L-line notes
 below; the GEMS-simple build omits the driver, the universal build adds it.
 
 ## J1962 (OBD2) pins used
@@ -123,64 +123,50 @@ below; the GEMS-simple build omits the driver, the universal build adds it.
 
 ## Board 1 — MAIN (universal adapter)
 
-### Parts
-| Ref | Part | Notes |
-|---|---|---|
-| U2 | Raspberry Pi Pico / Pico 2 (W) | powered over **microUSB** |
-| U1 | ST L9637D (SO-8) | K-line transceiver; on a SO-8→DIP breakout for perfboard |
-| R1 | **510 Ω** | K→Vs pull-up — **required** |
-| D1 | **1.5KE24A** TVS (24 V, uni) | Vs clamp — **populated** (Board 1 is car-capable) |
-| F1 | **1–2 A** fuse (inline/holder) | on the +12 V (OBD pin 16) feed |
-| C1 | 100 nF ceramic | Vcc decoupling (optional) |
-| JP1 | 2-pin header + shunt | **L↔K tie** (fit for bench/proprietary; pull for plain car OBD) |
-| P1 | **male J1962 pigtail** + 5-way PCB screw terminal block | the one external interface; pigtail leads screw in (12V/GND/GND/K/L) — no OBD housing on the board |
+**Full electrical detail (BOM, every pin, every net) lives in the standalone
+reference: [`diagrams/PCB_Board_Scheme/PCB_Board_Scheme.md`](../diagrams/PCB_Board_Scheme/PCB_Board_Scheme.md).**
+That file is the single source of truth for exact refdes/pins/nets; this doc
+stays narrative/rationale-focused to avoid the two drifting apart.
 
-### Nets
-```
-OBD.16 (+12V) ── F1 ── D1(TVS)→GND ── U1.7 (Vs)
-U1.7 (Vs) ── R1 510Ω ── U1.6 (K)               [K node]
-U1.6 (K)  ── OBD.7  (K-line out)
-OBD.15 (L) ── JP1 ── U1.6 (K node)             [L↔K tie, removable]
-U1.3 (Vcc) ── Pico 3V3 ;  C1 0.1µF U1.3→GND
-U1.4 (TX) ── Pico GP0  ;  U1.1 (RX) ── Pico GP1
-U1.8 (LI) ── GND       ;  U1.2 (LO) ── n/c
-GND net: U1.5 + Pico GND + OBD.4 + OBD.5        [star ground]
-Pico USB ── laptop/charger (5 V + data)         [12 V NEVER touches the Pico]
-```
+**Reference designators (locked 2026-09-29): U1 = Pico 2 W** (host MCU),
+**U2 = L9637D** (primary/engine channel), **U3 = L9637D** (secondary channel).
 
-Notes:
-- **Vcc = 3.3 V from the Pico, never 5 V** (RX idles at Vcc → would injure GP1).
-- **12 V lands only on U1 pin 7.** Verify L9637D pin-1 orientation before power.
-- TVS + fuse are populated here so Board 1 is protected **in the car**; on the
-  clean bench 12 V they simply sit idle.
+- **Vcc = 3.3 V from the Pico, never 5 V** (RX idles at Vcc → would injure the
+  Pico's GPIO).
+- **12 V lands only on U2/U3 pin 7 (Vs) and the buck input.** Verify L9637D
+  pin-1 orientation before power.
+- **TVS (D1) + fuse (F1)** are populated so Board 1 is protected **in the
+  car**; on the clean bench 12 V they simply sit idle.
 
 ### L-line handling (GEMS-simple vs universal)
 
 The L9637D's L pins are a **comparator — sense only; it does NOT drive L** (Doc ID
 1765, pin 2 LO / pin 8 LI). K and L are kept as **separate nets**; how L is used
-is a build choice:
+is a build choice — implemented via the terminal scheme below (see "Finalized
+Board 1 I/O"), **not a dedicated jumper**:
 
-- **GEMS-simple build (default):** L (OBD.15) → **JP1** → K node. L9637D LI→GND,
-  LO→n/c. Passive strap only — this is what opens the GEMS **0xDA** channel. No
-  L driving.
+- **GEMS-simple build (this build):** L (OBD pin 15) lands on terminal **A2**,
+  which is tied to A1 (K). Passive strap only — this is what opens the GEMS
+  **0xDA** channel. No L driving. LI (U2 pin 8) is free for a listen-only tap
+  (terminal A3); LO (U2 pin 2) goes straight to Pico GP2.
 - **Universal build (multi-make):** add an **external open-collector L driver** so
   firmware can drive the 5-baud init on L for cars that need it:
   ```
   Pico GPIO(Ldrv) ── ~1kΩ ── base/gate of NPN/N-MOSFET ── open-collector → L net
   L net ── pull-up (to L-bus rail via ~510Ω–1k)
-  (optional L sense: L net → U1.8 LI ;  U1.2 LO → Pico GPIO)
   ```
-  Keep **JP1** too (for the GEMS strap). The three L modes are **mutually
-  exclusive per session** — K-only, K+driven-L, or K+strap — never drive L while
-  JP1 straps it to K (the L driver would fight the K driver). A firmware/profile
-  interlock enforces this.
-- **Protection:** with JP1 closed, L joins the K node and shares its 510 Ω pull-up
-  + Vs TVS. When JP1 is open and L is undriven, the L pin floats — harmless. The
-  external driver transistor should be rated for the 12 V L-bus (≥40 V part).
+  The three L modes are **mutually exclusive per session** — K-only, K+driven-L,
+  or K+strap (A2 landed) — never drive L while it's also strapped to K via A2
+  (the L driver would fight the K driver). A firmware/profile interlock enforces
+  this; moving the A2 wire is the physical interlock for now.
+- **Protection:** with A2 landed (strapped), L joins the K node and shares its
+  510 Ω pull-up + Vs TVS. With A2 unused and L undriven, the L pin floats —
+  harmless. The external driver transistor should be rated for the 12 V L-bus
+  (≥40 V part).
 
 ### Finalized Board 1 I/O — the 9-terminal block IS the OBD pigtail termination (2026-09-27, terminal scheme CORRECTED 2026-09-29)
 
-Board 1 has **ONE terminal block, stacked two rows, 9 terminals total** — and the
+Board 1 has **ONE terminal block, one row, 9 terminals total** — and the
 OBD pigtail wires land **directly** on these terminals. There is no separate
 downstream "patch bank" — the terminals themselves are both the pigtail
 termination point AND the transceiver-channel selector. **The screw terminals ARE
@@ -196,9 +182,9 @@ is landed wherever you want that OBD line to go:
 
 | Terminal | Internal net | Current build's pigtail wire |
 |---|---|---|
-| **A1** | U1 pin 6 (K) | OBD **pin 7** (engine K-line) |
-| **A2** | U1 pin 6 (K) — **same node as A1**, 2nd slot | OBD **pin 15** (L-line) — **intentionally tied to A1**, so U1 always has the GEMS 0xDA L↔K strap open |
-| **A3** | U1 pin 8 (LI) — read-only listen tap | not currently used |
+| **A1** | U2 pin 6 (K) | OBD **pin 7** (engine K-line) |
+| **A2** | U2 pin 6 (K) — **same node as A1**, 2nd slot | OBD **pin 15** (L-line) — **intentionally tied to A1**, so U2 always has the GEMS 0xDA L↔K strap open |
+| **A3** | U2 pin 8 (LI) — read-only listen tap | not currently used |
 | **B1** | U3 pin 6 (K, secondary channel) | OBD **pin 8** (10AS diagnostic bus) |
 | **B2** | U3 pin 6 (K) — same node as B1, 2nd slot | not currently used |
 | **B3** | U3 pin 8 (LI) — read-only listen tap | not currently used |
@@ -210,12 +196,12 @@ is landed wherever you want that OBD line to go:
   is tied together permanently until a wire is physically moved. **A3/B3 are
   separate, read-only LI nodes**, isolated from the K nodes.
 - **A1+A2 tied to pins 7+15 is a deliberate design choice for this build** — it
-  keeps U1's 0xDA channel permanently open rather than optional/removable. To go
+  keeps U2's 0xDA channel permanently open rather than optional/removable. To go
   back to plain OBD (no L↔K strap), unscrew the pin-15 wire from A2. To route L
   elsewhere instead (e.g. if not using the immobiliser work), move it to B1/B2/B3
   as needed — **that's the reconfiguration model: move wires between screws, not
   jumpers or code.**
-- LO (U1 pin 2 / U3 pin 2) is **not** a terminal — it's a fixed internal wire
+- LO (U2 pin 2 / U3 pin 2) is **not** a terminal — it's a fixed internal wire
   straight to the Pico (**GP2** / **GP6**), since it's the comparator's output *to*
   the microcontroller, never something an external pigtail wire connects to.
 - **The other 10 OBD pins** (1, 2, 3, 6, 9, 10, 11, 12, 13, 14 — incl. CAN 6/14 and
@@ -241,7 +227,7 @@ a K-line, not switching real power), so keeping them separate buys nothing here.
 point** (not a terminal-to-terminal short, and not a separate discrete junction
 pad either). Both OBD GND terminals live on the **top layer** (with the rest of
 the terminal block); each one drops **its own via straight down into the
-bottom-layer ground pour**, same as L9637D U1 GND, L9637D U3 GND, buck GND, and
+bottom-layer ground pour**, same as L9637D U2 GND, L9637D U3 GND, buck GND, and
 Pico GND. A classic single-pad "star ground" is a technique for boards **without**
 a ground plane — once you have a full continuous pour, the pour itself is a big,
 low-resistance, effectively-equipotential sheet, so every ground pin vias into it
@@ -264,7 +250,7 @@ placement**:
 - **Top layer = components + traces, separated by PHYSICAL ZONE, not by layer:**
   - **Power zone** — F1 (fuse), D1 (TVS), the buck, D2 (1N5817) — clustered
     together, 12 V/5 V traces sized for current (≥1.5 mm / a pour, not hair-thin).
-  - **Signal zone** — U1/U3 (L9637D) K/L/LI lines and their UART traces to the
+  - **Signal zone** — U2/U3 (L9637D) K/L/LI lines and their UART traces to the
     Pico — kept short, and **physically away from the power zone**, especially
     away from the buck's switching node (switching regulators radiate noise right
     at that node — a classic glitch source for a nearby UART/K-line receiver).
@@ -300,21 +286,22 @@ L9637D LO (pin 2) ──► Pico GP2 (physical pin 4)   (3.3 V digital copy; int
   monitor itself). Zero transitions = static line **or** a signal the 1-bit
   comparator can't resolve — a scope disambiguates. Not proof of "no signal."
 
-### DUAL transceiver — U1 + U3, two K-line channels (DECIDED 2026-09-28)
+### DUAL transceiver — U2 + U3, two K-line channels (DECIDED 2026-09-28)
 
 Board 1 now carries **TWO L9637D transceivers** so it can drive **two independent
 K-line channels at once** — engine on one, a second module (10AS / EAS / SRS) on the
 other — with **independent baud** (engine 10400, 10AS 9600) on the RP2040's two
 hardware UARTs. This is what the immobiliser relearn wants (ECM learn session live
-on U1 *while* commanding the 10AS on U3) and what multi-line vehicles need (P38
-engine on pin 7 *and* EAS on 11/12 concurrently).
+on U2 *while* commanding the 10AS on U3) and what multi-line vehicles need (P38
+engine on pin 7 *and* EAS on 11/12 concurrently). **U1 = Pico** (host MCU), driving
+both channels.
 
-| | **U1 — K-line #1 (engine)** | **U3 — K-line #2 (10AS/EAS/SRS)** |
+| | **U2 — K-line #1 (engine)** | **U3 — K-line #2 (10AS/EAS/SRS)** |
 |---|---|---|
 | UART | **UART0 / `Serial1`** | **UART1 / `Serial2`** |
-| TX (4) | Pico **GP0** | Pico **GP4** (`Serial2.setTX(4)`) |
-| RX (1) | Pico **GP1** | Pico **GP5** (`Serial2.setRX(5)`) |
-| LO (2) | Pico **GP2** (fixed wire, not a terminal) | Pico **GP6** (fixed wire, not a terminal) |
+| TX (4) | Pico (U1) **GP0** | Pico (U1) **GP4** (`Serial2.setTX(4)`) |
+| RX (1) | Pico (U1) **GP1** | Pico (U1) **GP5** (`Serial2.setRX(5)`) |
+| LO (2) | Pico (U1) **GP2** (fixed wire, not a terminal) | Pico (U1) **GP6** (fixed wire, not a terminal) |
 | K (6) | **R1 510 Ω → Vs**; terminals **A1/A2** (dflt pin 7) | **R2 510 Ω → Vs**; terminals **B1/B2** (dflt pin 8) |
 | LI (8) | terminal **A3** (read-only listen tap) | terminal **B3** (read-only listen tap) |
 | Vs (7) / Vcc (3) / GND (5) | shared 12 V (fused+TVS) / 3V3 / GND | same shared rails |
@@ -326,7 +313,7 @@ engine on pin 7 *and* EAS on 11/12 concurrently).
   Pico 3V3. One fuse still covers both. (GP8/GP9 are the no-config UART1 default if
   you'd rather not `setTX/setRX`.)
 - **Firmware TODO (hardware ready, U3 idle until then):** add a **`channel` byte**
-  (0 = U1/Serial1, 1 = U3/Serial2 at its own baud) to the K-line commands
+  (0 = U2/Serial1, 1 = U3/Serial2 at its own baud) to the K-line commands
   (`CMD_INIT` / `CMD_SEND_RECV` / `CMD_RAW_XFER` / `CMD_MONITOR_L` / `CMD_CAPTURE`),
   mirroring the existing Serial1 handlers onto Serial2.
 
@@ -336,7 +323,7 @@ Board 1 is **self-powered on a running truck** — no separate 5 V brick. USB is
 **optional** (data/flashing only).
 
 ```
-OBD pin 16 (+12 V) ─[F1 1A]─┬─[TVS 1.5KE24A]─► U1 Vs + U3 Vs
+OBD pin 16 (+12 V) ─[F1 1A]─┬─[TVS 1.5KE24A]─► U2 Vs + U3 Vs
                             └─► BUCK 12→5V (fixed, 5–30 Vin, 3 A) ─► 1N5817 ─► Pico VSYS (pin 39)
 ```
 - **1N5817** (band toward Pico) diode-ORs the buck with USB **automatically — no
@@ -401,9 +388,9 @@ lets the 10AS mobilise the ECM on the bench — see `docs/10as-pinout.md`.
 |---|---|---|
 | +12 V | car OBD pin 16 → Board 1 | DC adapter → Board 2 → OBD pin 16 → Board 1 |
 | K-line | Board 1 ↔ car ECU (OBD pin 7) | Board 1 ↔ Board 2 → ECU C1017 p23 **and** 10AS C225 p17 |
-| L-line | Board 1 JP1↔K, OBD pin 15 → car | Board 1 JP1↔K, OBD pin 15 → Board 2 → ECU C1017 p20 |
+| L-line | Board 1 terminal A2↔K, OBD pin 15 → car | Board 1 terminal A2↔K, OBD pin 15 → Board 2 → ECU C1017 p20 |
 | GND | car OBD pin 4/5 | DC adapter → Board 2 → OBD pin 4/5 + ECU + 10AS |
-| Pico logic | microUSB 5 V (always) | microUSB 5 V (always) |
+| U1 (Pico) power | buck → VSYS (route A), USB optional (data/flashing) | same — buck fed from Board 2's DC 12 V via the OBD pass-through |
 
 **Power is inherently single-source:** Board 1 is *either* in the car *or* in
 Board 2, so OBD pin 16 only ever has one 12 V origin. Never power the bench from
@@ -413,7 +400,8 @@ the DC adapter while Board 1 is also in a car.
 1. **Connector genders:** Board 1 male, Board 2 female. Board 2→ECU/10AS = screw
    terminals, not OBD.
 2. **L9637D pin-1 orientation** confirmed before any power; **Vcc = 3.3 V**.
-3. **JP1 fitted** for bench/proprietary (0xDA) work; pull it for plain car OBD.
+3. **Terminal A2 landed** (OBD pin 15 on the K1/U2 node) for bench/proprietary
+   (0xDA) work; unland it for plain car OBD only.
 4. **Star ground** ties DC-adapter GND, both OBD grounds, ECU GND, 10AS GND, Pico
    USB GND to one point — avoids loops between the three boxes.
 5. First contact **read-only** (`gems_t4 kline live`), writes proven on the
