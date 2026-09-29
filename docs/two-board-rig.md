@@ -228,6 +228,50 @@ is landed wherever you want that OBD line to go:
 Verified DLC pin meanings per model live in **`docs/dlc-pinouts.md`** (Disco 1:
 10AS on pin 8; P38: BeCM shares 7/15). Reaching the **10AS needs OBD pin 8**, not 7.
 
+### Ground handling — pins 4 & 5 bonded at a single star point (2026-09-29)
+
+**J1962 pins 4 and 5 are two different grounds by spec:** pin 4 = **chassis
+ground** (shared with everything else on the vehicle — starter, alternator, lights
+— can carry noise); pin 5 = **signal ground**, meant as a cleaner reference for the
+diagnostic electronics. On most vehicles they're already bonded near the connector
+anyway, and our L9637D circuit is high-impedance/low-current (just reading/driving
+a K-line, not switching real power), so keeping them separate buys nothing here.
+
+**Decision: bond pins 4 and 5 together, at ONE star-ground point on the board**
+(not just shorted terminal-to-terminal). Both OBD GND terminals run as separate
+wires to that single point, where they join: L9637D U1 GND, L9637D U3 GND, buck
+GND, and Pico GND. That single point then ties into the ground pour (below). This
+avoids a small ground loop that a terminal-to-terminal short could create, while
+landing on the same practical result (they end up bonded) that most simple K-line
+adapters use.
+
+### PCB layer strategy — 2 layers, ground pour + zoned placement (2026-09-29)
+
+Board 1 is a **2-layer board** (per `hardware/gems-2pcb/README.md` fab spec — 2
+layers is plenty here). True per-signal-type layer separation (a dedicated power
+plane, a dedicated ground plane, separate signal layers) needs 4+ layers and is
+overkill for this design. The 2-layer approach instead separates by **plane +
+placement**:
+
+- **Bottom layer = one continuous ground pour.** Every GND pin (both chips, buck,
+  Pico, the star point above) drops a via straight into this pour. Gives a
+  low-impedance return path for every signal and a de facto shield under the
+  top-side traces — this is the single highest-value thing a 2-layer board can do.
+- **Top layer = components + traces, separated by PHYSICAL ZONE, not by layer:**
+  - **Power zone** — F1 (fuse), D1 (TVS), the buck, D2 (1N5817) — clustered
+    together, 12 V/5 V traces sized for current (≥1.5 mm / a pour, not hair-thin).
+  - **Signal zone** — U1/U3 (L9637D) K/L/LI lines and their UART traces to the
+    Pico — kept short, and **physically away from the power zone**, especially
+    away from the buck's switching node (switching regulators radiate noise right
+    at that node — a classic glitch source for a nearby UART/K-line receiver).
+  - **RF keep-out** — nothing routed on either layer under or near the Pico
+    2 W's antenna end.
+  - **Star ground** (above) sits between the two zones, close to the ground-pour
+    via field, not buried inside the noisy power zone.
+- **Net class widths** (carried over from the original single-transceiver spec,
+  now applying per-transceiver): power ≥ 1.5 mm / pour; K/L ≥ 0.4 mm; UART/Vcc
+  ≥ 0.3 mm; 0.2 mm min clearance (JLC handles this easily).
+
 ### Immobiliser-line sniffer — the spare L channel as a 12 V-safe monitor
 
 The L9637D's L channel is **read-only (LI→LO, sense; can't drive)** — which makes it
