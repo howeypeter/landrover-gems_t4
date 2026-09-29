@@ -21,8 +21,10 @@ OBD pin reaches which vehicle module).
 | R1 | Resistor | 510 Ω, **1 W** | K-line pull-up for U2 (K ↔ Vs). K held low dissipates ~0.28 W at 12 V, ~0.41 W at 14.4 V, ~0.64 W at 18 V — ¼ W has no margin |
 | R2 | Resistor | 510 Ω, **1 W** | K-line pull-up for U3 (K ↔ Vs), same rating and rationale as R1 |
 | F1 | Fuse | 1 A | Inline on the +12 V input, protects the whole board |
-| D1 | TVS diode | 1.5KE24A, unidirectional (breakdown-voltage grade "24"; VRWM ≈ 20.5 V, not literally a 24 V standoff — see note) | Clamps the fused 12 V node |
-| REG1 | Buck converter | Fixed 5 V out, 5–30 V in, 3 A | Steps 12 V down for the Pico |
+| D1 | TVS diode | 1.5KE24A, unidirectional, 10/1000 µs. VRWM = 20.5 V, VBR = 22.8–25.2 V, VC(max) = 33.2 V ("24" is the breakdown-grade name, not the standoff voltage) | Clamps the fused 12 V node |
+| Q1 | P-channel MOSFET | Automotive-rated, VDS ≥ −40 V, low RDS(on) — exact MPN TBD | Reverse-polarity protection ahead of REG1 (ideal-diode topology): source → VS_FUSED, drain → VIN_PROT |
+| R3 | Resistor | ~10 kΩ | Q1 gate → GND — biases Q1 on for correct polarity, off for reversed polarity |
+| REG1 | Buck converter | **LMR51610-Q1** (TI, automotive, 65 V/1 A sync buck, SOT-23), fixed 5 V out | Steps 12 V down for the Pico. ~2× input-voltage margin over D1's 33.2 V clamp |
 | D2 | Schottky diode | 1N5817, 1 A / 20 V | Buck output → Pico VSYS; diode-ORs with USB power |
 | C1 | Ceramic capacitor | 100 nF ("104"), 50 V+ | Vcc decoupling for U2, mounted close to U2 pin 3 |
 | C2 | Ceramic capacitor | 100 nF ("104"), 50 V+ | Vcc decoupling for U3, mounted close to U3 pin 3 |
@@ -115,9 +117,17 @@ J1 pin 16 (+12V)
  VS_FUSED ──────────────┬───────────────┬──────────────────────┐
    │                    │               │                      │
    ▼                    ▼               ▼                      ▼
- [D1] TVS           U2 pin 7 (Vs)   U3 pin 7 (Vs)          REG1 VIN
- K(cathode)=VS_FUSED                                       (buck 12→5V)
- A(anode)=GND, clamp                                             │
+ [D1] TVS           U2 pin 7 (Vs)   U3 pin 7 (Vs)          [Q1] P-FET
+ K(cathode)=VS_FUSED                                    reverse-polarity
+ A(anode)=GND, clamp                                    protection (ideal diode)
+                                                                 │
+                                                                 ▼
+                                                            VIN_PROT
+                                                                 │
+                                                                 ▼
+                                                        REG1 VIN (LMR51610-Q1)
+                                                          (buck 12→5V)
+                                                                 │
                                                                  ▼
                                                             REG1 VOUT (5V)
                                                                  │
@@ -134,16 +144,26 @@ J1 pin 16 (+12V)
 ```
 
 - **F1 (1 A)** is the only fuse on the board — it protects both L9637D pull-ups,
-  the TVS, and the buck, since all three tap the same fused node.
+  the TVS, and the buck path, since all three tap the same fused node.
 - **D1 (TVS)** sits across VS_FUSED → GND with its **cathode (banded end) on
   VS_FUSED and anode on GND** — this keeps it reverse-biased (inert) during
   normal operation and lets it clamp only on a positive overvoltage spike,
-  protecting both transceivers' Vs pins and the buck's input. ⚠️ The exact
-  clamp voltage (Vc) at the relevant test current is not yet independently
-  confirmed against the manufacturer datasheet — verify before finalizing
-  REG1's required absolute-max input rating (must exceed Vc with margin).
-- **REG1 (buck)** steps 12 V down to a fixed 5 V. Its input sees the same fused +
-  TVS-protected node as the transceivers.
+  protecting both transceivers' Vs pins and Q1/REG1's input. VC(max) = 33.2 V
+  (10/1000 µs, per the exact 1.5KE24A spec — see BOM); REG1's 65 V absolute-max
+  input rating clears this with ~2× margin.
+- **Q1 (P-channel MOSFET)** is a series reverse-polarity protection stage ahead
+  of REG1 only — the L9637Ds tolerate reverse-supply conditions directly and
+  sit upstream of Q1 on VS_FUSED, but the buck module's reverse behavior is
+  unverified, so Q1 protects it. Standard ideal-diode topology: source tied to
+  VS_FUSED, drain feeds VIN_PROT (REG1's input), gate pulled to GND through R3.
+  On correct polarity this biases Q1 on (low RDS(on) drop); on reversed supply
+  Vgs flips and Q1 (plus its body diode orientation) blocks conduction. Covers
+  the case a keyed OBD connector doesn't — a miswired reconfigurable terminal
+  (e.g. +12V landed on a GND slot) or reversed bench/jump-start polarity.
+- **REG1 (LMR51610-Q1)** steps the protected 12 V rail down to a fixed 5 V.
+  Automotive-qualified, 65 V absolute-max input — comfortably clears D1's
+  33.2 V clamp. Full support-circuit values (inductor, input/output caps) come
+  from the TI datasheet at layout time.
 - **D2 (Schottky)** is in series between the buck's output and Pico VSYS. Its
   job is NOT protection — it lets the buck's 5 V and the Pico's own USB-VBUS
   path coexist on VSYS without back-feeding each other (a diode-OR). **Feed
@@ -165,6 +185,7 @@ J1 pin 16 (+12V)
 | REG1 GND | GND |
 | U1 (Pico) GND | GND |
 | D1 (TVS) anode | GND |
+| R3 (Q1 gate pull-down) | GND |
 | C1 pin B | GND |
 | C2 pin B | GND |
 
@@ -218,10 +239,11 @@ firmware isn't yet.
 | K2_LO | U3 pin 2, U1 GP6 |
 | LI2 | Terminal B3, U3 pin 8 |
 | 12V_IN | Terminal 12V, F1 pin A |
-| VS_FUSED | F1 pin B, **D1 cathode**, U2 pin 7, U3 pin 7, REG1 VIN, R1 pin B, R2 pin B |
+| VS_FUSED | F1 pin B, **D1 cathode**, U2 pin 7, U3 pin 7, Q1 source, R1 pin B, R2 pin B |
+| VIN_PROT | Q1 drain, REG1 VIN |
 | VSYS_5V | REG1 VOUT, D2 anode, D2 cathode → U1 VSYS |
 | P3V3 | U1 3V3, U2 pin 3, U3 pin 3, C1 pin A, C2 pin A |
-| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, **D1 anode**, C1 pin B, C2 pin B |
+| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, **D1 anode**, Q1 gate ← R3, C1 pin B, C2 pin B |
 
 ---
 
