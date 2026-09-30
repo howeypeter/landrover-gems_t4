@@ -1086,6 +1086,42 @@ up):**
   `docs/chip-tooling.md` — if EA-mode access works, it may make the more
   invasive fault-injection approach unnecessary.
 
+- **10AS↔ECM immobiliser handshake — external claim of a 366-baud serial
+  protocol carrying a 16-bit token, needs bench verification.** Logged
+  2026-09-30 from a shared analysis document (`lucas_handshake_analysis.md`,
+  citing EEVblog "Reverse Engineering an ECU - Identifying IC's" and
+  ECUConnections thread `t=59049`) — **UNVERIFIED**, same status as other
+  external/community leads in `docs/chip-tooling.md`. Both cited forum
+  threads are real (confirmed to exist via search), but their content
+  couldn't be read (login-gated / CAPTCHA-blocked), so the specific
+  technical claims are unconfirmed.
+  **Known conflicts with our own verified data:**
+  - The document claims **pin 17** carries "immobilization data...directly
+    into the GEMS 8 ECU." Our RAVE-verified pinout (`docs/10as-pinout.md`)
+    says the opposite pairing: **pin 15** (wire B) → ECM C1017 pin 26 is the
+    confirmed coded mobilise line; **pin 17** (wire KB) is the diagnostic
+    serial line → routes to **OBD-II pin 8**, not to the ECU, and its
+    protocol content is explicitly still unmapped in our own docs. The
+    document appears to conflate the two pins.
+  - Our 2026-09-28 bench capture (PIO+DMA, 200kS/s, 1.6s buffer) tapped the
+    actual mobilise line (pin 15) and found **no decodable serial code** —
+    just a DC-enable-like transient. A real 366-baud burst (sync + 16-bit
+    token + checksum) would be trivially visible at that oversampling rate,
+    so this is fairly strong evidence AGAINST a 366-baud protocol on pin 15
+    specifically.
+  **User's instinct (2026-09-30): still worth checking — "probably a weird
+  baud rate"** — i.e., don't dismiss the core idea of an unconventional
+  baud rate on *some* 10AS line just because pin 15 came up empty. **Most
+  promising target: pin 17** (the diagnostic serial line), since that's
+  the one still genuinely unmapped in our own research and is arguably what
+  the document actually meant, mislabeled. Backlog: bench-capture **pin 17**
+  specifically at 366 baud (and a few neighboring odd rates as a sweep, in
+  case 366 itself is mistranscribed) on the next 10AS bench session, ignition
+  on. Cheap, direct test — either confirms a real protocol lead on the one
+  channel that matters for the EKA-read goal, or closes this out too. Ties
+  to [Read the EKA code from the Lucas 10AS] below and the pin-17 diagnostic
+  serial channel noted in `docs/10as-pinout.md`.
+
 - **Read the EKA code from the Lucas 10AS (Discovery 1 alarm/immobiliser).**
   Requested 2026-09-07. The **EKA (Emergency Key Access)** is the 4-digit code
   that lets you disarm the alarm / mobilise via the key when the fob fails. On
