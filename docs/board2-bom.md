@@ -12,7 +12,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 | Ref | Part | Qty | Status | Notes |
 |---|---|---|---|---|
 | J2 | 12 V DC input jack (barrel or 2-pos terminal) | 1 | OPEN | match the bench supply plug (size/polarity); not specified yet |
-| D2 | Reverse-polarity series diode — **SS54** (5 A/40 V Schottky, LCSC C22452) | 1 | OK | SMD (DO-214AB), fine on a PCB. Orientation: cathode (band) toward F2/load |
+| D2 | Reverse-polarity series diode — **SB540** (5 A/40 V Schottky, DO-201AD axial through-hole) | 1 | OK | chosen 2026-11-11 (~$0.30 at Mouser per user); replaces SS54 (SMD, 5-pc minimum) and 1N5822 (Mouser ~$20). Band (cathode) toward F2/load; footprint DO-201AD |
 | F2 | Fuse 2 A + holder | 1 | OPEN | holder type (5x20 / blade) not chosen |
 | SW1 | 4-pin screw terminal (12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED) | 1 | OPEN | pitch/part not chosen; wires to off-board illuminated switch |
 | SW2 | 4-pin screw terminal, same | 1 | OPEN | shared 12V_IGN switch |
