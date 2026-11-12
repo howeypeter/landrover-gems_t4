@@ -82,9 +82,11 @@ so no side-wall cutout is required. 0412 vs other suffixes (0415 is SMD, 0418 et
 **verify the exact suffix and peg need against the Molex drawing before ordering.** Mating housing
 unchanged (43025-0400). Mini-Fit Jr was considered and not chosen. The 1x8 right-angle option is the footnote now.
 
-**Board:** 85 x 75 mm. J7 on one 85 mm long edge, J4 on the opposite long edge; J2 and the SW1/SW2
-terminals on the short edges. Enclosure note: internal perfboard 70 x 90 mm, mounting holes 83 x 61 mm,
-about 1/4" standoffs.
+**Board:** 87 x 77 mm (same as Board 1; set 2026-11-12), mounting holes 4.25 mm from the edges (centres 78.5 x 68.5 mm;
+Board 1 holes were found 1-3 mm too far apart, so expect to nudge these). Layout (see `hardware/board2-pcb/gen_pcb.py`):
+J4 2x4 grid centred on the top edge; J6 above F2; power chain right to left along one row (J2 at the right edge,
+D2, F2, D3, then SW1 at the left edge, SW2 below it); J71/J72 directly above J3, J3 centred on the bottom edge.
+Edge terminals (J2, SW1, SW2) are rotated so wire entry faces the edge. About 1/4" standoffs.
 
 ## 6. Cables and the immobiliser line
 
