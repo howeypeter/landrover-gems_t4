@@ -77,14 +77,13 @@ def text(msg, x, y, size=1.8):
 
 C1x02 = use("Connector_Generic", "Conn_01x02")
 C1x04 = use("Connector_Generic", "Conn_01x04")
-C1x06 = use("Connector_Generic", "Conn_01x06")
+C1x08 = use("Connector_Generic", "Conn_01x08")
 C1x16 = use("Connector_Generic", "Conn_01x16")
 DIODE = use("Device", "D")
 TVS = use("Device", "D_TVS")
 FUSE = use("Device", "Fuse")
 
-FP_SPT6 = "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_6-H-3.5_1x06_P3.5mm_Horizontal"   # PLACEHOLDER for SPTAF 1/6-3,5-EL (1862084)
-FP_SPT4 = "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal"   # PLACEHOLDER for SPTAF 1/4-3,5-EL (1862068)
+FP_TBL = "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg"   # custom, from Same Sky TBL002A-350 datasheet
 FP_J3 = "Connector_Phoenix_MC:PhoenixContact_MC_1,5_16-G-3.81_1x16_P3.81mm_Horizontal"     # PLACEHOLDER for Amphenol Anytek OQ1632510000G
 FP_TB2 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"  # PLACEHOLDER J2 (jack type OPEN)
 FP_TB4 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal"  # PLACEHOLDER SW1/SW2 (part OPEN)
@@ -112,14 +111,14 @@ text("OBD2 INPUT (fixed 1:1):  J3 pin n  =  J7 pin n   (pin 5 = GND, pin 16 = V1
 def obd(n):
     return "GND" if n == 5 else ("V12S" if n == 16 else f"OBD{n}")
 place(C1x16, "J3", "OQ1632510000G (16-pos 3.81)", FP_J3, 8, 52, {str(n): obd(n) for n in range(1, 17)}, "From Board 1 OBD2 pigtail (male plug)")
-place(C1x06, "J71", "SPTAF 1/6-3,5-EL 1862084", FP_SPT6, 26, 44, {str(n): obd(n) for n in range(1, 7)}, "J7 pins 1-6")
-place(C1x06, "J72", "SPTAF 1/6-3,5-EL 1862084", FP_SPT6, 26, 60, {str(n - 6): obd(n) for n in range(7, 13)}, "J7 pins 7-12")
-place(C1x04, "J73", "SPTAF 1/4-3,5-EL 1862068", FP_SPT4, 26, 74, {str(n - 12): obd(n) for n in range(13, 17)}, "J7 pins 13-16")
+place(C1x08, "J71", "TBL002A-350-08GR-2OR", FP_TBL, 26, 48, {str(n): obd(n) for n in range(1, 9)}, "J7 pins 1-8")
+place(C1x08, "J72", "TBL002A-350-08GR-2OR", FP_TBL, 26, 66, {str(n - 8): obd(n) for n in range(9, 17)}, "J7 pins 9-16")
 
 # ---- J6 landing ----
 text("J6 PATCH LANDING:  wires from J7 patch in here; a/b of each net are tied", 56, 36)
-place(C1x04, "J61", "SPTAF 1/4-3,5-EL 1862068 (row a)", FP_SPT4, 64, 48, {"1": "NET1", "2": "NET2", "3": "NET3", "4": "NET4"}, "Row a: NET1a..NET4a (faces left)")
-place(C1x04, "J62", "SPTAF 1/4-3,5-EL 1862068 (row b)", FP_SPT4, 64, 62, {"1": "NET1", "2": "NET2", "3": "NET3", "4": "NET4"}, "Row b: NET1b..NET4b (mirrored, faces right)")
+place(C1x08, "J6", "TBL002A-350-08GR-2OR", FP_TBL, 64, 54,
+      {"1": "NET1", "2": "NET2", "3": "NET3", "4": "NET4", "5": "NET1", "6": "NET2", "7": "NET3", "8": "NET4"},
+      "Pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b of each net tied)")
 
 # ---- J4 outputs: 2x4 grid; pins 1 BAT, 2 NET, 3 IGN, 4 GND ----
 text("J4 OUTPUT HEADERS (Micro-Fit 2x2 vertical):  pin1 12V_BAT=V12S, pin2 NET, pin3 12V_IGN=IGN, pin4 GND", 4, 90)

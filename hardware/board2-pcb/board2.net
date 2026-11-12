@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-11T21:47:41")
+		(date "2026-11-11T23:48:11")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "b856794f-b051-475e-b8a9-41c69eff4e34")
+			(tstamps "903344b3-20f3-48ef-91fa-6c58e8456e89")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "bd2c6d1c-2a96-4d2f-8ba7-0b3efd655a99")
+			(tstamps "2fd5546d-825b-4486-9a80-007d155df172")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "e1516252-2e90-442c-8b14-8d780885458f")
+			(tstamps "9fd465d5-0382-4c98-b2a6-b2e16de6e2df")
 			(units
 				(unit
 					(name "A")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "764a05aa-92e8-4d8a-84e3-ca54e6889e11")
+			(tstamps "94971546-c3ad-4455-9c2e-45d369f58f21")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "fd3d3d88-9697-4337-b908-05c6a4996c94")
+			(tstamps "15847fcf-a81a-4bc2-8a3f-cec314b947c2")
 			(units
 				(unit
 					(name "A")
@@ -367,6 +367,78 @@
 			)
 		)
 		(comp
+			(ref "J6")
+			(value "TBL002A-350-08GR-2OR")
+			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+			(description "Pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b of each net tied)")
+			(fields
+				(field
+					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b of each net tied)")
+			)
+			(libsource
+				(lib "Connector_Generic")
+				(part "Conn_01x08")
+				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(property
+				(name "Sheetname")
+				(value "board2")
+			)
+			(property
+				(name "Sheetfile")
+				(value "board2.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "connector")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "Connector*:*_1x??_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "72fb01b0-722f-4748-aeac-5a9f64c4912a")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
+						)
+					)
+				)
+			)
+		)
+		(comp
 			(ref "J41")
 			(value "43045-0412")
 			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
@@ -405,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "18a94b21-512d-4ebf-a582-03d4fe3172b0")
+			(tstamps "d0480073-60a4-4738-a661-0e442395d4b2")
 			(units
 				(unit
 					(name "A")
@@ -465,7 +537,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "01cdf13b-cc0e-45fe-af82-104c5fd3cc19")
+			(tstamps "d4998976-b2c0-4fcd-a1c9-711bde564660")
 			(units
 				(unit
 					(name "A")
@@ -525,7 +597,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "5c9750a1-e55e-4edc-87bd-81fb9b7d4aa1")
+			(tstamps "5554d917-a66b-4f73-bd70-a0544a78a16c")
 			(units
 				(unit
 					(name "A")
@@ -585,7 +657,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "58885bcb-1e19-44d7-9b96-c0752cb821b0")
+			(tstamps "85024b75-2297-426a-884c-dc8528b08654")
 			(units
 				(unit
 					(name "A")
@@ -645,7 +717,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "b509d18a-daf0-4dbd-9edb-0e1ac66c5667")
+			(tstamps "28b9c024-c52b-4e5c-bd40-14831a153f74")
 			(units
 				(unit
 					(name "A")
@@ -705,7 +777,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "2d440808-a735-4dca-bc30-ccf199207537")
+			(tstamps "10caa2b6-8058-4f47-bea0-2b29b48285b4")
 			(units
 				(unit
 					(name "A")
@@ -765,7 +837,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "a808a5fd-fb71-454c-88d4-183193a974c8")
+			(tstamps "b2e3920d-7e8a-4d51-9fa0-fe08e4215368")
 			(units
 				(unit
 					(name "A")
@@ -825,127 +897,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "2b117ee5-51b2-40b1-8e53-c0b981f13294")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J61")
-			(value "SPTAF 1/4-3,5-EL 1862068 (row a)")
-			(footprint "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal")
-			(description "Row a: NET1a..NET4a (faces left)")
-			(fields
-				(field
-					(name "Footprint") "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Row a: NET1a..NET4a (faces left)")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "bb56025e-d989-4dc4-952b-296f9deb4573")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J62")
-			(value "SPTAF 1/4-3,5-EL 1862068 (row b)")
-			(footprint "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal")
-			(description "Row b: NET1b..NET4b (mirrored, faces right)")
-			(fields
-				(field
-					(name "Footprint") "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Row b: NET1b..NET4b (mirrored, faces right)")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "1c5c126f-e0e3-4e42-8fd3-887b10bf50d9")
+			(tstamps "03ceabae-6aba-4a3a-b649-01eb4d138433")
 			(units
 				(unit
 					(name "A")
@@ -968,22 +920,22 @@
 		)
 		(comp
 			(ref "J71")
-			(value "SPTAF 1/6-3,5-EL 1862084")
-			(footprint "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_6-H-3.5_1x06_P3.5mm_Horizontal")
-			(description "J7 pins 1-6")
+			(value "TBL002A-350-08GR-2OR")
+			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+			(description "J7 pins 1-8")
 			(fields
 				(field
-					(name "Footprint") "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_6-H-3.5_1x06_P3.5mm_Horizontal")
+					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
 				(field
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "J7 pins 1-6")
+					(name "Description") "J7 pins 1-8")
 			)
 			(libsource
 				(lib "Connector_Generic")
-				(part "Conn_01x06")
-				(description "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+				(part "Conn_01x08")
+				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(property
 				(name "Sheetname")
@@ -1005,7 +957,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "cc6edf02-7291-43b9-9042-24124aaddba8")
+			(tstamps "3afac795-a8c6-43b3-93af-b5de10b34162")
 			(units
 				(unit
 					(name "A")
@@ -1027,6 +979,12 @@
 						)
 						(pin
 							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
 						)
 					)
 				)
@@ -1034,22 +992,22 @@
 		)
 		(comp
 			(ref "J72")
-			(value "SPTAF 1/6-3,5-EL 1862084")
-			(footprint "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_6-H-3.5_1x06_P3.5mm_Horizontal")
-			(description "J7 pins 7-12")
+			(value "TBL002A-350-08GR-2OR")
+			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+			(description "J7 pins 9-16")
 			(fields
 				(field
-					(name "Footprint") "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_6-H-3.5_1x06_P3.5mm_Horizontal")
+					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
 				(field
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "J7 pins 7-12")
+					(name "Description") "J7 pins 9-16")
 			)
 			(libsource
 				(lib "Connector_Generic")
-				(part "Conn_01x06")
-				(description "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+				(part "Conn_01x08")
+				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(property
 				(name "Sheetname")
@@ -1071,7 +1029,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "659e4d67-c670-49ce-931e-174716720eee")
+			(tstamps "600a35f4-dde9-4756-86f1-bd5b429cf001")
 			(units
 				(unit
 					(name "A")
@@ -1094,65 +1052,11 @@
 						(pin
 							(num "6")
 						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J73")
-			(value "SPTAF 1/4-3,5-EL 1862068")
-			(footprint "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal")
-			(description "J7 pins 13-16")
-			(fields
-				(field
-					(name "Footprint") "Connector_Phoenix_SPT:PhoenixContact_SPT_1.5_4-H-3.5_1x04_P3.5mm_Horizontal")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "J7 pins 13-16")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "5355fe60-5329-4fa9-a9ef-494cabc32960")
-			(units
-				(unit
-					(name "A")
-					(pins
 						(pin
-							(num "1")
+							(num "7")
 						)
 						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
+							(num "8")
 						)
 					)
 				)
@@ -1197,7 +1101,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ef058a7b-4f7d-40b7-a497-111317e3e612")
+			(tstamps "b7cec4d7-87fc-447a-b0db-ef21ce507a4c")
 			(units
 				(unit
 					(name "A")
@@ -1257,7 +1161,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "5f507557-c1a7-49f9-b280-1e8cf40d468b")
+			(tstamps "b687485c-ab0e-408d-b9a5-6fd5b1260ff3")
 			(units
 				(unit
 					(name "A")
@@ -1362,8 +1266,8 @@
 		)
 		(libpart
 			(lib "Connector_Generic")
-			(part "Conn_01x06")
-			(description "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			(part "Conn_01x08")
+			(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
 			(footprints
 				(fp "Connector*:*_1x??_*")
 			)
@@ -1371,7 +1275,7 @@
 				(field
 					(name "Reference") "J")
 				(field
-					(name "Value") "Conn_01x06")
+					(name "Value") "Conn_01x08")
 				(field
 					(name "Footprint")
 				)
@@ -1379,7 +1283,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+					(name "Description") "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(pins
 				(pin
@@ -1410,6 +1314,16 @@
 				(pin
 					(num "6")
 					(name "Pin_6")
+					(type "passive")
+				)
+				(pin
+					(num "7")
+					(name "Pin_7")
+					(type "passive")
+				)
+				(pin
+					(num "8")
+					(name "Pin_8")
 					(type "passive")
 				)
 			)
@@ -1813,15 +1727,15 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J61")
+				(ref "J6")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J62")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(ref "J6")
+				(pin "5")
+				(pinfunction "Pin_5_5")
 				(pintype "passive")
 			)
 		)
@@ -1842,15 +1756,15 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J61")
+				(ref "J6")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "J62")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J6")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 		)
@@ -1871,15 +1785,15 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J61")
+				(ref "J6")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J62")
-				(pin "3")
-				(pinfunction "Pin_3_3")
+				(ref "J6")
+				(pin "7")
+				(pinfunction "Pin_7_7")
 				(pintype "passive")
 			)
 		)
@@ -1900,15 +1814,15 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J61")
+				(ref "J6")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "J62")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(ref "J6")
+				(pin "8")
+				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
 		)
@@ -2008,9 +1922,9 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(ref "J71")
+				(pin "7")
+				(pinfunction "Pin_7_7")
 				(pintype "passive")
 			)
 		)
@@ -2025,9 +1939,9 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J71")
+				(pin "8")
+				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
 		)
@@ -2043,8 +1957,8 @@
 			)
 			(node
 				(ref "J72")
-				(pin "3")
-				(pinfunction "Pin_3_3")
+				(pin "1")
+				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 		)
@@ -2060,8 +1974,8 @@
 			)
 			(node
 				(ref "J72")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "2")
+				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 		)
@@ -2077,8 +1991,8 @@
 			)
 			(node
 				(ref "J72")
-				(pin "5")
-				(pinfunction "Pin_5_5")
+				(pin "3")
+				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 		)
@@ -2094,8 +2008,8 @@
 			)
 			(node
 				(ref "J72")
-				(pin "6")
-				(pinfunction "Pin_6_6")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 		)
@@ -2110,9 +2024,9 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J73")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(ref "J72")
+				(pin "5")
+				(pinfunction "Pin_5_5")
 				(pintype "passive")
 			)
 		)
@@ -2127,9 +2041,9 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J73")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J72")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 		)
@@ -2144,9 +2058,9 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J73")
-				(pin "3")
-				(pinfunction "Pin_3_3")
+				(ref "J72")
+				(pin "7")
+				(pinfunction "Pin_7_7")
 				(pintype "passive")
 			)
 		)
@@ -2215,9 +2129,9 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J73")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(ref "J72")
+				(pin "8")
+				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
 			(node

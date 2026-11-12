@@ -67,13 +67,11 @@ SW2 gates the shared **12V_IGN** rail to every J4 IGN pin. GND is bussed.
 |---|---|---|
 | J3 | Amphenol Anytek OQ1632510000G (DigiKey 609-3829-ND), 16-pos 3.81 mm male right-angle shrouded | 1 |
 | J3 mate | TJ1631530000G female screw-terminal plug | 1 |
-| J7 | Phoenix SPTAF 1/6-3,5-EL (1862084) | 2 |
-| J7 | Phoenix SPTAF 1/4-3,5-EL (1862068) | 1 |
-| J6 | Phoenix SPTAF 1/4-3,5-EL (1862068) | 2 |
+| J7 | Same Sky TBL002A-350-08GR-2OR (8-pos, 3.5 mm, 45° push-button; 2 A UL/5 A IEC) | 2 |
+| J6 | Same Sky TBL002A-350-08GR-2OR (single block: pins 1-4 a-row, 5-8 b-row) | 1 |
 | J4 | Molex Micro-Fit 3.0 **43045-0412**, 4-ckt dual-row, **vertical** through-hole, 3.00 mm pitch, ~8.5 A (revised from right-angle 43045-0400) | 8 |
 
-(Total Phoenix: 2x 1862084 + 3x 1862068. User mentioned Newark codes 14AC7464 and 14AC7456; the
-code-to-MPN mapping is unverified.)
+(Replaced Phoenix SPTAF 2026-11-11 by user choice. Footprint is custom `hardware/board2-pcb/board2.pretty`, built from the Same Sky datasheet: 29.5 x 12 mm body, A/B pin rows 5.0 mm apart, wire entry toward -Y — verify against the vendor footprint/3D model before fab.)
 
 **J4 decision (REVISED 2026-11-11, supersedes the 1x8 right-angle plan):** **8x vertical Micro-Fit
 43045-0412 (through-hole, 2x2, 3.00 mm pitch, 1.02 mm drills) as a 2x4 grid**: row a on top, row b mirrored
