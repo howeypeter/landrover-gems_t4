@@ -3,7 +3,7 @@ import pcbnew, re, os
 from pcbnew import FromMM as mm, VECTOR2I
 HERE=os.path.dirname(os.path.abspath(__file__))
 FPDIR=r"C:\Program Files\KiCad\10.0\share\kicad\footprints"
-W,H=90.0,80.0
+W,H=87.0,77.0
 net=open(os.path.join(HERE,"board2.net"),encoding="utf-8").read()
 fp_of={}
 for m in re.finditer(r'\(comp\s+\(ref "([^"]+)"\)(.*?)\(footprint "([^"]+)"\)',net,re.S): fp_of[m.group(1)]=m.group(3)
@@ -16,11 +16,11 @@ for n in nets:
     ni[n]=pcbnew.NETINFO_ITEM(b,n); b.Add(ni[n])
 pinnet={(r,p):n for n,l in nets.items() for r,p in l}
 # row layout: ref -> (center x, center y)  (board origin top-left)
-# power chain right->left along y=43: J2 (right edge) -> D2 -> F2 -> D3(tap) -> SW1 (left edge); J6 above F2; SW2 below SW1
-pos={"J71":(W/2-15.5,59.5),"J72":(W/2+15.5,59.5),
-     "J2":(84,44.5),"D2":(68,44.5),"F2":(46,44.5),"D3":(24,44.5),
-     "SW1":(8.5,34),"SW2":(8.5,56),
-     "J6":(46,31.5),"J3":(W/2,H-7)}
+# power chain right->left along y=42: J2 (right edge) -> D2 -> F2 -> D3(tap) -> SW1 (left edge); J6 above F2; SW2 below SW1
+pos={"J71":(W/2-15.5,56.5),"J72":(W/2+15.5,56.5),
+     "J2":(W-6.2,42),"D2":(66,42),"F2":(43.5,42),"D3":(21,42),
+     "SW1":(6.5,31),"SW2":(6.5,52.7),
+     "J6":(43.5,30.2),"J3":(43.5,H-7)}
 ROT={"J2":90,"SW1":270,"SW2":270,"D3":180}   # edge terminals: wire entry faces the edge
 for i in range(4):
     pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,18.9)
@@ -39,7 +39,7 @@ for (x1,y1,x2,y2) in [(0,0,W,0),(W,0,W,H),(W,H,0,H),(0,H,0,0)]:
     s=pcbnew.PCB_SHAPE(b); s.SetShape(pcbnew.SHAPE_T_SEGMENT); s.SetLayer(pcbnew.Edge_Cuts)
     s.SetStart(VECTOR2I(mm(x1),mm(y1))); s.SetEnd(VECTOR2I(mm(x2),mm(y2))); s.SetWidth(mm(0.1)); b.Add(s)
 # mounting holes M3, 4 mm inset
-for hx,hy in [(4,4),(W-4,4),(4,H-4),(W-4,H-4)]:
+for hx,hy in [(4.25,4.25),(W-4.25,4.25),(4.25,H-4.25),(W-4.25,H-4.25)]:
     f=pcbnew.FootprintLoad(os.path.join(FPDIR,"MountingHole.pretty"),"MountingHole_3.2mm_M3_Pad_Via")
     f.SetReference("H"); f.Reference().SetVisible(False); f.SetPosition(VECTOR2I(mm(hx),mm(hy))); b.Add(f)
 
@@ -72,8 +72,15 @@ for r in range(2):
 # switch + title labels
 for ref,txt in (("SW1","SW1 POWER"),("SW2","SW2 IGN")):
     fps[ref].Reference().SetVisible(False)
-sx,sy=pads_of("SW1")["1"]; label("SW1 POWER",sx,20.5,0.9)
-sx,sy=pads_of("SW2")["1"]; label("SW2 IGN",sx,68.4,0.9)
+sx,sy=pads_of("SW1")["1"]; label("SW1 POWER",sx,18.6,0.9)
+sx,sy=pads_of("SW2")["1"]; label("SW2 IGN",sx,66.3,0.9)
+# J3 pin labels (OBD pin number / function), above the pad row; ref hidden
+fps["J3"].Reference().SetVisible(False)
+for n,(x,y) in pads_of("J3").items():
+    k=int(n); txt="GND" if k==5 else ("12V" if k==16 else str(k))
+    label(txt,x,y-3.0,0.8)
+# net legend
+label("J4 PINS:",10.5,10.5,0.8); label("1=12V_BAT 2=NET",10.5,12.2,0.8); label("3=12V_IGN 4=GND",10.5,14,0.8)
 label("Board 2 r1",W-8,64.5,0.8)
 b.Save(os.path.join(HERE,"board2.kicad_pcb"))
 print("saved")
