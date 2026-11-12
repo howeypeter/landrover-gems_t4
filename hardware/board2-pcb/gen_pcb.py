@@ -8,8 +8,8 @@ net=open(os.path.join(HERE,"board2.net"),encoding="utf-8").read()
 fp_of={}
 for m in re.finditer(r'\(comp\s+\(ref "([^"]+)"\)(.*?)\(footprint "([^"]+)"\)',net,re.S): fp_of[m.group(1)]=m.group(3)
 nets={}
-for m in re.finditer(r'\(net \(code "\d+"\) \(name "([^"]+)"\)(.*?)(?=\(net \(code|\Z)',net,re.S):
-    nets[m.group(1)]=re.findall(r'\(node \(ref "([^"]+)"\) \(pin "([^"]+)"\)',m.group(2))
+for m in re.finditer(r'\(net\s+\(code "\d+"\)\s+\(name "([^"]+)"\)(.*?)(?=\(net\s+\(code|\Z)',net,re.S):
+    nets[m.group(1).lstrip("/")]=re.findall(r'\(node\s+\(ref "([^"]+)"\)\s+\(pin "([^"]+)"\)',m.group(2))
 b=pcbnew.BOARD()
 ni={}
 for n in nets:
@@ -19,7 +19,7 @@ pinnet={(r,p):n for n,l in nets.items() for r,p in l}
 R1,R2=14,31
 pos={"J71":(21,R1),"J72":(53,R1),"J2":(79,R1),
      "J6":(21,R2),"SW1":(51,R2+2),"SW2":(76,R2+2),
-     "D3":(79,45),"D2":(79,52),"F2":(76,62),"J3":(40,H-7)}
+     "D3":(79,45),"D2":(79,53.5),"F2":(76,62),"J3":(40,H-7)}
 for i in range(4):
     pos[f"J4{i+1}"]=(14+12*i,46); pos[f"J4{i+5}"]=(14+12*i,57)
 for ref,fid in fp_of.items():
@@ -39,6 +39,6 @@ for (x1,y1,x2,y2) in [(0,0,W,0),(W,0,W,H),(W,H,0,H),(0,H,0,0)]:
 # mounting holes M3, 4 mm inset
 for hx,hy in [(4,4),(W-4,4),(4,H-4),(W-4,H-4)]:
     f=pcbnew.FootprintLoad(os.path.join(FPDIR,"MountingHole.pretty"),"MountingHole_3.2mm_M3_Pad_Via")
-    f.SetReference("H"); f.SetPosition(VECTOR2I(mm(hx),mm(hy))); b.Add(f)
+    f.SetReference("H"); f.Reference().SetVisible(False); f.SetPosition(VECTOR2I(mm(hx),mm(hy))); b.Add(f)
 b.Save(os.path.join(HERE,"board2.kicad_pcb"))
 print("saved")

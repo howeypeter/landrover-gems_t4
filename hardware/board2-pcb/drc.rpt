@@ -1,8 +1,28 @@
 ** Drc report for board2.kicad_pcb **
-** Created on 2026-11-11T23:48:46 **
-** Report includes: Errors **
+** Created on 2026-11-12T00:01:51 **
+** Report includes: Errors, Warnings, Exclusions **
 
-** Found 0 DRC violations **
+** Found 5 DRC violations **
+[starved_thermal]: Thermal relief connection to zone incomplete (layer B.Cu; 2 spokes connected to isolated island)
+    Local override; error
+    @(0.4500 mm, 0.4500 mm): Zone [GND] on B.Cu, priority 0
+    @(15.5000 mm, 47.0800 mm): PTH pad 4 [GND] of J41
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(76.0000 mm, 56.0000 mm): Reference field of F2
+    @(74.1300 mm, 56.2200 mm): Segment of D2 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(76.0000 mm, 56.0000 mm): Reference field of F2
+    @(75.5550 mm, 50.7800 mm): Segment of D2 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(76.0000 mm, 56.0000 mm): Reference field of F2
+    @(75.6750 mm, 50.7800 mm): Segment of D2 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(76.0000 mm, 56.0000 mm): Reference field of F2
+    @(75.7950 mm, 50.7800 mm): Segment of D2 on F.Silkscreen
 
 ** Found 0 unconnected pads **
 
