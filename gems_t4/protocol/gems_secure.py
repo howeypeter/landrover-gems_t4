@@ -173,15 +173,24 @@ class GemsSecureSession:
             cfg = s.read_config()
     """
 
-    def __init__(self, transport: Transport) -> None:
+    def __init__(self, transport: Transport, *, channel: int | None = None) -> None:
         self.transport = transport
         self.unlocked = False
         self.last_seed: int | None = None
+        #: Board 1 dual-transceiver channel (0=U2 default, 1=U3, None=leave
+        #: as-is). Must be selected AFTER transport.open() but BEFORE the
+        #: 0xDA 5-baud init below, same ordering constraint as Backend.connect.
+        self._channel = channel
 
     # -- lifecycle -------------------------------------------------------- #
     def connect(self) -> InitResult:
-        """Open the transport and 5-baud-init at 0xDA. Raises on init failure."""
+        """Open the transport, select the K-line channel if set, and
+        5-baud-init at 0xDA. Raises on init failure."""
         self.transport.open()
+        if self._channel is not None:
+            select_channel = getattr(self.transport, "select_channel", None)
+            if select_channel is not None:
+                select_channel(self._channel)
         result = self.transport.init(SECURE_INIT_ADDRESS, "slow")
         self.unlocked = False
         return result

@@ -44,20 +44,37 @@ Physical order, left to right, single row:
 [ A1 ][ A2 ][ A3 ]   [ B1 ][ B2 ][ B3 ]   [ 12V ]   [ GND ][ GND ]
 ```
 
-| Terminal | Internal net | This build's OBD pin |
-|---|---|---|
-| A1 | K1 (U2 pin 6) | pin 7 — engine K-line |
-| A2 | K1 (U2 pin 6) — **same node as A1** | pin 15 — L-line, **intentionally tied to A1** (keeps the GEMS 0xDA L↔K strap permanently open) |
-| A3 | LI1 (U2 pin 8, read-only) | not currently used |
-| B1 | K2 (U3 pin 6) | pin 8 — 10AS diagnostic bus |
-| B2 | K2 (U3 pin 6) — same node as B1 | not currently used |
-| B3 | LI2 (U3 pin 8, read-only) | not currently used |
-| 12V | 12V_IN | pin 16 — battery +12 V |
-| GND | GND | pin 4 — chassis ground |
-| GND | GND | pin 5 — signal ground |
+**Board silkscreen uses friendlier names for the same six terminals:**
+`K1-A`=A1, `K1-B`=A2, `K1-RO`=A3, `K2-A`=B1, `K2-B`=B2, `K2-RO`=B3. Both names
+refer to the identical physical screw terminal; this doc keeps the A/B lettering
+for brevity, the board itself prints the K1/K2 names.
 
-Other OBD pins (1, 2, 3, 6, 9, 10, 11, 12, 13, 14 — including CAN on 6/14 and
+**Full 6-terminal assignment FINALIZED (2026-10-20):**
+
+| Terminal | Internal net | This build's OBD pin / tap |
+|---|---|---|
+| A1 (`K1-A`) | K1 (U2 pin 6) | pin 7 — engine K-line |
+| A2 (`K1-B`) | K1 (U2 pin 6) — **same node as A1** | pin 15 — L-line, **intentionally tied to A1** (keeps the GEMS 0xDA L↔K strap permanently open) |
+| A3 (`K1-RO`) | LI1 (U2 pin 8, read-only) | pin 13 — **SRS/airbag diagnostic line** (RAVE-verified, `docs/dlc-pinouts.md`). **Passive listen tap only** — LI cannot drive, so this board can never write to the airbag bus, only sniff it. No active SRS diagnostics (that would need a bidirectional channel, which isn't spare). |
+| B1 (`K2-A`) | K2 (U3 pin 6) | pin 8 — **10AS diagnostic bus**. Bidirectional — this channel both writes (init/request frames) and reads, needed for any real 10AS exchange (e.g. the EKA read goal); the 10AS protocol itself is still unmapped, but the transport already supports raw writes via `select_channel(1)` + `raw_xfer()`. |
+| B2 (`K2-B`) | K2 (U3 pin 6) — same node as B1 | spare slot on the K2/10AS node — not currently used |
+| B3 (`K2-RO`) | LI2 (U3 pin 8, read-only) | **10AS→ECM mobilise line** (C225 pin 15 → C1017 pin 26) — **not on the OBD2 pigtail at all**; tapped via a separate direct splice onto that wire at the bench. Passive listen tap only. Per the 2026-09-28 PIO+DMA capture, this line is DC-enable-like with no decodable serial data, so the simple LI comparator read (`read_pins()`/`monitor_l()`) is sufficient — no need for the dedicated high-speed sniffer for routine monitoring. **Verify the line's voltage swing against the L9637D's comparator threshold before relying on this** — not yet explicitly checked. |
+| 12V | 12V_IN | pin 16 — battery +12 V |
+| GND | GND | **not landed** — pin 4 (chassis ground) deliberately left unconnected, see §6 |
+| GND | GND | pin 5 — signal ground (Board 1's only ground reference) |
+
+Other OBD pins (1, 2, 3, 6, 9, 10, 11, 12, 14 — including CAN on 6/14 and
 J1850 on 2/10) are **not landed on any terminal** in this build.
+
+**Why this split (K1 active, K2 active, both RO passive-only):** there are
+exactly 2 bidirectional channels (K1, K2) and at this point 3 candidate jobs —
+(1) engine K+L tied for 0xDA, (2) 10AS diagnostics on pin 8, (3) true independent
+read access to SRS and the immobiliser mobilise line. Only 2 of those can be
+*active/bidirectional* at once; SRS and the mobilise line don't need write
+access for their purpose here (sniffing state, not driving it — and for the
+mobilise line especially, read-only is also a deliberate safety property, not
+just a resource constraint), so parking both on the RO pins is the right fit
+rather than a compromise.
 
 ---
 
@@ -176,9 +193,11 @@ J1 pin 16 (+12V)
 
 ## 6. Ground
 
+**CORRECTED (2026-10-20) — pin 4 is NOT landed; Board 1 grounds through pin 5
+only.** The earlier "bond 4+5" decision is reversed — see rationale below.
+
 | Source | Connects to net |
 |---|---|
-| J1 pin 4 (chassis ground) | GND |
 | J1 pin 5 (signal ground) | GND |
 | U2 pin 5 | GND |
 | U3 pin 5 | GND |
@@ -189,12 +208,24 @@ J1 pin 16 (+12V)
 | C1 pin B | GND |
 | C2 pin B | GND |
 
-**Pins 4 and 5 are intentionally bonded into one net (GND).** They're
-electrically distinct on a real vehicle (chassis vs. signal reference), but our
-circuit is high-impedance/low-current (just reading/driving a K-line — no real
-power switching), so the noise-isolation reason for keeping them separate
-doesn't apply here. All grounds — both terminals, both transceivers, the buck,
-and the Pico — are a single electrical net.
+J1 pin 4 (chassis ground) is **deliberately left unconnected** — not landed on
+either GND terminal.
+
+**Why this changed:** pins 4 and 5 are electrically distinct on the real
+vehicle (chassis-return vs. a dedicated clean reference for diagnostic gear),
+and per RAVE (`docs/dlc-pinouts.md`) they go to **different splice points** on
+this vehicle — pin 4 → S204/E201, pin 5 → E200 — so they are **not** already
+bonded near the connector as earlier assumed. Board 1 is an external device;
+bonding 4+5 on it would create a new current path between two ground networks
+the OEM kept separate, letting chassis-ground noise/transients (starter crank,
+alternator ripple) reach what's supposed to be the clean reference, through
+thin signal-rated pigtail wiring never meant to carry chassis-ground current.
+**Fix: use pin 5 only** — it's the pin J1962 provides specifically for this
+purpose — and leave pin 4 off the board entirely, so Board 1 never bridges the
+two ground networks and relies on the vehicle's own (OEM-designed) grounding
+scheme for chassis duty. The second physical GND terminal slot stays wired to
+the same internal GND net (it's one node, not two independent ones) but is
+simply left unused unless a future need arises.
 
 ---
 
@@ -232,18 +263,18 @@ firmware isn't yet.
 | K1_TX | U2 pin 4, U1 GP0 |
 | K1_RX | U2 pin 1, U1 GP1 |
 | K1_LO | U2 pin 2, U1 GP2 |
-| LI1 | Terminal A3, U2 pin 8 |
+| LI1 | Terminal A3 (`K1-RO`), U2 pin 8 — tapped to OBD pin 13 (SRS/airbag), passive listen only |
 | K2 | Terminal B1, Terminal B2, U3 pin 6, R2 pin A |
 | K2_TX | U3 pin 4, U1 GP4 |
 | K2_RX | U3 pin 1, U1 GP5 |
 | K2_LO | U3 pin 2, U1 GP6 |
-| LI2 | Terminal B3, U3 pin 8 |
+| LI2 | Terminal B3 (`K2-RO`), U3 pin 8 — tapped to the 10AS→ECM mobilise line (off-OBD2 direct splice), passive listen only |
 | 12V_IN | Terminal 12V, F1 pin A |
 | VS_FUSED | F1 pin B, **D1 cathode**, U2 pin 7, U3 pin 7, Q1 source, R1 pin B, R2 pin B |
 | VIN_PROT | Q1 drain, REG1 VIN |
 | VSYS_5V | REG1 VOUT, D2 anode, D2 cathode → U1 VSYS |
 | P3V3 | U1 3V3, U2 pin 3, U3 pin 3, C1 pin A, C2 pin A |
-| GND | Terminal GND ×2 (OBD pins 4 & 5), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, **D1 anode**, Q1 gate ← R3, C1 pin B, C2 pin B |
+| GND | Terminal GND ×2 (only OBD pin 5 landed — pin 4 intentionally unconnected, see §6), U2 pin 5, U3 pin 5, REG1 GND, U1 GND, **D1 anode**, Q1 gate ← R3, C1 pin B, C2 pin B |
 
 ---
 
@@ -258,8 +289,12 @@ firmware isn't yet.
 - **Why LI is a separate, unbussed net:** LI (pin 8) is the L9637D's read-only
   comparator input — it senses a line but can never drive it. Keeping it off
   the K node means you can tap it onto any signal you want to passively
-  listen to (e.g. the 10AS→ECM immobiliser mobilise line) without disturbing
-  or loading whatever's on the K bus.
+  listen to without disturbing or loading whatever's on the K bus. **Finalized
+  use (2026-10-20): LI1 (`K1-RO`) → SRS/airbag (OBD pin 13); LI2 (`K2-RO`) →
+  the 10AS→ECM immobiliser mobilise line** (off-OBD2, direct splice). Both are
+  safety-sensitive buses where read-only access isn't just convenient — it's a
+  hardware guarantee this board can never accidentally write an actuation or
+  state-change command onto either line.
 - **Why two transceivers:** K1 and K2 are fully independent — different OBD
   pins, different pull-ups, different UARTs, different bauds. This lets the
   board hold two K-line sessions open at once (e.g. talking to the engine ECM

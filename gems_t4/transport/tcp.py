@@ -31,7 +31,10 @@ from gems_t4.transport.base import (
 )
 from gems_t4.transport.pico import (
     CMD_INIT,
+    CMD_MONITOR_L,
     CMD_PING,
+    CMD_RAW_XFER,
+    CMD_SELECT_CHANNEL,
     CMD_SEND_RECV,
     CMD_SET_WIFI,
     CMD_WIFI_STATUS,
@@ -235,6 +238,37 @@ class TcpTransport(Transport):
         if status != STATUS_OK:
             raise TransportError(f"wifi-status failed (status {status})")
         return payload.decode("ascii", "replace")
+
+    # -- raw / unmapped access (bypasses ALL protocol gating — see callers) - #
+    def raw_xfer(self, payload: bytes) -> bytes:
+        """See :meth:`PicoAdapterTransport.raw_xfer` for the full contract."""
+        status, resp = self._transceive(CMD_RAW_XFER, payload)
+        if status != STATUS_OK:
+            raise TransportError(f"raw_xfer failed (status {status})")
+        return resp
+
+    def monitor_l(self, window_ms: int = 1000) -> bytes:
+        """See :meth:`PicoAdapterTransport.monitor_l` for the full contract."""
+        hi, lo = (window_ms >> 8) & 0xFF, window_ms & 0xFF
+        status, resp = self._transceive(CMD_MONITOR_L, bytes([hi, lo]))
+        if status != STATUS_OK:
+            raise TransportError(f"monitor_l failed (status {status})")
+        return resp
+
+    # -- dual K-line channel select (Board 1's second L9637D) --------------- #
+    def select_channel(self, channel: int) -> None:
+        """Pick which L9637D/UART pair subsequent commands operate on over the
+        network link. See :meth:`PicoAdapterTransport.select_channel` for the
+        full contract. (When the far end is `gems_t4 serve`, not a real Pico,
+        this returns BAD_REQUEST, surfaced as a clear TransportError.)"""
+        if channel not in (0, 1):
+            raise ValueError(f"channel must be 0 or 1, got {channel!r}")
+        status, _ = self._transceive(CMD_SELECT_CHANNEL, bytes([channel]))
+        if status != STATUS_OK:
+            raise TransportError(
+                f"select-channel failed (status {status}) - the far end must "
+                f"be a Pico running pico_kline_all >= 3.8.0 (not `gems_t4 serve`)."
+            )
 
 
 def parse_endpoint(value: str) -> tuple[str, int]:

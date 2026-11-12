@@ -80,6 +80,16 @@ class VinReconstructBody(BaseModel):
     plant: str = "A"                      # position 11
 
 
+class RawLinkBody(BaseModel):
+    link: str                             # K1 | K2 | L1 | L2
+    data_hex: str | None = None           # required for K1/K2; must be omitted for L1/L2
+    window_ms: int = 1000                 # L1/L2 only: capture window, clamped to 5000
+    # Explicit, named acknowledgment that this bypasses every other safety
+    # gate (no backup/verify/decode) — deliberately not called "confirm" so
+    # it reads as what it is: opting into a raw/unmapped ECU channel.
+    secure_session_ack: bool = False
+
+
 class WifiBody(BaseModel):
     kind: str = "usb"                     # usb | ble | network
     com_port: str | None = None           # usb: serial port (auto-detect if omitted)
@@ -230,6 +240,22 @@ def build_app(backend: Backend | None = None) -> FastAPI:
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(409, str(exc)) from exc
         return {"actuator_id": r.actuator_id, "ok": r.ok, "message": r.message}
+
+    # -- raw link access (bypasses ALL protocol gating — see Backend docstring) #
+    @app.post("/api/raw")
+    def raw_link(body: RawLinkBody) -> dict:
+        data = bytes.fromhex(body.data_hex) if body.data_hex else None
+        try:
+            result = locked(
+                be().raw_link_transfer, body.link, data,
+                window_ms=body.window_ms,
+                secure_session_ack=body.secure_session_ack,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001 - not connected, transport error, etc.
+            raise HTTPException(409, str(exc)) from exc
+        return {"link": body.link, "result_hex": result.hex()}
 
     # -- identity / coding / immobiliser -------------------------------------- #
     @app.get("/api/vin")

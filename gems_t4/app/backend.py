@@ -113,6 +113,10 @@ class Backend:
         # Set True for USB connections (a Pico adapter → a real GEMS ECU).
         self._use_kline = False
         self._ecu: VirtualEcu | None = None
+        #: Board 1 dual-transceiver channel select (0=U2 default, 1=U3, or
+        #: None to leave the Pico on whatever channel it's already on). Must
+        #: be applied BEFORE the ECU's 5-baud init, not after — see connect().
+        self._channel: int | None = None
         self._connection_label = (
             "Custom transport" if transport_factory is not None else "Virtual ECU"
         )
@@ -214,6 +218,20 @@ class Backend:
         if self.connected:
             self.disconnect()
             self.connect()
+
+    def set_channel(self, channel: int | None) -> None:
+        """Select which of Board 1's two L9637D transceivers subsequent real-ECU
+        sessions use: ``0`` = U2 (GP0/1, the default), ``1`` = U3 (GP4/5), or
+        ``None`` to leave the Pico on whatever channel it's already on (no
+        select-channel command sent). Takes effect on the next :meth:`connect`
+        — it must reach the Pico BEFORE the ECU's 5-baud init, otherwise that
+        handshake runs on the wrong chip. Only real transports (USB/BLE/
+        network-to-a-real-Pico) support this; the virtual ECU ignores it.
+        Needs firmware pico_kline_all >= 3.8.0.
+        """
+        if channel not in (None, 0, 1):
+            raise ValueError(f"channel must be 0, 1, or None, got {channel!r}")
+        self._channel = channel
 
     def set_connection(
         self,
@@ -366,6 +384,13 @@ class Backend:
             self._adapter_fw = _ping_firmware(transport)
             if on_adapter is not None:
                 on_adapter(self._adapter_fw)
+            # Channel select MUST happen here — after the adapter link is up,
+            # before the ECU's 5-baud init — or that handshake runs on whatever
+            # channel the Pico booted on (always 0/U2), not the requested one.
+            if self._channel is not None:
+                select_channel = getattr(transport, "select_channel", None)
+                if select_channel is not None:
+                    select_channel(self._channel)
             # Phase 2: the ECU 5-baud init (transport.open() inside is a no-op).
             kline = KlineClient(transport)
             kline.connect()
@@ -565,6 +590,76 @@ class Backend:
                     message=getattr(outcome, "message", None))
         return outcome
 
+    # -- raw link access (bypasses ALL protocol gating — see docstring) ---- #
+    _RAW_LINKS = {"K1": 0, "K2": 1, "L1": 0, "L2": 1}
+
+    def raw_link_transfer(
+        self,
+        link: str,
+        data: bytes | None = None,
+        *,
+        window_ms: int = 1000,
+        secure_session_ack: bool = False,
+    ) -> bytes:
+        """Send/monitor raw bytes on a named physical link: ``K1``/``K2`` are
+        the two bidirectional K-line channels (U2/U3); ``L1``/``L2`` are their
+        read-only LI/LO listen taps (can only be monitored, never driven — the
+        L9637D LI pin senses but can't transmit).
+
+        This is deliberately NOT gated like coding/immobiliser writes (no
+        decoded/validated payload, no backup, no verify-after-write) — it's
+        the raw reverse-engineering primitive the ``bench/*.py`` probe scripts
+        already use directly against the transport, now reachable through
+        ``Backend``/the API instead of only ad-hoc scripts. Because it bypasses
+        every other safety net, the caller must explicitly acknowledge that by
+        passing ``secure_session_ack=True`` — named to say what it actually
+        means (you are opening a raw/unmapped channel to the ECU outside
+        normal protocol gating), not a generic "confirm".
+
+        ``K1``/``K2`` send ``data`` (required) via the transport's
+        ``raw_xfer`` — everything received in ~400ms comes back unparsed
+        (echo bytes first, then any real response; caller separates them).
+        ``L1``/``L2`` ignore ``data`` (raise if given) and instead return
+        ``window_ms`` of transition-timing data from ``monitor_l``.
+
+        Requires an already-connected real-ECU session (USB/BLE/network to a
+        real Pico — not the virtual ECU) and firmware pico_kline_all >= 3.8.0
+        for the channel select to take effect.
+        """
+        if link not in self._RAW_LINKS:
+            raise ValueError(f"link must be one of {sorted(self._RAW_LINKS)}, got {link!r}")
+        if not secure_session_ack:
+            raise ValueError(
+                "raw_link_transfer requires secure_session_ack=True — this "
+                "bypasses every other safety gate (no backup, no verify, no "
+                "decoded payload), so the caller must explicitly acknowledge it"
+            )
+        transport = self._active_transport()
+        if transport is None:
+            raise TransportError(
+                "raw_link_transfer needs an already-open real-ECU session "
+                "(connect over USB/BLE/network first)"
+            )
+        select_channel = getattr(transport, "select_channel", None)
+        if select_channel is not None:
+            select_channel(self._RAW_LINKS[link])
+        is_l_link = link.startswith("L")
+        if is_l_link:
+            if data is not None:
+                raise ValueError(f"{link} is read-only (LI/LO) — cannot send data to it")
+            result = transport.monitor_l(window_ms)
+        else:
+            if not data:
+                raise ValueError(f"{link} needs non-empty data to send")
+            result = transport.raw_xfer(data)
+        self._audit(
+            "raw_link_transfer", "read" if is_l_link else "write",
+            link=link, data_hex=(data.hex() if data else None),
+            window_ms=window_ms if is_l_link else None,
+            result_hex=result.hex(),
+        )
+        return result
+
     # -- proprietary 0xDA secure channel (real ECU, bench L-line) ---------- #
     def secure_session(self) -> "GemsSecureSession":
         """Build a :class:`GemsSecureSession` over the configured real transport.
@@ -583,7 +678,7 @@ class Backend:
                 "the proprietary 0xDA channel needs a real adapter (USB/BLE), "
                 "not the virtual ECU — select a --port/--ble connection"
             )
-        return GemsSecureSession(self._transport_factory())
+        return GemsSecureSession(self._transport_factory(), channel=self._channel)
 
     # -- coding / programming (gated writes) ------------------------------- #
     @staticmethod

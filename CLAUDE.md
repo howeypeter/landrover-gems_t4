@@ -140,6 +140,22 @@ The active working list for the next couple of days. Detailed backlog entries
    (or `Stop-ScheduledTask gems_t4-web`), AND **firmware 3.2.0 makes the WiFi
    server single-client, LAST-connection-wins** (new tester cleanly takes over a
    stale/previous connection instead of the old first-wins lockout; needs reflash).
+   **Correct `arduino-cli` invocation (found 2026-10-02, after repeated syntax
+   errors — save this, don't re-derive it):**
+   ```
+   arduino-cli compile --fqbn "rp2040:rp2040:rpipico2w" --board-options "ipbtstack=ipv4btcble,flash=4194304_1048576" firmware/pico_kline_all/pico_kline_all.ino
+   arduino-cli upload --port COM4 --fqbn "rp2040:rp2040:rpipico2w" --board-options "ipbtstack=ipv4btcble,flash=4194304_1048576" firmware/pico_kline_all/pico_kline_all.ino
+   ```
+   Gotchas: (a) `compile` accepts repeated `-o "rp2040:rp2040:<opt>=<val>"` flags,
+   but **`upload` does NOT have a `-o` shorthand** — it errors "unknown shorthand
+   flag" and needs `--board-options "<opt1>=<val1>,<opt2>=<val2>"` (comma-separated,
+   one flag) instead. (b) `upload` without a prior matching `compile` fails with a
+   Python `FileNotFoundError` on the `.uf2` — always compile with the exact same
+   `--board-options` immediately before uploading. (c) `arduino-cli board details`
+   needs `-b <fqbn>`, not a bare positional arg. Reflash verified working
+   2026-10-02 (`gems_t4 kline wifi-status --ble` → WiFi reconnected, IP
+   192.168.1.138, SSID howitzer_vpn — creds had persisted in LittleFS from an
+   earlier session).
    Two gotchas found +
    fixed en route: (1) **build MUST include a LittleFS region** — the board default
    `flash=4194304_0` ("no FS") makes `set-wifi` fail `status 2` / `wifi-status`=
@@ -625,8 +641,16 @@ as static lookalikes for now.
   land **directly** on them, no separate patch layer. A1/A2 = one K-line node
   (A1=OBD pin7, A2=OBD pin15/L — tied on purpose, keeps GEMS 0xDA permanently
   open); A3 = LI, a separate read-only listen tap. B1/B2/B3 mirror this for U3
-  (B1=OBD pin8/10AS). **Firmware TODO:** add a `channel` byte (0=Serial1/U2,
-  1=Serial2/U3) to the K-line commands. **Route-A power IN:** OBD 12V → 1A fuse
+  (B1=OBD pin8/10AS). **Channel select was already implemented** (not a TODO —
+  `CMD_SELECT_CHANNEL`, hardware-verified) — `gems_t4 kline ... --channel 0|1`
+  picks U2 vs U3. **Full 6-terminal assignment FINALIZED (2026-10-20):** A3
+  (`K1-RO` on the silkscreen) → OBD pin 13 (SRS/airbag), passive listen only;
+  B3 (`K2-RO`) → the 10AS→ECM mobilise line (C225 p15 → C1017 p26, off the
+  OBD2 pigtail entirely, direct splice at the bench), also passive listen
+  only — both RO terminals are deliberately read-only-only buses (safety
+  property, not just unused slots). Detail: `diagrams/PCB_Board_Scheme/
+  PCB_Board_Scheme.md` §2/§8/§9, `docs/two-board-rig.md` "Finalized Board 1
+  I/O". **Route-A power IN:** OBD 12V → 1A fuse
   → TVS → {U2/U3 Vs, buck}; buck (fixed 5V, 5–30Vin, 3A) → 1N5817 → Pico
   VSYS(39), diode-OR'd with USB (no switch; never VBUS). **Full electrical
   design (BOM/pins/nets, the source of truth) is now its own doc:
@@ -636,6 +660,15 @@ as static lookalikes for now.
   the engine — recreated the exact contention Board 1's dual-transceiver split
   was built to avoid; now routes via pin 8, kept separate) plus several stale
   JP1/patch-bank references across `hardware-shopping-list.md`.
+  **⚠️ UPDATE 2026-10-05 — Board 2 terminal scheme corrected (Board 1 unchanged).**
+  Board 2's female OBD2 pigtail is now **soldered** to a fixed 16-pad block (one
+  pad per OBD pin, P2.1…P2.16, never moves), with a **separate screw patch layer**
+  between that block and `TB-ECU`/`TB-10AS` — all of Board 2's reconfiguration now
+  happens at that one patch layer, instead of moving the pigtail wires directly.
+  Board 1 keeps its original 9-terminal direct-landing scheme exactly as-is; the
+  two boards now deliberately use different reconfiguration points (Board 1 =
+  pigtail side, Board 2 = fan-out side) rather than mirroring each other. Full
+  detail in `docs/two-board-rig.md`'s Board 2 section.
 - `docs/gems-ecu-pinout.md` (added 2026-09-14) — the **authoritative GEMS ECU
   connector pinout** (all three plugs C1017/C1032/C1033 = C507/C505/C509, every
   populated pin, wire colours, male/female physical pin map), from the BlackBox
@@ -676,6 +709,17 @@ as static lookalikes for now.
   the "reconstruct the full VIN from the ECU/10AS last-6" concept (derived
   11-char prefix + read serial), with a worked Disco-1 template, NAS/verify
   caveats, and a `gems_t4/gems/vin.py` build sketch. Backlog item, not built.
+- `docs/can-bus-reference-research.md` (added 2026-10-08) — **deferred, NOT
+  part of current scope** — research from a side discussion on making Board 1
+  also CAN-capable for a hypothetical future "universal adapter." Covers the
+  MCP2518FD+TCAN1042 parts needed (Pico has no native CAN), why swapping the
+  host MCU to STM32H725 (comma.ai Red Panda's chip) isn't worth it (loses the
+  Pico 2 W's WiFi/BLE, throws away all hardware-verified firmware), and
+  confirmed-from-source detail on how Red Panda runs 3 simultaneous CAN-FD
+  buses off one STM32H725 (3 built-in FDCAN instances + electrical
+  harness-orientation sensing that drives active GPIO pin-remuxing for a 4th
+  transceiver — not a passive cable-plugging effect). Not wired into Board 1's
+  actual design docs; the Discovery 1 has no CAN bus at all.
 - `docs/rave-index.md` (added 2026-09-18, committed) — section→page index of all
   75 RAVE PDFs (titles + page numbers only; the PDFs themselves stay local/
   gitignored — LR IP). Generator: `bench/rave_index.py`. Jump straight to a

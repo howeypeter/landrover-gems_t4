@@ -38,6 +38,10 @@ CMD_SEND_RECV = 0x03
 CMD_SET_TIMING = 0x04
 CMD_SET_WIFI = 0x06
 CMD_WIFI_STATUS = 0x07
+CMD_RAW_XFER = 0x08
+CMD_MONITOR_L = 0x09
+CMD_SELECT_CHANNEL = 0x0D
+CMD_READ_PINS = 0x0E
 
 STATUS_OK = 0x00
 STATUS_TIMEOUT = 0x01
@@ -206,6 +210,76 @@ class PicoAdapterTransport(Transport):
         if status != STATUS_OK:
             raise TransportError(f"wifi-status failed (status {status})")
         return payload.decode("ascii", "replace")
+
+    # -- raw / unmapped access (bypasses ALL protocol gating — see callers) - #
+    def raw_xfer(self, payload: bytes) -> bytes:
+        """Send ``payload`` at the CURRENT session baud/channel with NO echo
+        cancellation: the firmware flushes stale RX, transmits, then collects
+        everything received over a fixed ~400 ms window (echo bytes first,
+        then any real response) and hands it all back unparsed. The caller is
+        responsible for separating echo from response. This is the reverse-
+        engineering primitive used by the ``bench/*.py`` probe scripts,
+        formalized here so it's reachable from the API/Backend instead of only
+        ad-hoc scripts. Requires an already-open, already-initialized link
+        (call :meth:`select_channel` first if you need a specific channel).
+        """
+        status, resp = self._transceive(CMD_RAW_XFER, payload)
+        if status != STATUS_OK:
+            raise TransportError(f"raw_xfer failed (status {status})")
+        return resp
+
+    def monitor_l(self, window_ms: int = 1000) -> bytes:
+        """Passively capture digital transitions on the active channel's LO
+        (L-line comparator) pin for ``window_ms`` (clamped to 5000 by the
+        firmware). Read-only — the L9637D's LI/LO path can only sense, never
+        drive. Returns ``[initial_level] + N * [dt_hi][dt_lo]`` microsecond
+        deltas between transitions; see firmware CMD_MONITOR_L for the format.
+        """
+        hi, lo = (window_ms >> 8) & 0xFF, window_ms & 0xFF
+        status, resp = self._transceive(CMD_MONITOR_L, bytes([hi, lo]))
+        if status != STATUS_OK:
+            raise TransportError(f"monitor_l failed (status {status})")
+        return resp
+
+    # -- dual K-line channel select (Board 1's second L9637D) --------------- #
+    def select_channel(self, channel: int) -> None:
+        """Pick which L9637D/UART pair subsequent commands operate on.
+
+        ``channel`` 0 = U2 (Serial1, GP0 TX / GP1 RX, LO on GP2) — the default
+        at boot. ``channel`` 1 = U3 (Serial2, GP4 TX / GP5 RX, LO on GP6).
+        Sticky on the Pico until changed again; every INIT/SEND_RECV/
+        SET_TIMING/RAW_INIT/RAW_XFER/MONITOR_L/CAPTURE call after this uses the
+        selected channel. Needs firmware >= pico_kline_all 3.8.0.
+        """
+        if channel not in (0, 1):
+            raise ValueError(f"channel must be 0 or 1, got {channel!r}")
+        status, _ = self._transceive(CMD_SELECT_CHANNEL, bytes([channel]))
+        if status != STATUS_OK:
+            raise TransportError(
+                f"select-channel failed (status {status}) - is this firmware "
+                f"pico_kline_all >= 3.8.0?"
+            )
+
+    def read_pins(self) -> dict[str, bool]:
+        """Raw digital level of TX/RX/LO on the active channel (see
+        :meth:`select_channel`), bypassing UART byte-framing entirely -- reads
+        the pad's instantaneous electrical state via the RP2040's GPIO_IN
+        register. Unlike :meth:`raw_xfer` (which decodes/returns serial BYTES
+        and so reports nothing when there's no traffic to frame), this reports
+        a level even when the K-line is open/idle and no Vs is connected --
+        per the L9637D datasheet, RX/LO are specified to show a DEFINED level
+        in that condition, which is what makes this useful as a no-12V-needed
+        orientation cross-check. Needs firmware >= pico_kline_all 3.9.0.
+        """
+        status, payload = self._transceive(CMD_READ_PINS)
+        if status != STATUS_OK:
+            raise TransportError(
+                f"read-pins failed (status {status}) - is this firmware "
+                f"pico_kline_all >= 3.9.0?"
+            )
+        if len(payload) < 3:
+            raise TransportError(f"read-pins: short reply ({len(payload)} bytes)")
+        return {"tx": bool(payload[0]), "rx": bool(payload[1]), "lo": bool(payload[2])}
 
 
 def find_pico_port() -> "str | None":

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board 2 bench hub — electrical schematic</title>
+<style>
+  body{margin:0;background:#fff;color:#111;font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:22px}
+  h1{font-size:21px;margin:0 0 2px}
+  h2{font-size:16px;margin:26px 0 6px}
+  p.sub{color:#555;margin:0 0 10px;max-width:1160px}
+  .wrap{max-width:1460px;margin:0 auto}
+  .sheet{border:1.5px solid #111;border-radius:4px;margin:12px 0 4px;background:#fff;overflow-x:auto}
+  .legend{font:12px "SF Mono",Consolas,monospace;color:#333;background:#f7f7f4;border:1px solid #ddd;border-radius:5px;padding:8px 12px;margin:8px 0}
+  .swatch{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin:0 4px 0 10px}
+  .note{background:#fff6e0;border:1px solid #e0c060;border-radius:5px;padding:8px 12px;margin:10px 0;font-size:13px}
+  table.parts{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0 2px}
+  table.parts th,table.parts td{border:1px solid #ccc;padding:4px 8px;text-align:left;vertical-align:top}
+  table.parts th{background:#efece5}
+  td.ref{font-family:"SF Mono",Consolas,monospace;white-space:nowrap}
+  code{font-family:"SF Mono",Consolas,monospace;font-size:12.5px}
+  .foot{color:#666;font-size:12px;margin-top:22px;border-top:1px solid #ccc;padding-top:8px}
+  svg text{font-family:"SF Mono",Consolas,"Roboto Mono",monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Board 2 — bench hub, electrical schematic</h1>
+<p class="sub">Perfboard build. Solid lines are copper nets; a filled dot &#9679; is a
+connection, wires that merely cross (no dot) are not connected. <b>TB-CAR is a
+generic patch panel</b> &#8212; K1/K2's A/B/RO terminals have no fixed destination;
+dashed lines below them show one example patching (Example 2, the default
+ECU+10AS session), not a permanent wire. Pin numbers for P2 are standard J1962
+(OBD2) pin numbers; pin numbers for the ECU/10AS destinations are the connector
+pins documented in <code>docs/gems-ecu-pinout.md</code> and
+<code>docs/10as-pinout.md</code>.</p>
+
+<div class="note">
+<b>This board is multi-use, not fixed-harness.</b> K1-A/B/RO and K2-A/B/RO
+are generic — each session you patch them to whichever module you're working
+with (engine K-line, 10AS K-line, ABS, SRS, or the immobiliser line directly).
+The dashed wiring shown below is <i>one</i> example configuration
+(the default ECU+10AS session); see <code>docs/board2-bench-hub.md</code>
+&#8220;Example configurations&#8221; for others, e.g. patching K2-A straight to the
+immobiliser/mobilise line instead of the 10AS K-line.
+<br><br>
+<b>Power is paired per channel</b> — 12V-1/12Vi-1 go with whatever's patched
+onto K1, 12V-2/12Vi-2 with whatever's patched onto K2 — but the
+<b>switched/ignition feed is one shared switch (SW2)</b>, gating 12Vi-1 and
+12Vi-2 together, not two independent switches.
+<br><br>
+<b>Signals with no J1962 pin</b> (immobiliser/mobilise, MIL-shared) can't ride
+through P2 &#8212; they reach TB-CAR only as direct wires, shown separately below.
+</div>
+
+<div class="legend">
+<b>wire colours:</b>
+<span class="swatch" style="background:#c0392b"></span>+12V / switched
+<span class="swatch" style="background:#444"></span>GND
+<span class="swatch" style="background:#1f7a3d"></span>example patch (this example's K/L)
+<span class="swatch" style="background:#b8860b"></span>direct wire, no J1962 pin (immobiliser / MIL)
+</div>
+
+<h2>Sheet 1 — Board 2 · bench hub</h2>
+<div class="sheet">
+<svg viewBox="0 0 1460 700" width="100%" role="img" aria-label="Board 2 bench hub wired schematic">
+  <style>
+    .p12{stroke:#c0392b;stroke-width:2.1;fill:none}
+    .g{stroke:#444;stroke-width:1.8;fill:none}
+    .ex{stroke:#1f7a3d;stroke-width:2;fill:none;stroke-dasharray:7 4}
+    .di{stroke:#b8860b;stroke-width:2;fill:none;stroke-dasharray:7 4}
+    .body{stroke:#111;stroke-width:1.7;fill:#fff}
+    .icf{stroke:#111;stroke-width:1.7;fill:#f3f7ff}
+    .pad{stroke:#111;stroke-width:1.5;fill:#fafafa}
+    .t{font-size:12px;fill:#111}
+    .tb{font-size:13px;font-weight:700;fill:#111}
+    .pn{font-size:10px;fill:#666}
+    .dest{font-size:10px;fill:#555;font-style:italic}
+    .lr{font-size:11px;fill:#c0392b;font-weight:700}
+    .lg{font-size:11px;fill:#444;font-weight:700}
+  </style>
+
+  <!-- ===================== POWER CHAIN ===================== -->
+  <rect class="body" x="60" y="90" width="70" height="40"/>
+  <text class="tb" x="95" y="82" text-anchor="middle">J2</text>
+  <text class="pn" x="95" y="145" text-anchor="middle">DC jack 2.1mm</text>
+
+  <line class="p12" x1="130" y1="110" x2="150" y2="110"/>
+  <circle class="body" cx="150" cy="110" r="3"/>
+  <line class="p12" x1="150" y1="110" x2="150" y2="98"/>
+  <line class="p12" x1="150" y1="98" x2="165" y2="98"/>
+  <line class="p12" x1="150" y1="110" x2="150" y2="122"/>
+  <line class="p12" x1="150" y1="122" x2="165" y2="122"/>
+  <polygon class="body" points="165,90 205,98 165,106"/>
+  <line class="body" x1="205" y1="88" x2="205" y2="108"/>
+  <polygon class="body" points="165,114 205,122 165,130"/>
+  <line class="body" x1="205" y1="112" x2="205" y2="132"/>
+  <line class="p12" x1="205" y1="98" x2="220" y2="98"/>
+  <line class="p12" x1="220" y1="98" x2="220" y2="110"/>
+  <line class="p12" x1="205" y1="122" x2="220" y2="122"/>
+  <line class="p12" x1="220" y1="122" x2="220" y2="110"/>
+  <circle class="body" cx="220" cy="110" r="3"/>
+  <text class="tb" x="185" y="82" text-anchor="middle">D2a / D2b</text>
+  <text class="pn" x="185" y="145" text-anchor="middle">1N5817 &#215;2, parallel</text>
+  <line class="p12" x1="220" y1="110" x2="255" y2="110"/>
+
+  <rect class="body" x="255" y="102" width="56" height="16"/>
+  <text class="tb" x="283" y="82" text-anchor="middle">F2</text>
+  <text class="pn" x="283" y="145" text-anchor="middle">1A</text>
+  <line class="p12" x1="311" y1="110" x2="360" y2="110"/>
+
+  <circle class="body" cx="360" cy="110" r="3"/>
+  <circle class="body" cx="420" cy="110" r="3"/>
+  <line class="p12" x1="363" y1="108" x2="415" y2="92"/>
+  <text class="tb" x="390" y="82" text-anchor="middle">SW1</text>
+  <text class="pn" x="390" y="145" text-anchor="middle">illum. latching, 12V/5A</text>
+  <text class="pn" x="390" y="157" text-anchor="middle">built-in LED = PWR</text>
+  <line class="p12" x1="423" y1="110" x2="470" y2="110"/>
+
+  <circle cx="470" cy="110" r="3.4"/>
+  <line class="p12" x1="470" y1="110" x2="1400" y2="110"/>
+  <text class="lr" x="560" y="100">+12V rail (unswitched)</text>
+
+  <circle cx="470" cy="110" r="3.4"/>
+  <line class="p12" x1="470" y1="110" x2="470" y2="55"/>
+  <line class="p12" x1="470" y1="55" x2="250" y2="55"/>
+  <line class="p12" x1="250" y1="55" x2="250" y2="330"/>
+  <text class="t" x="330" y="48" fill="#c0392b">to P2 pin16 (feeds Board 1)</text>
+
+  <!-- shared ignition switch SW2, feeding both 12Vi-1 and 12Vi-2 -->
+  <circle cx="600" cy="110" r="3.4"/>
+  <line class="p12" x1="600" y1="110" x2="600" y2="175"/>
+  <circle class="body" cx="600" cy="178" r="3"/>
+  <circle class="body" cx="660" cy="178" r="3"/>
+  <line class="p12" x1="603" y1="176" x2="655" y2="160"/>
+  <text class="tb" x="630" y="200" text-anchor="middle">SW2</text>
+  <text class="pn" x="630" y="214" text-anchor="middle">illum. latching, 12V/5A</text>
+  <text class="pn" x="630" y="226" text-anchor="middle">built-in LED = IGN</text>
+  <line class="p12" x1="660" y1="178" x2="1160" y2="178"/>
+  <circle cx="1080" cy="178" r="3.4"/>
+  <line class="p12" x1="1080" y1="178" x2="1080" y2="420"/>
+  <circle cx="1160" cy="178" r="3.4"/>
+  <line class="p12" x1="1160" y1="178" x2="1160" y2="420"/>
+  <text class="pn" x="1120" y="200" text-anchor="middle">12Vi-1 and 12Vi-2, both gated by SW2 together</text>
+
+  <!-- unswitched drops to 12V-1 / 12V-2 -->
+  <circle cx="1000" cy="110" r="3.4"/>
+  <line class="p12" x1="1000" y1="110" x2="1000" y2="420"/>
+  <circle cx="1240" cy="110" r="3.4"/>
+  <line class="p12" x1="1240" y1="110" x2="1240" y2="420"/>
+
+  <!-- ===================== P2 connector ===================== -->
+  <rect class="icf" x="60" y="220" width="190" height="130"/>
+  <text class="tb" x="155" y="212" text-anchor="middle">P2 &#8212; J1962 female</text>
+  <text class="pn" x="155" y="365" text-anchor="middle">from Board 1's male plug</text>
+
+  <text class="t" x="68" y="245">7&#160; (engine K)</text>
+  <text class="t" x="68" y="270">15&#160; (L)</text>
+  <text class="t" x="68" y="295">8&#160; (10AS K)</text>
+  <text class="t" x="68" y="320">16&#160; +12V / 4,5 GND</text>
+
+  <line class="ex" x1="250" y1="245" x2="380" y2="245"/>
+  <line class="ex" x1="380" y1="245" x2="380" y2="420"/>
+  <line class="ex" x1="380" y1="420" x2="430" y2="420"/>
+
+  <line class="ex" x1="250" y1="270" x2="400" y2="270"/>
+  <line class="ex" x1="400" y1="270" x2="400" y2="420"/>
+  <line class="ex" x1="400" y1="420" x2="520" y2="420"/>
+
+  <line class="ex" x1="250" y1="295" x2="410" y2="295"/>
+  <line class="ex" x1="410" y1="295" x2="410" y2="420"/>
+  <line class="ex" x1="410" y1="420" x2="700" y2="420"/>
+
+  <circle cx="250" cy="330" r="3"/>
+  <line class="g" x1="250" y1="330" x2="270" y2="330"/>
+  <line class="g" x1="270" y1="330" x2="270" y2="650"/>
+
+  <!-- ===================== direct wires (no J1962 pin) ===================== -->
+  <text class="t" x="62" y="400" fill="#b8860b">direct: immobiliser (10AS p15 &#8596; ECU p26)</text>
+  <line class="di" x1="400" y1="410" x2="970" y2="410"/>
+  <line class="di" x1="970" y1="410" x2="970" y2="420"/>
+  <text class="pn" x="700" y="403" fill="#b8860b">&#8592; shown here patched onto K2-RO (Example 2); move to a -A terminal to drive it (Example 1)</text>
+
+  <!-- ===================== TB-CAR patch panel ===================== -->
+  <text class="tb" x="850" y="395" text-anchor="middle">TB-CAR &#8212; 11-position patch panel (generic)</text>
+
+  <g>
+    <rect class="pad" x="420" y="412" width="20" height="16"/>
+    <text class="t" x="430" y="408" text-anchor="middle">K1-A</text>
+    <text class="dest" x="430" y="470" text-anchor="middle">ex: engine K</text>
+  </g>
+  <g>
+    <rect class="pad" x="510" y="412" width="20" height="16"/>
+    <text class="t" x="520" y="408" text-anchor="middle">K1-B</text>
+    <text class="dest" x="520" y="470" text-anchor="middle">ex: L-line</text>
+  </g>
+  <g>
+    <rect class="pad" x="600" y="412" width="20" height="16"/>
+    <text class="t" x="610" y="408" text-anchor="middle">K1-RO</text>
+    <text class="dest" x="610" y="470" text-anchor="middle">unused here</text>
+  </g>
+  <g>
+    <rect class="pad" x="690" y="412" width="20" height="16"/>
+    <text class="t" x="700" y="408" text-anchor="middle">K2-A</text>
+    <text class="dest" x="700" y="470" text-anchor="middle">ex: 10AS K</text>
+  </g>
+  <g>
+    <rect class="pad" x="870" y="412" width="20" height="16"/>
+    <text class="t" x="880" y="408" text-anchor="middle">K2-B</text>
+    <text class="dest" x="880" y="470" text-anchor="middle">unused here</text>
+  </g>
+  <g>
+    <rect class="pad" x="960" y="412" width="20" height="16"/>
+    <text class="t" x="970" y="408" text-anchor="middle">K2-RO</text>
+    <text class="dest" x="970" y="470" text-anchor="middle">ex: immob./MIL view</text>
+  </g>
+  <g>
+    <rect class="pad" x="990" y="412" width="20" height="16"/>
+    <text class="t" x="1000" y="408" text-anchor="middle">12V-1</text>
+    <text class="dest" x="1000" y="470" text-anchor="middle">ex: ECU p7</text>
+  </g>
+  <g>
+    <rect class="pad" x="1070" y="412" width="20" height="16"/>
+    <text class="t" x="1080" y="408" text-anchor="middle">12Vi-1</text>
+    <text class="dest" x="1080" y="470" text-anchor="middle">ex: ECU p8</text>
+  </g>
+  <g>
+    <rect class="pad" x="1150" y="412" width="20" height="16"/>
+    <text class="t" x="1160" y="408" text-anchor="middle">12Vi-2</text>
+    <text class="dest" x="1160" y="470" text-anchor="middle">ex: unused</text>
+  </g>
+  <g>
+    <rect class="pad" x="1230" y="412" width="20" height="16"/>
+    <text class="t" x="1240" y="408" text-anchor="middle">12V-2</text>
+    <text class="dest" x="1240" y="470" text-anchor="middle">ex: 10AS p10/25</text>
+  </g>
+  <g>
+    <rect class="pad" x="1340" y="412" width="20" height="16"/>
+    <text class="t" x="1350" y="408" text-anchor="middle">GND</text>
+    <text class="dest" x="1350" y="470" text-anchor="middle">shared star</text>
+  </g>
+  <line class="g" x1="1350" y1="428" x2="1350" y2="650"/>
+
+  <!-- ===================== GND rail ===================== -->
+  <line class="g" x1="90" y1="650" x2="1400" y2="650"/>
+  <line class="g" x1="650" y1="650" x2="650" y2="664"/>
+  <line class="g" x1="636" y1="664" x2="664" y2="664"/>
+  <line class="g" x1="640" y1="669" x2="660" y2="669"/>
+  <line class="g" x1="644" y1="674" x2="656" y2="674"/>
+  <text class="lg" x="650" y="694" text-anchor="middle">GND star point</text>
+
+  <line class="g" x1="95" y1="130" x2="95" y2="650"/>
+</svg>
+</div>
+
+<table class="parts">
+<tr><th>Ref</th><th>Part</th><th>Notes</th></tr>
+<tr><td class="ref">P2</td><td>Female J1962 pigtail</td><td>receives Board 1's male plug; wired to TB-CAR, no OBD housing on the board</td></tr>
+<tr><td class="ref">J2</td><td>DC barrel jack, 2.1mm</td><td>bench 12V in, low-amp supply</td></tr>
+<tr><td class="ref">D2a, D2b</td><td>Schottky, 1N5817 (1A/20V) &#215;2, in parallel</td><td>reverse-polarity protection; two paralleled 1A diodes from existing stock instead of buying a higher-current part — mount close together, similar lead lengths, for reasonably even current sharing</td></tr>
+<tr><td class="ref">F2</td><td>1A fuse + holder</td><td>main bench fuse (single, not per-branch); conservative starting point</td></tr>
+<tr><td class="ref">SW1</td><td>12mm illuminated latching pushbutton, 12V/5A, pre-wired (red/black=LED, 2&#215;green=contacts)</td><td>master power — gates the whole 12V rail; built-in LED is the PWR indicator, one panel hole for both</td></tr>
+<tr><td class="ref">SW2</td><td>same part as SW1</td><td>shared switched feed — gates 12Vi-1 and 12Vi-2 together, not two independent switches; built-in LED is the IGN indicator</td></tr>
+<tr><td class="ref">&#8212;</td><td>2&#215; 510&#8486; resistor</td><td>in series with each switch's red/black LED leads — safe default whether or not the switch has its own internal resistor</td></tr>
+<tr><td class="ref">TB-CAR</td><td>11-position patch panel</td><td>K1-A, K1-B, K1-RO, K2-A, K2-B, K2-RO, 12V-1, 12Vi-1, 12V-2, 12Vi-2, GND — generic, no fixed destination; power paired per channel</td></tr>
+<tr><td class="ref">&#8212;</td><td>patch wires</td><td>short jumpers wiring each session's chosen configuration onto TB-CAR; changed per use case, not a fixed connection</td></tr>
+<tr><td class="ref">&#8212;</td><td>direct wires</td><td>immobiliser and MIL-shared lines bypass P2/OBD2 entirely — no J1962 pin carries them</td></tr>
+<tr><td class="ref">&#8212;</td><td>GND bus</td><td>soldered perfboard rail commoning all incoming grounds; see <code>docs/board2-bench-hub.md</code></td></tr>
+</table>
+
+<p class="foot">Companion doc: <code>docs/board2-bench-hub.md</code> (patch reference,
+example configurations, pre-power checklist, open items). This project's
+verified Discovery 1 pinout (<code>docs/dlc-pinouts.md</code>) is unchanged —
+patching this board onto a different GEMS-era vehicle needs that vehicle's own
+pins meter-verified first.</p>
+</div>
+</body>
+</html>

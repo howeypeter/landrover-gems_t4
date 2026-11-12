@@ -31,7 +31,7 @@ needed for the write path.
 |---|---|---|---|
 | 27C512 | DIP-28 | GEMS **fuel** maps | read (dump), later write a substitute |
 | 27C1001 / 27C010 | DIP-32 | GEMS **ignition + code** (incl. `$27` handler, immobiliser check) | read (dump), later write a patched substitute |
-| 10AS EEPROM | 8-pin (likely SOIC-8) | alarm/immobiliser store (EKA + codes) | read (fallback to the K-line route) |
+| 10AS EEPROM | ~~8-pin (likely SOIC-8)~~ **CORRECTED 2026-10-02: embedded inside the main ZC99305CFN (PLCC-52)** | alarm/immobiliser store (EKA + codes) | **T48 CANNOT read this — PLCC-52 exceeds its pin-count capability.** See the bootstrap-mode lead below as the alternative. |
 
 The T48's built-in 40-pin ZIF reads the DIP EPROMs directly (no adapter). Reading
 is non-destructive.
@@ -77,6 +77,17 @@ So the ~1-month wait blocks nothing: use it to crack the 10AS K-line, and have t
 T48 ready as the fallback + for the GEMS EPROM dump/write work. Ties to the
 [EKA read from the 10AS], [EPROM programmability], and [immobiliser-from-bench]
 backlog items.
+
+**⚠️ CORRECTED 2026-10-02 — the T48 CANNOT serve as the 10AS fallback as planned.**
+The 10AS EEPROM was assumed to be a discrete 8-pin chip (fallback #2 above); the
+user has now confirmed from the physical board that the 10AS's **only IC is the
+Motorola ZC99305CFN in a PLCC-52 package**, with the EKA/config data embedded
+**inside that microcontroller**, not in a separate discrete EEPROM. **PLCC-52
+exceeds the T48's pin-count capability** — it cannot read this chip at all. The
+T48 remains valid for the GEMS 27C512/27C1001 dumps (already done, see
+`EPROM_DUMP_ANALYSIS.md`), but is **no longer a fallback route for the 10AS**.
+The two live options for the 10AS are now: (1) the K-line route above (unchanged),
+or (2) the ZC99305 bootstrap-mode UART dump below.
 
 ## External lead — Gemini "GEMS 8 tool dev" guide (2026-09-28, UNVERIFIED)
 
@@ -150,3 +161,56 @@ general** and applies to any MCU, including the GEMS **Intel 87C196KC**.
   MCU**. If it's all in the external 27C1001 (our assumption), just READ it — no EMFI.
   **So: dump with the T48 FIRST, check the code split; keep PicoEMP as the cheap
   plan-B for locked internal code / immo-glitch.**
+
+## External lead — Gemini "ZC99305 bootstrap dump" procedure (2026-10-02, UNVERIFIED)
+
+User-supplied Gemini write-up on reading the **10AS's own microcontroller**
+(**Motorola ZC99305CFN, PLCC-52** — confirmed by the user from the physical board;
+NOT the GEMS 87C196KC above) via its **bootstrap/boot-ROM mode** over a direct UART
+connection, bypassing the K-line entirely. Same rule as all LLM-sourced leads in this
+file: **treat as hypothesis, not ground truth** — no datasheet, no confirmed byte
+offsets, no confirmed baud rate.
+
+**The claimed procedure:**
+1. **Force bootstrap mode**: ground **MODA (pin 4)** and **MODB (pin 5)**, then pulse
+   **RESET (pin 2)** low→high while they're held low.
+2. **Isolate pins 20 (RxD) and 21 (TxD)** from the Lucas board's onboard K-line
+   transceiver — Gemini says these pins are hard-wired into that circuit on the 10AS
+   PCB, so they must be desoldered/lifted off their pads (or the trace cut) before an
+   external UART can drive them without contention.
+3. **Power**: VSS (pin 1 or 27) → GND, VDD (pin 52 or 26) → +5V.
+4. **Handshake**: send sync byte `0xFF`; a correctly-wired/correctly-clocked chip
+   echoes `0xFF` back, then a ~256-byte bootstrap-loader "RAM utility" is streamed in,
+   which then dumps the internal EEPROM out over TxD.
+5. **$0-hardware version** (2nd Gemini message, 2026-10-02): a plain USB-TTL adapter
+   (CH340/CP2102/FT232RL, ~$6) or an existing Pico/Arduino as a dumb UART bridge is
+   sufficient — no VVDI/UPA-USB/XPROG programmer needed. Free software: RealTerm, the
+   legacy "HC11Boot"/"Motor05" DOS utilities, or a ~15-line pyserial script.
+
+**Confirmed independently (by the user, from the physical board):**
+- Crystal next to the ZC99305CFN reads **4.0000 MHz**.
+
+**UNRESOLVED — do not assume a baud rate:**
+- Gemini's reference point ("8 MHz → 1200 baud") was stated with more confidence
+  than is actually warranted; the real HC11-family bootstrap baud divisor depends on
+  the specific part's boot ROM and was never verified against a datasheet. A naive
+  "half the crystal, half the baud" guess gives 600 baud at 4 MHz, but this is
+  **unconfirmed** — 300 or 1200 are also plausible depending on the actual divisor.
+  **Resolve empirically**: wire up at low risk, sweep `0xFF` at 300/600/1200 baud,
+  take whichever gets a clean echo.
+- **Do not conflate this with the separate 366-baud figure** logged 2026-09-30 (see
+  `memory/real-gems-protocol.md` / CLAUDE.md backlog) — that number is an unverified
+  external claim about the **10AS↔ECM mobilise-line K-line protocol** (pin 15/C225,
+  a totally different signal), and was already contradicted by the user's own PIO
+  bench capture on that line (no decodable serial, just a DC transient). It has no
+  bearing on the ZC99305 bootstrap UART (pins 20/21) discussed here.
+
+**Before cutting anything:** confirm PLCC-52 pin-1 orientation (notch/dot/bevel
+corner) against the physical part — counting pins wrong on a 52-pin package with no
+printed numbers risks lifting/cutting the wrong traces, which is not easily
+recoverable.
+
+**Status:** not attempted. Lowest-cost dump path found so far for the 10AS
+specifically (vs. a $200–400 VVDI/UPA-USB/XPROG programmer) IF the bootstrap
+handshake and baud rate can be confirmed empirically. Ties to [EKA read from the
+Lucas 10AS] backlog item and `docs/10as-pinout.md`.

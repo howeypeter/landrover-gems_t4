@@ -36,8 +36,12 @@
 // (both need a Pico W / 2 W radio + the combined BT-stack build). WiFi creds are
 // stored at RUNTIME in LittleFS via `set-wifi` (no file, no reflash); WiFi stays
 // idle until creds exist. Transport precedence when frames arrive: USB > WiFi > BLE.
-#define ENABLE_BLE   1     // Bluetooth LE (Pico W / 2 W; needs the BT stack build)
-#define ENABLE_WIFI  1     // WiFi/TCP (Pico W / 2 W; set 0 on a non-radio board).
+#ifndef ENABLE_BLE
+#define ENABLE_BLE   0     // Bluetooth LE (Pico W / 2 W; needs the BT stack build)
+#endif
+#ifndef ENABLE_WIFI
+#define ENABLE_WIFI  0     // WiFi/TCP (Pico W / 2 W; set 0 on a non-radio board).
+#endif
                            // Credentials live in LittleFS, set at RUNTIME with the
                            // `gems_t4 kline set-wifi` command - no wifi_secrets.h and
                            // NO reflash to change the password. WiFi stays idle until
@@ -57,17 +61,40 @@
 #include "hardware/pio.h"     // PIO logic capture for the immobiliser-line sniffer
 #include "hardware/clocks.h"  // clock_get_hz for the PIO sample-rate divider
 #include "hardware/dma.h"     // DMA for the long buffered capture (CMD_CAPTURE)
+#include "hardware/gpio.h"    // gpio_get() for CMD_READ_PINS (raw pad level, bypasses UART claim)
 
 // ---- pins / config (identical to the USB firmware) -------------------------
 static const uint32_t KLINE_BAUD = 10400;
-static const uint8_t  KLINE_TX_PIN = 0;
-static const uint8_t  KLINE_RX_PIN = 1;
+
+// Two independent K-line channels, one per L9637D transceiver (Board 1 dual-
+// transceiver design, 2026-09-28): channel 0 = U2 on UART0 (Serial1, GP0 TX/
+// GP1 RX); channel 1 = U3 on UART1 (Serial2, GP4 TX/GP5 RX). g_ch selects
+// which one the K-line helpers/handlers below operate on; CMD_SELECT_CHANNEL
+// (0x0D) sets it. Default (g_ch=0) matches every pre-existing host/client that
+// doesn't know about channels, so this is backward compatible.
+static const uint8_t KLINE_TX_PIN0 = 0, KLINE_RX_PIN0 = 1;   // channel 0 (U2)
+static const uint8_t KLINE_TX_PIN1 = 4, KLINE_RX_PIN1 = 5;   // channel 1 (U3)
+static uint8_t g_ch = 0;
+
+// NOTE: explicit SerialUART& return type, not decltype(Serial1)& — the Arduino
+// ctags-based prototype auto-generator mis-parses decltype() return types and
+// inserts a bogus "int klineSerial();" forward declaration above this, which
+// then fights the real definition below (same class of gotcha documented in
+// kline_transport.h for why ActiveT lives in a header).
+static inline SerialUART& klineSerial() { return (g_ch == 0) ? Serial1 : Serial2; }
+static inline uint8_t klineTxPin() { return (g_ch == 0) ? KLINE_TX_PIN0 : KLINE_TX_PIN1; }
+static inline uint8_t klineRxPin() { return (g_ch == 0) ? KLINE_RX_PIN0 : KLINE_RX_PIN1; }
+
 static uint16_t P1 = 20, P2 = 50, P3 = 55, P4 = 10;
 
-// Immobiliser-line monitor: GP2 (physical pin 4) <- L9637D pin 2 (LO), the 3.3 V
-// comparator copy of a tapped 12 V line (e.g. the 10AS->ECM coded mobilise wire,
-// C225 p15 / C1017 p26, T'd into LI pin 8). Read-only sniffer; see CMD_MONITOR_L.
-static const uint8_t  LMON_PIN = 2;
+// Immobiliser-line monitor: L9637D pin 2 (LO), the 3.3 V comparator copy of
+// whatever's tapped onto that chip's LI pin 8 (e.g. the 10AS->ECM coded
+// mobilise wire, C225 p15 / C1017 p26). Read-only sniffer; see CMD_MONITOR_L.
+// One LO pin per K-line channel, same pairing as the K-line UARTs: channel 0
+// (U2) LO -> GP2, channel 1 (U3) LO -> GP6. Follows g_ch (CMD_SELECT_CHANNEL).
+static const uint8_t  LMON_PIN0 = 2;
+static const uint8_t  LMON_PIN1 = 6;
+static inline uint8_t lmonPin() { return (g_ch == 0) ? LMON_PIN0 : LMON_PIN1; }
 
 // ---- host protocol constants (must match HOST_PROTOCOL.md) -----------------
 static const uint8_t HOST_START = 0xA5;
@@ -75,17 +102,19 @@ static const uint8_t PICO_START = 0x5A;
 static const uint8_t CMD_PING = 0x01, CMD_INIT = 0x02, CMD_SEND_RECV = 0x03, CMD_SET_TIMING = 0x04;
 static const uint8_t CMD_RAW_INIT = 0x05;
 static const uint8_t CMD_RAW_XFER = 0x08;   // raw send/recv, NO echo cancel (RE tool)
-static const uint8_t CMD_MONITOR_L = 0x09;  // sniff transitions on LMON_PIN/GP2 (LO)
+static const uint8_t CMD_MONITOR_L = 0x09;  // sniff transitions on the active channel's LO pin (GP2 or GP6)
 static const uint8_t CMD_PIO_CAPTURE = 0x0A; // PIO short (~10ms) one-frame logic capture
 static const uint8_t CMD_CAPTURE = 0x0B;    // PIO+DMA LONG buffered capture into RAM
 static const uint8_t CMD_READBUF = 0x0C;    // read back a chunk of the capture buffer
 static const uint8_t CMD_SET_WIFI = 0x06, CMD_WIFI_STATUS = 0x07;
+static const uint8_t CMD_SELECT_CHANNEL = 0x0D;  // payload: [ch] 0=U2(GP0/1), 1=U3(GP4/5)
+static const uint8_t CMD_READ_PINS = 0x0E;  // raw digital read of TX/RX/LO on the active channel
 static const uint8_t ST_OK = 0x00, ST_TIMEOUT = 0x01, ST_BUS_ERROR = 0x02, ST_BAD_REQUEST = 0x03;
 static const uint16_t RESP_TIMEOUT_MS = 1000;
 static const size_t   MAX_PAYLOAD = 255;
 
 // "pentest" substring kept so pentest_scan.py's firmware gate passes.
-static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.7.0";
+static const char FW_VERSION[] = "gems_t4-pico-all-pentest 3.9.0";
 
 // ---- BLE / WiFi objects ----------------------------------------------------
 #if ENABLE_BLE
@@ -198,12 +227,12 @@ static size_t readHost(uint8_t *buf, size_t n, uint32_t timeout_ms) {
 //  Keep in lockstep with ../pico_kline/pico_kline.ino if that changes.
 // ==========================================================================
 static bool klineWriteByte(uint8_t b) {
-  Serial1.write(b);
+  klineSerial().write(b);
   uint32_t start = millis();
-  while (!Serial1.available()) {
+  while (!klineSerial().available()) {
     if (millis() - start > P4 + 5) return false;
   }
-  Serial1.read();
+  klineSerial().read();
   return true;
 }
 
@@ -217,14 +246,14 @@ static bool klineWrite(const uint8_t *frame, size_t n) {
 
 static int klineReadFrame(uint8_t *out, size_t maxlen) {
   uint32_t start = millis();
-  while (!Serial1.available()) {
+  while (!klineSerial().available()) {
     if (millis() - start > RESP_TIMEOUT_MS) return -1;
   }
   uint32_t lastByte = millis();
   size_t n = 0;
   while (n < maxlen) {
-    if (Serial1.available()) {
-      out[n++] = Serial1.read();
+    if (klineSerial().available()) {
+      out[n++] = klineSerial().read();
       lastByte = millis();
     } else if (millis() - lastByte > P1 + 2) {
       break;
@@ -237,28 +266,28 @@ static int klineReadFrame(uint8_t *out, size_t maxlen) {
 
 static bool klineReadByte(uint8_t *b, uint32_t timeout_ms) {
   uint32_t start = millis();
-  while (!Serial1.available()) {
+  while (!klineSerial().available()) {
     if (millis() - start > timeout_ms) return false;
   }
-  *b = Serial1.read();
+  *b = klineSerial().read();
   return true;
 }
 
 static bool slowInit(uint8_t address, uint32_t baud, uint8_t *keybytes, uint8_t *kb_len) {
-  Serial1.end();
-  pinMode(KLINE_TX_PIN, OUTPUT);
-  digitalWrite(KLINE_TX_PIN, HIGH);
+  klineSerial().end();
+  pinMode(klineTxPin(), OUTPUT);
+  digitalWrite(klineTxPin(), HIGH);
   delay(300);
-  digitalWrite(KLINE_TX_PIN, LOW); delay(200);
+  digitalWrite(klineTxPin(), LOW); delay(200);
   for (int i = 0; i < 8; i++) {
-    digitalWrite(KLINE_TX_PIN, (address >> i) & 1);
+    digitalWrite(klineTxPin(), (address >> i) & 1);
     delay(200);
   }
-  digitalWrite(KLINE_TX_PIN, HIGH); delay(200);
+  digitalWrite(klineTxPin(), HIGH); delay(200);
 
   // Session UART baud: GEMS = 10400; the Lucas 10AS alarm unit = 9600. The full
   // W4 handshake (below) must run at the module's baud, so it's a parameter now.
-  Serial1.begin(baud);
+  klineSerial().begin(baud);
   uint8_t sync, kb1, kb2;
   if (!klineReadByte(&sync, 500) || sync != 0x55) return false;
   if (!klineReadByte(&kb1, 50)) return false;
@@ -266,7 +295,7 @@ static bool slowInit(uint8_t address, uint32_t baud, uint8_t *keybytes, uint8_t 
 
   uint32_t kb2_at = millis();
   while (millis() - kb2_at < 30) { /* W4 window */ }
-  Serial1.write((uint8_t)(kb2 ^ 0xFF));
+  klineSerial().write((uint8_t)(kb2 ^ 0xFF));
   uint8_t echo, inv_addr;
   klineReadByte(&echo, 50);
   klineReadByte(&inv_addr, 100);
@@ -278,12 +307,12 @@ static bool slowInit(uint8_t address, uint32_t baud, uint8_t *keybytes, uint8_t 
 }
 
 static bool fastInit(uint8_t address, uint32_t baud, uint8_t *keybytes, uint8_t *kb_len) {
-  Serial1.end();
-  pinMode(KLINE_TX_PIN, OUTPUT);
-  digitalWrite(KLINE_TX_PIN, HIGH); delay(300);
-  digitalWrite(KLINE_TX_PIN, LOW);  delay(25);
-  digitalWrite(KLINE_TX_PIN, HIGH); delay(25);
-  Serial1.begin(baud);
+  klineSerial().end();
+  pinMode(klineTxPin(), OUTPUT);
+  digitalWrite(klineTxPin(), HIGH); delay(300);
+  digitalWrite(klineTxPin(), LOW);  delay(25);
+  digitalWrite(klineTxPin(), HIGH); delay(25);
+  klineSerial().begin(baud);
 
   uint8_t sc[5] = { 0x81, address, 0xF7, 0x81, 0 };
   sc[4] = (uint8_t)(sc[0] + sc[1] + sc[2] + sc[3]);
@@ -340,13 +369,13 @@ static void handleSetTiming(const uint8_t *payload, uint8_t len) {
 
 static int klineReadRaw(uint8_t *out, size_t maxlen, uint32_t firstTimeout) {
   uint32_t start = millis();
-  while (!Serial1.available()) {
+  while (!klineSerial().available()) {
     if (millis() - start > firstTimeout) return 0;
   }
   size_t n = 0;
   uint32_t last = millis();
   while (n < maxlen) {
-    if (Serial1.available()) { out[n++] = Serial1.read(); last = millis(); }
+    if (klineSerial().available()) { out[n++] = klineSerial().read(); last = millis(); }
     else if (millis() - last > P1 + 5) break;
     else if (millis() - start > firstTimeout + 800) break;
   }
@@ -361,19 +390,19 @@ static void handleRawInit(const uint8_t *payload, uint8_t len) {
   const uint8_t *frame = payload + 4;
   uint8_t framelen = (uint8_t)(len - 4);
 
-  Serial1.end();
-  pinMode(KLINE_TX_PIN, OUTPUT);
-  digitalWrite(KLINE_TX_PIN, HIGH);
+  klineSerial().end();
+  pinMode(klineTxPin(), OUTPUT);
+  digitalWrite(klineTxPin(), HIGH);
   delay(300);
   if (mode == 0) {
-    digitalWrite(KLINE_TX_PIN, LOW); delay(200);
-    for (int i = 0; i < 8; i++) { digitalWrite(KLINE_TX_PIN, (addr >> i) & 1); delay(200); }
-    digitalWrite(KLINE_TX_PIN, HIGH); delay(200);
+    digitalWrite(klineTxPin(), LOW); delay(200);
+    for (int i = 0; i < 8; i++) { digitalWrite(klineTxPin(), (addr >> i) & 1); delay(200); }
+    digitalWrite(klineTxPin(), HIGH); delay(200);
   } else if (mode == 1) {
-    digitalWrite(KLINE_TX_PIN, LOW); delay(25);
-    digitalWrite(KLINE_TX_PIN, HIGH); delay(25);
+    digitalWrite(klineTxPin(), LOW); delay(25);
+    digitalWrite(klineTxPin(), HIGH); delay(25);
   }
-  Serial1.begin(baud);
+  klineSerial().begin(baud);
   for (uint8_t i = 0; i < framelen; i++) {
     if (!klineWriteByte(frame[i])) break;
   }
@@ -390,22 +419,57 @@ static void handleRawInit(const uint8_t *payload, uint8_t len) {
 // model yet (e.g. the Lucas 10AS at 9600, where the normal echo-cancelling
 // SEND_RECV path returns only mangled echo). Read-only w.r.t. the sketch.
 static void handleRawXfer(const uint8_t *payload, uint8_t len) {
-  while (Serial1.available()) Serial1.read();          // drop stale RX
-  for (uint8_t i = 0; i < len; i++) Serial1.write(payload[i]);
-  Serial1.flush();                                     // wait for TX to drain
+  while (klineSerial().available()) klineSerial().read();          // drop stale RX
+  for (uint8_t i = 0; i < len; i++) klineSerial().write(payload[i]);
+  klineSerial().flush();                                            // wait for TX to drain
   static uint8_t buf[200];
   size_t n = 0;
   uint32_t start = millis();
   while (n < sizeof(buf) && (millis() - start) < 400) {  // fixed 400 ms capture
-    if (Serial1.available()) buf[n++] = Serial1.read();
+    if (klineSerial().available()) buf[n++] = klineSerial().read();
   }
   sendPico(ST_OK, buf, (uint8_t)n);
 }
 
-// CMD_MONITOR_L: passively capture digital TRANSITIONS on LMON_PIN (GP2 <- L9637D
-// LO). This is the immobiliser-line sniffer: LI (pin 8) is T'd onto the 10AS->ECM
-// coded mobilise wire, the comparator hands GP2 a 3.3 V copy, and this logs when it
-// changes. Purely read-only (LO is an output of the chip; we only read GP2).
+// CMD_SELECT_CHANNEL: pick which L9637D/UART pair subsequent K-line commands
+// (INIT/SEND_RECV/SET_TIMING/RAW_INIT/RAW_XFER) operate on. Sticky until
+// changed again. payload: [ch] — 0 = U2 (Serial1, GP0 TX/GP1 RX), 1 = U3
+// (Serial2, GP4 TX/GP5 RX). Defaults to 0 at boot, so any client that never
+// sends this command gets the original single-channel behavior unchanged.
+static void handleSelectChannel(const uint8_t *payload, uint8_t len) {
+  if (len < 1 || (payload[0] != 0 && payload[0] != 1)) { sendPico(ST_BAD_REQUEST, nullptr, 0); return; }
+  g_ch = payload[0];
+  sendPico(ST_OK, nullptr, 0);
+}
+
+// CMD_READ_PINS: raw digital level of TX/RX/LO on the active channel (see
+// CMD_SELECT_CHANNEL), via gpio_get() -- reads the pad's actual electrical
+// state directly, independent of whether the pin is currently claimed by the
+// UART peripheral (RP2040's GPIO_IN register reflects the pad level regardless
+// of function-select routing). Added as a Vs-free (no 12V needed) orientation
+// cross-check for a freshly-populated L9637D: per the ST datasheet, RX/LO are
+// specified to show a DEFINED level when K/LI are open (floating, nothing
+// driving them) -- so with no vehicle/bench K-line attached yet, a correctly
+// powered chip should read back a consistent, non-floating level here, where
+// a chip with no logic power at all (e.g. because a 180-degree rotation put
+// its real Vcc pin on the board's Vs pad instead) would not.
+//   payload: none.
+//   reply payload: [tx][rx][lo], each 0x00 or 0x01.
+static void handleReadPins(const uint8_t *payload, uint8_t len) {
+  (void)payload; (void)len;
+  uint8_t buf[3];
+  buf[0] = gpio_get(klineTxPin()) ? 1 : 0;
+  buf[1] = gpio_get(klineRxPin()) ? 1 : 0;
+  buf[2] = gpio_get(lmonPin())    ? 1 : 0;
+  sendPico(ST_OK, buf, 3);
+}
+
+// CMD_MONITOR_L: passively capture digital TRANSITIONS on the active channel's
+// LO pin (GP2 for channel 0/U2, GP6 for channel 1/U3 — see CMD_SELECT_CHANNEL).
+// This is the immobiliser-line sniffer: LI (pin 8) is T'd onto whatever's being
+// watched (e.g. the 10AS->ECM coded mobilise wire), the comparator hands the LO
+// pin a 3.3 V copy, and this logs when it changes. Purely read-only (LO is an
+// output of the chip; we only read the GPIO it drives).
 //
 // It is a CHARACTERISATION tool, not a decoder: it tells you whether the tapped
 // line carries digital activity the comparator can resolve, and its rough timing
@@ -430,11 +494,11 @@ static void handleMonitorL(const uint8_t *payload, uint8_t len) {
   if (win_ms == 0) win_ms = 1000;
   if (win_ms > 5000) win_ms = 5000;
 
-  pinMode(LMON_PIN, INPUT);            // LO has an internal pull-up; plain INPUT
+  pinMode(lmonPin(), INPUT);            // LO has an internal pull-up; plain INPUT
 
   static uint8_t buf[MAX_PAYLOAD];
   size_t n = 0;
-  uint8_t initial = digitalRead(LMON_PIN) ? 1 : 0;
+  uint8_t initial = digitalRead(lmonPin()) ? 1 : 0;
   buf[n++] = initial;
 
   uint8_t  last   = initial;
@@ -443,7 +507,7 @@ static void handleMonitorL(const uint8_t *payload, uint8_t len) {
   uint32_t t_prev = t0;
 
   while ((micros() - t0) < win_us && (n + 2) <= MAX_PAYLOAD) {
-    uint8_t cur = digitalRead(LMON_PIN) ? 1 : 0;
+    uint8_t cur = digitalRead(lmonPin()) ? 1 : 0;
     if (cur != last) {
       uint32_t now = micros();
       uint32_t dt  = now - t_prev;
@@ -486,7 +550,7 @@ static bool lmonPioInit(uint32_t rate_hz, uint32_t threshold) {
   }
   pio_sm_config c = pio_get_default_sm_config();
   sm_config_set_wrap(&c, lmon_off, lmon_off);          // single-instruction loop
-  sm_config_set_in_pins(&c, LMON_PIN);
+  sm_config_set_in_pins(&c, lmonPin());
   sm_config_set_in_shift(&c, false, true, threshold);  // shift left, autopush @ threshold
   sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);       // deeper RX FIFO
   float div = (float)clock_get_hz(clk_sys) / (float)rate_hz;
@@ -517,13 +581,13 @@ static void handleCapture(const uint8_t *payload, uint8_t len) {
                   if (khz) rate = khz * 1000UL; }
   if (len >= 3) trig = payload[2];
 
-  pinMode(LMON_PIN, INPUT);
+  pinMode(lmonPin(), INPUT);
   if (!lmonPioInit(rate, 32)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
 
   if (trig) {
-    uint8_t lvl0 = digitalRead(LMON_PIN) ? 1 : 0;
+    uint8_t lvl0 = digitalRead(lmonPin()) ? 1 : 0;
     uint32_t t0 = millis();
-    while ((digitalRead(LMON_PIN) ? 1 : 0) == lvl0) {
+    while ((digitalRead(lmonPin()) ? 1 : 0) == lvl0) {
       if (millis() - t0 > 20000) { sendPico(ST_TIMEOUT, nullptr, 0); return; }
     }
   }
@@ -570,13 +634,13 @@ static void handlePioCapture(const uint8_t *payload, uint8_t len) {
                   if (khz) rate = khz * 1000UL; }
   if (len >= 3 && payload[2]) nbytes = payload[2] > MAX_PAYLOAD ? MAX_PAYLOAD : payload[2];
 
-  pinMode(LMON_PIN, INPUT);
+  pinMode(lmonPin(), INPUT);
   if (!lmonPioInit(rate, 8)) { sendPico(ST_BUS_ERROR, nullptr, 0); return; }
 
   // Trigger: wait for the first level change so the capture starts at the event.
-  uint8_t lvl0 = digitalRead(LMON_PIN) ? 1 : 0;
+  uint8_t lvl0 = digitalRead(lmonPin()) ? 1 : 0;
   uint32_t t0 = millis();
-  while ((digitalRead(LMON_PIN) ? 1 : 0) == lvl0) {
+  while ((digitalRead(lmonPin()) ? 1 : 0) == lvl0) {
     if (millis() - t0 > 10000) { sendPico(ST_TIMEOUT, nullptr, 0); return; }
   }
 
@@ -619,6 +683,8 @@ static void serviceHostFrame() {
     case CMD_PIO_CAPTURE: handlePioCapture(payload, len); break;
     case CMD_CAPTURE:    handleCapture(payload, len); break;
     case CMD_READBUF:    handleReadBuf(payload, len); break;
+    case CMD_SELECT_CHANNEL: handleSelectChannel(payload, len); break;
+    case CMD_READ_PINS:  handleReadPins(payload, len); break;
 #if ENABLE_WIFI
     case CMD_SET_WIFI:    handleSetWifi(payload, len); break;
     case CMD_WIFI_STATUS: handleWifiStatus(); break;
@@ -720,10 +786,14 @@ void setup() {
   Serial.begin(115200);              // USB-CDC host transport (always on)
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
-  Serial1.setTX(KLINE_TX_PIN);
-  Serial1.setRX(KLINE_RX_PIN);
+  Serial1.setTX(KLINE_TX_PIN0);
+  Serial1.setRX(KLINE_RX_PIN0);
   Serial1.begin(KLINE_BAUD);
-  pinMode(LMON_PIN, INPUT);          // GP2 <- L9637D LO: immobiliser-line monitor
+  Serial2.setTX(KLINE_TX_PIN1);      // channel 1 (U3): GP4 TX / GP5 RX
+  Serial2.setRX(KLINE_RX_PIN1);
+  Serial2.begin(KLINE_BAUD);
+  pinMode(LMON_PIN0, INPUT);         // GP2 <- U2 LO (channel 0)
+  pinMode(LMON_PIN1, INPUT);         // GP6 <- U3 LO (channel 1)
 
 #if ENABLE_BLE
   BLE.begin(BLE_NAME);

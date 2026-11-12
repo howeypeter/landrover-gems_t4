@@ -45,13 +45,17 @@ a screw terminal block:
   ARE the pigtail termination points. **Reconfiguring which vehicle line goes to
   which transceiver channel = physically moving which pigtail wire is screwed into
   which terminal** — that's the whole point of screw terminals over solder joints.
-- **Board 2:** a **female J1962 pigtail** → screw terminal block; plus the DC
-  jack, the ECU terminal block and the 10AS terminal block.
+- **Board 2:** a **female J1962 pigtail** → **soldered** to a fixed 16-pad block
+  (⚠️ corrected 2026-10-05 — see the Board 2 section below: this one is soldered,
+  not screwed, with a separate patch-screw layer downstream); plus the DC jack,
+  the ECU terminal block and the 10AS terminal block.
 
-This keeps the OBD2 mechanics off the copper (cleaner, serviceable, no fragile
-connector-to-board solder joints) and means the whole rig is screw-terminal wiring
-end to end. Pick blocks rated for the current (the +12 V / ECU-power contacts carry
-a few amps — 5 mm-pitch blocks are ample; K/L/GND signal contacts can be smaller).
+This keeps Board 1's OBD2 mechanics off the copper (cleaner, serviceable, no
+fragile connector-to-board solder joints there) while Board 2 takes the opposite
+tradeoff deliberately (solder the pigtail, screw the patch layer) — see the Board 2
+section for why. Pick blocks rated for the current (the +12 V / ECU-power contacts
+carry a few amps — 5 mm-pitch blocks are ample; K/L/GND signal contacts can be
+smaller).
 
 ## Multi-vehicle scope & architecture
 
@@ -177,19 +181,24 @@ you physically move which pigtail wire is screwed into which terminal.
 ONE ROW:    [ A1 ][ A2 ][ A3 ]   [ B1 ][ B2 ][ B3 ]   [ 12V ]   [GND ][GND ]
 ```
 
-Each terminal has a fixed internal trace to a transceiver pin; each pigtail wire
-is landed wherever you want that OBD line to go:
+**Board silkscreen names:** `K1-A`=A1, `K1-B`=A2, `K1-RO`=A3, `K2-A`=B1,
+`K2-B`=B2, `K2-RO`=B3 — same six physical terminals; the board prints the K1/K2
+names, this doc keeps the A/B lettering.
 
-| Terminal | Internal net | Current build's pigtail wire |
+Each terminal has a fixed internal trace to a transceiver pin; each pigtail wire
+is landed wherever you want that OBD line to go. **Full 6-terminal assignment
+FINALIZED (2026-10-20):**
+
+| Terminal | Internal net | Current build's wire |
 |---|---|---|
-| **A1** | U2 pin 6 (K) | OBD **pin 7** (engine K-line) |
-| **A2** | U2 pin 6 (K) — **same node as A1**, 2nd slot | OBD **pin 15** (L-line) — **intentionally tied to A1**, so U2 always has the GEMS 0xDA L↔K strap open |
-| **A3** | U2 pin 8 (LI) — read-only listen tap | not currently used |
-| **B1** | U3 pin 6 (K, secondary channel) | OBD **pin 8** (10AS diagnostic bus) |
-| **B2** | U3 pin 6 (K) — same node as B1, 2nd slot | not currently used |
-| **B3** | U3 pin 8 (LI) — read-only listen tap | not currently used |
-| **GND** | common ground | OBD pin 4 |
-| **GND** | common ground | OBD pin 5 |
+| **A1** (`K1-A`) | U2 pin 6 (K) | OBD **pin 7** (engine K-line) |
+| **A2** (`K1-B`) | U2 pin 6 (K) — **same node as A1**, 2nd slot | OBD **pin 15** (L-line) — **intentionally tied to A1**, so U2 always has the GEMS 0xDA L↔K strap open |
+| **A3** (`K1-RO`) | U2 pin 8 (LI) — read-only listen tap | OBD **pin 13** (SRS/airbag diagnostic line). Passive sniff only — LI can't drive, so this board can never write to the airbag bus. |
+| **B1** (`K2-A`) | U3 pin 6 (K, secondary channel) | OBD **pin 8** (10AS diagnostic bus) — bidirectional; needed to actually write requests to the 10AS (e.g. for an eventual EKA read), not just listen |
+| **B2** (`K2-B`) | U3 pin 6 (K) — same node as B1, 2nd slot | spare slot on the 10AS node — not currently used |
+| **B3** (`K2-RO`) | U3 pin 8 (LI) — read-only listen tap | **10AS→ECM mobilise line** (C225 pin 15 → C1017 pin 26) — **off the OBD2 pigtail entirely**, tapped via a direct splice at the bench. Per the 2026-09-28 PIO+DMA capture this line is DC-enable-like (no decodable serial), so the plain LI comparator read is sufficient for state monitoring. |
+| **GND** | common ground | **not landed** — OBD pin 4 (chassis ground) deliberately left unconnected, see "Ground handling" below |
+| **GND** | common ground | OBD pin 5 — Board 1's only ground reference |
 | **12V** | fuse → TVS → {Vs, buck} | OBD pin 16 |
 
 - **A1/A2 are ONE electrical node** (same for B1/B2) — whatever's landed on either
@@ -197,10 +206,14 @@ is landed wherever you want that OBD line to go:
   separate, read-only LI nodes**, isolated from the K nodes.
 - **A1+A2 tied to pins 7+15 is a deliberate design choice for this build** — it
   keeps U2's 0xDA channel permanently open rather than optional/removable. To go
-  back to plain OBD (no L↔K strap), unscrew the pin-15 wire from A2. To route L
-  elsewhere instead (e.g. if not using the immobiliser work), move it to B1/B2/B3
-  as needed — **that's the reconfiguration model: move wires between screws, not
-  jumpers or code.**
+  back to plain OBD (no L↔K strap), unscrew the pin-15 wire from A2.
+- **Why A3/B3 (both RO) ended up on SRS and the immobiliser mobilise line
+  specifically:** there are only 2 bidirectional channels (K1, K2), already
+  committed to the engine (0xDA) and the 10AS. SRS and the mobilise line only
+  need passive state/traffic visibility here, not write access — and for the
+  mobilise line in particular, read-only is a genuine safety property (this
+  board can never accidentally assert/deassert the real mobilise signal),
+  not just a resource-allocation leftover.
 - LO (U2 pin 2 / U3 pin 2) is **not** a terminal — it's a fixed internal wire
   straight to the Pico (**GP2** / **GP6**), since it's the comparator's output *to*
   the microcontroller, never something an external pigtail wire connects to.
@@ -214,26 +227,45 @@ is landed wherever you want that OBD line to go:
 Verified DLC pin meanings per model live in **`docs/dlc-pinouts.md`** (Disco 1:
 10AS on pin 8; P38: BeCM shares 7/15). Reaching the **10AS needs OBD pin 8**, not 7.
 
-### Ground handling — pins 4 & 5 bonded at a single star point (2026-09-29)
+### Ground handling — pin 5 ONLY, pin 4 deliberately not landed (CORRECTED 2026-10-20)
 
 **J1962 pins 4 and 5 are two different grounds by spec:** pin 4 = **chassis
-ground** (shared with everything else on the vehicle — starter, alternator, lights
-— can carry noise); pin 5 = **signal ground**, meant as a cleaner reference for the
-diagnostic electronics. On most vehicles they're already bonded near the connector
-anyway, and our L9637D circuit is high-impedance/low-current (just reading/driving
-a K-line, not switching real power), so keeping them separate buys nothing here.
+ground** (shared with everything else on the vehicle — starter, alternator,
+lights — can carry noise and real transient current); pin 5 = **signal
+ground**, meant as a dedicated, cleaner reference specifically for diagnostic
+electronics.
 
-**Decision: bond pins 4 and 5 together via the ground pour, which IS the star
-point** (not a terminal-to-terminal short, and not a separate discrete junction
-pad either). Both OBD GND terminals live on the **top layer** (with the rest of
-the terminal block); each one drops **its own via straight down into the
-bottom-layer ground pour**, same as L9637D U2 GND, L9637D U3 GND, buck GND, and
-Pico GND. A classic single-pad "star ground" is a technique for boards **without**
-a ground plane — once you have a full continuous pour, the pour itself is a big,
-low-resistance, effectively-equipotential sheet, so every ground pin vias into it
-independently, right where it sits, and they're all tied together through the
-plane rather than through one dedicated home-run node. Same practical result
-(pins 4/5 end up bonded, no ground loop), simpler layout.
+**Earlier decision (2026-09-29) was to bond pins 4 and 5 together, reasoning
+that "they're probably already bonded near the connector anyway" and that our
+low-current circuit wouldn't care. Both parts of that turned out wrong:**
+
+- **They're not already bonded near the connector on this vehicle.** Per RAVE
+  (`docs/dlc-pinouts.md`), pin 4 goes to splice **S204/E201** and pin 5 goes to
+  splice **E200** — two genuinely distinct ground returns in the real harness,
+  not a shared local junction.
+- **The risk isn't Board 1's own current draw — it's current we'd divert from
+  elsewhere.** Board 1 is an *external* device plugged into an already-wired,
+  already-grounded vehicle. Bonding pins 4 and 5 on Board 1 creates a brand-new
+  parallel current path between two ground networks the OEM deliberately kept
+  separate. Under load (starter cranking, alternator ripple), some of that
+  chassis-ground current could divert through Board 1's thin, signal-rated
+  pigtail wiring and ground pour — wiring never sized for chassis-ground duty —
+  and in doing so inject exactly the noise pin 5 exists to avoid.
+
+**Fix: ground Board 1 through pin 5 only.** Pin 4 is **not landed on either
+GND terminal** — it's simply left unconnected, same treatment as any other
+unused OBD pin. The second physical GND terminal slot still exists on the
+9-terminal block and is still the same internal GND net as the first (it's one
+node, not two), but nothing is screwed into it unless a future need arises.
+This way Board 1 never bridges the two ground networks, and the vehicle's own
+(OEM-designed) grounding scheme continues to handle chassis-ground duty
+exactly as intended — Board 1 just rides along on the clean reference pin 5
+was built for.
+
+(The ground-pour / single-plane via reasoning below still applies to *how*
+pin 5 reaches every other ground point on the board — U2/U3 GND, the buck,
+the Pico — it's just that pin 4 is no longer one of the things tying into
+that plane.)
 
 ### PCB layer strategy — 2 layers, ground pour + zoned placement (2026-09-29)
 
@@ -340,10 +372,33 @@ This resolves the long-parked "route A" power decision; it supersedes the earlie
 
 ## Board 2 — BENCH hub
 
+### ⚠️ Terminal scheme CORRECTED 2026-10-05 — Board 2 is now a two-layer design; Board 1 is unaffected
+
+Decided 2026-10-05: **Board 1 stays exactly as documented above (9 terminals,
+unchanged).** Only **Board 2** changes, to a deliberate two-layer scheme that
+reduces the number of "things that move" to one consistent place on this board:
+
+1. **Fixed layer (soldered, never moves):** the female J1962 pigtail's 16 wires
+   are **soldered directly** to a **16-position pad block** on Board 2, one pad
+   per OBD pin number (P2.1 … P2.16), always in the same place. This is a
+   permanent, mechanically durable connection — no thin pigtail wire gets
+   repeatedly screwed/unscrewed.
+2. **Patch layer (screwed, the actual reconfiguration point):** a separate screw
+   terminal block sits between the fixed 16-pad block and the bench-module
+   terminal blocks (`TB-ECU`, `TB-10AS`, and any future module block). **All
+   reconfiguration on Board 2 happens here** — move a jumper from a P2.n pad to
+   whichever module terminal needs that OBD line this session.
+
+This supersedes the single-layer `TB-ECU`/`TB-10AS` wiring below only in that the
+**P2→TB nets are no longer a fixed hard-wire** — they now route through the patch
+layer. The module-side terminal blocks (`TB-ECU`, `TB-10AS`) and their targets are
+unchanged.
+
 ### Parts
 | Ref | Part | Notes |
 |---|---|---|
-| P2 | **female J1962 pigtail** + PCB screw terminal block | receives Board 1; pigtail leads screw in — no OBD housing on the board |
+| P2 | **female J1962 pigtail**, wires **soldered** to a 16-position pad block | receives Board 1; **fixed/permanent**, one pad per OBD pin (P2.1…P2.16) — not a screw terminal |
+| PATCH | screw terminal block (patch layer) | routes selected P2.n pads to `TB-ECU` / `TB-10AS` / future module blocks; **this is where wires move** |
 | J2 | DC barrel jack (2.1 mm) | bench 12 V in |
 | D2 | Schottky (SS54 / 1N5822) | reverse-polarity protect on the DC input |
 | F2 | **2 A** fuse + holder | main bench fuse |
@@ -356,24 +411,29 @@ This resolves the long-parked "route A" power decision; it supersedes the earlie
 ```
 J2 (+12 in) ── D2 (rev-pol) ── F2 (2A) ── SW1 ── V12S rail
 
-V12S ── P2.16                         (+12 up to Board 1 / L9637D Vs)
+V12S ── P2.16 (fixed pad)             (+12 up to Board 1 / L9637D Vs)
 V12S ── TB-ECU:+12main                (ECU C1033 pin 7)
 V12S ── SW2 ── TB-ECU:+12ign          (ECU C1033 pin 8)
 V12S ── TB-10AS:+12  (×2)             (10AS C225 pin 25 AND pin 10 — feed both)
 
-P2.7  (K1, Board 1 channel A / U2) ── TB-ECU:K    (ECU C1017 p23)
-P2.8  (K2, Board 1 channel B / U3) ── TB-10AS:K   (10AS C225 p17)
-                                       [K1 and K2 stay SEPARATE through Board 2 —
-                                        never bridge them; see the dual-transceiver
-                                        note above. Fixes an earlier draft that
-                                        shared both onto pin 7, which would recreate
+P2.7  (fixed pad, K1/U2) ──PATCH── TB-ECU:K    (ECU C1017 p23)
+P2.8  (fixed pad, K2/U3) ──PATCH── TB-10AS:K   (10AS C225 p17)
+                                       [K1 and K2 stay SEPARATE through the patch
+                                        layer — never jumper them together. This
+                                        is what fixes the earlier draft that
+                                        shared both onto pin 7, which recreated
                                         the shared-node contention.]
-P2.15 (L) ── TB-ECU:L                 (ECU C1017 p20 only — 10AS has no L)
+P2.15 (fixed pad, L) ──PATCH── TB-ECU:L        (ECU C1017 p20 only — 10AS has no L)
 
-GND (J2−) ── P2.4 ── P2.5 ──
+GND (J2−) ── P2.4 ── P2.5 (fixed pads) ──PATCH──
              TB-ECU:GND (ECU C1033 p5/p9/p10/p16) ──
              TB-10AS:GND (10AS C274 p11)                                  [star ground]
 ```
+
+**The other ~10 pads on the 16-position block** (P2.1, P2.2, P2.3, P2.6, P2.9,
+P2.11, P2.12, P2.13, P2.14 — incl. CAN 6/14, J1850 2/10) **sit soldered and idle**,
+unpatched, exactly mirroring Board 1's unused-pin handling. Patch them later if a
+future module needs one — no resoldering of the pigtail required.
 
 ### The one wire that is NOT on either board
 The **coded mobilise line** is a direct 10AS→ECM wire, not a bus signal:
@@ -404,8 +464,10 @@ Board 2, so OBD pin 16 only ever has one 12 V origin. Never power the bench from
 the DC adapter while Board 1 is also in a car.
 
 ## Build / safety checklist
-1. **Connector genders:** Board 1 male, Board 2 female. Board 2→ECU/10AS = screw
-   terminals, not OBD.
+1. **Connector genders:** Board 1 male, Board 2 female. Board 2's pigtail is
+   **soldered** to its 16-pad block (fixed); reconfiguration on Board 2 happens
+   at the **patch screw layer** between that pad block and `TB-ECU`/`TB-10AS`,
+   not by moving the pigtail itself.
 2. **L9637D pin-1 orientation** confirmed before any power; **Vcc = 3.3 V**.
 3. **Terminal A2 landed** (OBD pin 15 on the K1/U2 node) for bench/proprietary
    (0xDA) work; unland it for plain car OBD only.

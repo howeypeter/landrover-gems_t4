@@ -663,6 +663,7 @@ def _cmd_kline(args: argparse.Namespace) -> int:
 
     kind, kwargs = _kline_connection_spec(args)
     backend = Backend()
+    backend.set_channel(getattr(args, "channel", None))
     if args.kline_action == "secure":
         return _run_kline_secure(args, backend, kind, kwargs)
     type_name = {"usb": "USB", "ble": "Bluetooth LE",
@@ -971,6 +972,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="permit writes over --connect (default: read-only)")
     sp.add_argument("--ssid", help="set-wifi: the WiFi network name")
     sp.add_argument("--password", help="set-wifi: the WiFi password")
+    sp.add_argument("--channel", type=int, choices=[0, 1], default=None,
+                    help="Board 1 dual-transceiver: 0 = U2/GP0-1 (default), "
+                         "1 = U3/GP4-5. Needs firmware pico_kline_all >= 3.8.0. "
+                         "Omit to use whichever channel the Pico is already on.")
     sp.set_defaults(func=_cmd_kline)
 
     return parser
