@@ -172,7 +172,7 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
 <!-- ============================ SHEET 2 : PCB2 POWER ============================ -->
 <h2>Sheet 2 — PCB2 · POWER (DC input, protection, switching, ECU/adapter routing)</h2>
 <div class="sheet">
-<svg viewBox="0 0 1950 660" width="100%" role="img" aria-label="PCB2 POWER wired schematic">
+<svg viewBox="0 0 2200 660" width="100%" role="img" aria-label="PCB2 POWER wired schematic">
   <style>
     .p12{stroke:#c0392b;stroke-width:2.1;fill:none}
     .g{stroke:#444;stroke-width:1.8;fill:none}
@@ -188,7 +188,7 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
   </style>
 
   <!-- GND rail -->
-  <line class="g" x1="90" y1="600" x2="1500" y2="600"/>
+  <line class="g" x1="90" y1="600" x2="2120" y2="600"/>
   <line class="g" x1="300" y1="600" x2="300" y2="614"/><line class="g" x1="286" y1="614" x2="314" y2="614"/><line class="g" x1="290" y1="619" x2="310" y2="619"/><line class="g" x1="294" y1="624" x2="306" y2="624"/>
   <text class="t" x="300" y="644" text-anchor="middle" fill="#444">GND</text>
 
@@ -206,18 +206,30 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
   <text class="tb" x="259" y="200" text-anchor="middle">D2</text>
   <rect class="body" x="330" y="217" width="70" height="16" rx="8"/><text class="tb" x="365" y="200" text-anchor="middle">F2</text>
   <line class="p12" x1="400" y1="225" x2="450" y2="225"/>
-  <circle cx="450" cy="225" r="3.4"/><line class="p12" x1="450" y1="225" x2="505" y2="208"/><circle cx="535" cy="225" r="3.4"/>
-  <text class="tb" x="492" y="196" text-anchor="middle">SW1</text>
-  <line class="p12" x1="535" y1="225" x2="590" y2="225"/>
+  <rect class="body" x="452" y="207" width="100" height="72"/>
+  <text class="tb" x="502" y="196" text-anchor="middle">SW1 (4-pin screw terminal)</text>
+  <text class="pn" x="457" y="228">12V_IN</text><text class="pn" x="547" y="228" text-anchor="end">12V_OUT</text>
+  <text class="pn" x="547" y="250" text-anchor="end">12V_OUT_LED</text><text class="pn" x="457" y="272">GND_LED</text>
+  <text class="pn" x="502" y="293" text-anchor="middle">→ off-board illuminated switch</text>
+  <circle cx="452" cy="225" r="3.4"/><circle cx="552" cy="225" r="3.4"/><circle cx="552" cy="247" r="3.4"/><circle cx="452" cy="269" r="3.4"/>
+  <line class="p12" x1="552" y1="225" x2="590" y2="225"/>
+  <line class="p12" x1="552" y1="247" x2="570" y2="247"/><line class="p12" x1="570" y1="247" x2="570" y2="225"/><circle cx="570" cy="225" r="3"/>
+  <line class="g" x1="452" y1="269" x2="436" y2="269"/><line class="g" x1="436" y1="269" x2="436" y2="600"/><circle cx="436" cy="600" r="3.4"/>
 
   <!-- V12S rail -->
   <line class="p12" x1="590" y1="225" x2="950" y2="225"/><text class="lr" x="620" y="217">V12S</text>
-  <circle cx="650" cy="225" r="3.4"/><circle cx="720" cy="225" r="3.4"/><circle cx="790" cy="225" r="3.4"/><circle cx="950" cy="225" r="3.4"/>
+  <circle cx="650" cy="225" r="3.4"/><circle cx="720" cy="225" r="3.4"/><circle cx="950" cy="225" r="3.4"/>
 
   <!-- SW2 IGN up from rail @720 -->
-  <line class="p12" x1="720" y1="225" x2="720" y2="170"/><circle cx="720" cy="170" r="3.4"/>
-  <line class="p12" x1="720" y1="170" x2="762" y2="153"/><circle cx="790" cy="170" r="3.4"/>
-  <text class="tb" x="748" y="140" text-anchor="middle">SW2</text>
+  <line class="p12" x1="720" y1="225" x2="720" y2="140"/><line class="p12" x1="720" y1="140" x2="732" y2="140"/>
+  <rect class="body" x="732" y="122" width="100" height="72"/>
+  <text class="tb" x="782" y="112" text-anchor="middle">SW2 (4-pin screw terminal)</text>
+  <text class="pn" x="737" y="143">12V_IN</text><text class="pn" x="827" y="143" text-anchor="end">12V_OUT</text>
+  <text class="pn" x="827" y="165" text-anchor="end">12V_OUT_LED</text><text class="pn" x="737" y="187">GND_LED</text>
+  <circle cx="732" cy="140" r="3.4"/><circle cx="832" cy="140" r="3.4"/><circle cx="832" cy="162" r="3.4"/><circle cx="732" cy="184" r="3.4"/>
+  <line class="p12" x1="832" y1="162" x2="850" y2="162"/><line class="p12" x1="850" y1="162" x2="850" y2="140"/><circle cx="850" cy="140" r="3"/>
+  <line class="p12" x1="832" y1="140" x2="850" y2="140"/>
+  <line class="g" x1="732" y1="184" x2="708" y2="184"/><line class="g" x1="708" y1="184" x2="708" y2="600"/><circle cx="708" cy="600" r="3.4"/>
 
   <!-- D3 TVS (DNP) rail @650 -> GND -->
   <line class="p12" x1="650" y1="225" x2="650" y2="300"/>
@@ -226,14 +238,6 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
   <line class="g" x1="638" y1="415" x2="662" y2="415"/><line class="g" x1="642" y1="420" x2="658" y2="420"/><line class="g" x1="646" y1="425" x2="654" y2="425"/>
   <text class="t" x="600" y="300">D3</text>
 
-  <!-- R2 + LED1 (DNP) rail @790 -> GND -->
-  <line class="p12" x1="790" y1="225" x2="790" y2="300"/>
-  <rect class="body" x="782" y="300" width="16" height="40"/><text class="t" x="806" y="316">R2</text>
-  <line class="p12" x1="790" y1="340" x2="790" y2="360"/>
-  <polygon class="body" points="778,360 802,360 790,378"/><line class="body" x1="778" y1="378" x2="802" y2="378"/>
-  <line class="g" x1="790" y1="378" x2="790" y2="495"/>
-  <line class="g" x1="778" y1="495" x2="802" y2="495"/><line class="g" x1="782" y1="500" x2="798" y2="500"/><line class="g" x1="786" y1="505" x2="794" y2="505"/>
-  <text class="pn" x="812" y="372">LED1</text>
 
   <!-- ===================== J3 — 16-pin INPUT (from Board 1's OBD pigtail) ===================== -->
   <rect class="body" x="1010" y="95" width="100" height="300"/>
@@ -300,110 +304,122 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
   <line class="n" x1="1110" y1="371" x2="1150" y2="371"/>
   <line class="p12" x1="1110" y1="389" x2="1150" y2="389"/>
 
-  <!-- ===================== J6 — K-line/L-line PATCH BAY (between J7 and J4) ===================== -->
-  <rect class="body" x="1290" y="350" width="85" height="145"/>
-  <text class="tb" x="1332" y="342" text-anchor="middle">J6 — K/L patch bay</text>
-  <text class="pn" x="1332" y="507" text-anchor="middle">SPTAF 1/6-3,5-EL, 45°, 3.5mm</text>
-  <text class="t" x="1298" y="368">K1-A</text><text class="t" x="1298" y="390">K1-B</text>
-  <line class="k" x1="1290" y1="368" x2="1290" y2="390"/>
-  <text class="t" x="1298" y="412">L1-RO</text>
-  <text class="t" x="1298" y="434">K2-A</text><text class="t" x="1298" y="456">K2-B</text>
-  <line class="k" x1="1290" y1="434" x2="1290" y2="456"/>
-  <text class="t" x="1298" y="478">L2-RO</text>
+  <!-- ===================== J6 — 2x4 patch landing: column a (faces left) / column b (faces right, mirrored); a-b tied per net ===================== -->
+  <rect class="body" x="1300" y="152" width="80" height="82"/>
+  <text class="tb" x="1340" y="140" text-anchor="middle">J6 — patch in</text>
+  <text class="pn" x="1340" y="250" text-anchor="middle">2× SPTAF 1/4-3,5-EL (1862068)</text>
+  <text class="pn" x="1340" y="262" text-anchor="middle">mirrored rows: a faces left, b faces right</text>
+  <circle cx="1300" cy="170" r="3.4"/><circle cx="1380" cy="170" r="3.4"/>
+  <text class="pn" x="1306" y="165">a</text><text class="pn" x="1370" y="165">b</text>
+  <line class="k" x1="1303" y1="170" x2="1377" y2="170"/>
+  <rect x="1322" y="161" width="36" height="12" fill="#fff" stroke="none"/><text class="t" x="1340" y="173" text-anchor="middle">NET1</text>
+  <circle cx="1300" cy="185" r="3.4"/><circle cx="1380" cy="185" r="3.4"/>
+  <text class="pn" x="1306" y="180">a</text><text class="pn" x="1370" y="180">b</text>
+  <line class="k" x1="1303" y1="185" x2="1377" y2="185"/>
+  <rect x="1322" y="176" width="36" height="12" fill="#fff" stroke="none"/><text class="t" x="1340" y="188" text-anchor="middle">NET2</text>
+  <circle cx="1300" cy="200" r="3.4"/><circle cx="1380" cy="200" r="3.4"/>
+  <text class="pn" x="1306" y="195">a</text><text class="pn" x="1370" y="195">b</text>
+  <line class="k" x1="1303" y1="200" x2="1377" y2="200"/>
+  <rect x="1322" y="191" width="36" height="12" fill="#fff" stroke="none"/><text class="t" x="1340" y="203" text-anchor="middle">NET3</text>
+  <circle cx="1300" cy="215" r="3.4"/><circle cx="1380" cy="215" r="3.4"/>
+  <text class="pn" x="1306" y="210">a</text><text class="pn" x="1370" y="210">b</text>
+  <line class="k" x1="1303" y1="215" x2="1377" y2="215"/>
+  <rect x="1322" y="206" width="36" height="12" fill="#fff" stroke="none"/><text class="t" x="1340" y="218" text-anchor="middle">NET4</text>
 
-  <!-- ===================== J4 — OUTPUT (GND/12V/12Vi bussed; K/L fed by FIXED traces from J6) ===================== -->
-  <rect class="body" x="1485" y="75" width="150" height="430"/>
-  <text class="tb" x="1560" y="67" text-anchor="middle">J4 — output terminal</text>
-  <text class="pn" x="1560" y="520" text-anchor="middle">15–18 pos — 1848642 (placeholder)</text>
-  <!-- GND group: rows 1-6, bussed -->
-  <text class="t" x="1493" y="104">GND 1</text>
-  <text class="t" x="1493" y="126">GND 2</text>
-  <text class="t" x="1493" y="148">GND 3</text>
-  <text class="t" x="1493" y="170">GND 4</text>
-  <text class="t" x="1493" y="192">GND 5</text>
-  <text class="t" x="1493" y="214">GND 6</text>
-  <line class="g" x1="1485" y1="104" x2="1485" y2="214"/>
-  <!-- 12V group: rows 7-9, bussed -->
-  <text class="t" x="1493" y="236">+12V 1</text>
-  <text class="t" x="1493" y="258">+12V 2</text>
-  <text class="t" x="1493" y="280">+12V 3</text>
-  <line class="p12" x1="1485" y1="236" x2="1485" y2="280"/>
-  <!-- 12Vi group: rows 10-12, bussed -->
-  <text class="t" x="1493" y="302">+12Vi 1</text>
-  <text class="t" x="1493" y="324">+12Vi 2</text>
-  <text class="t" x="1493" y="346">+12Vi 3</text>
-  <line class="p12" x1="1485" y1="302" x2="1485" y2="346"/>
-  <!-- K1-A/K1-B and K2-A/K2-B are fused pairs (same net, two landing screws); L1-RO/L2-RO are standalone listen-only taps, no pairing -->
-  <text class="t" x="1493" y="368">K1-A</text><text class="t" x="1493" y="390">K1-B</text>
-  <line class="k" x1="1485" y1="368" x2="1485" y2="390"/>
-  <text class="t" x="1493" y="412">L1-RO</text>
-  <text class="t" x="1493" y="434">K2-A</text><text class="t" x="1493" y="456">K2-B</text>
-  <line class="k" x1="1485" y1="434" x2="1485" y2="456"/>
-  <text class="t" x="1493" y="478">L2-RO</text>
+  <!-- ===================== J4 — 2x4 grid of keyed Micro-Fit 2x2 headers (row a / row b mirrored), nets in the middle channel ===================== -->
+  <text class="tb" x="1780" y="364" text-anchor="middle">J4 — output (2×4 keyed 2×2 headers)</text>
+  <text class="pn" x="1780" y="378" text-anchor="middle">Molex Micro-Fit 3.0, 4-ckt dual-row, vertical (43045-04xx) — row a on top, row b mirrored below</text>
+  <rect class="body" x="1500" y="90" width="130" height="52"/>
+  <text class="pn" x="1505" y="104">12V_BAT</text><text class="pn" x="1548" y="104">12V_IGN</text><text class="pn" x="1596" y="104">GND</text>
+  <text class="t" x="1565" y="132" text-anchor="middle">NET1a</text>
+  <rect class="body" x="1500" y="243" width="130" height="52"/>
+  <text class="t" x="1565" y="263" text-anchor="middle">NET1b</text>
+  <text class="pn" x="1505" y="289">12V_BAT</text><text class="pn" x="1548" y="289">12V_IGN</text><text class="pn" x="1596" y="289">GND</text>
+  <line class="k" x1="1565" y1="142" x2="1565" y2="170"/><line class="k" x1="1565" y1="243" x2="1565" y2="170"/><circle cx="1565" cy="170" r="3"/>
+  <line class="k" x1="1380" y1="170" x2="1565" y2="170"/>
+  <line class="p12" x1="1525" y1="90" x2="1525" y2="78"/><circle cx="1525" cy="78" r="3"/>
+  <line class="p12" x1="1568" y1="90" x2="1568" y2="66"/><circle cx="1568" cy="66" r="3"/>
+  <line class="g" x1="1608" y1="90" x2="1608" y2="54"/><circle cx="1608" cy="54" r="3"/>
+  <line class="p12" x1="1525" y1="295" x2="1525" y2="312"/><circle cx="1525" cy="312" r="3"/>
+  <line class="p12" x1="1568" y1="295" x2="1568" y2="324"/><circle cx="1568" cy="324" r="3"/>
+  <line class="g" x1="1608" y1="295" x2="1608" y2="336"/><circle cx="1608" cy="336" r="3"/>
+  <rect class="body" x="1642" y="90" width="130" height="52"/>
+  <text class="pn" x="1647" y="104">12V_BAT</text><text class="pn" x="1690" y="104">12V_IGN</text><text class="pn" x="1738" y="104">GND</text>
+  <text class="t" x="1707" y="132" text-anchor="middle">NET2a</text>
+  <rect class="body" x="1642" y="243" width="130" height="52"/>
+  <text class="t" x="1707" y="263" text-anchor="middle">NET2b</text>
+  <text class="pn" x="1647" y="289">12V_BAT</text><text class="pn" x="1690" y="289">12V_IGN</text><text class="pn" x="1738" y="289">GND</text>
+  <line class="k" x1="1707" y1="142" x2="1707" y2="185"/><line class="k" x1="1707" y1="243" x2="1707" y2="185"/><circle cx="1707" cy="185" r="3"/>
+  <line class="k" x1="1380" y1="185" x2="1707" y2="185"/>
+  <line class="p12" x1="1667" y1="90" x2="1667" y2="78"/><circle cx="1667" cy="78" r="3"/>
+  <line class="p12" x1="1710" y1="90" x2="1710" y2="66"/><circle cx="1710" cy="66" r="3"/>
+  <line class="g" x1="1750" y1="90" x2="1750" y2="54"/><circle cx="1750" cy="54" r="3"/>
+  <line class="p12" x1="1667" y1="295" x2="1667" y2="312"/><circle cx="1667" cy="312" r="3"/>
+  <line class="p12" x1="1710" y1="295" x2="1710" y2="324"/><circle cx="1710" cy="324" r="3"/>
+  <line class="g" x1="1750" y1="295" x2="1750" y2="336"/><circle cx="1750" cy="336" r="3"/>
+  <rect class="body" x="1784" y="90" width="130" height="52"/>
+  <text class="pn" x="1789" y="104">12V_BAT</text><text class="pn" x="1832" y="104">12V_IGN</text><text class="pn" x="1880" y="104">GND</text>
+  <text class="t" x="1849" y="132" text-anchor="middle">NET3a</text>
+  <rect class="body" x="1784" y="243" width="130" height="52"/>
+  <text class="t" x="1849" y="263" text-anchor="middle">NET3b</text>
+  <text class="pn" x="1789" y="289">12V_BAT</text><text class="pn" x="1832" y="289">12V_IGN</text><text class="pn" x="1880" y="289">GND</text>
+  <line class="k" x1="1849" y1="142" x2="1849" y2="200"/><line class="k" x1="1849" y1="243" x2="1849" y2="200"/><circle cx="1849" cy="200" r="3"/>
+  <line class="k" x1="1380" y1="200" x2="1849" y2="200"/>
+  <line class="p12" x1="1809" y1="90" x2="1809" y2="78"/><circle cx="1809" cy="78" r="3"/>
+  <line class="p12" x1="1852" y1="90" x2="1852" y2="66"/><circle cx="1852" cy="66" r="3"/>
+  <line class="g" x1="1892" y1="90" x2="1892" y2="54"/><circle cx="1892" cy="54" r="3"/>
+  <line class="p12" x1="1809" y1="295" x2="1809" y2="312"/><circle cx="1809" cy="312" r="3"/>
+  <line class="p12" x1="1852" y1="295" x2="1852" y2="324"/><circle cx="1852" cy="324" r="3"/>
+  <line class="g" x1="1892" y1="295" x2="1892" y2="336"/><circle cx="1892" cy="336" r="3"/>
+  <rect class="body" x="1926" y="90" width="130" height="52"/>
+  <text class="pn" x="1931" y="104">12V_BAT</text><text class="pn" x="1974" y="104">12V_IGN</text><text class="pn" x="2022" y="104">GND</text>
+  <text class="t" x="1991" y="132" text-anchor="middle">NET4a</text>
+  <rect class="body" x="1926" y="243" width="130" height="52"/>
+  <text class="t" x="1991" y="263" text-anchor="middle">NET4b</text>
+  <text class="pn" x="1931" y="289">12V_BAT</text><text class="pn" x="1974" y="289">12V_IGN</text><text class="pn" x="2022" y="289">GND</text>
+  <line class="k" x1="1991" y1="142" x2="1991" y2="215"/><line class="k" x1="1991" y1="243" x2="1991" y2="215"/><circle cx="1991" cy="215" r="3"/>
+  <line class="k" x1="1380" y1="215" x2="1991" y2="215"/>
+  <line class="p12" x1="1951" y1="90" x2="1951" y2="78"/><circle cx="1951" cy="78" r="3"/>
+  <line class="p12" x1="1994" y1="90" x2="1994" y2="66"/><circle cx="1994" cy="66" r="3"/>
+  <line class="g" x1="2034" y1="90" x2="2034" y2="54"/><circle cx="2034" cy="54" r="3"/>
+  <line class="p12" x1="1951" y1="295" x2="1951" y2="312"/><circle cx="1951" cy="312" r="3"/>
+  <line class="p12" x1="1994" y1="295" x2="1994" y2="324"/><circle cx="1994" cy="324" r="3"/>
+  <line class="g" x1="2034" y1="295" x2="2034" y2="336"/><circle cx="2034" cy="336" r="3"/>
 
-  <!-- FIXED traces, J6 -> J4, one per row, same name both ends (not patch wires) -->
-  <line class="k" x1="1375" y1="368" x2="1485" y2="368"/>
-  <line class="k" x1="1375" y1="390" x2="1485" y2="390"/>
-  <line class="k" x1="1375" y1="412" x2="1485" y2="412"/>
-  <line class="k" x1="1375" y1="434" x2="1485" y2="434"/>
-  <line class="k" x1="1375" y1="456" x2="1485" y2="456"/>
-  <line class="k" x1="1375" y1="478" x2="1485" y2="478"/>
+  <!-- power buses: V12S (78 top / 312 bottom), IGN (66 / 324), GND (54 / 336); joined by right-hand spines x=2090/2105/2120 -->
+  <line class="p12" x1="1525" y1="78" x2="2090" y2="78"/><line class="p12" x1="1525" y1="312" x2="2090" y2="312"/><line class="p12" x1="2090" y1="45" x2="2090" y2="312"/><circle cx="2090" cy="78" r="3"/><circle cx="2090" cy="312" r="3"/>
+  <line class="p12" x1="1568" y1="66" x2="2105" y2="66"/><line class="p12" x1="1568" y1="324" x2="2105" y2="324"/><line class="p12" x1="2105" y1="15" x2="2105" y2="324"/><circle cx="2105" cy="66" r="3"/><circle cx="2105" cy="324" r="3"/>
+  <line class="g" x1="1608" y1="54" x2="2120" y2="54"/><line class="g" x1="1608" y1="336" x2="2120" y2="336"/><line class="g" x1="2120" y1="54" x2="2120" y2="600"/><circle cx="2120" cy="54" r="3"/><circle cx="2120" cy="336" r="3"/><circle cx="2120" cy="600" r="3.4"/>
+  <line class="p12" x1="950" y1="225" x2="950" y2="45"/><line class="p12" x1="950" y1="45" x2="2090" y2="45"/>
+  <line class="p12" x1="850" y1="140" x2="850" y2="15"/><line class="p12" x1="850" y1="15" x2="2105" y2="15"/>
+  <text class="lr" x="2094" y="40">V12S</text><text class="lr" x="2109" y="10">IGN (SW2)</text><text class="pn" x="2124" y="590">GND</text>
 
-  <!-- V12S (above-route, y=45) -> J4 +12V bus, left edge -->
-  <line class="p12" x1="950" y1="225" x2="950" y2="45"/><line class="p12" x1="950" y1="45" x2="1465" y2="45"/><line class="p12" x1="1465" y1="45" x2="1465" y2="258"/><line class="p12" x1="1465" y1="258" x2="1485" y2="258"/>
-  <!-- GND rail (below-route, corridor x=1480) -> J4 GND bus, left edge -->
-  <line class="g" x1="1480" y1="600" x2="1480" y2="150"/><line class="g" x1="1480" y1="150" x2="1485" y2="150"/><circle cx="1480" cy="600" r="3.4"/>
-  <!-- IGN (above-route, y=15, turns up right after SW2) -> J4 +12Vi bus, right edge -->
-  <line class="p12" x1="790" y1="170" x2="800" y2="170"/><line class="p12" x1="800" y1="170" x2="800" y2="15"/><line class="p12" x1="800" y1="15" x2="1635" y2="15"/><line class="p12" x1="1635" y1="15" x2="1635" y2="324"/>
-  <line class="p12" x1="1635" y1="324" x2="1485" y2="324"/>
-
-  <!-- Worked K-line patch example: J3 pin7 -> (FIXED trace) -> J7 pin7 -> (patch wire, movable) -> J6 K1-A -> (fixed trace) -> J4 K1-A/K1-B -> wire -> ECU plug (off-board) -->
-  <line class="k" x1="1250" y1="227" x2="1270" y2="227" stroke-dasharray="6 4"/>
-  <line class="k" x1="1270" y1="227" x2="1270" y2="368" stroke-dasharray="6 4"/>
-  <line class="k" x1="1270" y1="368" x2="1290" y2="368" stroke-dasharray="6 4"/>
-  <line class="k" x1="1635" y1="390" x2="1695" y2="390" stroke-dasharray="6 4"/>
-  <text class="pn" x="1699" y="394">→ ECU C1017 p23</text>
-  <text class="pn" x="1253" y="215">patch wire</text>
-
-  <!-- L1-RO, K2-A/K2-B, L2-RO: spare in this example, patch as needed (at J6, the patch bay) -->
-  <text class="pn" x="1385" y="416">spare</text>
-  <text class="pn" x="1385" y="449">spare</text>
-  <text class="pn" x="1385" y="482">spare</text>
+  <!-- Worked patch example: J3 pin7 -> (fixed) -> J7 pin7 -> (movable patch wire) -> J6 NET1a -> (a/b tied, fixed trace) -> J4 NET1a + NET1b headers -> device cable -->
+  <line class="k" x1="1250" y1="227" x2="1275" y2="227" stroke-dasharray="6 4"/>
+  <line class="k" x1="1275" y1="227" x2="1275" y2="170" stroke-dasharray="6 4"/>
+  <line class="k" x1="1275" y1="170" x2="1300" y2="170" stroke-dasharray="6 4"/>
+  <text class="pn" x="1180" y="440">patch wire (dashed): J7 pin 7 → J6 NET1a</text>
 </svg>
-<div class="tblk"><div>PCB2 · POWER / wire-operator board</div><div>gems_t4 GEMS bench rig</div><div>Sheet 2/2</div><div>Rev D · 2026-11-11</div></div>
+<div class="tblk"><div>PCB2 · POWER / wire-operator board</div><div>gems_t4 GEMS bench rig</div><div>Sheet 2/2</div><div>Rev E · 2026-11-11</div></div>
 </div>
 <table class="parts">
 <tr><th>Ref</th><th>Component — what it is</th><th>LCSC #</th></tr>
 <tr><td class="ref">J2</td><td>12 V DC input — barrel jack or 2-pos terminal (from a bench PSU/adapter)</td><td class="lc">—</td></tr>
 <tr><td class="ref">D2</td><td><b>SS54</b> — Schottky 5 A / 40 V, reverse-polarity series diode</td><td class="lc">C22452</td></tr>
 <tr><td class="ref">F2</td><td>2 A fuse + holder — main protection (bench ECU + adapter draw ≈1–2 A)</td><td class="lc">—</td></tr>
-<tr><td class="ref">SW1</td><td>SPST toggle — general power on/off (whole rig)</td><td class="lc">—</td></tr>
-<tr><td class="ref">SW2</td><td>SPST toggle — ignition; gates +12 V to ECU pin 8</td><td class="lc">—</td></tr>
-<tr><td class="ref">D3</td><td>SMBJ24A — TVS clamp on the 12 V rail (<b>DNP</b> / optional)</td><td class="lc">—</td></tr>
-<tr><td class="ref">R2</td><td>2.2 kΩ 0805 — LED series resistor (<b>DNP</b>; place with LED1)</td><td class="lc">C17520</td></tr>
-<tr><td class="ref">LED1</td><td>0805 LED — power indicator (<b>DNP</b> / optional)</td><td class="lc">—</td></tr>
+<tr><td class="ref">SW1</td><td>4-pin screw terminal (<b>12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED</b>) wired to an off-board illuminated switch — general power on/off (whole rig). 12V_IN from F2; 12V_OUT = switched V12S; 12V_OUT_LED is tied to 12V_OUT on the board (lamp lights when on); GND_LED to GND.</td><td class="lc">—</td></tr>
+<tr><td class="ref">SW2</td><td>4-pin screw terminal (<b>12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED</b>) wired to an off-board illuminated switch — shared ignition switch for all J4 12V_IGN pins (ECU ignition feed, 10AS IGN). 12V_IN from V12S; 12V_OUT = 12V_IGN rail; 12V_OUT_LED tied to 12V_OUT; GND_LED to GND.</td><td class="lc">—</td></tr>
+<tr><td class="ref">D3</td><td><b>1.5KE24A</b> — 1500 W / 24 V unidirectional TVS, DO-27 axial through-hole (part on hand). Across the 12 V rail after D2/F2: <b>band (cathode) to V12S, other end to GND</b>. Clamps supply spikes; fitted. <b>Leads ~1.0 mm → 1.3 mm holes</b> (lead + 0.3 mm clearance). Standard perfboard holes are ~1 mm, so drill the two holes out to 1.3 mm or solder the leads flat onto the pads.</td><td class="lc">—</td></tr>
 <tr><td class="ref">J3</td><td>16-position, 3.81mm pitch — <b>Amphenol Anytek OQ1632510000G</b> (DigiKey <b>609-3829-ND</b>), a male, shrouded, right-angle (90°) PCB header. The pigtail from Board 1's male OBD2 plug lands on a mating <b>Amphenol Anytek TJ1631530000G</b> pluggable terminal block (female, screw termination, 10A/300V), which plugs into this header — confirmed as a real mated pair, not placeholders. Pin 16 = V12S (12V out, Board 2 → Board 1); pin 5 = GND. Every pin has a <b>fixed, 1:1 trace to the matching pin on J7</b> — J3 itself is never touched when reconfiguring a session.</td><td class="lc">609-3829-ND</td></tr>
 <tr><td class="ref">J7</td><td>16-position <b>Phoenix Contact SPTAF push-in, 45°(135°) angled, 3.5mm pitch</b> — same EL series/family as the 1862042 lead that started this: <b>2× SPTAF 1/6-3,5-EL (1862084)</b> + <b>1× SPTAF 1/4-3,5-EL (1862068)</b> ganged side by side (6+6+4=16), same 16A/160V/1.5mm² rating throughout. 16 positions at 3.5mm pitch runs ~55–60mm, fitting comfortably on the board's 85mm long edge with margin to spare. Wired 1:1 to J3 by fixed trace. This is the junction that was missing — it's the side you actually touch: any of its 16 terminals can be patched to a <b>J6</b> position via a short jumper wire, push-in (no tool, no screw) for the current session, without disturbing J3's robust pigtail connection. <b>Verify from the datasheet</b> that adjacent housings maintain continuous 3.5mm pitch when ganged end-to-end before ordering.</td><td class="lc">—</td></tr>
-<tr><td class="ref">J6</td><td>6-position K-line/L-line patch bay — <b>Phoenix Contact SPTAF 1/6-3,5-EL (1862084)</b>, same 45°(135°) push-in family as J7 (no ganging needed, 6 positions fits one housing natively). Matching J7's connector family means every patch wire terminates the same way on both ends — bare stripped wire, push in, no adapter needed between the two different connector types. Between J7 and J4: <b>K1-A, K1-B, L1-RO, K2-A, K2-B, L2-RO</b> — same naming and pairing as J4's K/L group (K1-A/K1-B and K2-A/K2-B fused pairs; L1-RO/L2-RO standalone). This is where the session's push-in patch wires from J7 land; each J6 position then has a <b>fixed PCB trace</b> straight to its same-named J4 position.</td><td class="lc">—</td></tr>
-<tr><td class="ref">J4</td><td>15–18 position output terminal block (placeholder MPN: <b>1848642</b>), grouped: 5–6 GND (bussed via the ground plane), 2–3 +12V unswitched (bussed to V12S), 2–3 +12V(IGN) switched (bussed to SW2's output), and 6 K-line/L-line terminals (K1-A/K1-B, L1-RO, K2-A/K2-B, L2-RO) fed by fixed traces from J6 — not by direct patch wires from J3/J7 any more.</td><td class="lc">—</td></tr>
+<tr><td class="ref">J6</td><td>Patch landing — <b>2× Phoenix Contact SPTAF 1/4-3,5-EL (1862068)</b>, 45°(135°) push-in, 3.5mm, 16A/160V (same part as J7's 4-position block), laid out as <b>2 rows × 4 columns with <u>mirrored</u> rows</b> (row a faces one way, row b the other, so each row's wires enter from its own side; if there is room, a gap of ~10–15mm between rows is the alternative — verify the 45° wire-entry geometry on the datasheet). Columns = nets: <b>NET1…NET4</b>; each column's a/b pair is <b>tied</b> (same copper net) and sits directly above/below its partner so they read as pairs. Nets are neutral on Board 2 (no IC): NET1 = Board 1 LINE1_U2 R/W, NET2 = LINE2_U2 RO, NET3 = LINE3_U3 R/W, NET4 = LINE4_U3 RO; the RO nets can be swapped freely. J7 patch wires land here; each net has a <b>fixed trace</b> to its two J4 headers.</td><td class="lc">—</td></tr>
+<tr><td class="ref">J4</td><td>Output: <b>2 rows × 4 columns of keyed 2×2 headers</b> (one per J6 a/b position; row a on top, row b mirrored) — <b>Molex Micro-Fit 3.0</b>, 3.00 mm pitch, 4-circuit dual-row, vertical (43045-04xx; <b>verify the vertical suffix + footprint from the Molex drawing</b> — 43045-0400 is listed right-angle). Each header carries <b>12V_BAT (V12S), 12V_IGN (SW2), GND</b> + its net pin (NETxa/NETxb); the two headers of a net share one copper net. Keyed = one orientation; cannot be confused with J3's OBD2 plug. Cables: ECU = 3 headers, 10AS = 2 headers (harness doubles GND wires for the ECU's 4 grounds). Any cable fits any header; a mis-plug only moves the data line (a↔b swaps harmless — tied).</td><td class="lc">—</td></tr>
 </table>
 
 <div class="legend">
-Signal flow: <b>J2</b> → D2 (reverse-polarity) → F2 → SW1 → <b style="color:#c0392b">V12S</b>,
-which feeds J3 pin 16 (back up to Board 1) and J4's unswitched +12V bus. <b>SW2</b>
-switches J4's +12V(IGN) bus. GND (J3 pin 5, J2 return) feeds J4's GND bus via the
-ground plane. <b style="color:#1f7a3d">K-line/L-line</b> is the one patchable part of
-this board. Every J3 pin has a fixed, 1:1 trace out to <b>J7</b> — 3× Phoenix Contact
-SPTAF 45°-angled push-in blocks (3.5mm pitch, 2×6-pos + 1×4-pos = 16) that mirror J3
-without disturbing it. The actual patching happens between <b>J7 and J6</b>: a short
-push-in jumper wire runs from whichever J7 terminal carries the signal you need that
-session to a J6 position — no tool, no screw, strip and push in; a <b>fixed PCB
-trace</b> (not a patch wire) then carries it straight from J6 to the same-named J4
-position, where a second external wire runs out to the ECU or 10AS plug. J7↔J6 is the
-only link you ever rewire — J3↔J7 and J6↔J4 are both permanent copper. The worked
-example shown: J3 pin 7 → (fixed trace) → J7 pin 7 → (push-in jumper) → J6 K1-A →
-(fixed trace) → J4 K1-A/K1-B → (external wire) → ECU C1017 pin 23. Dashed lines =
-the one movable patch link (J7↔J6); solid lines everywhere else = fixed traces.
+Board 2 is a dumb relay (no IC). Power: <b>J2</b> → D2 (reverse-polarity) → F2 → SW1 → <b style="color:#c0392b">V12S</b>, which feeds J3 pin 16 (to Board 1) and the 12V_BAT pin of every <b>J4</b> header; <b>SW2</b> switches the 12V_IGN pin of every J4 header; GND is bussed to every header.
+Signals: every J3 pin has a fixed 1:1 trace to <b>J7</b>. The only thing you rewire is a short push-in patch wire from a J7 terminal to a <b>J6</b> position (2 mirrored rows × NET1…NET4; the a/b pair in each column is tied). A fixed trace carries each net to its two <b>J4</b> headers (2 rows × 4 columns); per-device cables (ECU, 10AS, …) plug into J4 and the board never changes.
+Worked example (dashed = the one movable link): J3 pin 7 → (fixed) → J7 pin 7 → (patch wire) → J6 NET1a → (fixed, tied) → J4 NET1a/NET1b headers → device cable. Immobiliser 3-way: ECU + 10AS cables on the two NET3 headers, Board 1's LINE3 R/W and LINE4 RO wires landing on J6 NET3a/NET3b — all one net; patching only the RO wire = listen-only.
 </div>
 
 <p class="foot">
@@ -411,13 +427,10 @@ Fully-wired, colour-coded schematic for PCB layout — pairs with the topology d
 <code>gems-2pcb-solution.html</code>, the manufacturing package
 <code>hardware/gems-2pcb/</code> and the KiCad netlist starters in
 <code>hardware/gems-2pcb/kicad/</code>. Confirmed pinout:
-<code>memory/real-gems-protocol.md</code>. J3's connector pair (Amphenol Anytek OQ1632510000G
-header + TJ1631530000G plug) is confirmed, not a placeholder. J4's part number (1848642)
-is still a placeholder pending a real sourcing pass. This "wire-operator
-board" design is this session's take on Board 2 — it exists alongside, and has not yet
-been reconciled with, the fixed 16-pad + patch-layer design in <code>docs/two-board-rig.md</code>
-and the generic K1-A/K2-A patch-panel design in <code>docs/board2-bench-hub.md</code> /
-<code>diagrams/board2-bench-hub-schematic.html</code> from earlier sessions. Rev D · 2026-11-11.
+<code>memory/real-gems-protocol.md</code>. J3 (Amphenol Anytek OQ1632510000G + TJ1631530000G), J7 (SPTAF 1862084 ×2 + 1862068) and J6 (SPTAF 1862107) are confirmed parts; <b>J4's Micro-Fit 3.0 vertical part number is still to be pinned down</b>. Design notes: <code>docs/board2-j2-j7-output-design.md</code>. This "wire-operator
+board" design exists alongside, and has not yet been reconciled with, the fixed 16-pad + patch-layer design in <code>docs/two-board-rig.md</code>
+and the generic patch-panel design in <code>docs/board2-bench-hub.md</code> /
+<code>diagrams/board2-bench-hub-schematic.html</code>. Rev E · 2026-11-11.
 </p>
 
 </div>

@@ -105,10 +105,10 @@ K2-B  →  (not used)
 K2-RO →  MIL: 10AS C225 p11 ↔ ECU C1032 p22 (passive view only)
 
 12V-1 / 12Vi-1  →  ECU C1033 p7 / p8 (main / ignition, pending meter-verify)
-12V-2 / 12Vi-2  →  10AS C225 p10, p25 (both unswitched on the car — 12Vi-2
-                    left unused unless you want to test the 10AS under a
-                    simulated switched feed; SW2 gates both 12Vi outputs
-                    together, so switching it also affects 12Vi-1/ECU)
+12V-2 / 12Vi-2  →  10AS: 12V_BAT + 12V_IGN both needed (CORRECTED 2026-11-11:
+                    earlier note said the 10AS was unswitched-only; the user
+                    confirmed it needs the switched IGN feed too). SW2 gates
+                    both 12Vi outputs together (shared switch).
 ```
 
 These are two configurations of the same hardware — moving wires between
