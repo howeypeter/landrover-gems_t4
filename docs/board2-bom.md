@@ -16,7 +16,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 | F2 | Fuse 2 A + holder | 1 | OPEN | holder type (5x20 / blade) not chosen |
 | SW1 | 4-pin screw terminal (12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED) | 1 | OPEN | pitch/part not chosen; wires to off-board illuminated switch |
 | SW2 | 4-pin screw terminal, same | 1 | OPEN | shared 12V_IGN switch |
-| D3 | **1.5KE24A** TVS, 1500 W, 24 V, unidirectional, DO-27 axial | 1 | OK (on hand) | through-hole; leads ~1.0 mm -> **1.3 mm drill** in the KiCad footprint; band to V12S |
+| D3 | **1.5KE24A** TVS, 1500 W, 24 V, unidirectional, DO-27 axial | 1 | OK (on hand) | through-hole; leads ~1.0 mm -> **1.3 mm drill** in the KiCad footprint; band to VF (F2 output / SW1 input) |
 | J3 | Amphenol Anytek **OQ1632510000G**, 16-pos 3.81 mm, male shrouded right-angle header (DigiKey 609-3829-ND) | 1 | OK | |
 | J3 mate | Amphenol Anytek **TJ1631530000G**, 16-pos, female screw-terminal plug (Board 1 pigtail lands here) | 1 | OK | |
 | J7 | Same Sky **TBL002A-350-08GR-2OR** (DigiKey 102-6384-ND), 8-pos 3.5 mm 45° push-button, 2 A UL / 5 A IEC | 2 | OK | 2 x 8 = 16 pos (replaces Phoenix SPTAF 6+6+4); datasheet checked 2026-11-11; pins staggered A/B 5.0 mm, drill 1.2 mm |

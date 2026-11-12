@@ -73,7 +73,7 @@ add the LINE3 R/W wire = drive/test. (Board 1's RO hardware can never drive.)
 
 - **SW1 / SW2** are now 4-pin screw terminals (12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED) wired to off-board illuminated switches; 12V_OUT_LED is tied to 12V_OUT on the board (lamp lights when the output is live). SW1 = general power, SW2 = shared IGN for all J4 12V_IGN pins.
 - **R2 / LED1 removed** (redundant — the switches have their own lamps).
-- **D3 = 1.5KE24A TVS** (1500 W, 24 V, unidirectional, DO-27 axial; part on hand), fitted (no longer DNP): band to V12S, other end to GND. **Leads ~1.0 mm → 1.3 mm holes** (lead + 0.3 mm); on perfboard drill the holes out to 1.3 mm or solder the leads flat onto the pads.
+- **D3 = 1.5KE24A TVS** (1500 W, 24 V, unidirectional, DO-27 axial; part on hand), fitted (no longer DNP): band to VF (between F2 and SW1, so it clamps even with SW1 off), other end to GND. **Leads ~1.0 mm → 1.3 mm holes** (lead + 0.3 mm); on perfboard drill the holes out to 1.3 mm or solder the leads flat onto the pads.
 
 ## Per-module requirements
 

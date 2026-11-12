@@ -16,12 +16,14 @@ for n in nets:
     ni[n]=pcbnew.NETINFO_ITEM(b,n); b.Add(ni[n])
 pinnet={(r,p):n for n,l in nets.items() for r,p in l}
 # row layout: ref -> (center x, center y)  (board origin top-left)
-R1,R2=14,31
-pos={"J71":(21,R1),"J72":(53,R1),"J2":(79,R1),
-     "J6":(21,R2),"SW1":(51,R2+2),"SW2":(76,R2+2),
-     "D3":(79,45),"D2":(79,53.5),"F2":(76,62),"J3":(40,H-7)}
+# power chain right->left along y=43: J2 (right edge) -> D2 -> F2 -> D3(tap) -> SW1 (left edge); J6 above F2; SW2 below SW1
+pos={"J71":(W/2-15.5,59.5),"J72":(W/2+15.5,59.5),
+     "J2":(84,43),"D2":(68,43),"F2":(46,43),"D3":(24,43),
+     "SW1":(8.5,33),"SW2":(8.5,55),
+     "J6":(46,30),"J3":(W/2,H-7)}
+ROT={"J2":90,"SW1":270,"SW2":270,"D3":180}   # edge terminals: wire entry faces the edge
 for i in range(4):
-    pos[f"J4{i+1}"]=(14+12*i,46); pos[f"J4{i+5}"]=(14+12*i,57)
+    pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,17.4)
 for ref,fid in fp_of.items():
     lib,name=fid.split(":")
     f=pcbnew.FootprintLoad(os.path.join(HERE,"board2.pretty") if lib=="board2" else os.path.join(FPDIR,lib+".pretty"),name)
@@ -29,7 +31,7 @@ for ref,fid in fp_of.items():
     for p in f.Pads():
         n=pinnet.get((ref,p.GetNumber()))
         if n: p.SetNet(ni[n])
-    f.SetPosition(VECTOR2I(0,0)); c=f.GetBoundingBox(False,False).GetCenter()
+    f.SetPosition(VECTOR2I(0,0)); f.SetOrientationDegrees(ROT.get(ref,0)); c=f.GetBoundingBox(False,False).GetCenter()
     x,y=pos[ref]; f.Move(VECTOR2I(mm(x)-c.x,mm(y)-c.y))
     b.Add(f)
 # outline

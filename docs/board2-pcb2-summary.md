@@ -59,7 +59,7 @@ SW2 gates the shared **12V_IGN** rail to every J4 IGN pin. GND is bussed.
 - **D2 = SB540** (5 A/40 V Schottky, DO-201AD axial through-hole, ~$0.30 at Mouser per user). Band
   (cathode) toward F2/load. Replaced SS54 (SMD, Newark 5-pc minimum) and 1N5822 (Mouser ~$20).
 - **D3 = 1.5KE24A TVS** (1500 W, 24 V, unidirectional, DO-27), on hand, fitted (no longer DNP). Band to
-  V12S, other end GND. Leads ~1.0 mm, so use **1.3 mm holes**.
+  VF (between F2 and SW1, so it clamps even with SW1 off), other end GND. Leads ~1.0 mm, so use **1.3 mm holes**.
 
 ## 5. Connectors
 

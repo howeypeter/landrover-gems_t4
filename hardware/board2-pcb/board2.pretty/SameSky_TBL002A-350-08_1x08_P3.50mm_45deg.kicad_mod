@@ -13,5 +13,6 @@
 	(pad "6" thru_hole circle (at 17.5 5.0) (size 2 2) (drill 1.2) (layers "*.Cu" "*.Mask"))
 	(pad "7" thru_hole circle (at 21.0 0) (size 2 2) (drill 1.2) (layers "*.Cu" "*.Mask"))
 	(pad "8" thru_hole circle (at 24.5 5.0) (size 2 2) (drill 1.2) (layers "*.Cu" "*.Mask"))
+	(model "${KIPRJMOD}/board2.3dshapes/SameSky_TBL002A-350-08.wrl" (offset (xyz 0 0 0)) (scale (xyz 1 1 1)) (rotate (xyz 0 0 0)))
 	(embedded_fonts no)
 )

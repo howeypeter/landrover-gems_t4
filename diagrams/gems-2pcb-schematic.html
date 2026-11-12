@@ -218,7 +218,7 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
 
   <!-- V12S rail -->
   <line class="p12" x1="590" y1="225" x2="950" y2="225"/><text class="lr" x="620" y="217">V12S</text>
-  <circle cx="650" cy="225" r="3.4"/><circle cx="720" cy="225" r="3.4"/><circle cx="950" cy="225" r="3.4"/>
+  <circle cx="720" cy="225" r="3.4"/><circle cx="950" cy="225" r="3.4"/>
 
   <!-- SW2 IGN up from rail @720 -->
   <line class="p12" x1="720" y1="225" x2="720" y2="140"/><line class="p12" x1="720" y1="140" x2="732" y2="140"/>
@@ -231,12 +231,12 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
   <line class="p12" x1="832" y1="140" x2="850" y2="140"/>
   <line class="g" x1="732" y1="184" x2="708" y2="184"/><line class="g" x1="708" y1="184" x2="708" y2="600"/><circle cx="708" cy="600" r="3.4"/>
 
-  <!-- D3 TVS (DNP) rail @650 -> GND -->
-  <line class="p12" x1="650" y1="225" x2="650" y2="300"/>
-  <line class="body" x1="638" y1="300" x2="662" y2="300"/><polygon class="body" points="638,318 662,318 650,300"/>
-  <line class="g" x1="650" y1="318" x2="650" y2="415"/>
-  <line class="g" x1="638" y1="415" x2="662" y2="415"/><line class="g" x1="642" y1="420" x2="658" y2="420"/><line class="g" x1="646" y1="425" x2="654" y2="425"/>
-  <text class="t" x="600" y="300">D3</text>
+  <!-- D3 TVS tap between F2 and SW1 (VF) @415 -> GND -->
+  <line class="p12" x1="415" y1="225" x2="415" y2="300"/><circle cx="415" cy="225" r="3"/>
+  <line class="body" x1="403" y1="300" x2="427" y2="300"/><polygon class="body" points="403,318 427,318 415,300"/>
+  <line class="g" x1="415" y1="318" x2="415" y2="415"/>
+  <line class="g" x1="403" y1="415" x2="427" y2="415"/><line class="g" x1="407" y1="420" x2="423" y2="420"/><line class="g" x1="411" y1="425" x2="419" y2="425"/>
+  <text class="t" x="365" y="300">D3</text>
 
 
   <!-- ===================== J3 — 16-pin INPUT (from Board 1's OBD pigtail) ===================== -->
@@ -409,7 +409,7 @@ L9637D datasheet pins; on U2 the Pico physical pin numbers.</p>
 <tr><td class="ref">F2</td><td>2 A fuse + holder — main protection (bench ECU + adapter draw ≈1–2 A)</td><td class="lc">—</td></tr>
 <tr><td class="ref">SW1</td><td>4-pin screw terminal (<b>12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED</b>) wired to an off-board illuminated switch — general power on/off (whole rig). 12V_IN from F2; 12V_OUT = switched V12S; 12V_OUT_LED is tied to 12V_OUT on the board (lamp lights when on); GND_LED to GND.</td><td class="lc">—</td></tr>
 <tr><td class="ref">SW2</td><td>4-pin screw terminal (<b>12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED</b>) wired to an off-board illuminated switch — shared ignition switch for all J4 12V_IGN pins (ECU ignition feed, 10AS IGN). 12V_IN from V12S; 12V_OUT = 12V_IGN rail; 12V_OUT_LED tied to 12V_OUT; GND_LED to GND.</td><td class="lc">—</td></tr>
-<tr><td class="ref">D3</td><td><b>1.5KE24A</b> — 1500 W / 24 V unidirectional TVS, DO-27 axial through-hole (part on hand). Across the 12 V rail after D2/F2: <b>band (cathode) to V12S, other end to GND</b>. Clamps supply spikes; fitted. <b>Leads ~1.0 mm → 1.3 mm holes</b> (lead + 0.3 mm clearance). Standard perfboard holes are ~1 mm, so drill the two holes out to 1.3 mm or solder the leads flat onto the pads.</td><td class="lc">—</td></tr>
+<tr><td class="ref">D3</td><td><b>1.5KE24A</b> — 1500 W / 24 V unidirectional TVS, DO-27 axial through-hole (part on hand). Across the supply <b>between F2 and SW1</b> (net VF), so it clamps even with SW1 off: <b>band (cathode) to VF, other end to GND</b>. Clamps supply spikes; fitted. <b>Leads ~1.0 mm → 1.3 mm holes</b> (lead + 0.3 mm clearance). Standard perfboard holes are ~1 mm, so drill the two holes out to 1.3 mm or solder the leads flat onto the pads.</td><td class="lc">—</td></tr>
 <tr><td class="ref">J3</td><td>16-position, 3.81mm pitch — <b>Amphenol Anytek OQ1632510000G</b> (DigiKey <b>609-3829-ND</b>), a male, shrouded, right-angle (90°) PCB header. The pigtail from Board 1's male OBD2 plug lands on a mating <b>Amphenol Anytek TJ1631530000G</b> pluggable terminal block (female, screw termination, 10A/300V), which plugs into this header — confirmed as a real mated pair, not placeholders. Pin 16 = V12S (12V out, Board 2 → Board 1); pin 5 = GND. Every pin has a <b>fixed, 1:1 trace to the matching pin on J7</b> — J3 itself is never touched when reconfiguring a session.</td><td class="lc">609-3829-ND</td></tr>
 <tr><td class="ref">J7</td><td>16-position <b>Phoenix Contact SPTAF push-in, 45°(135°) angled, 3.5mm pitch</b> — same EL series/family as the 1862042 lead that started this: <b>2× SPTAF 1/6-3,5-EL (1862084)</b> + <b>1× SPTAF 1/4-3,5-EL (1862068)</b> ganged side by side (6+6+4=16), same 16A/160V/1.5mm² rating throughout. 16 positions at 3.5mm pitch runs ~55–60mm, fitting comfortably on the board's 85mm long edge with margin to spare. Wired 1:1 to J3 by fixed trace. This is the junction that was missing — it's the side you actually touch: any of its 16 terminals can be patched to a <b>J6</b> position via a short jumper wire, push-in (no tool, no screw) for the current session, without disturbing J3's robust pigtail connection. <b>Verify from the datasheet</b> that adjacent housings maintain continuous 3.5mm pitch when ganged end-to-end before ordering.</td><td class="lc">—</td></tr>
 <tr><td class="ref">J6</td><td>Patch landing — <b>2× Phoenix Contact SPTAF 1/4-3,5-EL (1862068)</b>, 45°(135°) push-in, 3.5mm, 16A/160V (same part as J7's 4-position block), laid out as <b>2 rows × 4 columns with <u>mirrored</u> rows</b> (row a faces one way, row b the other, so each row's wires enter from its own side; if there is room, a gap of ~10–15mm between rows is the alternative — verify the 45° wire-entry geometry on the datasheet). Columns = nets: <b>NET1…NET4</b>; each column's a/b pair is <b>tied</b> (same copper net) and sits directly above/below its partner so they read as pairs. Nets are neutral on Board 2 (no IC): NET1 = Board 1 LINE1_U2 R/W, NET2 = LINE2_U2 RO, NET3 = LINE3_U3 R/W, NET4 = LINE4_U3 RO; the RO nets can be swapped freely. J7 patch wires land here; each net has a <b>fixed trace</b> to its two J4 headers.</td><td class="lc">—</td></tr>
