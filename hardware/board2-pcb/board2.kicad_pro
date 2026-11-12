@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "filename": "board2.kicad_pro",
+    "version": 3
+  },
+  "schematic": {
+    "drawing": {}
+  },
+  "board": {},
+  "net_settings": {
+    "classes": [
+      {
+        "name": "Default"
+      }
+    ]
+  }
+}

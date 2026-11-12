@@ -1,9 +1,9 @@
-# Board 2 — J2–J7 "wire operator board" design (session context)
+﻿# Board 2 — J2–J7 "wire operator board" design (session context)
 
 **Status: working design, updated 2026-11-11 (rev 3) — Board 2 is a DUMB relay board
 (no IC): 4 neutral nets, J6 landing strip + J4 keyed output headers. Not yet
 reconciled with the other two Board 2 designs (see end).** The live schematic
-`diagrams/gems-2pcb-schematic.html` Sheet 2 (Rev F) matches this doc; the
+`diagrams/gems-2pcb-schematic.html` Sheet 2 (Rev G) matches this doc; the
 `hardware/j6-patch-bay/` KiCad scaffold is still the OLD layout.
 
 ## Principle
@@ -32,7 +32,7 @@ just a receive-only tap, not an L-line.
 Board 1 OBD2 plug -> OBD pigtail -> male plug -> J3 (fixed)
    -> [fixed 1:1] -> J7 (16-pos, patch access; silk = OBD pin numbers 1-16)
    -> [movable patch wires] -> J6 (2x4 landing: rows a/b mirrored)
-   -> [fixed traces, NETxa/NETxb tied] -> J4 (1x8 row of right-angle keyed headers)
+   -> [fixed traces, NETxa/NETxb tied] -> J4 (2x4 grid of vertical keyed headers)
    -> [per-device patch cables] -> ECU / 10AS / future BCM, SRS...
 ```
 
@@ -40,7 +40,7 @@ Board 1 OBD2 plug -> OBD pigtail -> male plug -> J3 (fixed)
 - **J6** — 2 rows x 4 columns, rows MIRRORED (row a faces one way, row b the other so wires enter from each side): `NET1a NET2a NET3a NET4a` over `NET1b NET2b NET3b NET4b` (each column = one net, a above b).
   `NETxa` and `NETxb` are tied (same copper net) — two access points per net.
   Silk: bracket over each a/b pair.
-- **J4** — 1x8 row of keyed 2x2 RIGHT-ANGLE headers along one board edge (cables exit sideways through the box wall; one per J6 position, a/b of each net adjacent). Each carries 12V_BAT, 12V_IGN,
+- **J4** — 2x4 grid of keyed 2x2 VERTICAL headers (row a on top, row b mirrored, nets in the middle channel; cables exit upward; one per J6 position, a/b of each net a column). Each carries 12V_BAT, 12V_IGN,
   GND + that position's one net pin. J6 NETxa/b and J4 NETxa/b are all one net (fixed traces).
 - Power/GND bussed to every J4 header from J2/SW1/SW2 (SW2 = shared IGN switch).
 - Only wires at J7/J6 and the cables on J4 ever change; **the PCB never changes**.
@@ -50,9 +50,8 @@ Board 1 OBD2 plug -> OBD pigtail -> male plug -> J3 (fixed)
 - J3: Amphenol Anytek OQ1632510000G (header, 609-3829-ND) + TJ1631530000G (plug), 16-pos 3.81mm.
 - J7: 2x SPTAF 1/6-3,5-EL (1862084) + 1x SPTAF 1/4-3,5-EL (1862068), 45 deg, 3.5mm.
 - J6: **2x SPTAF 1/4-3,5-EL, Phoenix 1862068** (same part as J7's 4-pos block; 45 deg, 3.5mm, push-in, 16A/160V), mounted as two mirrored rows (or ~10-15mm apart facing the same way — verify 45 deg wire-entry geometry on the datasheet). ~14mm wide. (The 8-pos 1862107 was the earlier single-row option.)
-- **J4 (decided 2026-11-11): 8x Molex Micro-Fit 3.0 `43045-0400`** — 4-circuit dual-row, 3.00mm pitch, **right-angle**, snap-in peg, mated height 10.29mm, ~8.5A. Laid out as a **1x8 row along one board edge** so the cable plugs exit sideways through a cutout in the box wall. **TO VERIFY from Molex drawing SD-43045-001 (not retrieved):** housing width along the row — 8 must fit with ~1-2mm gaps in the edge length (my estimate is ~7-9mm each, ~72mm total, on an 85mm edge; unverified), and the footprint.
-- **Footnote — vertical option:** vertical `43045-04xx` (e.g. `43045-0427`, with PCB peg) as a **2x4 grid** (row a on top, row b mirrored below, nets in a middle channel) — the earlier Rev E layout; use it if cables should exit upward. Mini-Fit Jr (5566/5557, ~9A, larger) was considered and not chosen.
-- Board 85x75mm; J7 on one 85mm long edge, J4 on the opposite long edge; J2 / switch terminals on the short edges.
+- **J4 (REVISED 2026-11-11, supersedes the 1x8 right-angle plan): 8x Molex Micro-Fit 3.0 `43045-0412`** — 4-circuit dual-row, 3.00mm pitch, **vertical through-hole** (1.02mm drills), laid out as a **2x4 grid** (~45 x 20mm; courtyard 11.16 x 9.78mm each): row a on top, row b mirrored below, nets in a middle channel. Reason: the right-angle `43045-0400` has an 11.16mm-wide courtyard, so 8 in a row need ~89mm, more than the 85mm edge. Cables exit upward (no side-wall cutout; enclosure needs an opening above J4). **TO VERIFY from the Molex drawing:** suffix and whether mounting pegs are wanted (0415 = SMD, 0418 = with pegs).
+- **Footnote — dropped option:** the 1x8 right-angle row (43045-0400 x8) — only if the board were widened to ~95mm. Mini-Fit Jr (5566/5557, ~9A, larger) was considered and not chosen.- Board 85x75mm; J7 on one 85mm long edge, J4 grid toward the opposite edge; J2 / switch terminals on the short edges.
 
 ## J4 cables / notes
 
@@ -85,7 +84,7 @@ add the LINE3 R/W wire = drive/test. (Board 1's RO hardware can never drive.)
 ## Open items
 
 1. ~~Which RO net carries the 10AS diagnostic line~~ — RESOLVED 2026-11-11: NET2 and NET4 are interchangeable; pick either per session (listen-only for now).
-2. J4: confirm 43045-0400 width/footprint vs the 85mm edge (Molex SD-43045-001); then KiCad board + BOM.
+2. J4: verify 43045-0412 suffix/pegs vs the Molex drawing; KiCad project started (`hardware/board2-pcb/`).
 3. Update `gems-2pcb-schematic.html` Sheet 2 + part table; fix A1/A2... names in Board 1 docs.
 4. Reconcile the three Board 2 designs.
 5. `docs/board2-bench-hub.md` 10AS IGN note — corrected 2026-11-11 (naming there is still old K/L).

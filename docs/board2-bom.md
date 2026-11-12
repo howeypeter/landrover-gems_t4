@@ -22,7 +22,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 | J7 | Phoenix **SPTAF 1/6-3,5-EL (1862084)** | 2 | OK | 45 deg push-in, 3.5 mm, 16 A/160 V |
 | J7 | Phoenix **SPTAF 1/4-3,5-EL (1862068)** | 1 | OK | gang 6+6+4 = 16 pos; verify continuous 3.5 mm pitch when ganged |
 | J6 | Phoenix **SPTAF 1/4-3,5-EL (1862068)** | 2 | OK | 2 x 4, rows mirrored (a / b), a/b of each net tied |
-| J4 | Molex Micro-Fit 3.0 **43045-0400**, 4-ckt dual-row, right-angle header | 8 | CHECK | 1x8 row along one edge; **verify width vs 85 mm edge (Molex SD-43045-001)**; vertical option 43045-04xx kept as footnote |
+| J4 | Molex Micro-Fit 3.0 **43045-0412**, 4-ckt dual-row, **vertical** through-hole header | 8 | CHECK | 2x4 grid (~45 x 20 mm), cables exit upward; revised 2026-11-11 because right-angle 43045-0400 x8 needs ~89 mm; **verify suffix/pegs vs Molex drawing** (0415 = SMD, 0418 = with mounting pegs) |
 
 ## Off-board / cables
 
@@ -40,7 +40,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 |---|---|---|---|
 | PCB, 85 x 75 mm outline, mounting holes (83 x 61 mm pattern per enclosure note) | 1 | OPEN | confirm outline/holes vs the enclosure |
 | Standoffs ~1/4" (6 mm) + screws | 4 | OPEN | |
-| Enclosure with side cutout for the J4 cables | 1 | OPEN | right-angle J4 exits through a wall |
+| Enclosure with room/opening above J4 for the cables | 1 | OPEN | vertical J4 cables exit upward (lid cutout or tall enough box) |
 
 ## Open decisions before ordering
 
