@@ -58,8 +58,11 @@ for fp in b.GetFootprints():
     for p in fp.Pads():
         c = p.GetPosition()
         x, y = tomm(c.x), tomm(c.y)
+        if not (X0 <= x <= X0 + tomm(bb.GetWidth()) and Y0 <= y <= Y0 + tomm(bb.GetHeight())):
+            continue   # parked off the board: not routed
         sz = p.GetSize()
         r = max(tomm(sz.x), tomm(sz.y)) / 2 * (1.2 if p.GetShape() != pcbnew.PAD_SHAPE_CIRCLE else 1.0)
+        dr = p.GetDrillSize(); r = max(r, max(tomm(dr.x), tomm(dr.y)) / 2)   # NPTH holes: keep clear of the drill
         n = p.GetNetname()
         nid = NID.get(n, -1) if n else -1
         for li in (0, 1):

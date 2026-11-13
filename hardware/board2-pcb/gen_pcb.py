@@ -16,12 +16,17 @@ for n in nets:
     ni[n]=pcbnew.NETINFO_ITEM(b,n); b.Add(ni[n])
 pinnet={(r,p):n for n,l in nets.items() for r,p in l}
 # row layout: ref -> (center x, center y)  (board origin top-left)
-# power chain right->left along y=42: J2 (right edge) -> D2 -> F2 -> D3(tap) -> SW1 (left edge); J6 above F2; SW2 below SW1
-pos={"J71":(W/2-15.5,56.5),"J72":(W/2+15.5,56.5),
-     "J2":(W-6.2,42),"D2":(66,42),"F2":(43.5,42),"D3":(21,42),
+# Signal flow bottom to top: J3 (bottom edge, plug opening facing the edge; pad numbers are mirrored in the footprint so
+# pins read 1..16 left to right) -> J7 (J71 left, J72 right, wire entry up toward J6) -> J6 (rotated 180, entry faces J7)
+# -> J4 grid at the top. Power chain right->left along y=42: J2 (right edge) -> D2 -> F2 -> D3(tap) -> SW1 (left edge);
+# J6 above F2; SW2 below SW1.
+# WORK IN PROGRESS (2026-11-12): F2, D2, D3 are parked off the board (to the right) while the power section is
+# rearranged; their original spots were F2 (43.5,42), D2 (66,42), D3 (21,42). J71/J72 were moved up 2 mm.
+pos={"J71":(W/2-15.5,54.5),"J72":(W/2+15.5,54.5),
+     "J2":(W-6.2,42),"D2":(W+26.5,33.5),"F2":(W+26.5,18.5),"D3":(W+26.5,48.5),
      "SW1":(6.5,31),"SW2":(6.5,52.7),
      "J6":(43.5,30.2),"J3":(43.5,H-7)}
-ROT={"J2":90,"SW1":270,"SW2":270,"D3":180}   # edge terminals: wire entry faces the edge
+ROT={"J2":90,"SW1":270,"SW2":270,"D3":180,"J3":180,"J6":180}   # edge terminals: wire entry faces the edge
 for i in range(4):
     pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,18.9)
 for ref,fid in fp_of.items():
@@ -50,14 +55,19 @@ def label(txt, x, y, size=0.9, rot=0, layer=pcbnew.F_SilkS):
     t.SetTextAngleDegrees(rot); b.Add(t)
 fps={f.GetReference():f for f in b.GetFootprints()}
 def pads_of(ref): return {p.GetNumber():(pcbnew.ToMM(p.GetPosition().x),pcbnew.ToMM(p.GetPosition().y)) for p in fps[ref].Pads()}
-# J6: net names (A row labelled above its pad, B row below)
-for n,(x,y) in pads_of("J6").items():
+# J6: net names (labels sit outside the two pad rows)
+p6=pads_of("J6"); m6=sum(y for x,y in p6.values())/len(p6)
+for n,(x,y) in p6.items():
     i=int(n)-1; name=f"NET{i%4+1}{'ab'[i//4]}"
-    label(name,x,y-1.6 if i%2==0 else y+1.6,0.8)
-# J7: OBD pin numbers
-for ref,off in (("J71",0),("J72",8)):
-    for n,(x,y) in pads_of(ref).items():
-        i=int(n)-1; label(str(off+i+1),x,y-1.6 if i%2==0 else y+1.6,0.9)
+    label(name,x,y-1.6 if y<m6 else y+1.6,0.8)
+# J7: OBD pin numbers, read from the net on each pad
+def obdnum(ref,pad):
+    nn=pinnet[(ref,pad)]
+    return "5" if nn=="GND" else ("16" if nn=="V12S" else nn[3:])
+for ref in ("J71","J72"):
+    pp=pads_of(ref); mm_=sum(y for x,y in pp.values())/len(pp)
+    for n,(x,y) in pp.items():
+        label(obdnum(ref,n),x,y-1.6 if y<mm_ else y+1.6,0.9)
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
 p2=pads_of("J2"); top=min(p2,key=lambda n:p2[n][1]); bot=max(p2,key=lambda n:p2[n][1])
 cx=p2[top][0]
@@ -77,8 +87,9 @@ sx,sy=pads_of("SW2")["1"]; label("SW2 IGN",sx,66.3,0.9)
 # J3 pin labels (OBD pin number / function), above the pad row; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():
-    k=int(n); txt="GND" if k==5 else ("12V" if k==16 else str(k))
-    label(txt,x,y-3.0,0.8)
+    label(str(int(n)),x,y-3.0,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
+    if int(n)==5: label("GND",x,y+3.0,0.8)    # function hints below the pad row
+    if int(n)==16: label("+12V_BAT",x-1.7,y+3.0,0.8)
 # net legend
 label("J4 PINS:",10.5,10.5,0.8); label("1=12V_BAT 2=NET",10.5,12.2,0.8); label("3=12V_IGN 4=GND",10.5,14,0.8)
 label("Board 2 r1",W-8,64.5,0.8)

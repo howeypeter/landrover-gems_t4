@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-12T00:17:16")
+		(date "2026-11-12T19:39:45")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3e266f6e-4e58-4139-9154-672179a7c9f3")
+			(tstamps "c7dd20c6-3d24-40f0-af8f-546cd7ae2f16")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "07f963ad-5c09-42b8-9a54-213127e55336")
+			(tstamps "4c22032e-5bd8-4428-b476-babef064e4b7")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "d5b3e6a5-a261-436b-af49-532b07aa476e")
+			(tstamps "31845795-01c8-4b3c-a8c8-564525888919")
 			(units
 				(unit
 					(name "A")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "5c11ff78-a0df-470f-a5ce-9b79b6400022")
+			(tstamps "00b93b27-9cfb-4c60-a115-01650338c2df")
 			(units
 				(unit
 					(name "A")
@@ -273,11 +273,11 @@
 		(comp
 			(ref "J3")
 			(value "OQ1632510000G (16-pos 3.81)")
-			(footprint "Connector_Phoenix_MC:PhoenixContact_MC_1,5_16-G-3.81_1x16_P3.81mm_Horizontal")
+			(footprint "board2:OQ1632510000G_1x16_P3.81mm_RA_PinsReversed")
 			(description "From Board 1 OBD2 pigtail (male plug)")
 			(fields
 				(field
-					(name "Footprint") "Connector_Phoenix_MC:PhoenixContact_MC_1,5_16-G-3.81_1x16_P3.81mm_Horizontal")
+					(name "Footprint") "board2:OQ1632510000G_1x16_P3.81mm_RA_PinsReversed")
 				(field
 					(name "Datasheet")
 				)
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "1119736f-97c3-407e-a1e4-4d49967cc305")
+			(tstamps "3d43fe74-11b6-4904-b48b-51b9dc99ac96")
 			(units
 				(unit
 					(name "A")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "fbc83eb2-c2a8-4a24-853a-cc06a2b19381")
+			(tstamps "299a0636-640e-4901-8956-8763f13f1838")
 			(units
 				(unit
 					(name "A")
@@ -477,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "a6457d39-b1ec-41ff-9c16-3876290f6b19")
+			(tstamps "ae5e5d06-2442-44f2-93d3-229ef9e68efd")
 			(units
 				(unit
 					(name "A")
@@ -537,7 +537,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "e27ee620-746a-4172-a36c-01c574137d2d")
+			(tstamps "8c9c4c18-b351-42ba-9102-47c68bf6bab6")
 			(units
 				(unit
 					(name "A")
@@ -597,7 +597,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "d3f5daea-c4c8-4c40-a242-ce34dcc8e653")
+			(tstamps "91e5b19f-4a0a-40b8-acb3-4897970bca2b")
 			(units
 				(unit
 					(name "A")
@@ -657,7 +657,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3ab3ede8-1118-41f1-a81f-5071f8d86804")
+			(tstamps "90f71d35-e510-4ea9-adb6-d346b1ff0c70")
 			(units
 				(unit
 					(name "A")
@@ -717,7 +717,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "401d9d4c-0f14-4577-89ab-272d2f98f375")
+			(tstamps "546d7bf9-4ef5-4b60-b265-3fd44e3da443")
 			(units
 				(unit
 					(name "A")
@@ -777,7 +777,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "528e93c2-b599-40e8-a618-c3a0cacc6aac")
+			(tstamps "a302a9f5-cc29-4a03-8e2a-8aa2ea524318")
 			(units
 				(unit
 					(name "A")
@@ -837,7 +837,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "03ee3f9e-2408-4b43-a664-5675ca0e1c41")
+			(tstamps "08e2dba5-ba32-431d-9bd4-14834ee80493")
 			(units
 				(unit
 					(name "A")
@@ -897,7 +897,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "32296c00-4c17-4128-b5c3-f29fa9beff5f")
+			(tstamps "d59f535c-13c3-45e7-bc88-91794440a73e")
 			(units
 				(unit
 					(name "A")
@@ -957,7 +957,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "69299c17-e9fe-4fb0-819e-a50bb6d79fe7")
+			(tstamps "d19a5432-20d6-4730-865b-0393c2487a68")
 			(units
 				(unit
 					(name "A")
@@ -1029,7 +1029,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ebe88b98-07e5-4a4d-8c88-78abe0fbdcd3")
+			(tstamps "75949059-7ae3-40b1-8602-18649a9eeb8b")
 			(units
 				(unit
 					(name "A")
@@ -1101,7 +1101,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "2f3c179a-7f40-415b-88b9-49e498635fb9")
+			(tstamps "42057c12-7f23-44f4-89dc-c002494d3a03")
 			(units
 				(unit
 					(name "A")
@@ -1161,7 +1161,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "0ae22d47-402d-44e8-ab12-7e82a08e9dd8")
+			(tstamps "b94e7128-259a-4511-aac2-34b376463963")
 			(units
 				(unit
 					(name "A")

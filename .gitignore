@@ -61,3 +61,9 @@ bench/*.state.json
 bench/*.log
 bench/*.csv
 bench/*.bin
+
+# --- Board 2: third-party library models we may not redistribute (SamacSys licence, public repo) ---
+hardware/board2-pcb/board2.3dshapes/OQ1632510000G.stp
+hardware/board2-pcb/board2.pretty/SHDRRA16W80P0X381_1X16_6215X920X745P.kicad_mod
+hardware/board2-pcb/board2.pretty/OQ1632510000G_1x16_P3.81mm_RA_PinsReversed.kicad_mod
+hardware/board2-pcb/jMKyryrC5T7A.pdf

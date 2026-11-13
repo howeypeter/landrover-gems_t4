@@ -84,7 +84,7 @@ TVS = use("Device", "D_TVS")
 FUSE = use("Device", "Fuse")
 
 FP_TBL = "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg"   # custom, from Same Sky TBL002A-350 datasheet
-FP_J3 = "Connector_Phoenix_MC:PhoenixContact_MC_1,5_16-G-3.81_1x16_P3.81mm_Horizontal"     # PLACEHOLDER for Amphenol Anytek OQ1632510000G
+FP_J3 = "board2:OQ1632510000G_1x16_P3.81mm_RA_PinsReversed"   # vendor (SamacSys via Mouser) footprint, pad numbers mirrored, holes 1.40 per Anytek drawing BOQ0602
 FP_TB2 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"  # PLACEHOLDER J2 (jack type OPEN)
 FP_TB4 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal"  # PLACEHOLDER SW1/SW2 (part OPEN)
 FP_D2 = "Diode_THT:D_DO-201AD_P12.70mm_Horizontal"
