@@ -1,26 +1,42 @@
 ** Drc report for board2.kicad_pcb **
-** Created on 2026-11-12T19:55:12 **
-** Report includes: Errors, Warnings **
+** Created on 2026-11-12T23:16:53 **
+** Report includes: Errors, Warnings, Exclusions **
 
-** Found 4 DRC violations **
+** Found 5 DRC violations **
 [silk_overlap]: Silkscreen clearance
     Rule: board setup constraints silk; warning
-    @(58.2500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
     @(37.5000 mm, 24.0800 mm): PCB text 'J46 NET2b' on F.Silkscreen
+    @(59.7500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
 [silk_overlap]: Silkscreen clearance
     Rule: board setup constraints silk; warning
-    @(58.2500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
+    @(59.7500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
+    @(32.0000 mm, 27.3000 mm): PCB text 'NET4b' on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(59.7500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
     @(49.5000 mm, 24.0800 mm): PCB text 'J47 NET3b' on F.Silkscreen
 [silk_overlap]: Silkscreen clearance
     Rule: board setup constraints silk; warning
-    @(58.2500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
-    @(56.5000 mm, 35.5000 mm): PCB text 'NET1a' on F.Silkscreen
+    @(59.7500 mm, 36.2000 mm): Rectangle of J6 on F.Silkscreen
+    @(61.5000 mm, 24.0800 mm): PCB text 'J48 NET4b' on F.Silkscreen
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; warning
-    @(25.5000 mm, 57.4000 mm): PCB text '4' on F.Silkscreen
-    @(25.5000 mm, 55.8000 mm): PTH pad 4 [OBD4] of J71
+    @(26.6000 mm, 55.9000 mm): PCB text '4' on F.Silkscreen
+    @(26.6000 mm, 54.3000 mm): PTH pad 4 [OBD4] of J71
 
 ** Found 5 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(0.4500 mm, 0.4500 mm): Zone [GND] on F.Cu, priority 0
+    @(107.1500 mm, 48.5000 mm): PTH pad 2 [GND] of D3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(80.9725 mm, 44.5450 mm): PTH pad 1 [VJ2] of J2
+    @(119.8500 mm, 33.5000 mm): PTH pad 2 [VJ2] of D2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(102.2500 mm, 18.5000 mm): PTH pad 1 [VD] of F2
+    @(107.1500 mm, 33.5000 mm): PTH pad 1 [VD] of D2
 [unconnected_items]: Missing connection between items
     Local override; error
     @(6.3275 mm, 23.3800 mm): PTH pad 1 [VF] of SW1
@@ -29,18 +45,6 @@
     Local override; error
     @(119.8500 mm, 48.5000 mm): PTH pad 1 [VF] of D3
     @(124.7500 mm, 18.5000 mm): PTH pad 2 [VF] of F2
-[unconnected_items]: Missing connection between items
-    Local override; error
-    @(107.1500 mm, 48.5000 mm): PTH pad 2 [GND] of D3
-    @(0.4500 mm, 0.4500 mm): Zone [GND] on F.Cu, priority 0
-[unconnected_items]: Missing connection between items
-    Local override; error
-    @(102.2500 mm, 18.5000 mm): PTH pad 1 [VD] of F2
-    @(107.1500 mm, 33.5000 mm): PTH pad 1 [VD] of D2
-[unconnected_items]: Missing connection between items
-    Local override; error
-    @(80.9725 mm, 44.5450 mm): PTH pad 1 [VJ2] of J2
-    @(119.8500 mm, 33.5000 mm): PTH pad 2 [VJ2] of D2
 
 ** Found 0 Footprint errors **
 

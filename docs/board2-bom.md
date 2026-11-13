@@ -17,8 +17,8 @@ before ordering; **OPEN** = not yet decided/sourced.
 | SW1 | 4-pin screw terminal (12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED) | 1 | OPEN | pitch/part not chosen; wires to off-board illuminated switch |
 | SW2 | 4-pin screw terminal, same | 1 | OPEN | shared 12V_IGN switch |
 | D3 | **1.5KE24A** TVS, 1500 W, 24 V, unidirectional, DO-27 axial | 1 | OK (on hand) | through-hole; leads ~1.0 mm -> **1.3 mm drill** in the KiCad footprint; band to VF (F2 output / SW1 input) |
-| J3 | Amphenol Anytek **OQ1632510000G**, 16-pos 3.81 mm, male shrouded right-angle header (DigiKey 609-3829-ND) | 1 | OK | |
-| J3 mate | Amphenol Anytek **TJ1631530000G**, 16-pos, female screw-terminal plug (Board 1 pigtail lands here) | 1 | OK | |
+| J3 | Same Sky **TBP02R1-381-16BE**, 16-pos 3.81 mm, right-angle (horizontal) pluggable header, blue | 1 | OK | replaces Amphenol Anytek OQ1632510000G (2026-11-12). Datasheet rev 1.04: holes 1.40 mm, body 61.75 x 9.20 mm, pin row 1.20 mm from the back; 8 A UL / 7 A IEC |
+| J3 mate | Same Sky **TBP02P1-381-16BE**, 16-pos, pluggable screw-terminal plug, 180° wire entry (Board 1 pigtail lands here) | 1 | OK | replaces TJ1631530000G; mates the TBP02R1-381 series per the Same Sky mating guide |
 | J7 | Same Sky **TBL002A-350-08GR-2OR** (DigiKey 102-6384-ND), 8-pos 3.5 mm 45° push-button, 2 A UL / 5 A IEC | 2 | OK | 2 x 8 = 16 pos (replaces Phoenix SPTAF 6+6+4); datasheet checked 2026-11-11; pins staggered A/B 5.0 mm, drill 1.2 mm |
 | J6 | Same Sky **TBL002A-350-08GR-2OR**, 8-pos | 1 | OK | single block: pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b tied); replaces 2 x SPTAF 1/4 |
 | J4 | Molex Micro-Fit 3.0 **43045-0412**, 4-ckt dual-row, **vertical** through-hole header | 8 | CHECK | 2x4 grid (~45 x 20 mm), cables exit upward; revised 2026-11-11 because right-angle 43045-0400 x8 needs ~89 mm; **verify suffix/pegs vs Molex drawing** (0415 = SMD, 0418 = with mounting pegs) |

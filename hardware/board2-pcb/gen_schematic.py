@@ -84,7 +84,7 @@ TVS = use("Device", "D_TVS")
 FUSE = use("Device", "Fuse")
 
 FP_TBL = "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg"   # custom, from Same Sky TBL002A-350 datasheet
-FP_J3 = "board2:OQ1632510000G_1x16_P3.81mm_RA_PinsReversed"   # vendor (SamacSys via Mouser) footprint, pad numbers mirrored, holes 1.40 per Anytek drawing BOQ0602
+FP_J3 = "board2:SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed"   # built from Same Sky datasheet TBP02R1-381 rev 1.04; pad numbers mirrored
 FP_TB2 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"  # PLACEHOLDER J2 (jack type OPEN)
 FP_TB4 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal"  # PLACEHOLDER SW1/SW2 (part OPEN)
 FP_D2 = "Diode_THT:D_DO-201AD_P12.70mm_Horizontal"
@@ -110,7 +110,7 @@ place(TVS, "D3", "1.5KE24A", FP_D3, 84, 21, {"1": "VF", "2": "GND"}, "TVS 1500W 
 text("OBD2 INPUT (fixed 1:1):  J3 pin n  =  J7 pin n   (pin 5 = GND, pin 16 = V12S)", 4, 36)
 def obd(n):
     return "GND" if n == 5 else ("V12S" if n == 16 else f"OBD{n}")
-place(C1x16, "J3", "OQ1632510000G (16-pos 3.81)", FP_J3, 8, 52, {str(n): obd(n) for n in range(1, 17)}, "From Board 1 OBD2 pigtail (male plug)")
+place(C1x16, "J3", "TBP02R1-381-16BE (16-pos 3.81)", FP_J3, 8, 52, {str(n): obd(n) for n in range(1, 17)}, "From Board 1 OBD2 pigtail (male plug)")
 place(C1x08, "J71", "TBL002A-350-08GR-2OR", FP_TBL, 26, 48, {str(n): obd(n) for n in range(1, 9)}, "J7 pins 1-8")
 place(C1x08, "J72", "TBL002A-350-08GR-2OR", FP_TBL, 26, 66, {str(n - 8): obd(n) for n in range(9, 17)}, "J7 pins 9-16")
 

@@ -22,10 +22,10 @@ pinnet={(r,p):n for n,l in nets.items() for r,p in l}
 # J6 above F2; SW2 below SW1.
 # WORK IN PROGRESS (2026-11-12): F2, D2, D3 are parked off the board (to the right) while the power section is
 # rearranged; their original spots were F2 (43.5,42), D2 (66,42), D3 (21,42). J71/J72 were moved up 2 mm.
-pos={"J71":(W/2-15.5,54.5),"J72":(W/2+15.5,54.5),
+pos={"J71":(W/2-15.9,53.0),"J72":(W/2+14.6,53.0),
      "J2":(W-6.2,42),"D2":(W+26.5,33.5),"F2":(W+26.5,18.5),"D3":(W+26.5,48.5),
      "SW1":(6.5,31),"SW2":(6.5,52.7),
-     "J6":(43.5,30.2),"J3":(43.5,H-7)}
+     "J6":(45.0,30.2),"J3":(43.5,H-7)}   # J7/J6 x re-centred 2026-11-12 after the body-margin fix, so the pads stay where they were
 ROT={"J2":90,"SW1":270,"SW2":270,"D3":180,"J3":180,"J6":180}   # edge terminals: wire entry faces the edge
 for i in range(4):
     pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,18.9)
@@ -87,9 +87,9 @@ sx,sy=pads_of("SW2")["1"]; label("SW2 IGN",sx,66.3,0.9)
 # J3 pin labels (OBD pin number / function), above the pad row; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():
-    label(str(int(n)),x,y-3.0,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
-    if int(n)==5: label("GND",x,y+3.0,0.8)    # function hints below the pad row
-    if int(n)==16: label("+12V_BAT",x-1.7,y+3.0,0.8)
+    if int(n)==5: label("GND",x,y-3.6,0.8,90)   # pin 5: sideways "GND" replaces the number
+    elif int(n)==16: label("+12V",x,y-4.0,0.8,90)   # pin 16: sideways "+12V" replaces the number
+    else: label(str(int(n)),x,y-3.0,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
 # net legend
 label("J4 PINS:",10.5,10.5,0.8); label("1=12V_BAT 2=NET",10.5,12.2,0.8); label("3=12V_IGN 4=GND",10.5,14,0.8)
 label("Board 2 r1",W-8,64.5,0.8)

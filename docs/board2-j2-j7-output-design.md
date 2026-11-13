@@ -47,7 +47,7 @@ Board 1 OBD2 plug -> OBD pigtail -> male plug -> J3 (fixed)
 
 ## Confirmed parts
 
-- J3: Amphenol Anytek OQ1632510000G (header, 609-3829-ND) + TJ1631530000G (plug), 16-pos 3.81mm.
+- J3: Same Sky TBP02R1-381-16BE (header) + TBP02P1-381-16BE (plug), 16-pos 3.81mm. (Replaced Amphenol Anytek OQ1632510000G + TJ1631530000G on 2026-11-12.)
 - J7: 2x SPTAF 1/6-3,5-EL (1862084) + 1x SPTAF 1/4-3,5-EL (1862068), 45 deg, 3.5mm.
 - J6: **2x SPTAF 1/4-3,5-EL, Phoenix 1862068** (same part as J7's 4-pos block; 45 deg, 3.5mm, push-in, 16A/160V), mounted as two mirrored rows (or ~10-15mm apart facing the same way — verify 45 deg wire-entry geometry on the datasheet). ~14mm wide. (The 8-pos 1862107 was the earlier single-row option.)
 - **J4 (REVISED 2026-11-11, supersedes the 1x8 right-angle plan): 8x Molex Micro-Fit 3.0 `43045-0412`** — 4-circuit dual-row, 3.00mm pitch, **vertical through-hole** (1.02mm drills), laid out as a **2x4 grid** (~45 x 20mm; courtyard 11.16 x 9.78mm each): row a on top, row b mirrored below, nets in a middle channel. Reason: the right-angle `43045-0400` has an 11.16mm-wide courtyard, so 8 in a row need ~89mm, more than the 85mm edge. Cables exit upward (no side-wall cutout; enclosure needs an opening above J4). **TO VERIFY from the Molex drawing:** suffix and whether mounting pegs are wanted (0415 = SMD, 0418 = with pegs).

@@ -65,8 +65,8 @@ SW2 gates the shared **12V_IGN** rail to every J4 IGN pin. GND is bussed.
 
 | Ref | Part | Qty |
 |---|---|---|
-| J3 | Amphenol Anytek OQ1632510000G (DigiKey 609-3829-ND), 16-pos 3.81 mm male right-angle shrouded | 1 |
-| J3 mate | TJ1631530000G female screw-terminal plug | 1 |
+| J3 | Same Sky TBP02R1-381-16BE, 16-pos 3.81 mm right-angle (horizontal) pluggable header, blue (replaced Amphenol Anytek OQ1632510000G 2026-11-12) | 1 |
+| J3 mate | Same Sky TBP02P1-381-16BE pluggable screw-terminal plug (replaced TJ1631530000G) | 1 |
 | J7 | Same Sky TBL002A-350-08GR-2OR (8-pos, 3.5 mm, 45° push-button; 2 A UL/5 A IEC) | 2 |
 | J6 | Same Sky TBL002A-350-08GR-2OR (single block: pins 1-4 a-row, 5-8 b-row) | 1 |
 | J4 | Molex Micro-Fit 3.0 **43045-0412**, 4-ckt dual-row, **vertical** through-hole, 3.00 mm pitch, ~8.5 A (revised from right-angle 43045-0400) | 8 |

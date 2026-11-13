@@ -1,8 +1,8 @@
 ﻿Reference,Manufacturer,Manufacturer Part Number,Description,Quantity,Status
 D2,Diodes Inc./onsemi/any,SB540,5A 40V Schottky through-hole DO-201AD (replaces SS54 and 1N5822),1,chosen
 D3,Littelfuse/any,1.5KE24A,1500W 24V unidirectional TVS DO-27 axial,1,on hand
-J3,Amphenol Anytek,OQ1632510000G,16-pos 3.81mm male shrouded right-angle header (DigiKey 609-3829-ND),1,confirmed
-J3 mate,Amphenol Anytek,TJ1631530000G,16-pos 3.81mm female screw-terminal plug,1,confirmed
+J3,Same Sky,TBP02R1-381-16BE,16-pos 3.81mm right-angle (horizontal) pluggable header; standard blue housing (replaces Amphenol Anytek OQ1632510000G),1,confirmed
+J3 mate,Same Sky,TBP02P1-381-16BE,16-pos 3.81mm pluggable screw-terminal plug (180deg wire entry; Board 1 pigtail lands here); mates TBP02R1-381 series per Same Sky mating guide,1,confirmed
 J7/J6,Same Sky,TBL002A-350-08GR-2OR,8-pos 3.5mm 45deg push-button terminal block (2 for J7 + 1 for J6),3,confirmed
 J4,Molex,43045-0412,Micro-Fit 3.0 vertical through-hole header 4-ckt dual-row (2x4 grid; verify suffix/pegs),8,verify part number
 J4 mate,Molex,43025-0400,Micro-Fit 3.0 receptacle housing 4-ckt dual-row (believed - verify; DigiKey lists 0430250400),8,verify part number

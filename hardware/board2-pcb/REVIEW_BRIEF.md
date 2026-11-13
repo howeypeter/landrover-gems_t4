@@ -10,11 +10,24 @@ The power section is being rearranged. **F2, D2 and D3 are parked off the board*
 so the power-chain nets (VJ2, VD, VF and the branch to SW1) show as unconnected in DRC on purpose. The layout described in
 section 8 for the power row is the previous arrangement. Routing and silkscreen will be redone after the move.
 
-**Files not in the repository (licence).** The J3 footprint and 3D model come from the SamacSys library via Mouser, whose
-licence forbids redistributing the models as library components. They are kept local: the SamacSys footprint, our edited copy
-of it (`OQ1632510000G_1x16_P3.81mm_RA_PinsReversed.kicad_mod`) and `OQ1632510000G.stp`, plus the Amphenol datasheet PDF. The
-footprint is embedded in `board2.kicad_pcb`, so the board opens without them; regenerating with `gen_pcb.py` needs them in
-`board2.pretty/` and `board2.3dshapes/`.
+**J3 changed (2026-11-12).** J3 is now the Same Sky TBP02R1-381-16BE (mate TBP02P1-381-16BE), replacing the Amphenol Anytek
+OQ1632510000G. Its footprint (`SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed.kicad_mod`) was written from the Same
+Sky datasheet rev 1.04 (3.81 mm pitch, 1.40 mm holes, pin row 1.20 mm from the back, body 61.75 x 9.20 mm) and is in the
+repository. The vendor's own footprint from the download matched those numbers.
+
+**Files not in the repository (licence).** The 3D models come from third-party downloads (a distributor and SamacSys via
+Mouser) and are kept local: `TBP02R1-381-16BE.step` (the J3 model), the older `OQ1632510000G.stp` and SamacSys footprint
+files, and the Amphenol datasheet PDF. The footprints are embedded in `board2.kicad_pcb`, so the board opens without them;
+regenerating with `gen_pcb.py` needs the STEP in `board2.3dshapes/`. KiCad 3D model settings for J3: rotate (0, 90, 0),
+offset (19.0, -10.1, -2.0) mm; the body then sits on the board and the pins pass through. In Cherry Blossom the model
+needed a Z offset of -3.5 mm to sit on the board with the pins through it (confirmed visually 2026-11-12); its rotation and
+X/Y offsets are not recorded here. Datasheet pin tail below the housing: 3.50 +/- 0.30 mm.
+
+Cherry Blossom 3D model settings for the Same Sky TBL002A-350-08GR-2OR. They are set on the part itself, so J71, J72 and J6
+all take them together (confirmed oriented correctly 2026-11-12; J6's 180° board rotation is applied on top of them): turn
+X, Y, Z = 90, 0, 90; offset X, Y, Z = 13 mm, -1.3 mm, -3.7 mm. The vendor STEP is the full 8-pole block (8 push buttons, about 29.3 mm long);
+the Same Sky `BOM.txt` description ("Vertical, 3.81 Pitch") is wrong for this part. KiCad has no equivalent settings: its J7/J6
+models are still green block stand-ins.
 
 ## 1. How to read this brief
 
@@ -137,7 +150,7 @@ Decisions and reasons:
 | F2 | 2 A fuse + holder | Schurter 0031.8201 5x20 open holder | **Stand-in.** Holder type not chosen. |
 | D3 | 1.5KE24A TVS, 1500 W, unidirectional, DO-27 | `D_DO-27_P12.70mm_Horizontal` | Pin 1 (K) = VF. Leads about 1.0 mm; wants about 1.3 mm holes. |
 | SW1, SW2 | 4-pos screw terminal | Phoenix MKDS 1,5/4 5.08 mm | **Stand-in.** Part not chosen. |
-| J3 | Amphenol Anytek OQ1632510000G (= 20020110-D161A01LF), 16-pos 3.81 mm right-angle shrouded header | edited vendor footprint in `board2.pretty` (SamacSys, via Mouser), with STEP model | 1.40 mm holes, pad numbers mirrored. At the bottom edge rotated 180°: plug opening faces the edge, pins 1 to 16 left to right. |
+| J3 | Same Sky TBP02R1-381-16BE, 16-pos 3.81 mm right-angle (horizontal) pluggable header, blue; mate TBP02P1-381-16BE | `SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed` in `board2.pretty`, built from datasheet rev 1.04, with STEP model | 1.40 mm holes, pad numbers mirrored. At the bottom edge rotated 180°: plug opening faces the edge, pins 1 to 16 left to right. |
 | J71, J72 | Same Sky TBL002A-350-08GR-2OR, 8-pos 3.5 mm, 45° push-button | custom `board2.pretty` | Together these are "J7". J71 = OBD pins 1–8, J72 = 9–16. |
 | J6 | Same Sky TBL002A-350-08GR-2OR | custom `board2.pretty` | Pins 1–4 = NET1a..4a, pins 5–8 = NET1b..4b. |
 | J41–J48 | Molex Micro-Fit 3.0 43045-0412, 2x2 vertical through-hole | stock KiCad Molex footprint | J41–J44 = NET1–4 "a" row, J45–J48 = NET1–4 "b" row. |
@@ -184,9 +197,9 @@ for the whole board.
 Layout, origin top-left. Signal flow runs bottom to top, and J3 and J7 both read pins 1 to 16 from left to right
 as you look at the board from the top with J3 nearest you:
 
-- **Bottom edge:** J3, centred, plug opening facing the bottom edge. Its footprint (`OQ1632510000G_1x16_P3.81mm_RA_PinsReversed`)
+- **Bottom edge:** J3, centred, plug opening facing the bottom edge. Its footprint (`SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed`)
   deliberately numbers the pads right to left in its own frame, so that after the 180° rotation pins read 1 to 16 left to right.
-  The Anytek drawing BOQ0602 does not number the pins, so which end is pin 1 is our choice; the pigtail plug must be wired to match
+  The Same Sky datasheet does not number the pins, so which end is pin 1 is our choice; the pigtail plug must be wired to match
   (OBD pin 1 on the terminal that mates with the J3 silk "1", the left end with the opening toward you).
 - **Above J3:** J71 (OBD 1-8, left) and J72 (OBD 9-16, right), at 0°, wire entry facing up toward J6.
 - **Middle row, right to left in circuit order:** J2 at the right edge, D2, F2, D3, then SW1 at the left edge. SW2 is below SW1.
