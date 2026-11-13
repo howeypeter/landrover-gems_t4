@@ -111,8 +111,10 @@ text("OBD2 INPUT (fixed 1:1):  J3 pin n  =  J7 pin n   (pin 5 = GND, pin 16 = V1
 def obd(n):
     return "GND" if n == 5 else ("V12S" if n == 16 else f"OBD{n}")
 place(C1x16, "J3", "TBP02R1-381-16BE (16-pos 3.81)", FP_J3, 8, 52, {str(n): obd(n) for n in range(1, 17)}, "From Board 1 OBD2 pigtail (male plug)")
-place(C1x08, "J71", "TBL002A-350-08GR-2OR", FP_TBL, 26, 48, {str(n): obd(n) for n in range(1, 9)}, "J7 pins 1-8")
-place(C1x08, "J72", "TBL002A-350-08GR-2OR", FP_TBL, 26, 66, {str(n - 8): obd(n) for n in range(9, 17)}, "J7 pins 9-16")
+# J71/J72 are turned 180 deg on the board, so their pin numbers run right to left; the mapping is reversed so that J3 pin n lines up with the
+# same left-to-right position on J7 (J3 pin 1 -> J71's leftmost pin, which is pin 8).
+place(C1x08, "J71", "TBL002A-350-08GR-2OR", FP_TBL, 26, 48, {str(n): obd(9 - n) for n in range(1, 9)}, "J7 OBD pins 1-8, pin 8 leftmost")
+place(C1x08, "J72", "TBL002A-350-08GR-2OR", FP_TBL, 26, 66, {str(n): obd(17 - n) for n in range(1, 9)}, "J7 OBD pins 9-16, pin 8 leftmost")
 
 # ---- J6 landing ----
 text("J6 PATCH LANDING:  wires from J7 patch in here; a/b of each net are tied", 56, 36)
