@@ -110,6 +110,10 @@ for ref,txt in (("SW1","SW1 POWER"),("SW2","SW2 IGN")):
 # SW2 (upper terminal): label above its first pad; SW1 (lower terminal): label below its last pad
 sw2=pads_of("SW2"); sx,sy=sw2["1"]; label("SW2 IGN",sx,min(v[1] for v in sw2.values())-4.8,0.9)
 sw1=pads_of("SW1"); sx,sy=sw1["1"]; label("SW1 POWER",sx,max(v[1] for v in sw1.values())+6.0,0.9)
+# pin names beside every pad of SW1/SW2 (vertical text in the gap between the terminal and J71/J45), same as Cherry Blossom
+for _sw in (sw1,sw2):
+    for _n,_nm in (("1","GND"),("2","LED+"),("3","OUT"),("4","IN")):
+        _x,_y=_sw[_n]; label(_nm,_x+6.25,_y,0.9,90)
 # J3 pin labels (OBD pin number / function), above the pad row; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():
