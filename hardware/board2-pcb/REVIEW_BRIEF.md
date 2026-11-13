@@ -26,7 +26,12 @@ X/Y offsets are not recorded here. Datasheet pin tail below the housing: 3.50 +/
 Cherry Blossom 3D model settings for the Same Sky TBL002A-350-08GR-2OR. They are set on the part itself, so J71, J72 and J6
 all take them together (confirmed oriented correctly 2026-11-12; J6's 180° board rotation is applied on top of them): turn
 X, Y, Z = 90, 0, 90; offset X, Y, Z = 13 mm, -1.3 mm, -3.7 mm. The vendor STEP is the full 8-pole block (8 push buttons, about 29.3 mm long);
-the Same Sky `BOM.txt` description ("Vertical, 3.81 Pitch") is wrong for this part. KiCad has no equivalent settings: its J7/J6
+the Same Sky `BOM.txt` description ("Vertical, 3.81 Pitch") is wrong for this part.
+Cherry Blossom shows STEP models without colour. A GLB converted from the vendor STEP keeps the colours (green body, orange
+buttons, white pins) and lines up exactly with the pinholes (confirmed 2026-11-12). It is made with KiCad:
+`kicad-cli pcb export glb --no-board-body --user-origin <footprint origin> -f -o part.glb <test board with the footprint at
+rotation 0, model offset 0>`. The settings above are for the STEP; the GLB needs its own (not recorded yet). The GLB is a
+vendor-licensed model derived from the STEP and is not in the repository. KiCad has no equivalent settings: its J7/J6
 models are still green block stand-ins.
 
 ## 1. How to read this brief
