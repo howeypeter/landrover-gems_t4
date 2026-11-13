@@ -21,15 +21,16 @@ before ordering; **OPEN** = not yet decided/sourced.
 | J3 mate | Same Sky **TBP02P1-381-16BE**, 16-pos, pluggable screw-terminal plug, 180° wire entry (Board 1 pigtail lands here) | 1 | OK | replaces TJ1631530000G; mates the TBP02R1-381 series per the Same Sky mating guide |
 | J7 | Same Sky **TBL002A-350-08GR-2OR** (DigiKey 102-6384-ND), 8-pos 3.5 mm 45° push-button, 2 A UL / 5 A IEC | 2 | OK | 2 x 8 = 16 pos (replaces Phoenix SPTAF 6+6+4); datasheet checked 2026-11-11; pins staggered A/B 5.0 mm, drill 1.2 mm |
 | J6 | Same Sky **TBL002A-350-08GR-2OR**, 8-pos | 1 | OK | single block: pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b tied); replaces 2 x SPTAF 1/4 |
-| J4 | Molex Micro-Fit 3.0 **43045-0412**, 4-ckt dual-row, **vertical** through-hole header | 8 | CHECK | 2x4 grid (~45 x 20 mm), cables exit upward; revised 2026-11-11 because right-angle 43045-0400 x8 needs ~89 mm; **verify suffix/pegs vs Molex drawing** (0415 = SMD, 0418 = with mounting pegs) |
+| J4 | Harwin **M20-9980546**, 2x5 (10-position) 2.54 mm vertical pin header, 3 A/contact | 4 | CHECK | four side by side = a 5-row x 8-column grid (~20.3 x 12.7 mm), cables exit upward. Rows: V12S, IGN, GND, key, NET; columns NET1a NET1b NET2a NET2b NET3a NET3b NET4a NET4b. **Pull the two key-row (row 4) pins from each header (8 in all) before soldering**; the footprint has no row-4 holes. Replaces the 8 Molex Micro-Fit 43045-0412 (2026-11-13). DigiKey, Octopart and LCSC (C3327032) list it; Mouser listing not yet confirmed |
 
 ## Off-board / cables
 
 | Item | Qty | Status | Notes |
 |---|---|---|---|
 | Illuminated latching pushbutton, 12 mm, 12 V (built-in lamp; 4 terminals: IN / OUT / LED+ / LED-) | 2 | OPEN | one for SW1 (power), one for SW2 (ignition); 12 V/5 A class |
-| Micro-Fit 3.0 receptacle housing, 4-ckt dual-row (mates 43045) | >= 5 (+spares, ~8) | CHECK | believed **43025-0400** — verify in Molex catalog; ECU cable = 3, 10AS cable = 2 |
-| Micro-Fit crimp terminals (female) for 20-24 AWG | >= 20 (+spares, ~40) | CHECK | believed 43030-00xx series; needs a Micro-Fit crimper |
+| Harwin M20 female crimp housings: **M20-1060500** (1x5, one column) and **M20-1070500** (2x5, two columns) | as needed | CHECK | ECU cable = 3 columns (a 2x5 plus a 1x5), 10AS cable = 2 columns (one 2x5). Mouser numbers not confirmed |
+| Harwin **M20-003** polarizing key plug | one per housing | CHECK | goes in slot 4 (the key row) of every cable housing |
+| Female crimp contacts: Harwin M20-1160042 / -1160046 / -1180042 / -1180046 (22-30 AWG), or pre-crimped leads | 4 per column of cable | CHECK | whether generic pre-crimped leads latch in the Harwin housing is unconfirmed |
 | Hook-up wire for device cables | — | OPEN | gauge to suit ~1-2 A; colour-code per net |
 | ECU / 10AS mating plugs (C1033, C1017, C225...) | — | OPEN | covered by the bench-rig / pinout docs, not Board 2 |
 
@@ -43,7 +44,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 
 ## Open decisions before ordering
 
-1. **J4 width:** confirm 43045-0400 fits 8 across the edge (and gap for the plugs).
+1. **J4:** confirm the Harwin M20-9980546 on Mouser (stock and part number) and the housing/key-plug/contact numbers; ideas parked in `docs/board2-backlog.md`.
 2. **SW1/SW2 terminals + switches:** pick the 4-pin screw terminal and the illuminated switch part numbers.
-3. **Micro-Fit plug housings and crimp terminals:** verify the exact part numbers and the crimp tool.
+3. **M20 plug housings, key plugs and crimp contacts:** verify the exact part numbers and whether pre-crimped leads fit.
 4. **J2 jack** and **F2 holder** types.

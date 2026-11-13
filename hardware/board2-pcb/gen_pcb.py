@@ -37,8 +37,9 @@ PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
 PAD12={"J2":((81.3,17.54),(81.3,12.46)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((81.3,26.5),(81.3,48.5)),
        "D3":((81.3,54.65),(81.3,67.15)),"SW1":((5.7,45.08),(5.7,50.16)),"SW2":((5.7,23.08),(5.7,28.16))}
 for _r in PAD12: ROT.pop(_r,None)
-for i in range(4):
-    pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,18.9)
+# J4: four Harwin M20-9980546 2x5 headers side by side = one 5 row x 8 column grid (key row 4: pins pulled, no holes); cables exit up.
+# Pad 1 / pad 2 targets from Cherry Blossom: columns 2.54 mm apart, row 1 at CB y = 33.08 (KiCad y 5.42); header i starts at CB x = -8.89 + 5.08 i.
+for _i in range(4): PAD12[f"J4{_i+1}"]=((43.5-8.89+5.08*_i,5.42),(43.5-8.89+5.08*_i+2.54,5.42))
 for ref,fid in fp_of.items():
     lib,name=fid.split(":")
     f=pcbnew.FootprintLoad(os.path.join(HERE,"board2.pretty") if lib=="board2" else os.path.join(FPDIR,lib+".pretty"),name)
@@ -99,11 +100,14 @@ label("+12V", cx, 21.9, 0.9)
 for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)
 label("D2",71.7,5.4,0.9); label("F2 2A",73.0,37.5,0.9); label("D3",81.3,51.6,0.9)
 # J4: reference + net, in the gap under each footprint (real refs hidden)
-for r in range(2):
-    for i in range(4):
-        ref=f"J4{i+1+4*r}"; x,y=pads_of(ref)["1"]
-        fps[ref].Reference().SetVisible(False)
-        label(f"{ref} NET{i+1}{'ab'[r]}", x+1.5, y+(7.85 if r==0 else 7.1), 0.8)
+cols=[]
+for _i in range(4):
+    ref=f"J4{_i+1}"; fps[ref].Reference().SetVisible(False); pp=pads_of(ref)
+    cols += [pp["1"][0], pp["2"][0]]
+pp=pads_of("J41"); rows_y={1:pp["1"][1], 2:pp["3"][1], 3:pp["5"][1], 5:pp["9"][1]}
+rows_y[4]=(rows_y[3]+rows_y[5])/2   # the key row (pins pulled, no holes) sits between GND (row 3) and NET (row 5)
+for k,x in enumerate(cols): label(f"{k//2+1}{'ab'[k%2]}", x, rows_y[1]-3.0, 0.9)   # column names above the grid
+for k,nm in enumerate(("+12V","IGN","GND","KEY","NET"), start=1): label(nm, min(cols)-4.2, rows_y[k], 0.8)   # row names left of it
 # switch + title labels
 for ref,txt in (("SW1","SW1 POWER"),("SW2","SW2 IGN")):
     fps[ref].Reference().SetVisible(False)
@@ -121,7 +125,6 @@ for n,(x,y) in pads_of("J3").items():
     elif int(n)==16: label("+12V",x,y-4.0,0.8,90)   # pin 16: sideways "+12V" replaces the number
     else: label(str(int(n)),x,y-3.0,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
 # net legend
-label("J4 PINS:",10.5,10.5,0.8); label("1=12V_BAT 2=NET",10.5,12.2,0.8); label("3=12V_IGN 4=GND",10.5,14,0.8)
 label("Board 2 r1",10.5,16.5,0.8)
 b.Save(os.path.join(HERE,"board2.kicad_pcb"))
 print("saved")

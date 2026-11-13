@@ -69,24 +69,26 @@ SW2 gates the shared **12V_IGN** rail to every J4 IGN pin. GND is bussed.
 | J3 mate | Same Sky TBP02P1-381-16BE pluggable screw-terminal plug (replaced TJ1631530000G) | 1 |
 | J7 | Same Sky TBL002A-350-08GR-2OR (8-pos, 3.5 mm, 45° push-button; 2 A UL/5 A IEC) | 2 |
 | J6 | Same Sky TBL002A-350-08GR-2OR (single block: pins 1-4 a-row, 5-8 b-row) | 1 |
-| J4 | Molex Micro-Fit 3.0 **43045-0412**, 4-ckt dual-row, **vertical** through-hole, 3.00 mm pitch, ~8.5 A (revised from right-angle 43045-0400) | 8 |
+| J4 | Harwin **M20-9980546**, 2x5 2.54 mm vertical pin header, 3 A/contact; four side by side = a 5 x 8 grid (replaced the 8 Molex Micro-Fit 43045-0412 on 2026-11-13) | 4 |
 
 (Replaced Phoenix SPTAF 2026-11-11 by user choice. Footprint is custom `hardware/board2-pcb/board2.pretty`, built from the Same Sky datasheet: 29.5 x 12 mm body, A/B pin rows 5.0 mm apart, wire entry toward -Y — verify against the vendor footprint/3D model before fab.)
 
-**J4 decision (REVISED 2026-11-11, supersedes the 1x8 right-angle plan):** **8x vertical Micro-Fit
-43045-0412 (through-hole, 2x2, 3.00 mm pitch, 1.02 mm drills) as a 2x4 grid**: row a on top, row b mirrored
-below, nets in a middle channel (the Rev E layout). Reason: the stock KiCad 43045-0400 right-angle footprint
-has an 11.16 mm-wide courtyard, so 8 in a row need ~89 mm and do not fit the 85 mm edge. The vertical
-courtyard is 11.16 x 9.78 mm, so the 2x4 grid is ~45 x 20 mm. Cables now exit **upward** (not sideways),
-so no side-wall cutout is required. 0412 vs other suffixes (0415 is SMD, 0418 etc. have mounting pegs):
-**verify the exact suffix and peg need against the Molex drawing before ordering.** Mating housing
-unchanged (43025-0400). Mini-Fit Jr was considered and not chosen. The 1x8 right-angle option is the footnote now.
+**J4 decision (REVISED 2026-11-13, supersedes the Molex Micro-Fit plan):** a **5-row x 8-column grid at 2.54 mm** built
+from **four Harwin M20-9980546 2x5 headers side by side** (about 20.3 x 12.7 mm), after the idea in
+`~/Downloads/5x8_modular_pcb_connector_spec_bom.md` (used for the pins and plugs only). Rows 1 to 5: V12S, IGN, GND,
+key, NET. Columns 1 to 8: NET1a, NET1b, NET2a, NET2b, NET3a, NET3b, NET4a, NET4b. The key row has no pins: pull the two
+row-4 pins from each header (8 in all) before soldering; the footprint has no row-4 holes, so a header with its key pins
+still in will not seat. The cable plugs are Harwin M20 crimp housings (1x5 M20-1060500, 2x5 M20-1070500) with an M20-003
+key plug in slot 4; a plug turned 180 degrees puts the key on the live IGN pin (row 2), and a plug slipped one row
+also hits a live pin. Cables exit **upward**. Open points, and the 1x8-row alternative that was considered, are in
+`docs/board2-backlog.md`.
 
 **Board:** 87 x 77 mm (same as Board 1; set 2026-11-12), mounting holes 4.25 mm from the edges (centres 78.5 x 68.5 mm;
 Board 1 holes were found 1-3 mm too far apart, so expect to nudge these). Layout (see `hardware/board2-pcb/gen_pcb.py`):
-J4 2x4 grid centred on the top edge; J6 above F2; power chain right to left along one row (J2 at the right edge,
-D2, F2, D3, then SW1 at the left edge, SW2 below it); J71/J72 directly above J3, J3 centred on the bottom edge.
-Edge terminals (J2, SW1, SW2) are rotated so wire entry faces the edge. About 1/4" standoffs.
+J4 5x8 grid (four 2x5 headers) centred on the top edge; J6 below it, centred; power parts in the right-hand column
+(J2 at the top right, D2 beside it, then F2 and D3 below J2); SW2 above SW1 on the left edge; J71/J72 directly above J3
+(turned 180 degrees), J3 centred on the bottom edge. Edge terminals (J2, SW1, SW2) have their wire entry facing the
+edge. About 1/4" standoffs. (Layout as of 2026-11-13; earlier text in this file described the previous arrangement.)
 
 ## 6. Cables and the immobiliser line
 
@@ -100,20 +102,19 @@ Edge terminals (J2, SW1, SW2) are rotated so wire entry faces the edge. About 1/
 
 ## 7. Bill of materials status
 
-OK/confirmed: D2 SB540, D3 (on hand), J3 + mate, J7, J6. CHECK: J4 (width), J4 mating housing, crimp
-terminals. OPEN: J2 jack, F2 fuse + holder, SW1/SW2 screw terminals, illuminated switches (x2), wire,
+OK/confirmed: D2 SB540, D3 (on hand), J3 + mate, J7, J6. CHECK: J4 (Harwin M20-9980546 on Mouser), the M20
+plug housings, key plug and crimp contacts. OPEN: J2 jack, F2 fuse + holder, SW1/SW2 screw terminals, illuminated switches (x2), wire,
 PCB, standoffs, enclosure. Full tables in `docs/board2-bom.md`.
 
-Distributor tips: DigiKey lists Molex numbers without hyphens (0430250400). The earlier upload that could
-not find 43025-0400 was likely MPN format or stock; check 43020-0400 too.
+Distributor tips: DigiKey and Mouser list Harwin M20 parts by their full number (M20-9980546); Mouser prefixes
+Harwin with 855-. Confirm each number on Mouser before ordering.
 
 ## 8. Open items / next steps
 
-1. ~~J4 width~~ RESOLVED 2026-11-11: right-angle 1x8 does not fit 85 mm; moved to vertical 2x4 grid
-   (43045-0412). Still verify the part suffix/pegs. **Schematic Sheet 2 (Rev F) and the J4 text in
-   `board2-j2-j7-output-design.md` still show the old 1x8 right-angle layout: update to the 2x4 grid.**
-2. **Micro-Fit plug housing and crimp terminal part numbers** (43025-0400 / 43030-xxxx), wire gauge,
-   and a Micro-Fit crimper.
+1. ~~J4 width~~ RESOLVED 2026-11-13: J4 is a 5x8 grid of four Harwin M20-9980546 2x5 headers (see section 5).
+   **Schematic Sheet 2 (Rev F) of `diagrams/gems-2pcb-schematic.html` still shows the old Micro-Fit J4: update.**
+2. **M20 plug housings (M20-1060500 / M20-1070500), key plug (M20-003) and crimp contacts**
+   (M20-1160042 / -1160046 / -1180042 / -1180046): verify the numbers on Mouser and whether pre-crimped leads fit.
 3. Pick SW1/SW2 4-pin screw terminals, the two illuminated switches, J2 jack, F2 holder.
 4. Confirm PCB outline and mounting holes against the enclosure; side cutout for J4 cables.
 5. **KiCad (started 2026-11-11):** project `hardware/board2-pcb/` (`board2.kicad_pro`, `board2.kicad_sch`, generated by `gen_schematic.py`; ERC clean, netlist 20 parts / 24 nets, `board2_schematic.pdf`). Refs: J2, D2, F2, SW1, SW2, D3, J3, J71-J73 (J7), J61-J62 (J6 rows a/b), J41-J48 (J4; J41-44 row a NET1-4, J45-48 row b). J4 pins: 1 BAT, 2 NET, 3 IGN, 4 GND. Placeholder footprints (replace): SPTAF (stock Phoenix SPT 1.5), J3 (stock Phoenix MC 1.5 16-pos 3.81), J2, SW1/SW2, F2. **Next:** board outline 85x75, mounting holes, place J7/J6/J4, update PCB from schematic, route. (original note: KiCad PCB setup (KiCad 10: `C:\Program Files\KiCad\10.0\bin\kicad-cli.exe`, not on PATH).

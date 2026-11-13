@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-13T00:48:23")
+		(date "2026-11-13T14:55:11")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3efdf223-44e5-42e1-aa71-0d6b58e90001")
+			(tstamps "1663d749-91ea-4b5b-a479-803652d5efd4")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "6c3fb3a1-f79d-4160-99c3-e20381b5b528")
+			(tstamps "3056d660-7beb-4827-a101-d7896b08cacd")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8d4745aa-fbc4-4c5f-b8cc-2b13d568b346")
+			(tstamps "04cb8f7b-d390-4cbe-b5dc-81b1adb63a1f")
 			(units
 				(unit
 					(name "A")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "02560b92-7e9d-43ba-935a-6538fbefd1e9")
+			(tstamps "c95a7238-7369-4746-b79d-43674ae5d536")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "88ce7628-4519-4671-ba37-cd623b41ba12")
+			(tstamps "55530a45-1536-4de3-ab01-b943de48182a")
 			(units
 				(unit
 					(name "A")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ec8e3c75-5a48-496e-92d3-4f7058db32bd")
+			(tstamps "56c03743-e712-4349-8f92-277e6d1f29cc")
 			(units
 				(unit
 					(name "A")
@@ -440,22 +440,22 @@
 		)
 		(comp
 			(ref "J41")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET1a: 1=12V_BAT 2=NET1 3=12V_IGN 4=GND")
+			(value "M20-9980546")
+			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
+			(description "Columns 1-2 of the 5x8 grid (NET1a, NET1b); key-row pins 7/8 pulled")
 			(fields
 				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
+					(name "Footprint") "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 				(field
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Header NET1a: 1=12V_BAT 2=NET1 3=12V_IGN 4=GND")
+					(name "Description") "Columns 1-2 of the 5x8 grid (NET1a, NET1b); key-row pins 7/8 pulled")
 			)
 			(libsource
 				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+				(part "Conn_02x05_Odd_Even")
+				(description "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(property
 				(name "Sheetname")
@@ -471,13 +471,13 @@
 			)
 			(property
 				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
+				(value "Connector*:*_2x??_*")
 			)
 			(sheetpath
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "cdb48aa5-818e-4115-a7ad-b2266cb22832")
+			(tstamps "90a6ac7e-539e-4c5b-a283-cfc466257f36")
 			(units
 				(unit
 					(name "A")
@@ -486,13 +486,31 @@
 							(num "1")
 						)
 						(pin
-							(num "2")
-						)
-						(pin
 							(num "3")
 						)
 						(pin
+							(num "5")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
 							(num "4")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "8")
+						)
+						(pin
+							(num "10")
 						)
 					)
 				)
@@ -500,22 +518,22 @@
 		)
 		(comp
 			(ref "J42")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET2a: 1=12V_BAT 2=NET2 3=12V_IGN 4=GND")
+			(value "M20-9980546")
+			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
+			(description "Columns 3-4 of the 5x8 grid (NET2a, NET2b); key-row pins 7/8 pulled")
 			(fields
 				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
+					(name "Footprint") "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 				(field
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Header NET2a: 1=12V_BAT 2=NET2 3=12V_IGN 4=GND")
+					(name "Description") "Columns 3-4 of the 5x8 grid (NET2a, NET2b); key-row pins 7/8 pulled")
 			)
 			(libsource
 				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+				(part "Conn_02x05_Odd_Even")
+				(description "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(property
 				(name "Sheetname")
@@ -531,13 +549,13 @@
 			)
 			(property
 				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
+				(value "Connector*:*_2x??_*")
 			)
 			(sheetpath
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "aaa797cf-0efb-47ba-82b1-66424cc3a58f")
+			(tstamps "7ebee67e-a35d-43d0-9014-4be3baf60a94")
 			(units
 				(unit
 					(name "A")
@@ -546,13 +564,31 @@
 							(num "1")
 						)
 						(pin
-							(num "2")
-						)
-						(pin
 							(num "3")
 						)
 						(pin
+							(num "5")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
 							(num "4")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "8")
+						)
+						(pin
+							(num "10")
 						)
 					)
 				)
@@ -560,22 +596,22 @@
 		)
 		(comp
 			(ref "J43")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET3a: 1=12V_BAT 2=NET3 3=12V_IGN 4=GND")
+			(value "M20-9980546")
+			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
+			(description "Columns 5-6 of the 5x8 grid (NET3a, NET3b); key-row pins 7/8 pulled")
 			(fields
 				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
+					(name "Footprint") "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 				(field
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Header NET3a: 1=12V_BAT 2=NET3 3=12V_IGN 4=GND")
+					(name "Description") "Columns 5-6 of the 5x8 grid (NET3a, NET3b); key-row pins 7/8 pulled")
 			)
 			(libsource
 				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+				(part "Conn_02x05_Odd_Even")
+				(description "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(property
 				(name "Sheetname")
@@ -591,13 +627,13 @@
 			)
 			(property
 				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
+				(value "Connector*:*_2x??_*")
 			)
 			(sheetpath
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "2326e4ea-6a78-4dd2-9c5b-f1b5e7d430db")
+			(tstamps "3e276c5e-8f8f-4394-81dc-2b28b8329a49")
 			(units
 				(unit
 					(name "A")
@@ -606,13 +642,31 @@
 							(num "1")
 						)
 						(pin
-							(num "2")
-						)
-						(pin
 							(num "3")
 						)
 						(pin
+							(num "5")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
 							(num "4")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "8")
+						)
+						(pin
+							(num "10")
 						)
 					)
 				)
@@ -620,22 +674,22 @@
 		)
 		(comp
 			(ref "J44")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET4a: 1=12V_BAT 2=NET4 3=12V_IGN 4=GND")
+			(value "M20-9980546")
+			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
+			(description "Columns 7-8 of the 5x8 grid (NET4a, NET4b); key-row pins 7/8 pulled")
 			(fields
 				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
+					(name "Footprint") "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 				(field
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Header NET4a: 1=12V_BAT 2=NET4 3=12V_IGN 4=GND")
+					(name "Description") "Columns 7-8 of the 5x8 grid (NET4a, NET4b); key-row pins 7/8 pulled")
 			)
 			(libsource
 				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+				(part "Conn_02x05_Odd_Even")
+				(description "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
 			)
 			(property
 				(name "Sheetname")
@@ -651,13 +705,13 @@
 			)
 			(property
 				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
+				(value "Connector*:*_2x??_*")
 			)
 			(sheetpath
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "7019ab55-5731-4b38-831f-f571fae4744f")
+			(tstamps "8e9d1823-c207-49a5-bc2b-29d6b163512a")
 			(units
 				(unit
 					(name "A")
@@ -666,253 +720,31 @@
 							(num "1")
 						)
 						(pin
-							(num "2")
-						)
-						(pin
 							(num "3")
 						)
 						(pin
-							(num "4")
+							(num "5")
 						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J45")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET1b: 1=12V_BAT 2=NET1 3=12V_IGN 4=GND")
-			(fields
-				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Header NET1b: 1=12V_BAT 2=NET1 3=12V_IGN 4=GND")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "3f23cbd2-a19b-4ae4-b4a4-d26c08c1a941")
-			(units
-				(unit
-					(name "A")
-					(pins
 						(pin
-							(num "1")
+							(num "7")
+						)
+						(pin
+							(num "9")
 						)
 						(pin
 							(num "2")
 						)
 						(pin
-							(num "3")
-						)
-						(pin
 							(num "4")
 						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J46")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET2b: 1=12V_BAT 2=NET2 3=12V_IGN 4=GND")
-			(fields
-				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Header NET2b: 1=12V_BAT 2=NET2 3=12V_IGN 4=GND")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b7f2e335-634e-45db-9268-aeeeaa61e3cc")
-			(units
-				(unit
-					(name "A")
-					(pins
 						(pin
-							(num "1")
+							(num "6")
 						)
 						(pin
-							(num "2")
+							(num "8")
 						)
 						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J47")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET3b: 1=12V_BAT 2=NET3 3=12V_IGN 4=GND")
-			(fields
-				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Header NET3b: 1=12V_BAT 2=NET3 3=12V_IGN 4=GND")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "e6d00d53-fdb5-4e13-9c2c-dae1ac97188d")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J48")
-			(value "43045-0412")
-			(footprint "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-			(description "Header NET4b: 1=12V_BAT 2=NET4 3=12V_IGN 4=GND")
-			(fields
-				(field
-					(name "Footprint") "Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Header NET4b: 1=12V_BAT 2=NET4 3=12V_IGN 4=GND")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "66375135-e242-4168-882d-55754af80d90")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
+							(num "10")
 						)
 					)
 				)
@@ -957,7 +789,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "6577cf94-122a-4d85-bd7e-a35cbbd94f86")
+			(tstamps "637ee909-c250-48e6-a5a9-5948d2e54559")
 			(units
 				(unit
 					(name "A")
@@ -1029,7 +861,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "af674d31-ef49-424d-8c95-9b41ebaf34a0")
+			(tstamps "9e233020-5648-4995-acbf-f0a768e86453")
 			(units
 				(unit
 					(name "A")
@@ -1101,7 +933,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "15c5be9a-dea1-4e99-a027-86749a89038c")
+			(tstamps "f01a7cb5-31bc-437b-bf26-4e14c50a5c0e")
 			(units
 				(unit
 					(name "A")
@@ -1161,7 +993,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "fb5d6802-7e8a-4e96-ba17-6cc835e96ccc")
+			(tstamps "2836e920-eb7c-4ba0-8f92-994ac0978baa")
 			(units
 				(unit
 					(name "A")
@@ -1433,6 +1265,80 @@
 			)
 		)
 		(libpart
+			(lib "Connector_Generic")
+			(part "Conn_02x05_Odd_Even")
+			(description "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
+			(footprints
+				(fp "Connector*:*_2x??_*")
+			)
+			(fields
+				(field
+					(name "Reference") "J")
+				(field
+					(name "Value") "Conn_02x05_Odd_Even")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "Pin_1")
+					(type "passive")
+				)
+				(pin
+					(num "2")
+					(name "Pin_2")
+					(type "passive")
+				)
+				(pin
+					(num "3")
+					(name "Pin_3")
+					(type "passive")
+				)
+				(pin
+					(num "4")
+					(name "Pin_4")
+					(type "passive")
+				)
+				(pin
+					(num "5")
+					(name "Pin_5")
+					(type "passive")
+				)
+				(pin
+					(num "6")
+					(name "Pin_6")
+					(type "passive")
+				)
+				(pin
+					(num "7")
+					(name "Pin_7")
+					(type "passive")
+				)
+				(pin
+					(num "8")
+					(name "Pin_8")
+					(type "passive")
+				)
+				(pin
+					(num "9")
+					(name "Pin_9")
+					(type "passive")
+				)
+				(pin
+					(num "10")
+					(name "Pin_10")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
 			(lib "Device")
 			(part "D")
 			(description "Diode")
@@ -1580,50 +1486,50 @@
 			)
 			(node
 				(ref "J41")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J41")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 			(node
 				(ref "J42")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J42")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 			(node
 				(ref "J43")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J43")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 			(node
 				(ref "J44")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "5")
+				(pinfunction "Pin_5_5")
 				(pintype "passive")
 			)
 			(node
-				(ref "J45")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive")
-			)
-			(node
-				(ref "J46")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive")
-			)
-			(node
-				(ref "J47")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive")
-			)
-			(node
-				(ref "J48")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(ref "J44")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 			(node
@@ -1656,9 +1562,21 @@
 				(pintype "passive")
 			)
 			(node
+				(ref "J41")
+				(pin "4")
+				(pinfunction "Pin_4_4")
+				(pintype "passive")
+			)
+			(node
 				(ref "J42")
 				(pin "3")
 				(pinfunction "Pin_3_3")
+				(pintype "passive")
+			)
+			(node
+				(ref "J42")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
@@ -1668,33 +1586,21 @@
 				(pintype "passive")
 			)
 			(node
+				(ref "J43")
+				(pin "4")
+				(pinfunction "Pin_4_4")
+				(pintype "passive")
+			)
+			(node
 				(ref "J44")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J45")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "J46")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "J47")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "J48")
-				(pin "3")
-				(pinfunction "Pin_3_3")
+				(ref "J44")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
@@ -1716,14 +1622,14 @@
 			(class "Default")
 			(node
 				(ref "J41")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(pin "10")
+				(pinfunction "Pin_10_10")
 				(pintype "passive")
 			)
 			(node
-				(ref "J45")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J41")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 			(node
@@ -1745,14 +1651,14 @@
 			(class "Default")
 			(node
 				(ref "J42")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(pin "10")
+				(pinfunction "Pin_10_10")
 				(pintype "passive")
 			)
 			(node
-				(ref "J46")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J42")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 			(node
@@ -1774,14 +1680,14 @@
 			(class "Default")
 			(node
 				(ref "J43")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(pin "10")
+				(pinfunction "Pin_10_10")
 				(pintype "passive")
 			)
 			(node
-				(ref "J47")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J43")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 			(node
@@ -1803,14 +1709,14 @@
 			(class "Default")
 			(node
 				(ref "J44")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(pin "10")
+				(pinfunction "Pin_10_10")
 				(pintype "passive")
 			)
 			(node
-				(ref "J48")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J44")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 			(node
@@ -2081,9 +1987,21 @@
 				(pintype "passive")
 			)
 			(node
+				(ref "J41")
+				(pin "2")
+				(pinfunction "Pin_2_2")
+				(pintype "passive")
+			)
+			(node
 				(ref "J42")
 				(pin "1")
 				(pinfunction "Pin_1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "J42")
+				(pin "2")
+				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
@@ -2093,33 +2011,21 @@
 				(pintype "passive")
 			)
 			(node
+				(ref "J43")
+				(pin "2")
+				(pinfunction "Pin_2_2")
+				(pintype "passive")
+			)
+			(node
 				(ref "J44")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J45")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J46")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J47")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J48")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(ref "J44")
+				(pin "2")
+				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
@@ -2200,6 +2106,94 @@
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
+			)
+		)
+		(net
+			(code "25")
+			(name "unconnected-(J41-Pin_7-Pad7)")
+			(class "Default")
+			(node
+				(ref "J41")
+				(pin "7")
+				(pinfunction "Pin_7_7")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "26")
+			(name "unconnected-(J41-Pin_8-Pad8)")
+			(class "Default")
+			(node
+				(ref "J41")
+				(pin "8")
+				(pinfunction "Pin_8_8")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "27")
+			(name "unconnected-(J42-Pin_7-Pad7)")
+			(class "Default")
+			(node
+				(ref "J42")
+				(pin "7")
+				(pinfunction "Pin_7_7")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "28")
+			(name "unconnected-(J42-Pin_8-Pad8)")
+			(class "Default")
+			(node
+				(ref "J42")
+				(pin "8")
+				(pinfunction "Pin_8_8")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "29")
+			(name "unconnected-(J43-Pin_7-Pad7)")
+			(class "Default")
+			(node
+				(ref "J43")
+				(pin "7")
+				(pinfunction "Pin_7_7")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "30")
+			(name "unconnected-(J43-Pin_8-Pad8)")
+			(class "Default")
+			(node
+				(ref "J43")
+				(pin "8")
+				(pinfunction "Pin_8_8")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "31")
+			(name "unconnected-(J44-Pin_7-Pad7)")
+			(class "Default")
+			(node
+				(ref "J44")
+				(pin "7")
+				(pinfunction "Pin_7_7")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "32")
+			(name "unconnected-(J44-Pin_8-Pad8)")
+			(class "Default")
+			(node
+				(ref "J44")
+				(pin "8")
+				(pinfunction "Pin_8_8")
+				(pintype "passive+no_connect")
 			)
 		)
 	)

@@ -50,7 +50,7 @@ Board 1 OBD2 plug -> OBD pigtail -> male plug -> J3 (fixed)
 - J3: Same Sky TBP02R1-381-16BE (header) + TBP02P1-381-16BE (plug), 16-pos 3.81mm. (Replaced Amphenol Anytek OQ1632510000G + TJ1631530000G on 2026-11-12.)
 - J7: 2x SPTAF 1/6-3,5-EL (1862084) + 1x SPTAF 1/4-3,5-EL (1862068), 45 deg, 3.5mm.
 - J6: **2x SPTAF 1/4-3,5-EL, Phoenix 1862068** (same part as J7's 4-pos block; 45 deg, 3.5mm, push-in, 16A/160V), mounted as two mirrored rows (or ~10-15mm apart facing the same way — verify 45 deg wire-entry geometry on the datasheet). ~14mm wide. (The 8-pos 1862107 was the earlier single-row option.)
-- **J4 (REVISED 2026-11-11, supersedes the 1x8 right-angle plan): 8x Molex Micro-Fit 3.0 `43045-0412`** — 4-circuit dual-row, 3.00mm pitch, **vertical through-hole** (1.02mm drills), laid out as a **2x4 grid** (~45 x 20mm; courtyard 11.16 x 9.78mm each): row a on top, row b mirrored below, nets in a middle channel. Reason: the right-angle `43045-0400` has an 11.16mm-wide courtyard, so 8 in a row need ~89mm, more than the 85mm edge. Cables exit upward (no side-wall cutout; enclosure needs an opening above J4). **TO VERIFY from the Molex drawing:** suffix and whether mounting pegs are wanted (0415 = SMD, 0418 = with pegs).
+- **J4 (REVISED AGAIN 2026-11-13: now four Harwin M20-9980546 2x5 headers forming a 5-row x 8-column 2.54 mm grid; rows V12S, IGN, GND, key (pins pulled), NET; see `docs/board2-pcb2-summary.md`). The text that follows is the previous Micro-Fit plan, kept for history.)** — earlier plan: 8x Molex Micro-Fit 3.0 `43045-0412` — 4-circuit dual-row, 3.00mm pitch, **vertical through-hole** (1.02mm drills), laid out as a **2x4 grid** (~45 x 20mm; courtyard 11.16 x 9.78mm each): row a on top, row b mirrored below, nets in a middle channel. Reason: the right-angle `43045-0400` has an 11.16mm-wide courtyard, so 8 in a row need ~89mm, more than the 85mm edge. Cables exit upward (no side-wall cutout; enclosure needs an opening above J4). **TO VERIFY from the Molex drawing:** suffix and whether mounting pegs are wanted (0415 = SMD, 0418 = with pegs).
 - **Footnote — dropped option:** the 1x8 right-angle row (43045-0400 x8) — only if the board were widened to ~95mm. Mini-Fit Jr (5566/5557, ~9A, larger) was considered and not chosen.- Board 85x75mm; J7 on one 85mm long edge, J4 grid toward the opposite edge; J2 / switch terminals on the short edges.
 
 ## J4 cables / notes
@@ -84,7 +84,7 @@ add the LINE3 R/W wire = drive/test. (Board 1's RO hardware can never drive.)
 ## Open items
 
 1. ~~Which RO net carries the 10AS diagnostic line~~ — RESOLVED 2026-11-11: NET2 and NET4 are interchangeable; pick either per session (listen-only for now).
-2. J4: verify 43045-0412 suffix/pegs vs the Molex drawing; KiCad project started (`hardware/board2-pcb/`).
+2. J4: verify the Harwin M20 numbers on Mouser (header, housings, key plug, contacts); KiCad project in `hardware/board2-pcb/`.
 3. Update `gems-2pcb-schematic.html` Sheet 2 + part table; fix A1/A2... names in Board 1 docs.
 4. Reconcile the three Board 2 designs.
 5. `docs/board2-bench-hub.md` 10AS IGN note — corrected 2026-11-11 (naming there is still old K/L).

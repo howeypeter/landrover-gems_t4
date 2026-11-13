@@ -169,13 +169,15 @@ Decisions and reasons:
 | J3 | Same Sky TBP02R1-381-16BE, 16-pos 3.81 mm right-angle (horizontal) pluggable header, blue; mate TBP02P1-381-16BE | `SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed` in `board2.pretty`, built from datasheet rev 1.04, with STEP model | 1.40 mm holes, pad numbers mirrored. At the bottom edge rotated 180°: plug opening faces the edge, pins 1 to 16 left to right. |
 | J71, J72 | Same Sky TBL002A-350-08GR-2OR, 8-pos 3.5 mm, 45° push-button | custom `board2.pretty` | Together these are "J7". J71 = OBD pins 1–8, J72 = 9–16. |
 | J6 | Same Sky TBL002A-350-08GR-2OR | custom `board2.pretty` | Pins 1–4 = NET1a..4a, pins 5–8 = NET1b..4b. |
-| J41–J48 | Molex Micro-Fit 3.0 43045-0412, 2x2 vertical through-hole | stock KiCad Molex footprint | J41–J44 = NET1–4 "a" row, J45–J48 = NET1–4 "b" row. |
+| J41–J44 | Harwin M20-9980546, 2x5 2.54 mm vertical pin header, four side by side | custom `Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved` in `board2.pretty` | One 5-row x 8-column grid; header J4n holds columns 2n-1 and 2n (odd pins left, even pins right). Row-4 (key row) pins are pulled from each header, so the footprint has no row-4 holes (pins 7, 8 absent). |
 
-J4 pinout, identical on all eight headers: **1 = 12V_BAT (V12S), 2 = NET,
-3 = 12V_IGN (IGN), 4 = GND.**
+J4 pinout, rows 1 to 5: **V12S, IGN, GND, key (no pin), NET.** Pins 1,2 = V12S; 3,4 = IGN; 5,6 = GND; 9,10 = NETn.
+Columns 1 to 8 are NET1a, NET1b, NET2a, NET2b, NET3a, NET3b, NET4a, NET4b (a and b of a net are the same net).
+The cable plug is a Harwin M20 crimp housing with a key plug in slot 4: a plug turned 180 degrees puts its key on the live
+IGN pin, and a plug slipped one row hits a live pin too.
 
 Ratings we are relying on: Same Sky TBL002A-350 is 2 A (UL) / 5 A (IEC) per
-contact, 20–24 AWG. Micro-Fit 3.0 is about 8.5 A per contact. The fuse is 2 A
+contact, 20–24 AWG. Harwin M20 is 3 A per contact. The fuse is 2 A
 for the whole board.
 
 ## 7. Known weak points (please check these first)
@@ -190,9 +192,9 @@ for the whole board.
    position (1.2 mm from the back wall, 8.0 mm from the mating face) match the drawing. Not yet re-checked by a second person.
 3. **J2, F2, SW1, SW2 footprints are generic stand-ins** because the real parts
    are not chosen. Layout around them may move.
-4. **Molex 43045-0412.** Needs the suffix confirmed against the Molex drawing
-   (some suffixes are SMD or have board pegs that need extra holes), and the pin
-   numbering confirmed against the mating housing (believed 43025-0400).
+4. **Harwin M20-9980546 (J4).** The footprint is hand-built (1.02 mm holes, 1.75 mm pads, pins 7 and 8 left out); not yet
+   checked against the Harwin drawing. The Mouser numbers for the header, the cable housings (M20-1060500 / M20-1070500),
+   the M20-003 key plug and the crimp contacts are unconfirmed.
 5. **Routing is from a home-made grid router** (section 9). It is electrically
    complete and DRC-clean but takes indirect paths and has more vias than a
    person would use.
@@ -217,14 +219,16 @@ as you look at the board from the top with J3 nearest you:
   deliberately numbers the pads right to left in its own frame, so that after the 180° rotation pins read 1 to 16 left to right.
   The Same Sky datasheet does not number the pins, so which end is pin 1 is our choice; the pigtail plug must be wired to match
   (OBD pin 1 on the terminal that mates with the J3 silk "1", the left end with the opening toward you).
-- **Above J3:** J71 (OBD 1-8, left) and J72 (OBD 9-16, right), at 0°, wire entry facing up toward J6.
-- **Middle row, right to left in circuit order:** J2 at the right edge, D2, F2, D3, then SW1 at the left edge. SW2 is below SW1.
-  J2, SW1 and SW2 are rotated so wire entry faces the board edge.
-- **Above the power row:** J6, centred, rotated 180° so its wire entry faces J7 (the patch wires arrive from below).
-- **Top edge:** J4, 2 x 4 grid, centred. Row "a" (J41-J44) above row "b" (J45-J48). Cables leave upward (vertical headers).
+- **Above J3:** J71 (OBD 1-8, left) and J72 (OBD 9-16, right), turned 180° (the pin numbers on each run right to left, so
+  J3 pin n sits under the same left-to-right position on J7).
+- **Right edge (circuit order, top to bottom):** J2 at the top right with D2 beside it, then F2, then D3. SW2 (upper) and SW1 (lower)
+  are on the left edge. J2, SW1 and SW2 have their wire entry facing the board edge.
+- **Middle:** J6, centred, at 0° (the patch wires come up from J7).
+- **Top edge:** J4, a 5-row x 8-column grid of four 2x5 headers (J41-J44), centred. Cables leave upward (vertical headers).
 
-Silkscreen: OBD pin numbers on J3 and J7, net names on J6, reference plus net on
-each J4 header, a J4 pin legend, +12V/GND at J2, "SW1 POWER", "SW2 IGN".
+Silkscreen: OBD pin numbers on J3 and J7, net names on J6,
+column names (1a to 4b) above the J4 grid and row names (+12V, IGN, GND, KEY, NET) beside it, +12V/GND at J2,
+"SW1 POWER", "SW2 IGN" with pin names (GND, LED+, OUT, IN) beside every SW1/SW2 pin.
 
 Check results (2026-11-12):
 
@@ -279,7 +283,7 @@ Consequences for a reviewer:
 - Choose real parts for J2, F2 holder, SW1/SW2 terminals and the two illuminated
   switches; replace the stand-in footprints.
 - Verify the Same Sky, Anytek and Molex footprints against vendor data.
-- Confirm Micro-Fit mating housing and crimp terminal part numbers.
+- Confirm the Harwin M20 numbers on Mouser (header, housings, key plug, contacts).
 - Confirm outline and mounting holes against the enclosure after test-fitting
   Board 1.
 - Fix board thickness, copper weight and fab design rules.
