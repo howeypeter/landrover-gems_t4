@@ -69,3 +69,6 @@ hardware/board2-pcb/board2.pretty/OQ1632510000G_1x16_P3.81mm_RA_PinsReversed.kic
 hardware/board2-pcb/jMKyryrC5T7A.pdf
 # Same Sky TBP02R1-381-16BE 3D model downloaded from a distributor (vendor-licensed STEP): keep local
 hardware/board2-pcb/board2.3dshapes/TBP02R1-381-16BE.step
+
+# KiCad lock files
+*.lck
