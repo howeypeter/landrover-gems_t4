@@ -53,7 +53,7 @@ OBD2 plug -> pigtail -> male plug -> J3 (fixed) -> fixed 1:1 -> J7 (16-pos patch
 J2 -> D2 (reverse-polarity) -> F2 (2 A) -> SW1 -> **V12S**. V12S feeds J3 pin 16 and every J4 BAT pin.
 SW2 gates the shared **12V_IGN** rail to every J4 IGN pin. GND is bussed.
 
-- **SW1 / SW2** = 4-pin screw terminals: 12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED. 12V_OUT_LED is tied to
+- **SW1 / SW2** = 4-pin screw terminals: pin 1 GND_LED, pins 2-3 12V_OUT_LED + 12V_OUT, pin 4 12V_IN (reversed 2026-11-13 to match Board 1; SW2 input = V12S). 12V_OUT_LED is tied to
   12V_OUT on the board (user confirmed). They wire to off-board illuminated latching switches.
 - **R2 / LED1 removed** (switches have their own lamps).
 - **D2 = SB540** (5 A/40 V Schottky, DO-201AD axial through-hole, ~$0.30 at Mouser per user). Band

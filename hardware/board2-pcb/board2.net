@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-13T00:22:36")
+		(date "2026-11-13T00:48:23")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "149a3dc6-f618-4296-bda7-1022f841fab7")
+			(tstamps "3efdf223-44e5-42e1-aa71-0d6b58e90001")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "4f4d739b-6443-417d-9e30-ddbf7541255d")
+			(tstamps "6c3fb3a1-f79d-4160-99c3-e20381b5b528")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "99eb6c5b-e052-4c1e-a9ea-4f42fc0e6c96")
+			(tstamps "8d4745aa-fbc4-4c5f-b8cc-2b13d568b346")
 			(units
 				(unit
 					(name "A")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "35924f47-83d0-4d89-953f-50f7beefafe4")
+			(tstamps "02560b92-7e9d-43ba-935a-6538fbefd1e9")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "2e34360b-bc4f-47ca-87cf-688962f59073")
+			(tstamps "88ce7628-4519-4671-ba37-cd623b41ba12")
 			(units
 				(unit
 					(name "A")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "c42afac6-5e6e-4302-9a95-52c5b3cc2478")
+			(tstamps "ec8e3c75-5a48-496e-92d3-4f7058db32bd")
 			(units
 				(unit
 					(name "A")
@@ -477,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "aed8b887-c845-4a8f-8769-82766ba99a8a")
+			(tstamps "cdb48aa5-818e-4115-a7ad-b2266cb22832")
 			(units
 				(unit
 					(name "A")
@@ -537,7 +537,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ce1d2d5f-5ad1-494e-9d3f-324794013701")
+			(tstamps "aaa797cf-0efb-47ba-82b1-66424cc3a58f")
 			(units
 				(unit
 					(name "A")
@@ -597,7 +597,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8844313e-52b7-46dc-8ff1-a578e2baa3b9")
+			(tstamps "2326e4ea-6a78-4dd2-9c5b-f1b5e7d430db")
 			(units
 				(unit
 					(name "A")
@@ -657,7 +657,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "a854619a-855e-48eb-ab2b-9f5cb571c933")
+			(tstamps "7019ab55-5731-4b38-831f-f571fae4744f")
 			(units
 				(unit
 					(name "A")
@@ -717,7 +717,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "1da8bd5b-4ec8-4cce-8978-a56e845f770e")
+			(tstamps "3f23cbd2-a19b-4ae4-b4a4-d26c08c1a941")
 			(units
 				(unit
 					(name "A")
@@ -777,7 +777,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8bda0fe9-9504-4280-b0f7-b4daa611a05b")
+			(tstamps "b7f2e335-634e-45db-9268-aeeeaa61e3cc")
 			(units
 				(unit
 					(name "A")
@@ -837,7 +837,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "16936f57-87b6-48b9-a63f-1ad60431362d")
+			(tstamps "e6d00d53-fdb5-4e13-9c2c-dae1ac97188d")
 			(units
 				(unit
 					(name "A")
@@ -897,7 +897,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "560b524e-4874-4d77-84f4-a60e2a66876a")
+			(tstamps "66375135-e242-4168-882d-55754af80d90")
 			(units
 				(unit
 					(name "A")
@@ -957,7 +957,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "b7dae47a-1632-49b3-b729-7f97348306f8")
+			(tstamps "6577cf94-122a-4d85-bd7e-a35cbbd94f86")
 			(units
 				(unit
 					(name "A")
@@ -1029,7 +1029,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8b8aa83d-9a23-4d57-9f01-4b3ac1ca502c")
+			(tstamps "af674d31-ef49-424d-8c95-9b41ebaf34a0")
 			(units
 				(unit
 					(name "A")
@@ -1066,7 +1066,7 @@
 			(ref "SW1")
 			(value "4-pin screw terminal")
 			(footprint "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
-			(description "4-pin screw terminal to off-board illuminated switch (general power)")
+			(description "4-pin screw terminal to off-board illuminated switch (general power); pin 1 GND, pin 4 input (matches Board 1 convention)")
 			(fields
 				(field
 					(name "Footprint") "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
@@ -1074,7 +1074,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "4-pin screw terminal to off-board illuminated switch (general power)")
+					(name "Description") "4-pin screw terminal to off-board illuminated switch (general power); pin 1 GND, pin 4 input (matches Board 1 convention)")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -1101,7 +1101,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3000412b-9987-4177-ba05-0082f9f82024")
+			(tstamps "15c5be9a-dea1-4e99-a027-86749a89038c")
 			(units
 				(unit
 					(name "A")
@@ -1126,7 +1126,7 @@
 			(ref "SW2")
 			(value "4-pin screw terminal")
 			(footprint "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
-			(description "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN)")
+			(description "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN); pin 1 GND, pin 4 input (matches Board 1 convention)")
 			(fields
 				(field
 					(name "Footprint") "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
@@ -1134,7 +1134,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN)")
+					(name "Description") "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN); pin 1 GND, pin 4 input (matches Board 1 convention)")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -1161,7 +1161,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ae65578a-35de-4ae0-8520-93a7ecd36b8a")
+			(tstamps "fb5d6802-7e8a-4e96-ba17-6cc835e96ccc")
 			(units
 				(unit
 					(name "A")
@@ -1634,14 +1634,14 @@
 			)
 			(node
 				(ref "SW1")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "1")
+				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
 				(ref "SW2")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "1")
+				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 		)
@@ -2142,8 +2142,8 @@
 			)
 			(node
 				(ref "SW2")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 		)
@@ -2180,8 +2180,8 @@
 			)
 			(node
 				(ref "SW1")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 		)

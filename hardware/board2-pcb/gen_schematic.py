@@ -101,9 +101,9 @@ place(C1x02, "J2", "12V DC in", FP_TB2, 8, 21, {"1": "VJ2", "2": "GND"}, "12 V D
 place(DIODE, "D2", "SB540", FP_D2, 20, 21, {"2": "VJ2", "1": "VD"}, "Reverse-polarity Schottky 5A/40V; cathode (band) toward F2")
 place(FUSE, "F2", "2 A", FP_F2, 30, 21, {"1": "VD", "2": "VF"}, "2 A fuse + holder (OPEN)")
 place(C1x04, "SW1", "4-pin screw terminal", FP_TB4, 42, 21,
-      {"1": "VF", "2": "V12S", "3": "V12S", "4": "GND"}, "4-pin screw terminal to off-board illuminated switch (general power)")
+      {"1": "GND", "2": "V12S", "3": "V12S", "4": "VF"}, "4-pin screw terminal to off-board illuminated switch (general power); pin 1 GND, pin 4 input (matches Board 1 convention)")
 place(C1x04, "SW2", "4-pin screw terminal", FP_TB4, 62, 21,
-      {"1": "V12S", "2": "IGN", "3": "IGN", "4": "GND"}, "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN)")
+      {"1": "GND", "2": "IGN", "3": "IGN", "4": "V12S"}, "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN); pin 1 GND, pin 4 input (matches Board 1 convention)")
 place(TVS, "D3", "1.5KE24A", FP_D3, 84, 21, {"1": "VF", "2": "GND"}, "TVS 1500W 24V unidirectional, DO-27; cathode (band) to VF (F2 out / SW1 in); 1.0 mm leads, 1.3 mm holes")
 
 # ---- J3 / J7 (fixed 1:1) ----

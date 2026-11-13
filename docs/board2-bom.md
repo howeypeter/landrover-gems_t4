@@ -14,7 +14,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 | J2 | 12 V DC input jack (barrel or 2-pos terminal) | 1 | OPEN | match the bench supply plug (size/polarity); not specified yet |
 | D2 | Reverse-polarity series diode — **SB540** (5 A/40 V Schottky, DO-201AD axial through-hole) | 1 | OK | chosen 2026-11-11 (~$0.30 at Mouser per user); replaces SS54 (SMD, 5-pc minimum) and 1N5822 (Mouser ~$20). Band (cathode) toward F2/load; footprint DO-201AD |
 | F2 | Fuse 2 A + holder | 1 | OPEN | holder type (5x20 / blade) not chosen |
-| SW1 | 4-pin screw terminal (12V_IN, 12V_OUT, 12V_OUT_LED, GND_LED) | 1 | OPEN | pitch/part not chosen; wires to off-board illuminated switch |
+| SW1 | 4-pin screw terminal (pin 1 GND_LED, pins 2-3 12V_OUT_LED + 12V_OUT, pin 4 12V_IN; same order as Board 1) | 1 | OPEN | pitch/part not chosen; wires to off-board illuminated switch |
 | SW2 | 4-pin screw terminal, same | 1 | OPEN | shared 12V_IGN switch |
 | D3 | **1.5KE24A** TVS, 1500 W, 24 V, unidirectional, DO-27 axial | 1 | OK (on hand) | through-hole; leads ~1.0 mm -> **1.3 mm drill** in the KiCad footprint; band to VF (F2 output / SW1 input) |
 | J3 | Same Sky **TBP02R1-381-16BE**, 16-pos 3.81 mm, right-angle (horizontal) pluggable header, blue | 1 | OK | replaces Amphenol Anytek OQ1632510000G (2026-11-12). Datasheet rev 1.04: holes 1.40 mm, body 61.75 x 9.20 mm, pin row 1.20 mm from the back; 8 A UL / 7 A IEC |

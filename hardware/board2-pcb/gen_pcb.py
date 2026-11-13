@@ -31,6 +31,12 @@ ROT={"J2":90,"SW1":270,"SW2":270,"D3":180,"J3":180,"J71":180,"J72":180}   # edge
 # by the position of their pad 1, not by the outline centre. J71/J72 turned 180 deg on the board (wire entry the other way),
 # J6 back to 0 deg (it had been 180 deg only to compensate for the part's own orientation).
 PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
+# Power section synced from Cherry Blossom 2026-11-13: pad 1 and pad 2 target positions (KiCad mm). The footprints here are
+# stand-ins whose pad layout differs slightly from Cherry Blossom's parts, so the rotation is chosen so that the pad 1 -> pad 2
+# direction matches, and pad 1 is placed exactly. Right-edge column: J2, F2, D3 (x 81.3), D2 beside J2 (x 71.7); SW1/SW2 swapped.
+PAD12={"J2":((81.3,17.54),(81.3,12.46)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((81.3,26.5),(81.3,48.5)),
+       "D3":((81.3,54.65),(81.3,67.15)),"SW1":((5.7,45.08),(5.7,50.16)),"SW2":((5.7,23.08),(5.7,28.16))}
+for _r in PAD12: ROT.pop(_r,None)
 for i in range(4):
     pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,18.9)
 for ref,fid in fp_of.items():
@@ -40,7 +46,16 @@ for ref,fid in fp_of.items():
     for p in f.Pads():
         n=pinnet.get((ref,p.GetNumber()))
         if n: p.SetNet(ni[n])
-    f.SetPosition(VECTOR2I(0,0)); f.SetOrientationDegrees(ROT.get(ref,0)); c=f.GetBoundingBox(False,False).GetCenter()
+    f.SetPosition(VECTOR2I(0,0))
+    if ref in PAD12:
+        (t1,t2)=PAD12[ref]; tv=(t2[0]-t1[0],t2[1]-t1[1]); best=None
+        for ang in (0,90,180,270):
+            f.SetOrientationDegrees(ang)
+            pp={q.GetNumber():q.GetPosition() for q in f.Pads()}
+            v=(pcbnew.ToMM(pp["2"].x-pp["1"].x),pcbnew.ToMM(pp["2"].y-pp["1"].y)); dot=v[0]*tv[0]+v[1]*tv[1]
+            if best is None or dot>best[0]: best=(dot,ang)
+        ROT[ref]=best[1]; PAD1[ref]=t1
+    f.SetOrientationDegrees(ROT.get(ref,0)); c=f.GetBoundingBox(False,False).GetCenter()
     if ref in PAD1:
         p1=[q for q in f.Pads() if q.GetNumber()=="1"][0].GetPosition(); x,y=PAD1[ref]; f.Move(VECTOR2I(mm(x)-p1.x,mm(y)-p1.y))
     else:
@@ -76,10 +91,13 @@ for ref in ("J71","J72"):
     for n,(x,y) in pp.items():
         label(obdnum(ref,n),x,y-1.6 if y<mm_ else y+1.6,0.9)
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
-p2=pads_of("J2"); top=min(p2,key=lambda n:p2[n][1]); bot=max(p2,key=lambda n:p2[n][1])
-cx=p2[top][0]
-label("+12V" if top=="1" else "GND", cx, p2[top][1]-6.2, 0.9)
-label("GND" if top=="1" else "+12V", cx, p2[bot][1]+6.2, 0.9)
+p2=pads_of("J2"); cx=p2["1"][0]
+# same places as the Cherry Blossom labels: GND above the terminal (clear of the corner mounting hole), +12V below it
+label("GND", cx, 8.1, 0.9)
+label("+12V", cx, 21.9, 0.9)
+# designators of the power parts: references hidden, short labels placed in free spots
+for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)
+label("D2",71.7,5.4,0.9); label("F2 2A",73.0,37.5,0.9); label("D3",81.3,51.6,0.9)
 # J4: reference + net, in the gap under each footprint (real refs hidden)
 for r in range(2):
     for i in range(4):
@@ -89,8 +107,9 @@ for r in range(2):
 # switch + title labels
 for ref,txt in (("SW1","SW1 POWER"),("SW2","SW2 IGN")):
     fps[ref].Reference().SetVisible(False)
-sx,sy=pads_of("SW1")["1"]; label("SW1 POWER",sx,18.6,0.9)
-sx,sy=pads_of("SW2")["1"]; label("SW2 IGN",sx,66.3,0.9)
+# SW2 (upper terminal): label above its first pad; SW1 (lower terminal): label below its last pad
+sw2=pads_of("SW2"); sx,sy=sw2["1"]; label("SW2 IGN",sx,min(v[1] for v in sw2.values())-4.8,0.9)
+sw1=pads_of("SW1"); sx,sy=sw1["1"]; label("SW1 POWER",sx,max(v[1] for v in sw1.values())+6.0,0.9)
 # J3 pin labels (OBD pin number / function), above the pad row; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():
@@ -99,6 +118,6 @@ for n,(x,y) in pads_of("J3").items():
     else: label(str(int(n)),x,y-3.0,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
 # net legend
 label("J4 PINS:",10.5,10.5,0.8); label("1=12V_BAT 2=NET",10.5,12.2,0.8); label("3=12V_IGN 4=GND",10.5,14,0.8)
-label("Board 2 r1",W-8,64.5,0.8)
+label("Board 2 r1",10.5,16.5,0.8)
 b.Save(os.path.join(HERE,"board2.kicad_pcb"))
 print("saved")
