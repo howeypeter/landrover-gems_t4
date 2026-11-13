@@ -26,7 +26,11 @@ pos={"J71":(W/2-15.9,53.0),"J72":(W/2+14.6,53.0),
      "J2":(W-6.2,42),"D2":(W+26.5,33.5),"F2":(W+26.5,18.5),"D3":(W+26.5,48.5),
      "SW1":(6.5,31),"SW2":(6.5,52.7),
      "J6":(45.0,30.2),"J3":(43.5,H-7)}   # J7/J6 x re-centred 2026-11-12 after the body-margin fix, so the pads stay where they were
-ROT={"J2":90,"SW1":270,"SW2":270,"D3":180,"J3":180,"J6":180}   # edge terminals: wire entry faces the edge
+ROT={"J2":90,"SW1":270,"SW2":270,"D3":180,"J3":180,"J71":180,"J72":180}   # edge terminals: wire entry faces the edge
+# Synced from Cherry Blossom 2026-11-13 (CB x,y centred on the board, y up -> KiCad x+43.5, 38.5-y): these parts are placed
+# by the position of their pad 1, not by the outline centre. J71/J72 turned 180 deg on the board (wire entry the other way),
+# J6 back to 0 deg (it had been 180 deg only to compensate for the part's own orientation).
+PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
 for i in range(4):
     pos[f"J4{i+1}"]=(W/2-18+12*i,6.2); pos[f"J4{i+5}"]=(W/2-18+12*i,18.9)
 for ref,fid in fp_of.items():
@@ -37,7 +41,10 @@ for ref,fid in fp_of.items():
         n=pinnet.get((ref,p.GetNumber()))
         if n: p.SetNet(ni[n])
     f.SetPosition(VECTOR2I(0,0)); f.SetOrientationDegrees(ROT.get(ref,0)); c=f.GetBoundingBox(False,False).GetCenter()
-    x,y=pos[ref]; f.Move(VECTOR2I(mm(x)-c.x,mm(y)-c.y))
+    if ref in PAD1:
+        p1=[q for q in f.Pads() if q.GetNumber()=="1"][0].GetPosition(); x,y=PAD1[ref]; f.Move(VECTOR2I(mm(x)-p1.x,mm(y)-p1.y))
+    else:
+        x,y=pos[ref]; f.Move(VECTOR2I(mm(x)-c.x,mm(y)-c.y))
     b.Add(f)
 # outline
 for (x1,y1,x2,y2) in [(0,0,W,0),(W,0,W,H),(W,H,0,H),(0,H,0,0)]:

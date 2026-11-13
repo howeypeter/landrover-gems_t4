@@ -30,8 +30,19 @@ the Same Sky `BOM.txt` description ("Vertical, 3.81 Pitch") is wrong for this pa
 Cherry Blossom shows STEP models without colour. A GLB converted from the vendor STEP keeps the colours (green body, orange
 buttons, white pins) and lines up exactly with the pinholes (confirmed 2026-11-12). It is made with KiCad:
 `kicad-cli pcb export glb --no-board-body --user-origin <footprint origin> -f -o part.glb <test board with the footprint at
-rotation 0, model offset 0>`. The settings above are for the STEP; the GLB needs its own (not recorded yet). The GLB is a
-vendor-licensed model derived from the STEP and is not in the repository. KiCad has no equivalent settings: its J7/J6
+rotation 0, model offset 0>`. The GLB is a vendor-licensed model derived from the STEP and is not in the repository.
+
+Orientation on the board (2026-11-13): J71 and J72 are turned 180 degrees (wire entry faces the other way; pins read 1 to 8
+right to left, so the OBD lines to J3 cross and need re-routing); J6 is back at 0 degrees (its earlier 180 degrees only
+compensated for the part's own orientation). In KiCad these parts are positioned by pad 1 (see `PAD1` in `gen_pcb.py`),
+copied from Cherry Blossom.
+
+Final Cherry Blossom settings for the GLB (placed by "The file's origin"; confirmed 2026-11-13: pins in the holes, housing
+inside the silk box, buttons on the A-row side): turn X, Y, Z = 90, 0, 270; offset X, Y, Z = 3.5 mm, 2.3 mm, 0 mm. They are
+set on the part, so J71, J72 and J6 all take them. The settings in the paragraph above are for the STEP and are superseded.
+Lesson: the pad pattern is the same from both ends, so a model turned 180 degrees still lines up with the holes. Check the
+housing's long end: the real housing extends 3.25 mm past pin 1 (the square pad, A row) and 1.75 mm past pin 8, verified from
+the vendor model's own pin and body geometry. The first attempt (turn Z = 90) was 180 degrees out, so the box looked 1.5 mm off. KiCad has no equivalent settings: its J7/J6
 models are still green block stand-ins.
 
 ## 1. How to read this brief
