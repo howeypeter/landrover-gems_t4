@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-13T14:55:11")
+		(date "2026-11-13T15:19:52")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "1663d749-91ea-4b5b-a479-803652d5efd4")
+			(tstamps "9fa55bc2-b5a1-4955-ba77-b71c4278cb44")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3056d660-7beb-4827-a101-d7896b08cacd")
+			(tstamps "ac64d772-56fb-426f-a10b-75b1e5e56f4d")
 			(units
 				(unit
 					(name "A")
@@ -165,11 +165,11 @@
 		(comp
 			(ref "F2")
 			(value "2 A")
-			(footprint "Fuse:Fuseholder_Cylinder-5x20mm_Schurter_0031_8201_Horizontal_Open")
+			(footprint "board2:Fuseholder_2pin_5x20_P15mm")
 			(description "2 A fuse + holder (OPEN)")
 			(fields
 				(field
-					(name "Footprint") "Fuse:Fuseholder_Cylinder-5x20mm_Schurter_0031_8201_Horizontal_Open")
+					(name "Footprint") "board2:Fuseholder_2pin_5x20_P15mm")
 				(field
 					(name "Datasheet")
 				)
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "04cb8f7b-d390-4cbe-b5dc-81b1adb63a1f")
+			(tstamps "033b0000-8cfd-46f5-89b1-fb3f91789625")
 			(units
 				(unit
 					(name "A")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "c95a7238-7369-4746-b79d-43674ae5d536")
+			(tstamps "eb8dc087-c9f5-4b76-87ef-3c550ebc9cb7")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "55530a45-1536-4de3-ab01-b943de48182a")
+			(tstamps "b234dfbd-5e9b-42a4-a7fa-692722cebf9d")
 			(units
 				(unit
 					(name "A")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "56c03743-e712-4349-8f92-277e6d1f29cc")
+			(tstamps "bc26a7d4-58ea-4f8d-908f-22b8569ebd11")
 			(units
 				(unit
 					(name "A")
@@ -477,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "90a6ac7e-539e-4c5b-a283-cfc466257f36")
+			(tstamps "d6210e97-ffcd-43ff-a453-ae644d0a40c0")
 			(units
 				(unit
 					(name "A")
@@ -555,7 +555,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "7ebee67e-a35d-43d0-9014-4be3baf60a94")
+			(tstamps "14ed7ae7-b676-4241-8a96-8c6a57e3ed2f")
 			(units
 				(unit
 					(name "A")
@@ -633,7 +633,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3e276c5e-8f8f-4394-81dc-2b28b8329a49")
+			(tstamps "d2e2fca6-1fb5-4bbd-8ecb-f10e2a84ab43")
 			(units
 				(unit
 					(name "A")
@@ -711,7 +711,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8e9d1823-c207-49a5-bc2b-29d6b163512a")
+			(tstamps "46f5d7fc-2e2a-49e0-8b99-0f5a1f5000b4")
 			(units
 				(unit
 					(name "A")
@@ -789,7 +789,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "637ee909-c250-48e6-a5a9-5948d2e54559")
+			(tstamps "f14c3651-ffaa-4d4c-b97a-c76e964e2da2")
 			(units
 				(unit
 					(name "A")
@@ -861,7 +861,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "9e233020-5648-4995-acbf-f0a768e86453")
+			(tstamps "3809eb11-4c69-4931-ba47-910898fd5758")
 			(units
 				(unit
 					(name "A")
@@ -933,7 +933,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "f01a7cb5-31bc-437b-bf26-4e14c50a5c0e")
+			(tstamps "4a48cead-527a-44e9-b4b1-61f69ae18d17")
 			(units
 				(unit
 					(name "A")
@@ -993,7 +993,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "2836e920-eb7c-4ba0-8f92-994ac0978baa")
+			(tstamps "8d3c04d6-d671-46d0-bec6-3ccf6bd50f88")
 			(units
 				(unit
 					(name "A")

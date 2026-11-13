@@ -4,11 +4,15 @@ Written 2026-11-12 for an external review of the KiCad files in this folder.
 It explains what the board is for, what has been decided and why, what state the
 files are in, and what we most want checked.
 
-## 0. Work in progress (2026-11-12)
+## 0. Work in progress (updated 2026-11-13)
 
-The power section is being rearranged. **F2, D2 and D3 are parked off the board** (to the right) and their traces are removed,
-so the power-chain nets (VJ2, VD, VF and the branch to SW1) show as unconnected in DRC on purpose. The layout described in
-section 8 for the power row is the previous arrangement. Routing and silkscreen will be redone after the move.
+The power section has been rearranged (J2, F2, D3 in a column on the right edge, D2 beside J2) and is placed in both KiCad and
+Cherry Blossom. Routing in Cherry Blossom has not been done yet; in KiCad the board is routed by `route.py`. The layout
+paragraph in section 8 describes the current arrangement.
+
+**F2 changed (2026-11-13).** F2 uses the footprint from Board 1's F1 (`Fuseholder_2pin_5x20_P15mm.kicad_mod`): a covered 5x20
+holder, pins 15.0 mm apart, both holes 1.3 mm, body 25.7 x 11.5 mm. The 15 mm spacing is from Board 1's design; the body size
+is from a product photo. The holder's part number is not chosen.
 
 **J3 changed (2026-11-12).** J3 is now the Same Sky TBP02R1-381-16BE (mate TBP02P1-381-16BE), replacing the Amphenol Anytek
 OQ1632510000G. Its footprint (`SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed.kicad_mod`) was written from the Same
@@ -163,7 +167,7 @@ Decisions and reasons:
 |---|---|---|---|
 | J2 | 12 V input, 2-pos | Phoenix MKDS 1,5/2 5.08 mm | **Stand-in.** Jack or terminal not chosen. |
 | D2 | SB540, 5 A / 40 V Schottky, DO-201AD | `D_DO-201AD_P12.70mm_Horizontal` | Pin 1 (K) = VD, pin 2 (A) = VJ2. |
-| F2 | 2 A fuse + holder | Schurter 0031.8201 5x20 open holder | **Stand-in.** Holder type not chosen. |
+| F2 | 2 A fuse + holder (5x20 glass fuse, covered holder) | `Fuseholder_2pin_5x20_P15mm` in `board2.pretty` (Board 1's F1 footprint, holes corrected to 1.3 mm) | Pins 15.0 mm apart (inset from the fuse clips), body 25.7 x 11.5 mm. Holder part number not chosen. |
 | D3 | 1.5KE24A TVS, 1500 W, unidirectional, DO-27 | `D_DO-27_P12.70mm_Horizontal` | Pin 1 (K) = VF. Leads about 1.0 mm; wants about 1.3 mm holes. |
 | SW1, SW2 | 4-pos screw terminal | Phoenix MKDS 1,5/4 5.08 mm | **Stand-in.** Part not chosen. |
 | J3 | Same Sky TBP02R1-381-16BE, 16-pos 3.81 mm right-angle (horizontal) pluggable header, blue; mate TBP02P1-381-16BE | `SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed` in `board2.pretty`, built from datasheet rev 1.04, with STEP model | 1.40 mm holes, pad numbers mirrored. At the bottom edge rotated 180°: plug opening faces the edge, pins 1 to 16 left to right. |
@@ -190,7 +194,7 @@ for the whole board.
 2. **J3 footprint is the distributor's library footprint** (SamacSys, via Mouser) with two edits: pad numbers mirrored
    (see above) and holes opened to the 1.40 mm the Anytek drawing recommends. Pitch (3.81), end offset (2.5 mm), pin row
    position (1.2 mm from the back wall, 8.0 mm from the mating face) match the drawing. Not yet re-checked by a second person.
-3. **J2, F2, SW1, SW2 footprints are generic stand-ins** because the real parts
+3. **J2, SW1, SW2 footprints are generic stand-ins (F2 now has the Board 1 holder footprint)** because the real parts
    are not chosen. Layout around them may move.
 4. **Harwin M20-9980546 (J4).** The footprint is hand-built (1.02 mm holes, 1.75 mm pads, pins 7 and 8 left out); not yet
    checked against the Harwin drawing. The Mouser numbers for the header, the cable housings (M20-1060500 / M20-1070500),

@@ -13,7 +13,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 |---|---|---|---|---|
 | J2 | 12 V DC input jack (barrel or 2-pos terminal) | 1 | OPEN | match the bench supply plug (size/polarity); not specified yet |
 | D2 | Reverse-polarity series diode — **SB540** (5 A/40 V Schottky, DO-201AD axial through-hole) | 1 | OK | chosen 2026-11-11 (~$0.30 at Mouser per user); replaces SS54 (SMD, 5-pc minimum) and 1N5822 (Mouser ~$20). Band (cathode) toward F2/load; footprint DO-201AD |
-| F2 | Fuse 2 A + holder | 1 | OPEN | holder type (5x20 / blade) not chosen |
+| F2 | Fuse 2 A (5x20 glass) + PCB holder, covered type (green, cover marked 5X20) | 1 | CHECK | footprint chosen 2026-11-13: Board 1's F1 holder, **pins 15.0 mm apart**, holes **1.3 mm**, body 25.7 x 11.5 x 13.4 mm, pins 4.2 mm long (`board2.pretty/Fuseholder_2pin_5x20_P15mm`). Holder part number still to pick; confirm the pin spacing on the part you buy |
 | SW1 | 4-pin screw terminal (pin 1 GND_LED, pins 2-3 12V_OUT_LED + 12V_OUT, pin 4 12V_IN; same order as Board 1) | 1 | OPEN | pitch/part not chosen; wires to off-board illuminated switch |
 | SW2 | 4-pin screw terminal, same | 1 | OPEN | shared 12V_IGN switch |
 | D3 | **1.5KE24A** TVS, 1500 W, 24 V, unidirectional, DO-27 axial | 1 | OK (on hand) | through-hole; leads ~1.0 mm -> **1.3 mm drill** in the KiCad footprint; band to VF (F2 output / SW1 input) |
@@ -47,4 +47,4 @@ before ordering; **OPEN** = not yet decided/sourced.
 1. **J4:** confirm the Harwin M20-9980546 on Mouser (stock and part number) and the housing/key-plug/contact numbers; ideas parked in `docs/board2-backlog.md`.
 2. **SW1/SW2 terminals + switches:** pick the 4-pin screw terminal and the illuminated switch part numbers.
 3. **M20 plug housings, key plugs and crimp contacts:** verify the exact part numbers and whether pre-crimped leads fit.
-4. **J2 jack** and **F2 holder** types.
+4. **J2 jack** type, and the **F2 holder** part number (type chosen: 5x20 covered, 15 mm pins, as Board 1).

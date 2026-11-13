@@ -24,7 +24,7 @@ Context: J4 is being replaced by a Harwin M20 5-row x 8-column grid (four M20-99
 
 ## Other
 - Silk box and 3D model settings are final for J71, J72, J6 (see REVIEW_BRIEF.md).
-- SW1/SW2 terminals, illuminated switches, J2 jack, F2 holder: part choices still open (see `docs/board2-bom.md`).
+- SW1/SW2 terminals, illuminated switches, J2 jack: part choices still open; F2 holder: footprint set (Board 1's F1, 15 mm pins), part number open (see `docs/board2-bom.md`).
 - Sheet 2 of `diagrams/gems-2pcb-schematic.html` still shows the old layout, J4 and SW pin order.
 - BOM still says an 85 x 75 mm board; the board is 87 x 77 mm.
 - Routing in Cherry Blossom: not done yet (nets are locked-placement, unrouted).

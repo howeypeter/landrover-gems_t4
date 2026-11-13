@@ -34,7 +34,7 @@ PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
 # Power section synced from Cherry Blossom 2026-11-13: pad 1 and pad 2 target positions (KiCad mm). The footprints here are
 # stand-ins whose pad layout differs slightly from Cherry Blossom's parts, so the rotation is chosen so that the pad 1 -> pad 2
 # direction matches, and pad 1 is placed exactly. Right-edge column: J2, F2, D3 (x 81.3), D2 beside J2 (x 71.7); SW1/SW2 swapped.
-PAD12={"J2":((81.3,17.54),(81.3,12.46)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((81.3,26.5),(81.3,48.5)),
+PAD12={"J2":((81.3,17.54),(81.3,12.46)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((80.8,30.0),(80.8,45.0)),
        "D3":((81.3,54.65),(81.3,67.15)),"SW1":((5.7,45.08),(5.7,50.16)),"SW2":((5.7,23.08),(5.7,28.16))}
 for _r in PAD12: ROT.pop(_r,None)
 # J4: four Harwin M20-9980546 2x5 headers side by side = one 5 row x 8 column grid (key row 4: pins pulled, no holes); cables exit up.
