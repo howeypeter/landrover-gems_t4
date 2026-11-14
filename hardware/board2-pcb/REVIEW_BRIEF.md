@@ -54,7 +54,7 @@ is a 2x5 header, 12.7 x 5.08 x 2.64 mm body, 0.66 mm square pins from 3.0 mm bel
 (units are metres in the GLB). Its origin is pin 1 and its long axis runs along x, so it must be spun 90 degrees to match our
 footprint (5 pins along y). Placed by "The file's origin", offset 0. In Cherry Blossom the models worked once the spin was on
 the third Turn box (a first try with the spin on the wrong axis made the four headers overlap into one 11-pin-wide strip,
-22 pins visible); the exact Turn and Offset values the user used are not recorded here yet. In KiCad the footprint model is
+22 pins visible); the user's final Cherry Blossom settings (the part rebuilt 2026-11-14 with 1.1 mm holes; GLB re-uploaded) are: offset X, Y, Z = 1.27 mm, -5.08 mm, -3 mm; rotate X, Y, Z = 270, 0, 270 (set on the part, so J41 to J44 all take them). In KiCad the footprint model is
 `board2.3dshapes/M20-9980546_KeyRowRemoved.wrl` (rotate z 90, scale 0.3937), the same model with the two key-column pins
 (x = 7.62 mm) deleted, so the KEY row is empty. A GLB of the same edited model is next to it. Both derive from the vendor
 model and are gitignored.
@@ -320,4 +320,12 @@ Terminal wire entry and board facts (2026-11-14):
   J2 (XY308-2.54-2P) faces the right edge, entries about 2.2 mm from the edge, 3.4 mm below the top-right screw-hole ring. This was read from the footprint silk (funnel slots and
   the entry arrow), NOT checked against the Xinya datasheet or the vendor 3D model: confirm before ordering. If an entry faces the middle, rotate that terminal 180 degrees.
 - 2.54 mm terminals rate 6 A / 150 V per distributor listings (not the maker PDF); use 18 AWG for about 3 A.
+
+Design decision (2026-11-14, user): OBD pin 4 (chassis ground) is deliberately NOT tied to GND on Board 2. Only OBD pin 5 (signal ground) is GND, so a dirty
+chassis ground can not contaminate Board 1's signal ground. J3 pin 4 goes only to J71 pin 5 (net OBD4).
+Pre-routing footprint check (2026-11-14): pitch/drill agree with the Same Sky datasheets for J3 (3.81 mm, 1.40 mm holes) and J6/J71/J72 (3.50 mm, rows 5.0 mm, 1.2 mm holes)
+and with Board 1's F1 (15.0 mm, 1.3 mm holes). J41-J44 holes are 1.02 mm for 0.66 mm square pins (diagonal 0.93 mm, only about 0.09 mm margin; Harwin's own footprint uses 1.15 mm).
+Cherry Blossom's D2 land has the pads 13.6 mm apart while KiCad's DO-201AD stand-in is 12.7 mm (D3 12.5 vs 12.7): check the real SB540 / 1.5KE24A lead spacing.
+
+J41-J44 3D model settings in Cherry Blossom (2026-11-14, user): offset 1.27 mm, -5.08 mm, -3 mm; rotate 270, 0, 270. Use board2.3dshapes/M20-9980546_KeyRowRemoved.glb (8 pins, key column removed).
 
