@@ -346,7 +346,7 @@ Review fixes: GND thermal spokes widened to 4 x 0.5 mm; a direct 0.8 mm bottom-l
 verify_parts found no supplier records for J2, J5/J3/J4, J6-J9 or F2, so they stay "unverified" in the checks: pitch and holes were checked by hand against the Same Sky datasheets and Board 1.
 
 
-Silk title block (2026-11-14): "OBD2 BENCH BREAKOUT" / "Any OBD2 pin to any NET_SIGNAL output" / "Board 2 - Rev 1.0 - 2026-11", left of J5 (CB x -13.5, y -2.5/-4.3/-5.9). The revision comes from `REV`/`REVDATE` in `gen_pcb.py`; bump it for every change to copper or silk sent to the fab. The J6-J9 pin 9/10 row label is now `NET_SIGNAL` (any patched signal, not only K-line).
+Silk title block (2026-11-14): "OBD2 BENCH BREAKOUT" / "Any OBD2 pin to any NET_SIGNAL output" / "Board 2 - Rev 1.0 - 2026-11", left of J5 (CB x -9.5, y -2.5/-4.3/-6.1), all 1.0 mm tall; the tied-net note is two 1.0 mm lines at CB x -24, y 11.8/10.3. The revision comes from `REV`/`REVDATE` in `gen_pcb.py`; bump it for every change to copper or silk sent to the fab. The J6-J9 pin 9/10 row label is now `NET_SIGNAL` (any patched signal, not only K-line).
 
 ## How to use the tied NETs (J5 pairs)
 

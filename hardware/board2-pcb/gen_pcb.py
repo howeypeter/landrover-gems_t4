@@ -128,9 +128,9 @@ for n,(x,y) in pads_of("J2").items():
     else: label(str(int(n)),x,62.2,0.8)   # plain pin numbers 1..16 (J2 pads are numbered so they read 1..16 left to right)
 # net legend
 REV="1.0"; REVDATE="2026-11"   # bump REV for every change to copper or silk sent to the fab
-label("OBD2 BENCH BREAKOUT",30.0,41.0,1.0)   # title block, free area left of J5 (CB -13.5,-2.5)
-label("J5 pairs tied:",21.3,27.4,0.8); label("2 wires per NET",21.3,28.6,0.8)   # tied-NET note, up-left of J5, between via rows (CB -22.2, 11.1 / 9.9)
-label("Any OBD2 pin to any NET_SIGNAL output",30.0,42.8,0.8)
-label(f"Board 2 - Rev {REV} - {REVDATE}",30.0,44.4,0.8)
+label("OBD2 BENCH BREAKOUT",34.0,41.0,1.0)   # title block, free area left of J5 (CB -13.5,-2.5)
+label("J5 pairs tied:",19.5,26.7,1.0); label("2 wires per NET",19.5,28.2,1.0)   # tied-NET note, up-left of J5, between via rows (CB -22.2, 11.1 / 9.9)
+label("Any OBD2 pin to any NET_SIGNAL output",34.0,42.8,1.0)
+label(f"Board 2 - Rev {REV} - {REVDATE}",34.0,44.6,1.0)
 b.Save(os.path.join(HERE,"board2.kicad_pcb"))
 print("saved")

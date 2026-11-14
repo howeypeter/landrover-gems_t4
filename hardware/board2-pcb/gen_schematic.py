@@ -101,7 +101,7 @@ text("Nets are defined by labels at each pin. Same label = same net. NETnA and N
 
 # ---- power ----
 text("POWER:  J1 -> D2 -> F2 -> SW1 -> V12S ;  V12S -> SW2 -> IGN ;  D3 TVS VF-GND (between F2 and SW1)", 4, 14)
-place(C1x02, "J1", "12V DC in", FP_TB2, 8, 21, {"1": "VJ2", "2": "GND"}, "12 V DC input (jack type OPEN)")
+place(C1x02, "J1", "12V DC in", FP_TB2, 8, 21, {"1": "VJ2", "2": "GND"}, "12 V DC input: wires from the user's barrel jack screw into this terminal (pin 1 +12V, pin 2 GND)")
 place(DIODE, "D2", "SB540", FP_D2, 20, 21, {"2": "VJ2", "1": "VD"}, "Reverse-polarity Schottky 5A/40V; cathode (band) toward F2")
 place(FUSE, "F2", "2 A", FP_F2, 30, 21, {"1": "VD", "2": "VF"}, "2 A fuse + holder (OPEN)")
 place(C1x04, "SW1", "4-pin screw terminal", FP_TB4, 42, 21,

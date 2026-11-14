@@ -1,7 +1,7 @@
 # Board 2 pre-order checklist (Rev 1.0)
 
 Opened 2026-11-14. Everything below must be handled, or consciously waived, before the boards are ordered from JLCPCB.
-Status: OPEN = not done, DECIDE = needs a decision, DONE = finished (date). Update this file as items close.
+Status: OPEN = not done, DECIDE = needs a decision, DONE = finished (date), ACCEPTED = risk knowingly accepted by the user (date). Update this file as items close.
 
 State when opened: Cherry Blossom routed and clean (only the four "unverified part" warnings); KiCad regenerated but unrouted by design;
 silk, naming (J1-J9) and M4 holes done; last commit `684d630`.
@@ -10,28 +10,29 @@ silk, naming (J1-J9) and M4 holes done; last commit `684d630`.
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| A1 | J2 footprint (TBP02R1-381-16BE, 16-pos 3.81 mm) vs Same Sky datasheet drawing | OPEN | Hole 1.40 mm / pitch 3.81 agreed earlier; no supplier record in Cherry Blossom, so compare by hand. Datasheet: `hardware/board2-pcb/tbp02r1-381.pdf` (vendor file, keep out of the public repo). |
-| A2 | J3/J4/J5 footprint (TBL002A-350-08GR-2OR, 8-pos 3.5 mm 45 deg) vs datasheet | OPEN | Rows 5.0 mm, 1.2 mm holes agreed earlier; no supplier record. Confirm wire-entry direction too. |
-| A3 | F2 fuse holder footprint (5x20, 15 mm pins) and part number | OPEN | Part number never confirmed; no supplier record. 1.3 mm holes kept on purpose. |
-| A4 | J6-J9 Harwin M20-9980546 footprint (key row removed, 1.1 mm holes) | OPEN | Hand-built; no supplier pinout. Check pitch, hole and pad against the Harwin drawing. |
-| A5 | J1 12 V input: confirm the XY308-2.54-2P terminal (not a barrel jack) | DECIDE | BOM still says "jack type OPEN". |
-| A6 | SW1/SW2/J1 terminals (Xinya XY308): wire-entry direction and 6 A rating vs datasheet | OPEN | Both were left unverified. |
-| A7 | Enclosure fit: 87 x 77 mm outline and 78 x 68 mm M4 hole pattern (centres 4.5 mm from edges) | OPEN | Not test-fitted. Board 1 hole spacing differs. Screw-clearance zone is 5.5 mm around each hole centre. |
+| A1 | J2 footprint (TBP02R1-381-16BE, 16-pos 3.81 mm) vs Same Sky datasheet drawing | DONE (2026-11-14) | Checked against the datasheet PCB layout (rev 1.04): pitch 3.81 OK, hole dia 1.40 OK, 16-pole span 57.15 mm OK (B = 57.15), square pin 0.80 mm. Datasheet: `hardware/board2-pcb/tbp02r1-381.pdf` (vendor file, keep out of the public repo). |
+| A2 | J3/J4/J5 footprint (TBL002A-350-08GR-2OR, 8-pos 3.5 mm 45 deg) vs datasheet | DONE (2026-11-14) | Checked against the datasheet PCB layout (rev 1.04): pitch 3.50 OK, rows 5.00 apart OK, hole dia 1.20 OK, 8-pole span 24.50 OK, body depth 12.00 OK. Ratings per contact: 2 A UL / 5 A IEC (V12S fuse is 2 A, so J4 pin 1 sits at the UL figure). Wire range 24-20 AWG, strip 8-9 mm (22 AWG pigtail OK). Wire-entry direction is not clear from the drawing: see A6. |
+| A3 | F2 fuse holder footprint (5x20, 15 mm pins) and part number | ACCEPTED (2026-11-14) | Risk accepted by the user: the holder is an Amazon part, the specs given (5x20, 15 mm pins, 1.3 mm holes) are the right ones, so no supplier record or datasheet check is needed. Cherry Blossom will keep showing the "unverified part" warning for it. |
+| A4 | J6-J9 Harwin M20-9980546 footprint (key row removed, 1.1 mm holes) | DONE (2026-11-14) | Checked against Harwin drawing M20-998 (active product, 100% tin finish): pitch 2.54 OK, row spacing 2.54 OK, 0.64 mm square pin OK, 3 A OK, tail 3.00 mm. Note: Harwin recommends hole dia 1.02 +/-0.05 (max 1.07); ours is 1.1 (0.03 over), chosen for fab tolerance. The pin diagonal is 0.91 mm so it fits easily. |
+| A5 | J1 12 V input: confirm the XY308-2.54-2P terminal (not a barrel jack) | DONE (2026-11-14) | User confirmed: J1 is the screw terminal; the user's own barrel jack has wires that screw into J1. Before first power-up check polarity: jack tip/centre wire to J1 pin 1 (+12V), sleeve wire to J1 pin 2 (GND), as the silk shows. |
+| A6 | SW1/SW2/J1 terminals (Xinya XY308): wire-entry direction and 6 A rating vs datasheet | DONE (2026-11-14) | XY308-2.54 datasheet: 150 V / 6 A, 26-18 AWG (1.0 mm2), pitch 2.54 OK, solder pin 0.80 x 0.50 (hole 1.2 OK), tail 3.4, body 8.5 x 6.5. Rating OK. Wire-entry direction: user confirmed the current orientation is correct as-is. |
+| A7 | Enclosure fit: 87 x 77 mm outline and 78 x 68 mm M4 hole pattern (centres 4.5 mm from edges) | DEFERRED to the end (2026-11-14) | User will re-measure after checking M4 screws at the hardware store. Not test-fitted. Board 1 hole spacing differs. Screw-clearance zone is 5.5 mm around each hole centre (9 mm washer + 1 mm offset). To measure: hole centre spacing in both directions, usable inside length/width, M4 screw head or washer diameter, and clearance for cables (J6-J9 cables exit upward, J1 wires at the right edge, J2 pigtail at the bottom edge, SW1/SW2 wires at the left edge). If the pattern differs, holes can move without touching other parts only within the 5.5 mm zones. |
+| A8 | D2 (SB540, DO-201AD) and D3 (1.5KE24A, DO-201) hole sizes vs datasheets | DONE (2026-11-14) | D2 lead dia 1.20-1.30 mm in a 1.6 mm hole OK. D3 lead dia 0.96-1.07 mm in a 1.2 mm hole OK; body 7.2-9.5 mm long x 4.8-5.3 mm dia fits the 12.7 mm pad spacing. (D3 uses the KiCad DO-27 footprint name; the part is DO-201, geometry is what matters.) |
 
 ## B. Decisions
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| B1 | Small silk: subtitle, rev line, tied-net note are 0.8 mm; OBD pin numbers 0.8-0.9 mm | DECIDE | JLCPCB suggests about 1.0 mm height / 0.15 mm stroke. Raise to 1.0 (crowds a few spots) or order and look. |
-| B2 | Mounting-hole rings: plated, 8.0 mm, floating (not tied to GND) | DECIDE | Chosen 2026-11-14 as plated and floating; confirm. |
+| B1 | Small silk: subtitle, rev line, tied-net note were 0.8 mm | DONE (2026-11-14) | User chose to raise them to 1.0 mm (JLCPCB suggests about 1.0 mm height, 0.15 mm stroke). Title block now centred at KiCad x 34 (CB x -9.5), note at x 19.5 (CB x -24). KiCad text stroke is 0.15 mm; KiCad library part-outline lines are 0.12 mm, below the 0.153 mm JLCPCB silk minimum, so check line widths in the Cherry Blossom export (C2). |
+| B2 | Mounting-hole rings: plated, 8.0 mm, floating (not tied to GND) | DONE (2026-11-14) | User confirmed: keep floating. |
 
 ## C. Needed to publish
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| C1 | Export Gerbers/drill from **Cherry Blossom** (not KiCad: KiCad is unrouted) | OPEN | Editor's Export menu. |
+| C1 | Export Gerbers/drill from **Cherry Blossom** (not KiCad: KiCad is unrouted) | OPEN (needs user) | User exports from the editor (Export menu) while signed in; the built-in browser is not signed in and Claude does not sign in for the user. Save the zip to a new empty folder and tell Claude the path so it can run C2. |
 | C2 | Open the export in a Gerber viewer: pours, 0.8 mm power traces, M4 rings, silk, board outline | OPEN | |
-| C3 | JLCPCB order settings: 2 layers, 87 x 77 mm (100 x 100 tier), 1.6 mm, 1 oz, HASL, 6 mil rules, min drill 0.3 | OPEN | |
+| C3 | JLCPCB order settings | OPEN | Settings to enter: 2 layers; 87 x 77 mm (fits the 100 x 100 mm tier); qty as needed; 1.6 mm thickness; 1 oz outer copper; HASL (lead-free if you prefer); green or any mask; white silk; min track/space 6/6 mil (our rules: 0.25 mm signals, 0.2 mm clearance, 0.8 mm power); min drill 0.3 mm (vias 0.3 drill / 0.6 pad); no castellation, no edge plating; plated mount holes are part of the drill file. |
 | C4 | Confirm Rev: `REV = "1.0"`, `REVDATE = "2026-11"` in `gen_pcb.py` and the silk match what is ordered | OPEN | Bump REV for any copper or silk change sent to the fab. |
 
 ## D. Optional

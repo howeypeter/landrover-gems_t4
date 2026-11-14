@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-14T09:46:38")
+		(date "2026-11-14T10:20:33")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "9f5be7d0-b5d8-4fbf-83ea-ccf0d7a63c31")
+			(tstamps "0da1c3e8-a51b-4a59-998e-7cfaa02909a2")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "43dd10e5-767d-432d-9c1e-66c27efcb916")
+			(tstamps "3b19697e-5d8c-4dae-82a2-2c2cc1a674bf")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "89c31a87-5ce5-449f-8b88-2e5a1a8b6f4b")
+			(tstamps "5781cf24-180a-4473-9824-5bb40feda1ae")
 			(units
 				(unit
 					(name "A")
@@ -220,7 +220,7 @@
 			(ref "J1")
 			(value "12V DC in")
 			(footprint "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal")
-			(description "12 V DC input (jack type OPEN)")
+			(description "12 V DC input: wires from the user's barrel jack screw into this terminal (pin 1 +12V, pin 2 GND)")
 			(fields
 				(field
 					(name "Footprint") "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal")
@@ -228,7 +228,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "12 V DC input (jack type OPEN)")
+					(name "Description") "12 V DC input: wires from the user's barrel jack screw into this terminal (pin 1 +12V, pin 2 GND)")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "9a591fd5-e644-4304-98da-4c645b599040")
+			(tstamps "1934f607-de04-4827-8c73-4b35c86ec940")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "f2dfebaa-e72f-4dd2-8cce-88d9d2d5a2ca")
+			(tstamps "45afb31f-6e8c-4fa8-942d-0f57e1b7f36c")
 			(units
 				(unit
 					(name "A")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "217b5a9a-c510-4dad-8c33-1d4aa2a34099")
+			(tstamps "c6d8e8a1-bb28-466e-b9f3-b3164a7a84e7")
 			(units
 				(unit
 					(name "A")
@@ -477,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "a0424d26-7b5d-4789-b0c1-5c3a6b98e45e")
+			(tstamps "678a4f7f-ae7a-46fb-bc2f-82a1196d42cd")
 			(units
 				(unit
 					(name "A")
@@ -549,7 +549,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "fcf24a4f-3728-462a-afe8-4e97eb600ee9")
+			(tstamps "ee96e3b7-8336-4ed9-b7fa-0ba87433013f")
 			(units
 				(unit
 					(name "A")
@@ -621,7 +621,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "07e94574-4da6-4c32-8fa3-2cb621ca1fda")
+			(tstamps "d7704ddf-a312-4d8b-96fa-0b55101cfa57")
 			(units
 				(unit
 					(name "A")
@@ -699,7 +699,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "d522a79c-688b-4c18-be3e-192c5ff29b02")
+			(tstamps "46715fce-15a2-4aef-a934-09de25360aa4")
 			(units
 				(unit
 					(name "A")
@@ -777,7 +777,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "7ee645f2-399a-442f-9677-281a187b76a1")
+			(tstamps "a66a92b9-bb19-4085-b7df-1b7baae850a9")
 			(units
 				(unit
 					(name "A")
@@ -855,7 +855,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "9b4c03c2-aed2-43bc-b2e5-355f9f12f010")
+			(tstamps "3549b9cc-d923-495c-b532-5588532c460f")
 			(units
 				(unit
 					(name "A")
@@ -933,7 +933,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "6f707f25-26a4-4959-ac46-342d87949cf0")
+			(tstamps "c613d933-f753-4d65-bc8c-230f2cf3ccdc")
 			(units
 				(unit
 					(name "A")
@@ -993,7 +993,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "b493d0e7-c90f-4ae6-92cb-0c6ecc6a42ac")
+			(tstamps "212900ce-7c85-466e-a349-5c7392390780")
 			(units
 				(unit
 					(name "A")
