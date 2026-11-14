@@ -39,7 +39,7 @@ PAD12={"J2":((81.3,17.54),(81.3,15.0)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((80.8
 for _r in PAD12: ROT.pop(_r,None)
 # J4: four Harwin M20-9980546 2x5 headers side by side = one 5 row x 8 column grid (key row 4: pins pulled, no holes); cables exit up.
 # Pad 1 / pad 2 targets from Cherry Blossom: columns 2.54 mm apart, row 1 at CB y = 33.08 (KiCad y 5.42); header i starts at CB x = -8.89 + 5.08 i.
-for _i in range(4): PAD12[f"J4{_i+1}"]=((43.5-6.35+5.08*_i,15.58),(43.5-6.35+5.08*_i-2.54,15.58))   # turned 180 deg 2026-11-14: pin 1/2 row nearest J6
+for _i in range(4): PAD12[f"J4{_i+1}"]=((43.5-8.89+5.08*(3-_i),5.42),(43.5-8.89+5.08*(3-_i)+2.54,5.42))   # J41 on the +x end: J41 is on the left facing the board back (J4 edge)   # back at 0 deg (2026-11-14, user: do not rotate the J4 parts): pin 1/2 row nearest the J4 edge
 for ref,fid in fp_of.items():
     lib,name=fid.split(":")
     f=pcbnew.FootprintLoad(os.path.join(HERE,"board2.pretty") if lib=="board2" else os.path.join(FPDIR,lib+".pretty"),name)
@@ -80,11 +80,9 @@ def label(txt, x, y, size=0.9, rot=0, layer=pcbnew.F_SilkS, right=False, left=Fa
     t.SetTextAngleDegrees(rot); b.Add(t)
 fps={f.GetReference():f for f in b.GetFootprints()}
 def pads_of(ref): return {p.GetNumber():(pcbnew.ToMM(p.GetPosition().x),pcbnew.ToMM(p.GetPosition().y)) for p in fps[ref].Pads()}
-# J6: net names (labels sit outside the two pad rows)
-p6=pads_of("J6"); m6=sum(y for x,y in p6.values())/len(p6)
-for n,(x,y) in p6.items():
-    i=int(n)-1; name=f"NET{i%4+1}{'ab'[i//4]}"
-    label(name,x,y-1.6 if y<m6 else y+1.6,0.8)
+# J6: one net label per pin pair under the bottom row (as in Cherry Blossom 2026-11-14): pins 7,8 = NET1 ... pins 1,2 = NET4.
+# NOTE: the netlist still wires J6 pin 1/5 = NET1 etc.; the nets are to be reassigned later, so these labels lead the netlist.
+for _t,_x in (("NET4",33.75),("NET3",40.75),("NET2",47.75),("NET1",54.75)): label(_t,_x,36.3,1.0)
 # J7: OBD pin numbers, read from the net on each pad
 def obdnum(ref,pad):
     nn=pinnet[(ref,pad)]
@@ -105,7 +103,10 @@ label("D2",71.7,5.4,0.9); label("F2 2A",73.0,37.5,0.9); label("D3",85.6,60.95,1.
 # Centres from Cherry Blossom (x -> x+43.5, y -> 38.5-y). Real refs hidden; J41..J44 shown below the grid (toward J6). The key row (no holes) is unlabelled.
 for _i in range(4): fps[f"J4{_i+1}"].Reference().SetVisible(False)
 for _t,_x,_y in (("K_LINE_SIGNAL",28.35,5.42),("GND",31.25,10.5),("+12V_IGN",29.9,13.04),("+12V_BAT",29.9,15.58)): label(_t,_x,_y,0.8,180)
-for _i in range(4): label(f"J4{_i+1}",35.88+5.08*_i,17.5,0.9)
+for _i in range(4): label(f"J4{_i+1}",35.88+5.08*(3-_i),2.3,1.0,180)
+for _t,_x in (("NET1",51.12),("NET2",46.04),("NET3",40.96),("NET4",35.88)): label(_t,_x,19.5,1.0,270)   # on J43, J6 side, turned -90 deg (user 2026-11-14; nets to be reassigned later, so it does not match the J43 net yet)   # J4 edge side of the grid (CB y 36.2), text turned 180 deg like the row labels
+# J6 designator moved to the left side of its box (CB -17.3, 5.9)
+fps["J6"].Reference().SetVisible(False); label("J6",26.2,32.6,1.0)
 # switch terminals: names above each terminal (as in Cherry Blossom), pin names to the right of each pad, horizontal
 for ref in ("SW1","SW2"): fps[ref].Reference().SetVisible(False)
 sw2=pads_of("SW2"); sw1=pads_of("SW1")

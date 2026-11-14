@@ -302,3 +302,10 @@ Consequences for a reviewer:
   Board 1.
 - Fix board thickness, copper weight and fab design rules.
 - Clean up the routing by hand after review.
+
+J4 grid and net silk (2026-11-14, Cherry Blossom is the source, KiCad regenerated to match; the KiCad board is unrouted):
+J41 to J44 stay at 0 degrees. Their positions are swapped so that, facing the back (J4 edge) of the board, J41 is on the left and J44 on the right
+(J41 at x 6.35, J42 1.27, J43 -3.81, J44 -8.89 in Cherry Blossom coordinates). Row labels (+12V_BAT, +12V_IGN, GND, K_LINE_SIGNAL) and the J41 to J44 names are
+turned 180 degrees to read from the J4 edge; NET1 to NET4 sit on the J6 side of each header, turned -90 degrees. J6 has NET4, NET3, NET2, NET1 labels under pin pairs
+1-2, 3-4, 5-6, 7-8. These labels lead the netlist: J6 and the J4 rows are still wired the old way (NET1 on pins 1 and 5), to be reassigned later.
+
