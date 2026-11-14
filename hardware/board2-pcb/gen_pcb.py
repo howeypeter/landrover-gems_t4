@@ -34,12 +34,12 @@ PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
 # Power section synced from Cherry Blossom 2026-11-13: pad 1 and pad 2 target positions (KiCad mm). The footprints here are
 # stand-ins whose pad layout differs slightly from Cherry Blossom's parts, so the rotation is chosen so that the pad 1 -> pad 2
 # direction matches, and pad 1 is placed exactly. Right-edge column: J2, F2, D3 (x 81.3), D2 beside J2 (x 71.7); SW1/SW2 swapped.
-PAD12={"J2":((81.3,17.54),(81.3,12.46)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((80.8,30.0),(80.8,45.0)),
-       "D3":((81.3,54.65),(81.3,67.15)),"SW1":((5.7,45.08),(5.7,50.16)),"SW2":((5.7,23.08),(5.7,28.16))}
+PAD12={"J2":((81.3,17.54),(81.3,15.0)),"D2":((71.7,8.2),(71.7,21.8)),"F2":((80.8,30.0),(80.8,45.0)),
+       "D3":((81.3,54.65),(81.3,67.15)),"SW1":((5.7,37.08),(5.7,39.62)),"SW2":((5.7,15.08),(5.7,17.62))}   # SW1/SW2 moved up 8 mm (CB y +8) 2026-11-14
 for _r in PAD12: ROT.pop(_r,None)
 # J4: four Harwin M20-9980546 2x5 headers side by side = one 5 row x 8 column grid (key row 4: pins pulled, no holes); cables exit up.
 # Pad 1 / pad 2 targets from Cherry Blossom: columns 2.54 mm apart, row 1 at CB y = 33.08 (KiCad y 5.42); header i starts at CB x = -8.89 + 5.08 i.
-for _i in range(4): PAD12[f"J4{_i+1}"]=((43.5-8.89+5.08*_i,5.42),(43.5-8.89+5.08*_i+2.54,5.42))
+for _i in range(4): PAD12[f"J4{_i+1}"]=((43.5-6.35+5.08*_i,15.58),(43.5-6.35+5.08*_i-2.54,15.58))   # turned 180 deg 2026-11-14: pin 1/2 row nearest J6
 for ref,fid in fp_of.items():
     lib,name=fid.split(":")
     f=pcbnew.FootprintLoad(os.path.join(HERE,"board2.pretty") if lib=="board2" else os.path.join(FPDIR,lib+".pretty"),name)
@@ -72,9 +72,10 @@ for hx,hy in [(4.25,4.25),(W-4.25,4.25),(4.25,H-4.25),(W-4.25,H-4.25)]:
     f.SetReference("H"); f.Reference().SetVisible(False); f.SetPosition(VECTOR2I(mm(hx),mm(hy))); b.Add(f)
 
 # ---- silkscreen labels ----
-def label(txt, x, y, size=0.9, rot=0, layer=pcbnew.F_SilkS, right=False):
+def label(txt, x, y, size=0.9, rot=0, layer=pcbnew.F_SilkS, right=False, left=False):
     t=pcbnew.PCB_TEXT(b); t.SetText(txt); t.SetLayer(layer)
     if right: t.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_RIGHT)
+    if left: t.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_LEFT)
     t.SetPosition(VECTOR2I(mm(x),mm(y))); t.SetTextSize(VECTOR2I(mm(size),mm(size))); t.SetTextThickness(mm(0.15))
     t.SetTextAngleDegrees(rot); b.Add(t)
 fps={f.GetReference():f for f in b.GetFootprints()}
@@ -95,37 +96,30 @@ for ref in ("J71","J72"):
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
 p2=pads_of("J2"); cx=p2["1"][0]
 # same places as the Cherry Blossom labels: GND above the terminal (clear of the corner mounting hole), +12V below it
-label("GND", cx, 8.1, 0.9)
-label("+12V", cx, 21.9, 0.9)
+label("GND", cx, 11.5, 0.9)
+label("+12V", cx, 21.1, 0.9)
 # designators of the power parts: references hidden, short labels placed in free spots
 for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)
-label("D2",71.7,5.4,0.9); label("F2 2A",73.0,37.5,0.9); label("D3",81.3,51.6,0.9)
-# J4: reference + net, in the gap under each footprint (real refs hidden)
-cols=[]
-for _i in range(4):
-    ref=f"J4{_i+1}"; fps[ref].Reference().SetVisible(False); pp=pads_of(ref)
-    cols += [pp["1"][0], pp["2"][0]]
-pp=pads_of("J41"); rows_y={1:pp["1"][1], 2:pp["3"][1], 3:pp["5"][1], 5:pp["9"][1]}
-rows_y[4]=(rows_y[3]+rows_y[5])/2   # the key row (pins pulled, no holes) sits between GND (row 3) and NET (row 5)
-for k,x in enumerate(cols): label(f"{k//2+1}{'ab'[k%2]}", x, rows_y[1]-3.0, 0.9)   # column names above the grid
-for k,nm in enumerate(("+12V_BAT","+12V_IGN","GND","KEY","LINE SIGNAL"), start=1): label(nm, min(cols)-2.2, rows_y[k], 0.8, right=True)   # row names left of it, right-aligned to the grid
-# switch + title labels
-for ref,txt in (("SW1","SW1 POWER"),("SW2","SW2 IGN")):
-    fps[ref].Reference().SetVisible(False)
-# SW2 (upper terminal): label above its first pad; SW1 (lower terminal): label below its last pad
-sw2=pads_of("SW2"); sx,sy=sw2["1"]; label("SW2 IGN",sx,min(v[1] for v in sw2.values())-4.8,0.9)
-sw1=pads_of("SW1"); sx,sy=sw1["1"]; label("SW1 POWER",sx,max(v[1] for v in sw1.values())+6.0,0.9)
-# pin names beside every pad of SW1/SW2 (vertical text in the gap between the terminal and J71/J45), same as Cherry Blossom
+label("D2",71.7,5.4,0.9); label("F2 2A",73.0,37.5,0.9); label("D3",85.6,60.95,1.0,90)   # right of D3 (CB 42.1,-22.45)
+# J4: labels as in Cherry Blossom (2026-11-14): headers turned 180 deg, text turned 180 deg so it reads from the J4 edge.
+# Centres from Cherry Blossom (x -> x+43.5, y -> 38.5-y). Real refs hidden; J41..J44 shown below the grid (toward J6). The key row (no holes) is unlabelled.
+for _i in range(4): fps[f"J4{_i+1}"].Reference().SetVisible(False)
+for _t,_x,_y in (("K_LINE_SIGNAL",28.35,5.42),("GND",31.25,10.5),("+12V_IGN",29.9,13.04),("+12V_BAT",29.9,15.58)): label(_t,_x,_y,0.8,180)
+for _i in range(4): label(f"J4{_i+1}",35.88+5.08*_i,17.5,0.9)
+# switch terminals: names above each terminal (as in Cherry Blossom), pin names to the right of each pad, horizontal
+for ref in ("SW1","SW2"): fps[ref].Reference().SetVisible(False)
+sw2=pads_of("SW2"); sw1=pads_of("SW1")
+label("SW2_IGN",5.5,38.5-26.6,1.0); label("SW1_BAT",5.5,38.5-5.0,1.0)
 for _sw in (sw1,sw2):
     for _n,_nm in (("1","GND"),("2","LED+"),("3","OUT"),("4","IN")):
-        _x,_y=_sw[_n]; label(_nm,_x+6.25,_y,0.9,90)
-# J3 pin labels (OBD pin number / function), above the pad row; ref hidden
+        _x,_y=_sw[_n]; label(_nm,10.3,_y,0.9,left=True)   # left-justified, left edge at CB x -33.2
+# J3 pin labels (OBD pin number / function), centred halfway between the J3 end (KiCad y 66.8) and the J71/J72 bottom edge (57.6): y 62.2, as in Cherry Blossom; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():
-    if int(n)==5: label("GND",x,y-3.6,0.8,90)   # pin 5: sideways "GND" replaces the number
-    elif int(n)==16: label("+12V",x,y-4.0,0.8,90)   # pin 16: sideways "+12V" replaces the number
-    else: label(str(int(n)),x,y-3.0,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
+    if int(n)==5: label("GND",x,61.4,0.8,90)   # pin 5: sideways "GND" replaces the number
+    elif int(n)==16: label("+12V",x,60.9,0.8,90)   # pin 16: sideways "+12V" replaces the number
+    else: label(str(int(n)),x,62.2,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
 # net legend
-label("Board 2 r1",10.5,16.5,0.8)
+label("Board 2 r1",14.0,7.5,0.8)   # moved clear of the SW2 pin labels
 b.Save(os.path.join(HERE,"board2.kicad_pcb"))
 print("saved")

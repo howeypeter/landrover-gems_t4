@@ -175,11 +175,11 @@ Decisions and reasons:
 
 | Ref | Part | Footprint in the files | Notes |
 |---|---|---|---|
-| J2 | 12 V input, 2-pos | Phoenix MKDS 1,5/2 5.08 mm | **Stand-in.** Jack or terminal not chosen. |
+| J2 | 12 V input, 2-pos | XINLAIYA XY308-2.54-2P, 2.54 mm (as Board 1) | Terminal chosen 2026-11-14; wire to a jack. |
 | D2 | SB540, 5 A / 40 V Schottky, DO-201AD | `D_DO-201AD_P12.70mm_Horizontal` | Pin 1 (K) = VD, pin 2 (A) = VJ2. |
 | F2 | 2 A fuse + holder (5x20 glass fuse, covered holder) | `Fuseholder_2pin_5x20_P15mm` in `board2.pretty` (Board 1's F1 footprint, holes corrected to 1.3 mm) | Pins 15.0 mm apart (inset from the fuse clips), body 25.7 x 11.5 mm. Holder part number not chosen. |
 | D3 | 1.5KE24A TVS, 1500 W, unidirectional, DO-27 | `D_DO-27_P12.70mm_Horizontal` | Pin 1 (K) = VF. Leads about 1.0 mm; wants about 1.3 mm holes. |
-| SW1, SW2 | 4-pos screw terminal | Phoenix MKDS 1,5/4 5.08 mm | **Stand-in.** Part not chosen. |
+| SW1, SW2 | 4-pos screw terminal | XINLAIYA XY308-2.54-4P, 2.54 mm (as Board 1 J2) | Chosen 2026-11-14. |
 | J3 | Same Sky TBP02R1-381-16BE, 16-pos 3.81 mm right-angle (horizontal) pluggable header, blue; mate TBP02P1-381-16BE | `SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed` in `board2.pretty`, built from datasheet rev 1.04, with STEP model | 1.40 mm holes, pad numbers mirrored. At the bottom edge rotated 180°: plug opening faces the edge, pins 1 to 16 left to right. |
 | J71, J72 | Same Sky TBL002A-350-08GR-2OR, 8-pos 3.5 mm, 45° push-button | custom `board2.pretty` | Together these are "J7". J71 = OBD pins 1–8, J72 = 9–16. |
 | J6 | Same Sky TBL002A-350-08GR-2OR | custom `board2.pretty` | Pins 1–4 = NET1a..4a, pins 5–8 = NET1b..4b. |

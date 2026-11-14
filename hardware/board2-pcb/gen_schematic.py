@@ -89,8 +89,8 @@ FUSE = use("Device", "Fuse")
 
 FP_TBL = "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg"   # custom, from Same Sky TBL002A-350 datasheet
 FP_J3 = "board2:SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed"   # built from Same Sky datasheet TBP02R1-381 rev 1.04; pad numbers mirrored
-FP_TB2 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"  # PLACEHOLDER J2 (jack type OPEN)
-FP_TB4 = "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal"  # PLACEHOLDER SW1/SW2 (part OPEN)
+FP_TB2 = "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal"  # J2: XINLAIYA XY308-2.54-2P, 0.1 in pitch (as Board 1)
+FP_TB4 = "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal"  # SW1/SW2: XINLAIYA XY308-2.54-4P, 0.1 in pitch (same as Board 1 J2)
 FP_D2 = "Diode_THT:D_DO-201AD_P12.70mm_Horizontal"
 FP_D3 = "Diode_THT:D_DO-27_P12.70mm_Horizontal"
 FP_F2 = "board2:Fuseholder_2pin_5x20_P15mm"   # 5x20 covered holder, pins 15.0 mm apart, 1.3 mm holes: the Board 1 F1 footprint (body 25.7 x 11.5 mm)

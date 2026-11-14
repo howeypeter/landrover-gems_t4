@@ -9,3 +9,5 @@ J4 mate (1 column),Harwin,M20-1060500,1x5 female crimp housing 2.54mm (key plug 
 J4 mate (2 columns),Harwin,M20-1070500,2x5 (5+5) female crimp housing 2.54mm; Mouser number not confirmed,as needed,verify part number
 J4 key plug,Harwin,M20-003,Polarizing key plug for M20 housings (goes in slot 4 of each cable housing),as needed,verify part number
 J4 crimp contacts,Harwin,M20-1160042 / M20-1160046 / M20-1180042 / M20-1180046,Female crimp contacts for the M20 housings 22-30 AWG (or pre-crimped leads - fit in the Harwin housing unconfirmed),as needed,verify part number
+J2,XINLAIYA,XY308-2.54-2P,2-pos 2.54 mm screw terminal (LCSC C557685); 12V DC input,1,chosen
+SW1/SW2,XINLAIYA,XY308-2.54-4P,4-pos 2.54 mm screw terminal (LCSC C915913); one per switch,2,chosen

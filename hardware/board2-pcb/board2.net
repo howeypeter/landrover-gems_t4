@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-13T15:19:52")
+		(date "2026-11-14T01:05:51")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "9fa55bc2-b5a1-4955-ba77-b71c4278cb44")
+			(tstamps "54e44c18-f269-44a8-9146-fcd58d44d485")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ac64d772-56fb-426f-a10b-75b1e5e56f4d")
+			(tstamps "bba9dbfd-5dfc-40d4-a0d0-86475b854d03")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "033b0000-8cfd-46f5-89b1-fb3f91789625")
+			(tstamps "99dae1fa-21d7-43a5-a876-9cb12ee7acfb")
 			(units
 				(unit
 					(name "A")
@@ -219,11 +219,11 @@
 		(comp
 			(ref "J2")
 			(value "12V DC in")
-			(footprint "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal")
+			(footprint "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal")
 			(description "12 V DC input (jack type OPEN)")
 			(fields
 				(field
-					(name "Footprint") "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal")
+					(name "Footprint") "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal")
 				(field
 					(name "Datasheet")
 				)
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "eb8dc087-c9f5-4b76-87ef-3c550ebc9cb7")
+			(tstamps "ac640b35-a22d-4b0c-a1ab-0e5474f42d73")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "b234dfbd-5e9b-42a4-a7fa-692722cebf9d")
+			(tstamps "7fd8e74a-3639-4d3e-9d13-f3935e30b7d3")
 			(units
 				(unit
 					(name "A")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "bc26a7d4-58ea-4f8d-908f-22b8569ebd11")
+			(tstamps "4caefa91-9645-402d-ba23-517a6efaf9d4")
 			(units
 				(unit
 					(name "A")
@@ -477,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "d6210e97-ffcd-43ff-a453-ae644d0a40c0")
+			(tstamps "3d5c2a17-a240-4ba8-aa54-299fadb9a830")
 			(units
 				(unit
 					(name "A")
@@ -555,7 +555,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "14ed7ae7-b676-4241-8a96-8c6a57e3ed2f")
+			(tstamps "cebcbd5d-0d44-49ca-8f7a-d11940517e9b")
 			(units
 				(unit
 					(name "A")
@@ -633,7 +633,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "d2e2fca6-1fb5-4bbd-8ecb-f10e2a84ab43")
+			(tstamps "cf6eede7-c742-4a8b-a97b-700abae85a8f")
 			(units
 				(unit
 					(name "A")
@@ -711,7 +711,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "46f5d7fc-2e2a-49e0-8b99-0f5a1f5000b4")
+			(tstamps "1bd7c0ad-5c04-485d-afbe-876d4d3c1995")
 			(units
 				(unit
 					(name "A")
@@ -789,7 +789,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "f14c3651-ffaa-4d4c-b97a-c76e964e2da2")
+			(tstamps "80ed1cf0-cbea-4d8d-9f06-75acfe5e7653")
 			(units
 				(unit
 					(name "A")
@@ -861,7 +861,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3809eb11-4c69-4931-ba47-910898fd5758")
+			(tstamps "0f97af89-4a15-46b6-b62d-1cf3b436589a")
 			(units
 				(unit
 					(name "A")
@@ -897,11 +897,11 @@
 		(comp
 			(ref "SW1")
 			(value "4-pin screw terminal")
-			(footprint "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
+			(footprint "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal")
 			(description "4-pin screw terminal to off-board illuminated switch (general power); pin 1 GND, pin 4 input (matches Board 1 convention)")
 			(fields
 				(field
-					(name "Footprint") "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
+					(name "Footprint") "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal")
 				(field
 					(name "Datasheet")
 				)
@@ -933,7 +933,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "4a48cead-527a-44e9-b4b1-61f69ae18d17")
+			(tstamps "7673519d-81f6-4bdd-b553-2b08730f7797")
 			(units
 				(unit
 					(name "A")
@@ -957,11 +957,11 @@
 		(comp
 			(ref "SW2")
 			(value "4-pin screw terminal")
-			(footprint "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
+			(footprint "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal")
 			(description "4-pin screw terminal to off-board illuminated switch (shared 12V_IGN); pin 1 GND, pin 4 input (matches Board 1 convention)")
 			(fields
 				(field
-					(name "Footprint") "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal")
+					(name "Footprint") "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal")
 				(field
 					(name "Datasheet")
 				)
@@ -993,7 +993,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8d3c04d6-d671-46d0-bec6-3ccf6bd50f88")
+			(tstamps "ef7d18bb-44bc-4f3f-a31c-d684db542d89")
 			(units
 				(unit
 					(name "A")
