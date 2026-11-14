@@ -72,3 +72,7 @@ hardware/board2-pcb/board2.3dshapes/TBP02R1-381-16BE.step
 
 # KiCad lock files
 *.lck
+
+# Harwin M20-9980546 3D model (Ultra Librarian, vendor-licensed) and the pins-removed derivatives: keep local
+hardware/board2-pcb/board2.3dshapes/M20-9980546_KeyRowRemoved.glb
+hardware/board2-pcb/board2.3dshapes/M20-9980546_KeyRowRemoved.wrl

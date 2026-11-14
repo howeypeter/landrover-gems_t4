@@ -49,6 +49,16 @@ housing's long end: the real housing extends 3.25 mm past pin 1 (the square pad,
 the vendor model's own pin and body geometry. The first attempt (turn Z = 90) was 180 degrees out, so the box looked 1.5 mm off. KiCad has no equivalent settings: its J7/J6
 models are still green block stand-ins.
 
+J41-J44 3D model (2026-11-13/14): the Harwin M20-9980546 vendor model (Ultra Librarian download, `M20-9980546.glb` / `.stp`)
+is a 2x5 header, 12.7 x 5.08 x 2.64 mm body, 0.66 mm square pins from 3.0 mm below the body underside to 8.64 mm above it
+(units are metres in the GLB). Its origin is pin 1 and its long axis runs along x, so it must be spun 90 degrees to match our
+footprint (5 pins along y). Placed by "The file's origin", offset 0. In Cherry Blossom the models worked once the spin was on
+the third Turn box (a first try with the spin on the wrong axis made the four headers overlap into one 11-pin-wide strip,
+22 pins visible); the exact Turn and Offset values the user used are not recorded here yet. In KiCad the footprint model is
+`board2.3dshapes/M20-9980546_KeyRowRemoved.wrl` (rotate z 90, scale 0.3937), the same model with the two key-column pins
+(x = 7.62 mm) deleted, so the KEY row is empty. A GLB of the same edited model is next to it. Both derive from the vendor
+model and are gitignored.
+
 ## 1. How to read this brief
 
 - **Review target:** `board2.kicad_sch` and `board2.kicad_pcb` (KiCad 10).

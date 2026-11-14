@@ -14,4 +14,5 @@
 	(pad "9" thru_hole circle (at 0 10.16) (size 1.75 1.75) (drill 1.02) (layers "*.Cu" "*.Mask"))
 	(pad "10" thru_hole circle (at 2.54 10.16) (size 1.75 1.75) (drill 1.02) (layers "*.Cu" "*.Mask"))
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/board2.3dshapes/M20-9980546_KeyRowRemoved.wrl" (offset (xyz 0 0 0)) (scale (xyz 0.3937 0.3937 0.3937)) (rotate (xyz 0 0 90)))
 )
