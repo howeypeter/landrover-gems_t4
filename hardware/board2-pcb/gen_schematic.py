@@ -121,10 +121,10 @@ place(C1x08, "J71", "TBL002A-350-08GR-2OR", FP_TBL, 26, 48, {str(n): obd(9 - n) 
 place(C1x08, "J72", "TBL002A-350-08GR-2OR", FP_TBL, 26, 66, {str(n): obd(17 - n) for n in range(1, 9)}, "J7 OBD pins 9-16, pin 8 leftmost")
 
 # ---- J6 landing ----
-text("J6 PATCH LANDING:  wires from J7 patch in here; pin pairs 7-8 = NET1 ... 1-2 = NET4", 56, 36)
+text("J6 PATCH LANDING:  wires from J7 patch in here; pin pairs 1-2 = NET1 ... 7-8 = NET4", 56, 36)
 place(C1x08, "J6", "TBL002A-350-08GR-2OR", FP_TBL, 64, 54,
-      {"1": "NET4", "2": "NET4", "3": "NET3", "4": "NET3", "5": "NET2", "6": "NET2", "7": "NET1", "8": "NET1"},
-      "Pin pairs 1-2 = NET4, 3-4 = NET3, 5-6 = NET2, 7-8 = NET1 (reassigned 2026-11-14 to match the J6 silk; J41 at the +x end faces NET1)")
+      {"1": "NET1", "2": "NET1", "3": "NET2", "4": "NET2", "5": "NET3", "6": "NET3", "7": "NET4", "8": "NET4"},
+      "Pin pairs 1-2 = NET1, 3-4 = NET2, 5-6 = NET3, 7-8 = NET4 (reassigned 2026-11-14 to match the J6 silk; J41 at the -x end faces NET1, left to right from the front)")
 
 # ---- J4 outputs: 2x4 grid; pins 1 BAT, 2 NET, 3 IGN, 4 GND ----
 text("J4 OUTPUT GRID (4 x Harwin M20-9980546 2x5, 5 rows x 8 columns, 2.54 mm):  rows 1-5 = V12S, IGN, GND, key (pins pulled), NET;  columns = NET1a NET1b NET2a NET2b NET3a NET3b NET4a NET4b", 4, 90)

@@ -309,3 +309,8 @@ J41 to J44 stay at 0 degrees. Their positions are swapped so that, facing the ba
 turned 180 degrees to read from the J4 edge; NET1 to NET4 sit on the J6 side of each header, turned -90 degrees. J6 has NET4, NET3, NET2, NET1 labels under pin pairs
 1-2, 3-4, 5-6, 7-8. J6 was reassigned the same day to match: pin pairs 7-8 = NET1, 5-6 = NET2, 3-4 = NET3, 1-2 = NET4; J41 to J44 carry NET1 to NET4 (J41 at the +x end), so the J6 to J4 ratsnest lines no longer cross.
 
+Layout and silk update (2026-11-14, later): all text reads at 0 degrees (J3 edge) or 90 degrees, no upside-down text. J41 to J44 are at 0 degrees with J41 on the left,
+pins 1/2 (+12V_BAT) at the J4 edge, then +12V_IGN, GND, the blank key row, and K_LINE_SIGNAL (pins 9/10, NET1 to NET4 per header, joined to the J6 pin pairs) nearest J6.
+D2 is turned 180 degrees (anode on VJ2 toward J2, cathode on VD toward F2) and sits 1.5 mm further from F2; F2 is 6.25 mm higher (clear of J72 by about 1.4 mm);
+J2 is at y 25.43 (CB) with +12V below and GND above; D3 is unchanged at the bottom right (an upward move was tried and undone). KiCad is regenerated to match and is unrouted.
+
