@@ -98,8 +98,8 @@ for ref in ("J71","J72"):
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
 p2=pads_of("J2"); cx=p2["1"][0]
 # same places as the Cherry Blossom labels: GND above the terminal (clear of the corner mounting hole), +12V below it
-label("GND", 75.9, 11.8, 1.0)   # left of J2 pad 2 (CB 32.4, 26.7): keeps it clear of the 5.5 mm washer zone around the M4 hole
-label("+12V", cx, 17.15, 1.0)
+label("GND", 75.9, 11.8, 1.0)   # left of J2 pad 2 = GND (CB 32.4, 26.7)
+label("+12V", 75.5, 14.34, 1.0)   # left of J2 pad 1 = +12V (CB 32.0, 24.16)
 # designators of the power parts: references hidden, short labels placed in free spots
 for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)
 label("D2",70.2,5.4,0.9); label("F2 2A",73.0,31.25,0.9); label("D3",85.6,60.95,1.0,90)   # right of D3 (CB 42.1,-22.45)
