@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-14T01:05:51")
+		(date "2026-11-14T01:28:22")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "54e44c18-f269-44a8-9146-fcd58d44d485")
+			(tstamps "1d1ae920-fd88-4197-9729-fc9008bf0d52")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "bba9dbfd-5dfc-40d4-a0d0-86475b854d03")
+			(tstamps "8817a327-0b0e-465d-b6c1-6b0f9deef653")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "99dae1fa-21d7-43a5-a876-9cb12ee7acfb")
+			(tstamps "c2006652-804a-47f4-b101-d1a498a5df9e")
 			(units
 				(unit
 					(name "A")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ac640b35-a22d-4b0c-a1ab-0e5474f42d73")
+			(tstamps "559618c5-555d-4b05-9e64-becc47935770")
 			(units
 				(unit
 					(name "A")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "7fd8e74a-3639-4d3e-9d13-f3935e30b7d3")
+			(tstamps "8a714896-e36f-43b1-9023-b1b7bb43ddb2")
 			(units
 				(unit
 					(name "A")
@@ -370,7 +370,7 @@
 			(ref "J6")
 			(value "TBL002A-350-08GR-2OR")
 			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
-			(description "Pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b of each net tied)")
+			(description "Pin pairs 1-2 = NET4, 3-4 = NET3, 5-6 = NET2, 7-8 = NET1 (reassigned 2026-11-14 to match the J6 silk; J41 at the +x end faces NET1)")
 			(fields
 				(field
 					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
@@ -378,7 +378,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Pins 1-4 = NET1a..NET4a, pins 5-8 = NET1b..NET4b (a/b of each net tied)")
+					(name "Description") "Pin pairs 1-2 = NET4, 3-4 = NET3, 5-6 = NET2, 7-8 = NET1 (reassigned 2026-11-14 to match the J6 silk; J41 at the +x end faces NET1)")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "4caefa91-9645-402d-ba23-517a6efaf9d4")
+			(tstamps "1658f6a9-7a43-4e19-8def-cf47f30e7e74")
 			(units
 				(unit
 					(name "A")
@@ -477,7 +477,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "3d5c2a17-a240-4ba8-aa54-299fadb9a830")
+			(tstamps "9175986f-11ae-46fe-9634-581da207f654")
 			(units
 				(unit
 					(name "A")
@@ -555,7 +555,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "cebcbd5d-0d44-49ca-8f7a-d11940517e9b")
+			(tstamps "bd72ad8c-d976-40ba-8cc9-5eabcaebd93c")
 			(units
 				(unit
 					(name "A")
@@ -633,7 +633,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "cf6eede7-c742-4a8b-a97b-700abae85a8f")
+			(tstamps "990760a4-2858-4593-b820-b3320271f748")
 			(units
 				(unit
 					(name "A")
@@ -711,7 +711,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "1bd7c0ad-5c04-485d-afbe-876d4d3c1995")
+			(tstamps "2ac9b13e-4e2f-464e-a46c-943925d4a0cc")
 			(units
 				(unit
 					(name "A")
@@ -789,7 +789,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "80ed1cf0-cbea-4d8d-9f06-75acfe5e7653")
+			(tstamps "0eab9815-aa90-4ecc-b917-20b6ed317355")
 			(units
 				(unit
 					(name "A")
@@ -861,7 +861,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "0f97af89-4a15-46b6-b62d-1cf3b436589a")
+			(tstamps "78bd987f-e9ae-4296-9fa6-54502c87d491")
 			(units
 				(unit
 					(name "A")
@@ -933,7 +933,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "7673519d-81f6-4bdd-b553-2b08730f7797")
+			(tstamps "fbfb8761-b579-4443-bbf4-4d62bb37ff70")
 			(units
 				(unit
 					(name "A")
@@ -993,7 +993,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ef7d18bb-44bc-4f3f-a31c-d684db542d89")
+			(tstamps "42daf8b0-83fa-46f9-a610-8e34e8f743f8")
 			(units
 				(unit
 					(name "A")
@@ -1634,14 +1634,14 @@
 			)
 			(node
 				(ref "J6")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(pin "7")
+				(pinfunction "Pin_7_7")
 				(pintype "passive")
 			)
 			(node
 				(ref "J6")
-				(pin "5")
-				(pinfunction "Pin_5_5")
+				(pin "8")
+				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
 		)
@@ -1663,8 +1663,8 @@
 			)
 			(node
 				(ref "J6")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(pin "5")
+				(pinfunction "Pin_5_5")
 				(pintype "passive")
 			)
 			(node
@@ -1698,8 +1698,8 @@
 			)
 			(node
 				(ref "J6")
-				(pin "7")
-				(pinfunction "Pin_7_7")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 		)
@@ -1721,14 +1721,14 @@
 			)
 			(node
 				(ref "J6")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(pin "1")
+				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
 				(ref "J6")
-				(pin "8")
-				(pinfunction "Pin_8_8")
+				(pin "2")
+				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 		)

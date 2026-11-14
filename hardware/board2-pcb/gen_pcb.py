@@ -82,7 +82,8 @@ fps={f.GetReference():f for f in b.GetFootprints()}
 def pads_of(ref): return {p.GetNumber():(pcbnew.ToMM(p.GetPosition().x),pcbnew.ToMM(p.GetPosition().y)) for p in fps[ref].Pads()}
 # J6: one net label per pin pair under the bottom row (as in Cherry Blossom 2026-11-14): pins 7,8 = NET1 ... pins 1,2 = NET4.
 # NOTE: the netlist still wires J6 pin 1/5 = NET1 etc.; the nets are to be reassigned later, so these labels lead the netlist.
-for _t,_x in (("NET4",33.75),("NET3",40.75),("NET2",47.75),("NET1",54.75)): label(_t,_x,36.3,1.0)
+for _t,_x in (("NET4",33.75),("NET3",40.75),("NET2",47.75),("NET1",54.75)): label(_t,_x,36.3,1.0,180)
+for _t,_x in (("NET4",33.75),("NET3",40.75),("NET2",47.75),("NET1",54.75)): label(_t,_x,25.6,1.0,180)   # second set, above the J6 box (CB y 12.9)
 # J7: OBD pin numbers, read from the net on each pad
 def obdnum(ref,pad):
     nn=pinnet[(ref,pad)]
