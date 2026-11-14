@@ -218,7 +218,7 @@ for the whole board.
 | Item | Value |
 |---|---|
 | Outline | 87 x 77 mm rectangle (same as Board 1, same enclosure family) |
-| Mounting holes | 4 x M3 (3.2 mm, plated, with via ring), centres 4.25 mm from each edge, so 78.5 x 68.5 mm apart. Not assigned to a net. Spacing may be nudged after a test fit. |
+| Mounting holes | 4 x M4 (4.3 mm drill, plated, 8.0 mm ring left floating, 0.5 mm to the board edge; same hole size as Board 1), centres 4.5 mm from each edge, so 78 x 68 mm apart. Not assigned to a net. Spacing may be nudged after a test fit. |
 | Layers | 2 (F.Cu, B.Cu). Thickness and copper weight not yet fixed; assume 1.6 mm, 1 oz. |
 | Track widths | power nets (VJ2, VD, VF, V12S, IGN) and routed GND 0.8 mm; signals 0.3 mm |
 | Vias | 0.8 mm pad / 0.4 mm drill |
@@ -315,7 +315,7 @@ D2 is turned 180 degrees (anode on VJ2 toward J2, cathode on VD toward F2) and s
 J2 is at y 25.43 (CB) with +12V below and GND above; D3 is unchanged at the bottom right (an upward move was tried and undone). KiCad is regenerated to match and is unrouted.
 
 Terminal wire entry and board facts (2026-11-14):
-- Board 87 x 77 mm, 1.6 mm thick; four M3 mounting holes 4.25 mm in from the edges (top right at KiCad (82.75, 4.25), pad ring about 2.6 mm radius).
+- Board 87 x 77 mm, 1.6 mm thick; four M4 mounting holes 4.5 mm in from the edges (top right at KiCad (82.5, 4.5), 4.3 mm drill, 8.0 mm plated ring).
 - SW1 and SW2 (XINLAIYA XY308-2.54-4P) face the left board edge: the wire entries are on the left of the body, about 2.2 mm from the edge, so switch wires screw in from the side of the board.
   J2 (XY308-2.54-2P) faces the right edge, entries about 2.2 mm from the edge, 3.4 mm below the top-right screw-hole ring. This was read from the footprint silk (funnel slots and
   the entry arrow), NOT checked against the Xinya datasheet or the vendor 3D model: confirm before ordering. If an entry faces the middle, rotate that terminal 180 degrees.

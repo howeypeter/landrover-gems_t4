@@ -35,7 +35,7 @@ PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
 # stand-ins whose pad layout differs slightly from Cherry Blossom's parts, so the rotation is chosen so that the pad 1 -> pad 2
 # direction matches, and pad 1 is placed exactly. Right-edge column: J2, F2, D3 (x 81.3), D2 beside J2 (x 71.7); SW1/SW2 swapped.
 PAD12={"J2":((81.3,14.34),(81.3,11.8)),"D2":((70.2,21.8),(70.2,8.2)),"F2":((80.8,23.75),(80.8,38.75)),
-       "D3":((81.3,54.65),(81.3,67.15)),"SW1":((5.7,37.08),(5.7,39.62)),"SW2":((5.7,15.08),(5.7,17.62))}   # SW1/SW2 moved up 8 mm (CB y +8) 2026-11-14
+       "D3":((81.3,54.45),(81.3,67.15)),"SW1":((5.7,37.08),(5.7,39.62)),"SW2":((5.7,15.08),(5.7,17.62))}   # SW1/SW2 moved up 8 mm (CB y +8) 2026-11-14
 for _r in PAD12: ROT.pop(_r,None)
 # J4: four Harwin M20-9980546 2x5 headers side by side = one 5 row x 8 column grid (key row 4: pins pulled, no holes); cables exit up.
 # Pad 1 / pad 2 targets from Cherry Blossom: columns 2.54 mm apart, row 1 at CB y = 33.08 (KiCad y 5.42); header i starts at CB x = -8.89 + 5.08 i.
@@ -66,9 +66,12 @@ for ref,fid in fp_of.items():
 for (x1,y1,x2,y2) in [(0,0,W,0),(W,0,W,H),(W,H,0,H),(0,H,0,0)]:
     s=pcbnew.PCB_SHAPE(b); s.SetShape(pcbnew.SHAPE_T_SEGMENT); s.SetLayer(pcbnew.Edge_Cuts)
     s.SetStart(VECTOR2I(mm(x1),mm(y1))); s.SetEnd(VECTOR2I(mm(x2),mm(y2))); s.SetWidth(mm(0.1)); b.Add(s)
-# mounting holes M3, 4 mm inset
-for hx,hy in [(4.25,4.25),(W-4.25,4.25),(4.25,H-4.25),(W-4.25,H-4.25)]:
-    f=pcbnew.FootprintLoad(os.path.join(FPDIR,"MountingHole.pretty"),"MountingHole_3.2mm_M3_Pad_Via")
+# mounting holes M4 (4.3 mm plated, 4.5 mm inset; matches Board 1 hole size)
+for hx,hy in [(4.5,4.5),(W-4.5,4.5),(4.5,H-4.5),(W-4.5,H-4.5)]:
+    f=pcbnew.FootprintLoad(os.path.join(FPDIR,"MountingHole.pretty"),"MountingHole_4.3mm_M4_Pad")
+    for p in f.Pads(): p.SetSize(VECTOR2I(mm(8.0),mm(8.0)))   # 8.0 mm ring = 0.5 mm to the edge (same as CB)
+    for g in list(f.GraphicalItems()):
+        if g.GetLayer()==pcbnew.F_CrtYd: f.Remove(g)   # ring is the keep-out; stock courtyard is larger than the ring
     f.SetReference("H"); f.Reference().SetVisible(False); f.SetPosition(VECTOR2I(mm(hx),mm(hy))); b.Add(f)
 
 # ---- silkscreen labels ----
@@ -95,7 +98,7 @@ for ref in ("J71","J72"):
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
 p2=pads_of("J2"); cx=p2["1"][0]
 # same places as the Cherry Blossom labels: GND above the terminal (clear of the corner mounting hole), +12V below it
-label("GND", cx, 8.9, 1.0)   # above J2 (CB 37.8, 29.6)
+label("GND", cx, 9.5, 1.0)   # above J2 (CB 37.8, 29.0; moved 0.6 mm off the M4 ring)
 label("+12V", cx, 17.15, 1.0)
 # designators of the power parts: references hidden, short labels placed in free spots
 for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)

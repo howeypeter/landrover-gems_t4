@@ -83,8 +83,8 @@ key plug in slot 4; a plug turned 180 degrees puts the key on the live IGN pin (
 also hits a live pin. Cables exit **upward**. Open points, and the 1x8-row alternative that was considered, are in
 `docs/board2-backlog.md`.
 
-**Board:** 87 x 77 mm (same as Board 1; set 2026-11-12), mounting holes 4.25 mm from the edges (centres 78.5 x 68.5 mm;
-Board 1 holes were found 1-3 mm too far apart, so expect to nudge these). Layout (see `hardware/board2-pcb/gen_pcb.py`):
+**Board:** 87 x 77 mm (same as Board 1; set 2026-11-12), four M4 mounting holes (4.3 mm drill, plated, 8.0 mm ring, same size as Board 1) 4.5 mm from the edges (centres 78 x 68 mm;
+Board 1 hole spacing differs, so confirm against the enclosure). Layout (see `hardware/board2-pcb/gen_pcb.py`):
 J4 5x8 grid (four 2x5 headers) centred on the top edge; J6 below it, centred; power parts in the right-hand column
 (J2 at the top right, D2 beside it, then F2 and D3 below J2); SW2 above SW1 on the left edge; J71/J72 directly above J3
 (turned 180 degrees), J3 centred on the bottom edge. Edge terminals (J2, SW1, SW2) have their wire entry facing the
