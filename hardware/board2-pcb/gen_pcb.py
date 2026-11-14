@@ -72,8 +72,9 @@ for hx,hy in [(4.25,4.25),(W-4.25,4.25),(4.25,H-4.25),(W-4.25,H-4.25)]:
     f.SetReference("H"); f.Reference().SetVisible(False); f.SetPosition(VECTOR2I(mm(hx),mm(hy))); b.Add(f)
 
 # ---- silkscreen labels ----
-def label(txt, x, y, size=0.9, rot=0, layer=pcbnew.F_SilkS):
+def label(txt, x, y, size=0.9, rot=0, layer=pcbnew.F_SilkS, right=False):
     t=pcbnew.PCB_TEXT(b); t.SetText(txt); t.SetLayer(layer)
+    if right: t.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_RIGHT)
     t.SetPosition(VECTOR2I(mm(x),mm(y))); t.SetTextSize(VECTOR2I(mm(size),mm(size))); t.SetTextThickness(mm(0.15))
     t.SetTextAngleDegrees(rot); b.Add(t)
 fps={f.GetReference():f for f in b.GetFootprints()}
@@ -107,7 +108,7 @@ for _i in range(4):
 pp=pads_of("J41"); rows_y={1:pp["1"][1], 2:pp["3"][1], 3:pp["5"][1], 5:pp["9"][1]}
 rows_y[4]=(rows_y[3]+rows_y[5])/2   # the key row (pins pulled, no holes) sits between GND (row 3) and NET (row 5)
 for k,x in enumerate(cols): label(f"{k//2+1}{'ab'[k%2]}", x, rows_y[1]-3.0, 0.9)   # column names above the grid
-for k,nm in enumerate(("+12V","IGN","GND","KEY","NET"), start=1): label(nm, min(cols)-4.2, rows_y[k], 0.8)   # row names left of it
+for k,nm in enumerate(("+12V_BAT","+12V_IGN","GND","KEY","LINE SIGNAL"), start=1): label(nm, min(cols)-2.2, rows_y[k], 0.8, right=True)   # row names left of it, right-aligned to the grid
 # switch + title labels
 for ref,txt in (("SW1","SW1 POWER"),("SW2","SW2 IGN")):
     fps[ref].Reference().SetVisible(False)
