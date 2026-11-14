@@ -95,15 +95,15 @@ for ref in ("J71","J72"):
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
 p2=pads_of("J2"); cx=p2["1"][0]
 # same places as the Cherry Blossom labels: GND above the terminal (clear of the corner mounting hole), +12V below it
-label("GND", cx, 8.9, 0.9)   # above J2 (CB 37.8, 29.6)
-label("+12V", cx, 17.15, 0.9)
+label("GND", cx, 8.9, 1.0)   # above J2 (CB 37.8, 29.6)
+label("+12V", cx, 17.15, 1.0)
 # designators of the power parts: references hidden, short labels placed in free spots
 for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)
 label("D2",70.2,5.4,0.9); label("F2 2A",73.0,31.25,0.9); label("D3",85.6,60.95,1.0,90)   # right of D3 (CB 42.1,-22.45)
 # J4: labels as in Cherry Blossom (2026-11-14): headers turned 180 deg, text turned 180 deg so it reads from the J4 edge.
 # Centres from Cherry Blossom (x -> x+43.5, y -> 38.5-y). Real refs hidden; J41..J44 shown below the grid (toward J6). The key row (no holes) is unlabelled.
 for _i in range(4): fps[f"J4{_i+1}"].Reference().SetVisible(False)
-for _t,_x,_y in (("+12V_SW",30.3,5.42),("+12V_IGN",29.9,7.96),("GND",31.25,10.5),("K_LINE_SIGNAL",28.35,15.58)): label(_t,_x,_y,0.8)   # top to bottom (2026-11-14): BAT at the J4 edge, key row blank, signal nearest J6
+for _t,_x,_y in (("+12V_SW",29.05,5.42),("+12V_IGN",28.5,7.96),("GND",31.05,10.5),("K_LINE_SIGNAL",25.95,15.58)): label(_t,_x,_y,1.0)   # top to bottom (2026-11-14): BAT at the J4 edge, key row blank, signal nearest J6
 for _i in range(4): label(f"J4{_i+1}",35.88+5.08*_i,2.3,1.0)
 for _t,_x in (("NET1",35.88),("NET2",40.96),("NET3",46.04),("NET4",51.12)): label(_t,_x,19.5,1.0,90)   # on J43, J6 side, turned -90 deg (user 2026-11-14; nets to be reassigned later, so it does not match the J43 net yet)   # J4 edge side of the grid (CB y 36.2), text at 0 deg (standard reading direction)
 # J6 designator moved to the left side of its box (CB -17.3, 5.9)
@@ -114,7 +114,7 @@ sw2=pads_of("SW2"); sw1=pads_of("SW1")
 label("SW2_IGN",5.5,38.5-26.6,1.0); label("SW1_BAT",5.5,38.5-5.0,1.0)
 for _sw in (sw1,sw2):
     for _n,_nm in (("1","GND"),("2","LED+"),("3","OUT"),("4","IN")):
-        _x,_y=_sw[_n]; label(_nm,10.3,_y,0.9,left=True)   # left-justified, left edge at CB x -33.2
+        _x,_y=_sw[_n]; label(_nm,10.3,_y,1.0,left=True)   # left-justified, left edge at CB x -33.2
 # J3 pin labels (OBD pin number / function), centred halfway between the J3 end (KiCad y 66.8) and the J71/J72 bottom edge (57.6): y 62.2, as in Cherry Blossom; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():

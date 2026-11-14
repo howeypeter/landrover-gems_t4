@@ -336,3 +336,8 @@ D2/D3 lead spacing (2026-11-14, user): resolved, no change. D2 (SB540) and D3 (1
 
 J3 pin 5 silk (2026-11-14, user): relabelled SIG_GND (1.0 mm text like the digits, vertical, centred between J3 and J71/J72, about 1.4 mm clear of both outlines; the +12V on pin 16 is the same size and centred the same way); the net is still GND. Pin 4 (chassis ground) is unlabelled and not on GND.
 
+Routing (2026-11-14, Cherry Blossom only; the KiCad board stays unrouted): JLCPCB standard (6 mil) rules, min drill 0.3 mm, 1 oz copper, HASL, 87 x 77 mm.
+All 51 connections routed in one pass with the power nets first (VJ2, VD, VF, V12S, IGN, GND at 0.8 mm = about 2 A, the fuse rating; signals 0.25 mm), GND poured on both layers with stitching vias.
+Review fixes: GND thermal spokes widened to 4 x 0.5 mm; a direct 0.8 mm bottom-layer V12S trace SW1.3 to J72.1 (78 mm) so J3 pin 16 is no longer fed only through the J4 row; small silk raised to 1.0 mm.
+verify_parts found no supplier records for J3, J6/J71/J72, J41-J44 or F2, so they stay "unverified" in the checks: pitch and holes were checked by hand against the Same Sky datasheets and Board 1.
+
