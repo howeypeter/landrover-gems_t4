@@ -314,3 +314,10 @@ pins 1/2 (+12V_BAT) at the J4 edge, then +12V_IGN, GND, the blank key row, and K
 D2 is turned 180 degrees (anode on VJ2 toward J2, cathode on VD toward F2) and sits 1.5 mm further from F2; F2 is 6.25 mm higher (clear of J72 by about 1.4 mm);
 J2 is at y 25.43 (CB) with +12V below and GND above; D3 is unchanged at the bottom right (an upward move was tried and undone). KiCad is regenerated to match and is unrouted.
 
+Terminal wire entry and board facts (2026-11-14):
+- Board 87 x 77 mm, 1.6 mm thick; four M3 mounting holes 4.25 mm in from the edges (top right at KiCad (82.75, 4.25), pad ring about 2.6 mm radius).
+- SW1 and SW2 (XINLAIYA XY308-2.54-4P) face the left board edge: the wire entries are on the left of the body, about 2.2 mm from the edge, so switch wires screw in from the side of the board.
+  J2 (XY308-2.54-2P) faces the right edge, entries about 2.2 mm from the edge, 3.4 mm below the top-right screw-hole ring. This was read from the footprint silk (funnel slots and
+  the entry arrow), NOT checked against the Xinya datasheet or the vendor 3D model: confirm before ordering. If an entry faces the middle, rotate that terminal 180 degrees.
+- 2.54 mm terminals rate 6 A / 150 V per distributor listings (not the maker PDF); use 18 AWG for about 3 A.
+

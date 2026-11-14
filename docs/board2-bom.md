@@ -38,7 +38,7 @@ before ordering; **OPEN** = not yet decided/sourced.
 
 | Item | Qty | Status | Notes |
 |---|---|---|---|
-| PCB, 85 x 75 mm outline, mounting holes (83 x 61 mm pattern per enclosure note) | 1 | OPEN | confirm outline/holes vs the enclosure |
+| PCB, 87 x 77 mm outline, 1.6 mm, four M3 holes 4.25 mm in from the edges (78.5 x 68.5 mm pattern) | 1 | OPEN | corrected 2026-11-14 (was 85 x 75 / 83 x 61 per an old enclosure note); confirm outline/holes vs the enclosure |
 | Standoffs ~1/4" (6 mm) + screws | 4 | OPEN | |
 | Enclosure with room/opening above J4 for the cables | 1 | OPEN | vertical J4 cables exit upward (lid cutout or tall enough box) |
 

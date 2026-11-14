@@ -28,3 +28,6 @@ Context: J4 is being replaced by a Harwin M20 5-row x 8-column grid (four M20-99
 - Sheet 2 of `diagrams/gems-2pcb-schematic.html` still shows the old layout, J4 and SW pin order.
 - BOM still says an 85 x 75 mm board; the board is 87 x 77 mm.
 - Routing in Cherry Blossom: not done yet (nets are locked-placement, unrouted).
+- **Verify before ordering (2026-11-14):** wire-entry side of the XY308-2.54 terminals (SW1/SW2 face the left edge, J2 the right edge) against the Xinya datasheet or the 3D model, and the 6 A / 150 V rating against the maker PDF.
+- **Open layout notes:** F2 clears J72 by about 1.4 mm (it can not move further without hitting J2/D2); J71 to J72 gap about 1.0 mm; KiCad board is unrouted (routing is done in Cherry Blossom).
+
