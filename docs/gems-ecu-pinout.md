@@ -161,6 +161,9 @@ signal is on.
 | Pin | Code | Colour (described) | Function |
 |----:|------|--------------------|----------|
 | 15 | `YU` | yellow with blue tracer | **Throttle Position Sensor** |
+| 20 | `WK` | white with pink tracer | **L-line** (RAVE `lj`) — not yet physically checked, meter-verify |
+| 23 | `WLG` | white with light-green tracer | **K-line** (RAVE `lj`) — not yet physically checked, meter-verify |
+| 26 | `B` (solid black, per visual check) | black | **Theft alarm / mobilise** (10AS C225 pin 15) — continuity to 10AS not yet checked |
 
 > The remaining C507 colour codes are legible only in part on the supplied photo;
 > rather than risk mis-transcribing an authoritative table, fill each row in as
