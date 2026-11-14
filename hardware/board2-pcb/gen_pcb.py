@@ -35,7 +35,7 @@ PAD1={"J3":(14.93,68.0),"J71":(40.6,55.3),"J72":(71.1,55.3),"J6":(32.0,28.9)}
 # stand-ins whose pad layout differs slightly from Cherry Blossom's parts, so the rotation is chosen so that the pad 1 -> pad 2
 # direction matches, and pad 1 is placed exactly. Right-edge column: J2, F2, D3 (x 81.3), D2 beside J2 (x 71.7); SW1/SW2 swapped.
 PAD12={"J2":((81.3,14.34),(81.3,11.8)),"D2":((70.2,21.8),(70.2,8.2)),"F2":((80.8,23.75),(80.8,38.75)),
-       "D3":((81.3,54.45),(81.3,67.15)),"SW1":((5.7,37.08),(5.7,39.62)),"SW2":((5.7,15.08),(5.7,17.62))}   # SW1/SW2 moved up 8 mm (CB y +8) 2026-11-14
+       "D3":((81.3,52.75),(81.3,65.45)),"SW1":((5.7,37.08),(5.7,39.62)),"SW2":((5.7,15.08),(5.7,17.62))}   # SW1/SW2 moved up 8 mm (CB y +8) 2026-11-14
 for _r in PAD12: ROT.pop(_r,None)
 # J4: four Harwin M20-9980546 2x5 headers side by side = one 5 row x 8 column grid (key row 4: pins pulled, no holes); cables exit up.
 # Pad 1 / pad 2 targets from Cherry Blossom: columns 2.54 mm apart, row 1 at CB y = 33.08 (KiCad y 5.42); header i starts at CB x = -8.89 + 5.08 i.
@@ -98,7 +98,7 @@ for ref in ("J71","J72"):
 # J2 polarity: labels above/below the terminal (outside its body), nearest to each pad
 p2=pads_of("J2"); cx=p2["1"][0]
 # same places as the Cherry Blossom labels: GND above the terminal (clear of the corner mounting hole), +12V below it
-label("GND", cx, 9.5, 1.0)   # above J2 (CB 37.8, 29.0; moved 0.6 mm off the M4 ring)
+label("GND", 75.9, 11.8, 1.0)   # left of J2 pad 2 (CB 32.4, 26.7): keeps it clear of the 5.5 mm washer zone around the M4 hole
 label("+12V", cx, 17.15, 1.0)
 # designators of the power parts: references hidden, short labels placed in free spots
 for _r in ("J2","D2","F2","D3"): fps[_r].Reference().SetVisible(False)

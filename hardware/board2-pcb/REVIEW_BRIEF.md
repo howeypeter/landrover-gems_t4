@@ -218,7 +218,7 @@ for the whole board.
 | Item | Value |
 |---|---|
 | Outline | 87 x 77 mm rectangle (same as Board 1, same enclosure family) |
-| Mounting holes | 4 x M4 (4.3 mm drill, plated, 8.0 mm ring left floating, 0.5 mm to the board edge; same hole size as Board 1), centres 4.5 mm from each edge, so 78 x 68 mm apart. Not assigned to a net. Spacing may be nudged after a test fit. |
+| Mounting holes | 4 x M4 (4.3 mm drill, plated, 8.0 mm ring left floating, 0.5 mm to the board edge; same hole size as Board 1), centres 4.5 mm from each edge, so 78 x 68 mm apart. Parts, pads and silk are kept 5.5 mm or more from each hole centre (9 mm washer plus 1 mm for an off-centre screw); D3 was moved 1.7 mm up and the J2 GND label moved left of its pin for this. Not assigned to a net. Spacing may be nudged after a test fit. |
 | Layers | 2 (F.Cu, B.Cu). Thickness and copper weight not yet fixed; assume 1.6 mm, 1 oz. |
 | Track widths | power nets (VJ2, VD, VF, V12S, IGN) and routed GND 0.8 mm; signals 0.3 mm |
 | Vias | 0.8 mm pad / 0.4 mm drill |
