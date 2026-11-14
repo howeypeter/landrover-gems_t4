@@ -305,12 +305,12 @@ Consequences for a reviewer:
 
 J4 grid and net silk (2026-11-14, Cherry Blossom is the source, KiCad regenerated to match; the KiCad board is unrouted):
 J41 to J44 stay at 0 degrees. Their positions are swapped so that, facing the back (J4 edge) of the board, J41 is on the left and J44 on the right
-(J41 at x 6.35, J42 1.27, J43 -3.81, J44 -8.89 in Cherry Blossom coordinates). Row labels (+12V_BAT, +12V_IGN, GND, K_LINE_SIGNAL) and the J41 to J44 names are
+(J41 at x 6.35, J42 1.27, J43 -3.81, J44 -8.89 in Cherry Blossom coordinates). Row labels (+12V_SW, +12V_IGN, GND, K_LINE_SIGNAL) and the J41 to J44 names are
 turned 180 degrees to read from the J4 edge; NET1 to NET4 sit on the J6 side of each header, turned -90 degrees. J6 has NET4, NET3, NET2, NET1 labels under pin pairs
 1-2, 3-4, 5-6, 7-8. J6 was reassigned the same day to match: pin pairs 7-8 = NET1, 5-6 = NET2, 3-4 = NET3, 1-2 = NET4; J41 to J44 carry NET1 to NET4 (J41 at the +x end), so the J6 to J4 ratsnest lines no longer cross.
 
 Layout and silk update (2026-11-14, later): all text reads at 0 degrees (J3 edge) or 90 degrees, no upside-down text. J41 to J44 are at 0 degrees with J41 on the left,
-pins 1/2 (+12V_BAT) at the J4 edge, then +12V_IGN, GND, the blank key row, and K_LINE_SIGNAL (pins 9/10, NET1 to NET4 per header, joined to the J6 pin pairs) nearest J6.
+pins 1/2 (+12V_SW, V12S) at the J4 edge, then +12V_IGN, GND, the blank key row, and K_LINE_SIGNAL (pins 9/10, NET1 to NET4 per header, joined to the J6 pin pairs) nearest J6.
 D2 is turned 180 degrees (anode on VJ2 toward J2, cathode on VD toward F2) and sits 1.5 mm further from F2; F2 is 6.25 mm higher (clear of J72 by about 1.4 mm);
 J2 is at y 25.43 (CB) with +12V below and GND above; D3 is unchanged at the bottom right (an upward move was tried and undone). KiCad is regenerated to match and is unrouted.
 
@@ -328,4 +328,11 @@ and with Board 1's F1 (15.0 mm, 1.3 mm holes). J41-J44 holes are 1.02 mm for 0.6
 Cherry Blossom's D2 land has the pads 13.6 mm apart while KiCad's DO-201AD stand-in is 12.7 mm (D3 12.5 vs 12.7): check the real SB540 / 1.5KE24A lead spacing.
 
 J41-J44 3D model settings in Cherry Blossom (2026-11-14, user): offset 1.27 mm, -5.08 mm, -3 mm; rotate 270, 0, 270. Use board2.3dshapes/M20-9980546_KeyRowRemoved.glb (8 pins, key column removed).
+
+Naming (2026-11-14, user): the J4 row on pins 1/2 is silk-labelled +12V_SW (it was +12V_BAT): the rail is V12S, behind the 2 A fuse and SW1, not the raw battery. J3 pin 16 is deliberately driven from V12S.
+The SW1 terminal keeps its name SW1_BAT, and the device-side docs still call the pin 12V_BAT.
+
+D2/D3 lead spacing (2026-11-14, user): resolved, no change. D2 (SB540) and D3 (1.5KE24A) are axial parts whose leads are bent to fit the pads, so the Cherry Blossom land (D2 pads 13.6 mm, D3 12.5 mm) is kept and the KiCad stand-ins (12.7 mm) need no change.
+
+J3 pin 5 silk (2026-11-14, user): relabelled SIG_GND (1.0 mm text like the digits, vertical, centred between J3 and J71/J72, about 1.4 mm clear of both outlines; the +12V on pin 16 is the same size and centred the same way); the net is still GND. Pin 4 (chassis ground) is unlabelled and not on GND.
 

@@ -103,7 +103,7 @@ label("D2",70.2,5.4,0.9); label("F2 2A",73.0,31.25,0.9); label("D3",85.6,60.95,1
 # J4: labels as in Cherry Blossom (2026-11-14): headers turned 180 deg, text turned 180 deg so it reads from the J4 edge.
 # Centres from Cherry Blossom (x -> x+43.5, y -> 38.5-y). Real refs hidden; J41..J44 shown below the grid (toward J6). The key row (no holes) is unlabelled.
 for _i in range(4): fps[f"J4{_i+1}"].Reference().SetVisible(False)
-for _t,_x,_y in (("+12V_BAT",29.9,5.42),("+12V_IGN",29.9,7.96),("GND",31.25,10.5),("K_LINE_SIGNAL",28.35,15.58)): label(_t,_x,_y,0.8)   # top to bottom (2026-11-14): BAT at the J4 edge, key row blank, signal nearest J6
+for _t,_x,_y in (("+12V_SW",30.3,5.42),("+12V_IGN",29.9,7.96),("GND",31.25,10.5),("K_LINE_SIGNAL",28.35,15.58)): label(_t,_x,_y,0.8)   # top to bottom (2026-11-14): BAT at the J4 edge, key row blank, signal nearest J6
 for _i in range(4): label(f"J4{_i+1}",35.88+5.08*_i,2.3,1.0)
 for _t,_x in (("NET1",35.88),("NET2",40.96),("NET3",46.04),("NET4",51.12)): label(_t,_x,19.5,1.0,90)   # on J43, J6 side, turned -90 deg (user 2026-11-14; nets to be reassigned later, so it does not match the J43 net yet)   # J4 edge side of the grid (CB y 36.2), text at 0 deg (standard reading direction)
 # J6 designator moved to the left side of its box (CB -17.3, 5.9)
@@ -118,8 +118,8 @@ for _sw in (sw1,sw2):
 # J3 pin labels (OBD pin number / function), centred halfway between the J3 end (KiCad y 66.8) and the J71/J72 bottom edge (57.6): y 62.2, as in Cherry Blossom; ref hidden
 fps["J3"].Reference().SetVisible(False)
 for n,(x,y) in pads_of("J3").items():
-    if int(n)==5: label("GND",x,61.4,0.8,90)   # pin 5: sideways "GND" replaces the number
-    elif int(n)==16: label("+12V",x,60.9,0.8,90)   # pin 16: sideways "+12V" replaces the number
+    if int(n)==5: label("SIG_GND",x,62.2,1.0,90)   # OBD pin 5 = signal ground (pin 4 chassis ground is not tied to GND); centred between J3 and J71/J72 (CB y -23.7)   # pin 5: sideways "GND" replaces the number
+    elif int(n)==16: label("+12V",x,62.2,1.0,90)   # centred like SIG_GND (CB y -23.7)   # pin 16: sideways "+12V" replaces the number
     else: label(str(int(n)),x,62.2,0.8)   # plain pin numbers 1..16 (J3 pads are numbered so they read 1..16 left to right)
 # net legend
 label("Board 2 r1",14.0,7.5,0.8)   # moved clear of the SW2 pin labels
