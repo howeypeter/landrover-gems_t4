@@ -1,0 +1,9 @@
+Mfr Part Number (Input),Manufacturer Part Number,Mouser Part Number,Manufacturer Name,Description,Quantity 1,Unit Price 1,Quantity 2,Unit Price 2,Quantity 3,Unit Price 3,Quantity 4,Unit Price 4,Quantity 5,Unit Price 5,Order Quantity,Order Unit Price,Min./Mult.,Availability,Lead Time in Days,Lifecycle,NCNR,RoHS,Pb Free,Package Type,Datasheet URL,Product Image,Design Risk
+TBP02R1-381-16BE,TBP02R1-381-16BE,,Same Sky,J2: 16-pos 3.81 mm right-angle pluggable header (OBD2 pigtail input),,,,,,,,,,,1,,,,,,,,,,,,
+TBP02P1-381-16BE,TBP02P1-381-16BE,,Same Sky,J2 mate: 16-pos 3.81 mm pluggable screw-terminal plug (Board 1 pigtail lands here),,,,,,,,,,,1,,,,,,,,,,,,
+TBL002A-350-08GR-2OR,TBL002A-350-08GR-2OR,,Same Sky,"J3, J4, J5: 8-pos 3.5 mm 45 deg push-button terminal block (OBD breakout x2, patch landing x1)",,,,,,,,,,,3,,,,,,,,,,,,
+M20-9980546,M20-9980546,,Harwin,"J6-J9: 2x5 2.54 mm vertical pin header (key row pins 7/8 pulled), 4 side by side",,,,,,,,,,,4,,,,,,,,,,,,
+SB540-T,SB540-T,,Diodes Incorporated,"D2: 5 A 40 V Schottky, DO-201AD axial",,,,,,,,,,,1,,,,,,,,,,,,
+M20-1070500,M20-1070500,,Harwin,"Cable housing 2x5 female crimp (ECU cable x1, 10AS cable x1); Mouser number not confirmed",,,,,,,,,,,2,,,,,,,,,,,,
+M20-1060500,M20-1060500,,Harwin,Cable housing 1x5 female crimp (ECU cable third column); Mouser number not confirmed,,,,,,,,,,,1,,,,,,,,,,,,
+M20-003,M20-003,,Harwin,"Polarizing key plug, one per cable housing (slot 4); Mouser number not confirmed",,,,,,,,,,,3,,,,,,,,,,,,
