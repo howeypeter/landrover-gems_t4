@@ -1,5 +1,7 @@
 ﻿# Board 2 — J2–J7 "wire operator board" design (session context)
 
+> **Historical (old connector names).** Board 2 connectors were renumbered on 2026-11-14: J2 -> J1, J3 -> J2, J71/J72 ("J7") -> J3/J4, J6 -> J5, J4 grid -> J6-J9. See `hardware/board2-pcb/REVIEW_BRIEF.md`.
+
 **Status: working design, updated 2026-11-11 (rev 3) — Board 2 is a DUMB relay board
 (no IC): 4 neutral nets, J6 landing strip + J4 keyed output headers. Not yet
 reconciled with the other two Board 2 designs (see end).** The live schematic

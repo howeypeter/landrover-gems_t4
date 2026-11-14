@@ -1,9 +1,9 @@
-# Board 2 backlog (ideas parked 2026-11-13, to discuss once the new J4 is on the board)
+# Board 2 backlog (ideas parked 2026-11-13, to discuss once the new J6-J9 is on the board)
 
-Context: J4 is being replaced by a Harwin M20 5-row x 8-column grid (four M20-9980546 2x5 headers) per
+Context: J6-J9 is being replaced by a Harwin M20 5-row x 8-column grid (four M20-9980546 2x5 headers) per
 `~/Downloads/5x8_modular_pcb_connector_spec_bom.md`, built as the doc says first; refinements below come after.
 
-## J4 (Harwin M20 grid) - open questions
+## J6-J9 (Harwin M20 grid) - open questions
 - **Row 4 key.** Doc: pull the row-4 pin from each header (two per header, eight in all) and put an M20-003 key plug in slot 4 of
   every cable housing. Option: leave the row-4 holes off the footprint (32 holes) so no pin can be fitted.
 - **Pin order.** Doc order is V12S, IGN, GND, key, NET (rows 1-5). Checked: key in row 4 blocks a plug turned 180 degrees (it lands on
@@ -19,15 +19,15 @@ Context: J4 is being replaced by a Harwin M20 5-row x 8-column grid (four M20-99
 - **Retired with this change:** Molex Micro-Fit 43045-0412 (x8), 43025-0400 plug housings, 43030-00xx crimp terminals.
 - **Decided 2026-11-13:** four 2x5 headers (M20-9980546), key-row pins pulled and no row-4 holes in the footprint (a 1x8-per-row
   version with four M20-9990846 was built first and set aside: the 2x5 bodies hold the pins together better while soldering).
-  No single 5x8 header exists; headers come in 1 and 2 rows only. A 3.5 mm pitch (to match J6/J7) was searched: no unshrouded
-  single-row crimp family found (Molex 51067/53258 are shrouded, Ultra-Fit and Hirose MDF6 are dual-row), so J4 stays at 2.54 mm.
+  No single 5x8 header exists; headers come in 1 and 2 rows only. A 3.5 mm pitch (to match J5/J3/J4) was searched: no unshrouded
+  single-row crimp family found (Molex 51067/53258 are shrouded, Ultra-Fit and Hirose MDF6 are dual-row), so J6-J9 stays at 2.54 mm.
 
 ## Other
-- Silk box and 3D model settings are final for J71, J72, J6 (see REVIEW_BRIEF.md).
-- SW1/SW2 terminals, illuminated switches, J2 jack: part choices still open; F2 holder: footprint set (Board 1's F1, 15 mm pins), part number open (see `docs/board2-bom.md`).
-- Sheet 2 of `diagrams/gems-2pcb-schematic.html` still shows the old layout, J4 and SW pin order.
+- Silk box and 3D model settings are final for J3, J4, J5 (see REVIEW_BRIEF.md).
+- SW1/SW2 terminals, illuminated switches, J1 jack: part choices still open; F2 holder: footprint set (Board 1's F1, 15 mm pins), part number open (see `docs/board2-bom.md`).
+- Sheet 2 of `diagrams/gems-2pcb-schematic.html` still shows the old layout, J6-J9 and SW pin order.
 - BOM still says an 85 x 75 mm board; the board is 87 x 77 mm.
 - Routing in Cherry Blossom: not done yet (nets are locked-placement, unrouted).
-- **Verify before ordering (2026-11-14):** wire-entry side of the XY308-2.54 terminals (SW1/SW2 face the left edge, J2 the right edge) against the Xinya datasheet or the 3D model, and the 6 A / 150 V rating against the maker PDF.
-- **Open layout notes:** F2 clears J72 by about 1.4 mm (it can not move further without hitting J2/D2); J71 to J72 gap about 1.0 mm; KiCad board is unrouted (routing is done in Cherry Blossom).
+- **Verify before ordering (2026-11-14):** wire-entry side of the XY308-2.54 terminals (SW1/SW2 face the left edge, J1 the right edge) against the Xinya datasheet or the 3D model, and the 6 A / 150 V rating against the maker PDF.
+- **Open layout notes:** F2 clears J4 by about 1.4 mm (it can not move further without hitting J1/D2); J3 to J4 gap about 1.0 mm; KiCad board is unrouted (routing is done in Cherry Blossom).
 

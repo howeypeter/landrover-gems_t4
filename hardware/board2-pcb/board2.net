@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "C:\\Users\\howey\\OneDrive\\Documents\\Claude\\Projects\\LandRoverV1\\hardware\\board2-pcb\\board2.kicad_sch")
-		(date "2026-11-14T02:06:45")
+		(date "2026-11-14T09:46:38")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -93,7 +93,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "025c9653-e54b-43b6-adf7-e3012d2597c0")
+			(tstamps "9f5be7d0-b5d8-4fbf-83ea-ccf0d7a63c31")
 			(units
 				(unit
 					(name "A")
@@ -147,7 +147,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "16205a1d-67e0-4a45-8923-9231071068b9")
+			(tstamps "43dd10e5-767d-432d-9c1e-66c27efcb916")
 			(units
 				(unit
 					(name "A")
@@ -201,7 +201,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "63ef6ce2-f428-45aa-85bf-10a359b0c201")
+			(tstamps "89c31a87-5ce5-449f-8b88-2e5a1a8b6f4b")
 			(units
 				(unit
 					(name "A")
@@ -217,7 +217,7 @@
 			)
 		)
 		(comp
-			(ref "J2")
+			(ref "J1")
 			(value "12V DC in")
 			(footprint "TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal")
 			(description "12 V DC input (jack type OPEN)")
@@ -255,7 +255,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "28ef1260-bb50-45e4-8171-37f0208e60d3")
+			(tstamps "9a591fd5-e644-4304-98da-4c645b599040")
 			(units
 				(unit
 					(name "A")
@@ -271,7 +271,7 @@
 			)
 		)
 		(comp
-			(ref "J3")
+			(ref "J2")
 			(value "TBP02R1-381-16BE (16-pos 3.81)")
 			(footprint "board2:SameSky_TBP02R1-381-16BE_1x16_P3.81mm_RA_PinsReversed")
 			(description "From Board 1 OBD2 pigtail (male plug)")
@@ -309,7 +309,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "ee238cd0-fe9b-4c21-9a35-fc88bdb637ac")
+			(tstamps "f2dfebaa-e72f-4dd2-8cce-88d9d2d5a2ca")
 			(units
 				(unit
 					(name "A")
@@ -367,10 +367,10 @@
 			)
 		)
 		(comp
-			(ref "J6")
+			(ref "J3")
 			(value "TBL002A-350-08GR-2OR")
 			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
-			(description "Pin pairs 1-2 = NET1, 3-4 = NET2, 5-6 = NET3, 7-8 = NET4 (reassigned 2026-11-14 to match the J6 silk; J41 at the -x end faces NET1, left to right from the front)")
+			(description "J3/J4 OBD pins 1-8, pin 8 leftmost")
 			(fields
 				(field
 					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
@@ -378,7 +378,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Pin pairs 1-2 = NET1, 3-4 = NET2, 5-6 = NET3, 7-8 = NET4 (reassigned 2026-11-14 to match the J6 silk; J41 at the -x end faces NET1, left to right from the front)")
+					(name "Description") "J3/J4 OBD pins 1-8, pin 8 leftmost")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -405,7 +405,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "089e4d66-23ce-4066-a5ec-237c11ab02ee")
+			(tstamps "217b5a9a-c510-4dad-8c33-1d4aa2a34099")
 			(units
 				(unit
 					(name "A")
@@ -439,7 +439,151 @@
 			)
 		)
 		(comp
-			(ref "J41")
+			(ref "J4")
+			(value "TBL002A-350-08GR-2OR")
+			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+			(description "J3/J4 OBD pins 9-16, pin 8 leftmost")
+			(fields
+				(field
+					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "J3/J4 OBD pins 9-16, pin 8 leftmost")
+			)
+			(libsource
+				(lib "Connector_Generic")
+				(part "Conn_01x08")
+				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(property
+				(name "Sheetname")
+				(value "board2")
+			)
+			(property
+				(name "Sheetfile")
+				(value "board2.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "connector")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "Connector*:*_1x??_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "a0424d26-7b5d-4789-b0c1-5c3a6b98e45e")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "J5")
+			(value "TBL002A-350-08GR-2OR")
+			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+			(description "Pin pairs 1-2 = NET1, 3-4 = NET2, 5-6 = NET3, 7-8 = NET4 (reassigned 2026-11-14 to match the J5 silk; J6 at the -x end faces NET1, left to right from the front)")
+			(fields
+				(field
+					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Pin pairs 1-2 = NET1, 3-4 = NET2, 5-6 = NET3, 7-8 = NET4 (reassigned 2026-11-14 to match the J5 silk; J6 at the -x end faces NET1, left to right from the front)")
+			)
+			(libsource
+				(lib "Connector_Generic")
+				(part "Conn_01x08")
+				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(property
+				(name "Sheetname")
+				(value "board2")
+			)
+			(property
+				(name "Sheetfile")
+				(value "board2.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "connector")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "Connector*:*_1x??_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "fcf24a4f-3728-462a-afe8-4e97eb600ee9")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "J6")
 			(value "M20-9980546")
 			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 			(description "Columns 1-2 of the 5x8 grid (NET1a, NET1b); key-row pins 7/8 pulled")
@@ -477,7 +621,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "4585dca3-7692-4746-abe4-a6a76b0ccfc9")
+			(tstamps "07e94574-4da6-4c32-8fa3-2cb621ca1fda")
 			(units
 				(unit
 					(name "A")
@@ -517,7 +661,7 @@
 			)
 		)
 		(comp
-			(ref "J42")
+			(ref "J7")
 			(value "M20-9980546")
 			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 			(description "Columns 3-4 of the 5x8 grid (NET2a, NET2b); key-row pins 7/8 pulled")
@@ -555,7 +699,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "80447d9d-0378-4cd5-b890-b1585dea61a9")
+			(tstamps "d522a79c-688b-4c18-be3e-192c5ff29b02")
 			(units
 				(unit
 					(name "A")
@@ -595,7 +739,7 @@
 			)
 		)
 		(comp
-			(ref "J43")
+			(ref "J8")
 			(value "M20-9980546")
 			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 			(description "Columns 5-6 of the 5x8 grid (NET3a, NET3b); key-row pins 7/8 pulled")
@@ -633,7 +777,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "a5669b5e-1304-4659-abac-d04b9304c368")
+			(tstamps "7ee645f2-399a-442f-9677-281a187b76a1")
 			(units
 				(unit
 					(name "A")
@@ -673,7 +817,7 @@
 			)
 		)
 		(comp
-			(ref "J44")
+			(ref "J9")
 			(value "M20-9980546")
 			(footprint "board2:Harwin_M20-9980546_2x05_P2.54mm_Vertical_KeyRowRemoved")
 			(description "Columns 7-8 of the 5x8 grid (NET4a, NET4b); key-row pins 7/8 pulled")
@@ -711,7 +855,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "1064daaa-e875-4d93-9b8a-439350070381")
+			(tstamps "9b4c03c2-aed2-43bc-b2e5-355f9f12f010")
 			(units
 				(unit
 					(name "A")
@@ -745,150 +889,6 @@
 						)
 						(pin
 							(num "10")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J71")
-			(value "TBL002A-350-08GR-2OR")
-			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
-			(description "J7 OBD pins 1-8, pin 8 leftmost")
-			(fields
-				(field
-					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "J7 OBD pins 1-8, pin 8 leftmost")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x08")
-				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "e7218b42-aeb0-4c97-9662-76042e4cb085")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "7")
-						)
-						(pin
-							(num "8")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J72")
-			(value "TBL002A-350-08GR-2OR")
-			(footprint "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
-			(description "J7 OBD pins 9-16, pin 8 leftmost")
-			(fields
-				(field
-					(name "Footprint") "board2:SameSky_TBL002A-350-08_1x08_P3.50mm_45deg")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "J7 OBD pins 9-16, pin 8 leftmost")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x08")
-				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "board2")
-			)
-			(property
-				(name "Sheetfile")
-				(value "board2.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "e993dc92-8682-48c8-8751-8758a4597540")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "7")
-						)
-						(pin
-							(num "8")
 						)
 					)
 				)
@@ -933,7 +933,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "60a91e50-aee0-4820-b0f2-c7f4f994843d")
+			(tstamps "6f707f25-26a4-4959-ac46-342d87949cf0")
 			(units
 				(unit
 					(name "A")
@@ -993,7 +993,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "dc6d3b2d-f18a-43a9-a0b6-30469630c531")
+			(tstamps "b493d0e7-c90f-4ae6-92cb-0c6ecc6a42ac")
 			(units
 				(unit
 					(name "A")
@@ -1473,69 +1473,69 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J2")
+				(ref "J1")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
+				(ref "J2")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
 				(ref "J3")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "J41")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "J41")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive")
-			)
-			(node
-				(ref "J42")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "J42")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive")
-			)
-			(node
-				(ref "J43")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "J43")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive")
-			)
-			(node
-				(ref "J44")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "J44")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive")
-			)
-			(node
-				(ref "J71")
 				(pin "4")
 				(pinfunction "Pin_4_4")
+				(pintype "passive")
+			)
+			(node
+				(ref "J6")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J6")
+				(pin "6")
+				(pinfunction "Pin_6_6")
+				(pintype "passive")
+			)
+			(node
+				(ref "J7")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J7")
+				(pin "6")
+				(pinfunction "Pin_6_6")
+				(pintype "passive")
+			)
+			(node
+				(ref "J8")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J8")
+				(pin "6")
+				(pinfunction "Pin_6_6")
+				(pintype "passive")
+			)
+			(node
+				(ref "J9")
+				(pin "5")
+				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J9")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 			(node
@@ -1556,49 +1556,49 @@
 			(name "/IGN")
 			(class "Default")
 			(node
-				(ref "J41")
+				(ref "J6")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J41")
+				(ref "J6")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "J42")
+				(ref "J7")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J42")
+				(ref "J7")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "J43")
+				(ref "J8")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J43")
+				(ref "J8")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "J44")
+				(ref "J9")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J44")
+				(ref "J9")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
@@ -1621,27 +1621,27 @@
 			(name "/NET1")
 			(class "Default")
 			(node
-				(ref "J41")
-				(pin "10")
-				(pinfunction "Pin_10_10")
-				(pintype "passive")
-			)
-			(node
-				(ref "J41")
-				(pin "9")
-				(pinfunction "Pin_9_9")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "2")
 				(pinfunction "Pin_2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "J6")
+				(pin "10")
+				(pinfunction "Pin_10_10")
+				(pintype "passive")
+			)
+			(node
+				(ref "J6")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 		)
@@ -1650,27 +1650,27 @@
 			(name "/NET2")
 			(class "Default")
 			(node
-				(ref "J42")
-				(pin "10")
-				(pinfunction "Pin_10_10")
-				(pintype "passive")
-			)
-			(node
-				(ref "J42")
-				(pin "9")
-				(pinfunction "Pin_9_9")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "4")
 				(pinfunction "Pin_4_4")
+				(pintype "passive")
+			)
+			(node
+				(ref "J7")
+				(pin "10")
+				(pinfunction "Pin_10_10")
+				(pintype "passive")
+			)
+			(node
+				(ref "J7")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 		)
@@ -1679,27 +1679,27 @@
 			(name "/NET3")
 			(class "Default")
 			(node
-				(ref "J43")
-				(pin "10")
-				(pinfunction "Pin_10_10")
-				(pintype "passive")
-			)
-			(node
-				(ref "J43")
-				(pin "9")
-				(pinfunction "Pin_9_9")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "5")
 				(pinfunction "Pin_5_5")
 				(pintype "passive")
 			)
 			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "6")
 				(pinfunction "Pin_6_6")
+				(pintype "passive")
+			)
+			(node
+				(ref "J8")
+				(pin "10")
+				(pinfunction "Pin_10_10")
+				(pintype "passive")
+			)
+			(node
+				(ref "J8")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 		)
@@ -1708,27 +1708,27 @@
 			(name "/NET4")
 			(class "Default")
 			(node
-				(ref "J44")
-				(pin "10")
-				(pinfunction "Pin_10_10")
-				(pintype "passive")
-			)
-			(node
-				(ref "J44")
-				(pin "9")
-				(pinfunction "Pin_9_9")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive")
 			)
 			(node
-				(ref "J6")
+				(ref "J5")
 				(pin "8")
 				(pinfunction "Pin_8_8")
+				(pintype "passive")
+			)
+			(node
+				(ref "J9")
+				(pin "10")
+				(pinfunction "Pin_10_10")
+				(pintype "passive")
+			)
+			(node
+				(ref "J9")
+				(pin "9")
+				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 		)
@@ -1737,13 +1737,13 @@
 			(name "/OBD1")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive")
@@ -1754,13 +1754,13 @@
 			(name "/OBD2")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive")
@@ -1771,13 +1771,13 @@
 			(name "/OBD3")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "6")
 				(pinfunction "Pin_6_6")
 				(pintype "passive")
@@ -1788,13 +1788,13 @@
 			(name "/OBD4")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "5")
 				(pinfunction "Pin_5_5")
 				(pintype "passive")
@@ -1805,13 +1805,13 @@
 			(name "/OBD6")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "6")
 				(pinfunction "Pin_6_6")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
@@ -1822,13 +1822,13 @@
 			(name "/OBD7")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
@@ -1839,13 +1839,13 @@
 			(name "/OBD8")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
 			(node
-				(ref "J71")
+				(ref "J3")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
@@ -1856,13 +1856,13 @@
 			(name "/OBD9")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "9")
 				(pinfunction "Pin_9_9")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive")
@@ -1873,13 +1873,13 @@
 			(name "/OBD10")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "10")
 				(pinfunction "Pin_10_10")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive")
@@ -1890,13 +1890,13 @@
 			(name "/OBD11")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "11")
 				(pinfunction "Pin_11_11")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "6")
 				(pinfunction "Pin_6_6")
 				(pintype "passive")
@@ -1907,13 +1907,13 @@
 			(name "/OBD12")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "12")
 				(pinfunction "Pin_12_12")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "5")
 				(pinfunction "Pin_5_5")
 				(pintype "passive")
@@ -1924,13 +1924,13 @@
 			(name "/OBD13")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "13")
 				(pinfunction "Pin_13_13")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
@@ -1941,13 +1941,13 @@
 			(name "/OBD14")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "14")
 				(pinfunction "Pin_14_14")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "3")
 				(pinfunction "Pin_3_3")
 				(pintype "passive")
@@ -1958,13 +1958,13 @@
 			(name "/OBD15")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "15")
 				(pinfunction "Pin_15_15")
 				(pintype "passive")
 			)
 			(node
-				(ref "J72")
+				(ref "J4")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
@@ -1975,63 +1975,63 @@
 			(name "/V12S")
 			(class "Default")
 			(node
-				(ref "J3")
+				(ref "J2")
 				(pin "16")
 				(pinfunction "Pin_16_16")
 				(pintype "passive")
 			)
 			(node
-				(ref "J41")
+				(ref "J4")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J41")
+				(ref "J6")
+				(pin "1")
+				(pinfunction "Pin_1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "J6")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "J42")
+				(ref "J7")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J42")
+				(ref "J7")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "J43")
+				(ref "J8")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J43")
+				(ref "J8")
 				(pin "2")
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "J44")
+				(ref "J9")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
-				(ref "J44")
+				(ref "J9")
 				(pin "2")
 				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J72")
-				(pin "1")
-				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
@@ -2102,7 +2102,7 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J2")
+				(ref "J1")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
@@ -2110,10 +2110,10 @@
 		)
 		(net
 			(code "25")
-			(name "unconnected-(J41-Pin_7-Pad7)")
+			(name "unconnected-(J6-Pin_7-Pad7)")
 			(class "Default")
 			(node
-				(ref "J41")
+				(ref "J6")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive+no_connect")
@@ -2121,10 +2121,10 @@
 		)
 		(net
 			(code "26")
-			(name "unconnected-(J41-Pin_8-Pad8)")
+			(name "unconnected-(J6-Pin_8-Pad8)")
 			(class "Default")
 			(node
-				(ref "J41")
+				(ref "J6")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive+no_connect")
@@ -2132,10 +2132,10 @@
 		)
 		(net
 			(code "27")
-			(name "unconnected-(J42-Pin_7-Pad7)")
+			(name "unconnected-(J7-Pin_7-Pad7)")
 			(class "Default")
 			(node
-				(ref "J42")
+				(ref "J7")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive+no_connect")
@@ -2143,10 +2143,10 @@
 		)
 		(net
 			(code "28")
-			(name "unconnected-(J42-Pin_8-Pad8)")
+			(name "unconnected-(J7-Pin_8-Pad8)")
 			(class "Default")
 			(node
-				(ref "J42")
+				(ref "J7")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive+no_connect")
@@ -2154,10 +2154,10 @@
 		)
 		(net
 			(code "29")
-			(name "unconnected-(J43-Pin_7-Pad7)")
+			(name "unconnected-(J8-Pin_7-Pad7)")
 			(class "Default")
 			(node
-				(ref "J43")
+				(ref "J8")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive+no_connect")
@@ -2165,10 +2165,10 @@
 		)
 		(net
 			(code "30")
-			(name "unconnected-(J43-Pin_8-Pad8)")
+			(name "unconnected-(J8-Pin_8-Pad8)")
 			(class "Default")
 			(node
-				(ref "J43")
+				(ref "J8")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive+no_connect")
@@ -2176,10 +2176,10 @@
 		)
 		(net
 			(code "31")
-			(name "unconnected-(J44-Pin_7-Pad7)")
+			(name "unconnected-(J9-Pin_7-Pad7)")
 			(class "Default")
 			(node
-				(ref "J44")
+				(ref "J9")
 				(pin "7")
 				(pinfunction "Pin_7_7")
 				(pintype "passive+no_connect")
@@ -2187,10 +2187,10 @@
 		)
 		(net
 			(code "32")
-			(name "unconnected-(J44-Pin_8-Pad8)")
+			(name "unconnected-(J9-Pin_8-Pad8)")
 			(class "Default")
 			(node
-				(ref "J44")
+				(ref "J9")
 				(pin "8")
 				(pinfunction "Pin_8_8")
 				(pintype "passive+no_connect")
