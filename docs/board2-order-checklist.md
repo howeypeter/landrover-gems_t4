@@ -40,7 +40,7 @@ silk, naming (J1-J9) and M4 holes done; last commit `684d630`.
 | # | Item | Status | Notes |
 |---|---|---|---|
 | E1 | Verify J6-J9 harness parts on Mouser: M20-1070500 (2x5) and M20-1060500 (1x5) housings, M20-1180046 tin contacts (22-30 AWG), M20-003 key plugs for pins 7/8 | OPEN | Decision 2026-11-14: Harwin M20 loose-crimp route from Mouser; quantities 6 / 6 / 10 / 50 in `hardware/board2-bom-mouser.csv`. Confirm the key plug count (2 per 2x5 housing) against the Harwin housing drawing. See `docs/board2-cable-sourcing.md`. |
-| E2 | Crimp tool bought on Amazon suits the M20 contacts | OPEN | Replaces the $600 Harwin Z20-320 (removed from the Mouser BOM). Check it handles open-barrel 0.64 mm-pin female contacts at 22-30 AWG. |
+| E2 | Crimp tool bought on Amazon suits the M20 contacts | PARTIAL (2026-11-14) | User bought an iCrimp/IWISS SN-28B-type ratcheting crimper (AWG 18-28, 2.54 mm Dupont/JST XH/VH) from Amazon. It replaces the $600 Harwin Z20-320 (removed from the Mouser BOM). Suitability for the M20-1180046 is NOT confirmed (Harwin specifies only the Z20-320; the SN-28B stops at 28 AWG and may mangle the insulation crimp). **Still to do: test crimps on the spare contacts before building cables** (wire pull-out, seats and latches in the M20 housing, slides onto a 0.64 mm pin); use 24-26 AWG wire. Fallbacks: Engineer PA-09, or Harwin custom pre-crimped leads (technical@harwin.com). |
 
 ## D. Optional
 
