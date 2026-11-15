@@ -28,9 +28,10 @@ before ordering; **OPEN** = not yet decided/sourced.
 | Item | Qty | Status | Notes |
 |---|---|---|---|
 | Illuminated latching pushbutton, 12 mm, 12 V (built-in lamp; 4 terminals: IN / OUT / LED+ / LED-) | 2 | OPEN | one for SW1 (power), one for SW2 (ignition); 12 V/5 A class |
-| Harwin M20 female crimp housings: **M20-1060500** (1x5, one column) and **M20-1070500** (2x5, two columns) | as needed | CHECK | ECU cable = 3 columns (a 2x5 plus a 1x5), 10AS cable = 2 columns (one 2x5). Mouser numbers not confirmed |
-| Harwin **M20-003** polarizing key plug | one per housing | CHECK | goes in slot 4 (the key row) of every cable housing |
-| Female crimp contacts: Harwin M20-1160042 / -1160046 / -1180042 / -1180046 (22-30 AWG), or pre-crimped leads | 4 per column of cable | CHECK | whether generic pre-crimped leads latch in the Harwin housing is unconfirmed |
+| Harwin M20 female crimp housings: **M20-1060500** (1x5, one column) and **M20-1070500** (2x5, two columns) | 6 + 6 | CHECK | 4 active + 2 spare of each. Mouser numbers not confirmed |
+| Harwin **M20-003** polarizing key plug | 10 | CHECK | 2 per 2x5 housing (pins 7/8) + 2 spare |
+| Female crimp contacts: Harwin **M20-1180046** (loose, tin, 22-30 AWG) | 50 | CHECK | 32 needed (8 per 2x5) + 18 spare; standardised on tin to match the M20-9980546 headers |
+| Crimp tool for the M20 contacts | 1 | OPEN | user is buying a ratcheting crimper on Amazon instead of the $600 Harwin Z20-320; confirm it suits 0.64 mm-pin open-barrel contacts |
 | Hook-up wire for device cables | — | OPEN | gauge to suit ~1-2 A; colour-code per net |
 | ECU / 10AS mating plugs (C1033, C1017, C225...) | — | OPEN | covered by the bench-rig / pinout docs, not Board 2 |
 

@@ -5,9 +5,9 @@ J2,Same Sky,TBP02R1-381-16BE,16-pos 3.81mm right-angle (horizontal) pluggable he
 J2 mate,Same Sky,TBP02P1-381-16BE,16-pos 3.81mm pluggable screw-terminal plug (180deg wire entry; Board 1 pigtail lands here); mates TBP02R1-381 series per Same Sky mating guide,1,confirmed
 J3/J4/J5,Same Sky,TBL002A-350-08GR-2OR,8-pos 3.5mm 45deg push-button terminal block (2 for J3/J4 + 1 for J5),3,confirmed
 J6-J9,Harwin,M20-9980546,2x5 (10-pos) 2.54mm vertical pin header; 4 side by side = 5 rows x 8 columns; pull the 2 key-row pins (row 4) from each header (Mouser listing not yet confirmed),4,chosen - verify before ordering
-J6-J9 mate (1 column),Harwin,M20-1060500,1x5 female crimp housing 2.54mm (key plug in slot 4); Mouser number not confirmed,as needed,verify part number
-J6-J9 mate (2 columns),Harwin,M20-1070500,2x5 (5+5) female crimp housing 2.54mm; Mouser number not confirmed,as needed,verify part number
-J6-J9 key plug,Harwin,M20-003,Polarizing key plug for M20 housings (goes in slot 4 of each cable housing),as needed,verify part number
-J6-J9 crimp contacts,Harwin,M20-1160042 / M20-1160046 / M20-1180042 / M20-1180046,Female crimp contacts for the M20 housings 22-30 AWG (or pre-crimped leads - fit in the Harwin housing unconfirmed),as needed,verify part number
+J6-J9 mate (1 column),Harwin,M20-1060500,1x5 female crimp housing 2.54mm (single-column option); 4 active + 2 spare,6,chosen - verify before ordering
+J6-J9 mate (2 columns),Harwin,M20-1070500,2x5 (5+5) female crimp housing 2.54mm; 4 active + 2 spare,6,chosen - verify before ordering
+J6-J9 key plug,Harwin,M20-003,Polarizing key plug for M20 housings (2 per 2x5 housing for pins 7/8 + 2 spare),10,chosen - verify before ordering
+J6-J9 crimp contacts,Harwin,M20-1180046,Female crimp contact (loose; tin to match the tin header pins) 22-30 AWG; 32 needed (8 per 2x5) + 18 spare,50,chosen - verify before ordering
 J1,XINLAIYA,XY308-2.54-2P,2-pos 2.54 mm screw terminal (LCSC C557685); 12V DC input,1,chosen
 SW1/SW2,XINLAIYA,XY308-2.54-4P,4-pos 2.54 mm screw terminal (LCSC C915913); one per switch,2,chosen

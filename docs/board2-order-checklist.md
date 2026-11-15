@@ -35,6 +35,13 @@ silk, naming (J1-J9) and M4 holes done; last commit `684d630`.
 | C3 | JLCPCB order settings | OPEN | Settings to enter: 2 layers; 87 x 77 mm (fits the 100 x 100 mm tier); qty as needed; 1.6 mm thickness; 1 oz outer copper; HASL (lead-free if you prefer); green or any mask; white silk; min track/space 6/6 mil (our rules: 0.25 mm signals, 0.2 mm clearance, 0.8 mm power); min drill 0.3 mm (vias 0.3 drill / 0.6 pad); no castellation, no edge plating; plated mount holes are part of the drill file. |
 | C4 | Confirm Rev: `REV = "1.0"`, `REVDATE = "2026-11"` in `gen_pcb.py` and the silk match what is ordered | DONE (2026-11-14) | Silk reads "Board 2 - Rev 1.0 - 2026-11" in both tools. Bump the Rev and re-export if copper or silk changes. |
 
+## E. Cables / harness (added 2026-11-14)
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| E1 | Verify J6-J9 harness parts on Mouser: M20-1070500 (2x5) and M20-1060500 (1x5) housings, M20-1180046 tin contacts (22-30 AWG), M20-003 key plugs for pins 7/8 | OPEN | Decision 2026-11-14: Harwin M20 loose-crimp route from Mouser; quantities 6 / 6 / 10 / 50 in `hardware/board2-bom-mouser.csv`. Confirm the key plug count (2 per 2x5 housing) against the Harwin housing drawing. See `docs/board2-cable-sourcing.md`. |
+| E2 | Crimp tool bought on Amazon suits the M20 contacts | OPEN | Replaces the $600 Harwin Z20-320 (removed from the Mouser BOM). Check it handles open-barrel 0.64 mm-pin female contacts at 22-30 AWG. |
+
 ## D. Optional
 
 | # | Item | Status | Notes |
