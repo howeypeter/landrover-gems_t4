@@ -11,6 +11,6 @@ J6-J9 key plug,Harwin,M20-003,Polarizing key plug for M20 housings (2 per 2x5 ho
 J6-J9 crimp contacts,Harwin,M20-1180046,Female crimp contact (loose; tin to match the tin header pins) 22-30 AWG; 32 needed (8 per 2x5) + 18 spare,50,chosen - verify before ordering
 J1,XINLAIYA,XY308-2.54-2P,2-pos 2.54 mm screw terminal (LCSC C557685); 12V DC input,1,chosen
 SW1/SW2,XINLAIYA,XY308-2.54-4P,4-pos 2.54 mm screw terminal (LCSC C915913); one per switch,2,chosen
-F2,Amazon (no catalogue number),5x20 covered PCB fuse holder,15 mm pin spacing / 1.3 mm holes; fuse 2 A 5x20 glass,1,accepted risk (user-supplied specs)
-Crimp tool,iCrimp / IWISS,SN-28B (or equivalent),Ratcheting crimper AWG 18-28 for the M20 contacts (replaces Harwin Z20-320); bought on Amazon 2026-11-14; test crimps pending,1,bought
-Illuminated switch,TBD,TBD,12 mm 12 V latching pushbutton with LED and 4 terminals; one for SW1 and one for SW2; candidates in docs/board2-bom.md,2,open
+F2,Amazon (no catalogue number),5x20 covered PCB fuse holder,15 mm pin spacing / 1.3 mm holes; fuse 2 A 5x20 glass,1,on hand (holder and fuse); accepted risk (user-supplied specs)
+Crimp tool,iCrimp / IWISS,SN-28B (or equivalent),Ratcheting crimper AWG 18-28 for the M20 contacts (replaces Harwin Z20-320); bought on Amazon 2026-11-14; test crimps pending,1,on hand
+Illuminated switch,on hand,part number not recorded,12 V latching pushbutton with LED and 4 terminals; one for SW1 and one for SW2,2,on hand
