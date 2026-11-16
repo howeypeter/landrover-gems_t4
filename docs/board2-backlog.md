@@ -22,6 +22,13 @@ Context: J6-J9 is being replaced by a Harwin M20 5-row x 8-column grid (four M20
   No single 5x8 header exists; headers come in 1 and 2 rows only. A 3.5 mm pitch (to match J5/J3/J4) was searched: no unshrouded
   single-row crimp family found (Molex 51067/53258 are shrouded, Ultra-Fit and Hirose MDF6 are dual-row), so J6-J9 stays at 2.54 mm.
 
+## Rev 1.1 idea: right-angle J6-J9 (parked 2026-11-15)
+Rev 1.0 went to fab with vertical M20-9980546 headers, so this is for a later revision only.
+- **Idea:** horizontal cable exit using the right-angle 5+5 plug Harwin **M20-9950545** ([Harwin page](https://www.harwin.com/products/M20-9950545): 10 contacts, 12.70 x 13.76 x 8.08 mm body, 5.08 mm above the PCB, 0.64 mm pins, 3 A, 3.00 mm tail, gold, cuttable). One 2x5 per NET (NET1-NET4), four along one board edge (about 51 mm of the 87 mm edge).
+- **Pin map unchanged:** pins 1/2 V12S, 3/4 IGN, 5/6 GND, 7/8 key (pulled), 9/10 NETi. On the face that is 5 columns (V12S, IGN, GND, key, NET) by 2 rows, the two rows being the tied pair.
+- **Mating:** the 2x5 housing M20-1070500 mates (Harwin lists it); the 1x5 housings would cover only one row.
+- **Open:** the 9950545 is gold; check for a tin version (M20-9950546 was marked obsolete by one source) or accept gold headers with tin contacts. Needs new footprints, headers moved to the board edge, re-route, Rev bump, re-export of Gerbers, and a repeat of checklist A4. Check enclosure room for horizontal cables.
+
 ## Other
 - Silk box and 3D model settings are final for J3, J4, J5 (see REVIEW_BRIEF.md).
 - SW1/SW2 terminals, illuminated switches, J1 is a screw terminal fed by the user's own barrel jack (settled 2026-11-14): other part choices still open; F2 holder: footprint set (Board 1's F1, 15 mm pins), part number open (see `docs/board2-bom.md`).
