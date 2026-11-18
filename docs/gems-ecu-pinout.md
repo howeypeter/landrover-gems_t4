@@ -53,6 +53,12 @@ Added 2026-11-17 from the user's research (an AI-assisted part list), then cross
 
 **DECISION (user, 2026-11-17): use `345808-1` (tin) as the female pin/terminal for all three plugs.** **Problem found in review:** TE lists `345808-1` as 24-20 AWG (0.2-0.5 mm2), tin, F-crimp and **unsealed / not sealable** ([TE](https://www.te.com/en/product-345808-1.html)). It cannot take a wire seal, so it does not give a sealed Econoseal connection. It may suit a bench harness, but fit in the cavity and retention are unconfirmed. No source confirmed it is stocked at DigiKey or Mouser, and TE shows it as not currently available. The gold `344113-1` (18-14 AWG) is the confirmed sealable fallback.
 
+**NOTE FOR THE FUTURE (user, 2026-11-17): this is a BENCH harness, so there are no wire seals.** The terminals (`345808-1`) are unsealed, so the wire seals (`347874-1`) were dropped from `hardware/gems-ecu-plugs-bom.csv` (Qty 90 -> 0). **If this harness ever moves into the vehicle (engine bay, permanent), redo these choices:**
+- Switch to a sealable terminal, the gold `344113-1` (18-14 AWG), and put the wire seals (`347874-1`) back, one per wired cavity.
+- Keep the cavity plugs (`172748-1`) for empty cavities so the connector stays sealed.
+- Tin-plated terminals (`345808-1`) in a vehicle harness mating with the ECU's gold header pins (`344108-1`) risk fretting corrosion over time (a general engineering concern, not stated by TE). Use gold `344113-1` terminals for permanent use.
+- Use a crimp tool with both a conductor nest and a seal-wing nest for the chosen terminal.
+
 **Shared terminals, seals and plugs:**
 
 | Item | Part | Check result |
@@ -60,7 +66,7 @@ Added 2026-11-17 from the user's research (an AI-assisted part list), then cross
 | Female socket terminal, gold | `344113-1` | Confirmed: Econoseal III receptacle, 0.64 mm tab, **18-14 AWG** (the source list said 20-14), 7 A ([TE](https://www.te.com/en/product-344113-1.html)) |
 | Female socket terminal, tin | `345808-1` | Exists but **unsealed**, 24-20 AWG (see the decision above) |
 | Do NOT use | `175104-2` | TE lists it as a gold AMP **MULTILOCK** receptacle, unsealed, 20-16 AWG; it is not tin and not an Econoseal III contact. ProWire's generic kit includes it, but whether it fits Econoseal III cavities is unverified |
-| Wire seal | `347874-1` (CHOSEN 2026-11-17) | TE: green silicone seal for 1.6-2.4 mm insulation OD, 20-15 AWG ([TE](https://www.te.com/en/product-347874-1.html)). User note: it is the seal for Econoseal III .070 / Series J housings; `345791-1` is for standard Econoseal .070 Mark II and is **superseded** (TE), so do not use. The Series J / Mark II split is the user's note, not verified by me. Needs a sealable terminal (not `345808-1`) |
+| Wire seal | `347874-1` (**DROPPED 2026-11-17: bench harness, unsealed terminals, so none needed; Qty 0**) | TE: green silicone seal for 1.6-2.4 mm insulation OD, 20-15 AWG ([TE](https://www.te.com/en/product-347874-1.html)). User note: it is the seal for Econoseal III .070 / Series J housings; `345791-1` is for standard Econoseal .070 Mark II and is **superseded** (TE), so do not use. The Series J / Mark II split is the user's note, not verified by me. Needs a sealable terminal (not `345808-1`) |
 | Cavity plug (blank unused holes) | `172748-1` | Appears in ProWire's generic 36-way Econoseal kit as a sealing plug |
 
 **Wire size note:** terminals and seals come in wire-size ranges. `344113-1` covers 18-14 AWG while `347874-1` covers 20-15 AWG, so the overlap is 18-15 AWG. Match the terminal and seal to your wire gauge.
