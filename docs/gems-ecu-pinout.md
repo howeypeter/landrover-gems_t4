@@ -39,6 +39,36 @@ So the **red plug = C1017 = C507**; the pin tables below use the SM001 codes.
 > in the source table. A few low pins on C1017 (2–6) fell at a page break in the
 > capture — treat as unlisted / meter-verify if needed.
 
+## Modern mating plugs: TE Connectivity (AMP) Econoseal III, .070 series
+
+Added 2026-11-17 from the user's research (an AI-assisted part list), then cross-checked by web search and an adversarial agent review the same day (corrections applied below). These are the modern equivalents of the harness-side plugs that mate with the ECU's three headers. **Treat every part number as a lead until you check it against TE's drawings and, ideally, the number printed on your own plug.**
+
+| Plug (physical) | SM001 / P38 code | Housing | Locking plate | Check result |
+|---|---|---|---|---|
+| Red 36-way | C1017 / C507 | **`346189-5`** (TE: "36 WAY REC HSG ASSY RED"); the user-supplied `344111-5` has no listing anywhere | `344112-1` | Red housing number corrected 2026-11-17. Keying vs the black housing is **not published**; check TE drawings C_346189_B and 114-3040 |
+| Black 36-way | C1032 / C505 | `344111-1` | `344112-1` | Housing confirmed (Econoseal III 070, 36-way, black, glass-filled polyamide, 180 deg exit; [TE](https://www.te.com/en/product-344111-1.html)) |
+| Black 18-way | C1033 / C509 | `344106-1` | `344107-1` | Housing confirmed (RS). `344107-1` is a valid 18-way anti-backout plate, but TE marks it **"Do Not Use for New Design"** and unavailable; use distributor stock |
+
+**`344112-1` resolved:** TE lists it as a white nylon 36-way **anti-backout lock plate** ([TE](https://www.te.com/en/product-344112-1.html)), not a seal. The earlier "cable seal" document could not be re-found; ignore it. TE shows it as not currently available, so use distributor stock.
+
+**DECISION (user, 2026-11-17): use `345808-1` (tin) as the female pin/terminal for all three plugs.** **Problem found in review:** TE lists `345808-1` as 24-20 AWG (0.2-0.5 mm2), tin, F-crimp and **unsealed / not sealable** ([TE](https://www.te.com/en/product-345808-1.html)). It cannot take a wire seal, so it does not give a sealed Econoseal connection. It may suit a bench harness, but fit in the cavity and retention are unconfirmed. No source confirmed it is stocked at DigiKey or Mouser, and TE shows it as not currently available. The gold `344113-1` (18-14 AWG) is the confirmed sealable fallback.
+
+**Shared terminals, seals and plugs:**
+
+| Item | Part | Check result |
+|---|---|---|
+| Female socket terminal, gold | `344113-1` | Confirmed: Econoseal III receptacle, 0.64 mm tab, **18-14 AWG** (the source list said 20-14), 7 A ([TE](https://www.te.com/en/product-344113-1.html)) |
+| Female socket terminal, tin | `345808-1` | Exists but **unsealed**, 24-20 AWG (see the decision above) |
+| Do NOT use | `175104-2` | TE lists it as a gold AMP **MULTILOCK** receptacle, unsealed, 20-16 AWG; it is not tin and not an Econoseal III contact. ProWire's generic kit includes it, but whether it fits Econoseal III cavities is unverified |
+| Wire seal | `347874-1` (CHOSEN 2026-11-17) | TE: green silicone seal for 1.6-2.4 mm insulation OD, 20-15 AWG ([TE](https://www.te.com/en/product-347874-1.html)). User note: it is the seal for Econoseal III .070 / Series J housings; `345791-1` is for standard Econoseal .070 Mark II and is **superseded** (TE), so do not use. The Series J / Mark II split is the user's note, not verified by me. Needs a sealable terminal (not `345808-1`) |
+| Cavity plug (blank unused holes) | `172748-1` | Appears in ProWire's generic 36-way Econoseal kit as a sealing plug |
+
+**Wire size note:** terminals and seals come in wire-size ranges. `344113-1` covers 18-14 AWG while `347874-1` covers 20-15 AWG, so the overlap is 18-15 AWG. Match the terminal and seal to your wire gauge.
+
+**Crimping:** these are Econoseal-style terminals, not Dupont-style contacts. A Dupont/SN-28B crimper will not suit them, and a sealed terminal needs two crimps (conductor barrel and seal wings). RS and Waytek list a TE ratchet hand tool for "ECONOSEAL J-11 and .070 Series", 20-16 AWG; whether its number is 91582-1 or 91583-1 is unresolved, and `344113-1` (18-14 AWG) likely needs a different die. TE application specs 114-18022 and 114-3040 name the correct tooling but could not be read. `345808-1` lists applicator 2151105-1 and extraction tool 1-1579007-5. Generic open-barrel tools with wire and seal nests (e.g. Kent 30-16 AWG, Hozan P-706) are cheaper but not TE-specified.
+
+**Not found:** an ECU-side confirmation that GEMS uses Econoseal III at all. The only direct lead is the Rover MEMS ECU, which uses a TE 344108 / 344111 Econoseal pair. Confirm against the plug on your ECU.
+
 ## C1017 — Red 36-way (sensors / inputs / comms)
 
 | Pin | Function |
